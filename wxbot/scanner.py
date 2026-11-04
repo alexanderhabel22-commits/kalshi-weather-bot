@@ -200,10 +200,12 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             dm = build_day_model(si.metric, ws, we, now, obs, ens, nws_val, mparams, seed)
             if dm is None:
                 continue
-            log.info("model %s %s: median %s [%s-%s] nws %s obs %s bias %+.1f sigma %.1f members %d",
+            log.info("model %s %s: median %s [%s-%s] nws %s obs %s (%s, %d six-hour groups) "
+                     "bias %+.1f sigma %.1f members %d",
                      ev, si.metric, dm.median, dm.quantile(0.1), dm.quantile(0.9),
                      None if nws_val is None else round(nws_val), None if dm.obs_extreme is None
-                     else round(dm.obs_extreme, 1), dm.bias, dm.sigma, dm.members)
+                     else round(dm.obs_extreme, 1), dm.obs_source or "-", dm.n_six,
+                     dm.bias, dm.sigma, dm.members)
             locks_only = ens is None or bool(dm.notes)   # missing forecast / readings
             opps, rows_eval = strategy.evaluate_event(
                 ms, dm, series=si.ticker, city=si.city, metric=si.metric,

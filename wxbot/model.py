@@ -53,6 +53,8 @@ class DayModel:
     n: int
     obs_extreme: float | None = None       # real °F
     obs_extreme_time: datetime | None = None
+    obs_source: str = ""            # "obs" (point reading), "max6"/"min6" (6-hour group)
+    n_six: int = 0                  # 6-hour extreme groups seen in the window
     current: float | None = None
     last_obs_time: datetime | None = None
     guaranteed: int | None = None          # high: CLI >= g ; low: CLI <= g
@@ -229,6 +231,7 @@ def build_day_model(metric: str, window_start: datetime, window_end: datetime,
         metric=metric, counts=counts, n=n,
         obs_extreme=(s * obs_x) if obs_x is not None else None,
         obs_extreme_time=obs_o.time if obs_o else None,
+        obs_source=obs_o.source if obs_o else "", n_six=len(six),
         current=current, last_obs_time=last_obs, guaranteed=guaranteed,
         remaining_hours=remaining_h,
         remaining_median=(s * statistics.median(fut)) if fut else None,
