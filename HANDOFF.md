@@ -92,13 +92,14 @@ record earns it. Be candid about odds and risk; no hype.
    record vs market, forecast bias/coverage, bot health. Then recommend.
 
 ## Status (Nov 4, 2026, ~10:30 AM ET)
-- **Automatic runs: unreliable.** Only one `schedule` run (7:26 AM ET Nov 4)
-  in ~11 h after Alex re-saved `scan.yml`. Alex was asked to set up Plan B:
-  cron-job.org POSTing every 5 min to
-  `/repos/alexanderhabel22-commits/kalshi-weather-bot/actions/workflows/scan.yml/dispatches`
-  with body `{"ref":"main","inputs":{"command":"scan"}}` and a fine-grained
-  token (this repo only, Actions: read and write). Steps:
-  `/mnt/project-files/setup/plan-b-timer.md`. Confirm runs arrive every ~5 min.
+- **Automatic runs: outside timer, live since Nov 4 2:35 PM ET.** GitHub's
+  own schedule fired once in ~11 h, so Alex set up cron-job.org POSTing every
+  5 min to `/repos/alexanderhabel22-commits/kalshi-weather-bot/actions/workflows/scan.yml/dispatches`
+  (body `{"ref":"main","inputs":{"command":"scan"}}`), using fine-grained
+  token `kalshi-timer` (this repo only, Actions: read and write).
+  **Token expires Feb 2, 2027:** remind Alex in late January to regenerate it
+  and paste it into the cron-job.org job. Steps:
+  `/mnt/project-files/setup/plan-b-timer.md`.
 - **Grading verified on real data (Nov 3 settlements):** Kalshi `result` and
   `expiration_value` fill in; alerts.csv, forecasts.csv and REPORT.md grade
   correctly. No code change needed.
