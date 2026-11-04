@@ -2,7 +2,7 @@ name: hourly-research
 
 # Research only (Kalshi hourly temperature markets). Read-only public data;
 # never trades, never alerts. Runs when research/ changes on a claude/ branch,
-# or by hand. Results are uploaded as a run artifact.
+# or by hand. Results go to the hourly-research-data branch.
 on:
   push:
     branches: ["claude/**"]
@@ -14,7 +14,11 @@ on:
         default: "research/hourly_probe.py"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: hourly-research
+  cancel-in-progress: false
 
 jobs:
   run:
@@ -28,9 +32,20 @@ jobs:
       - run: pip install requests
       - name: Run
         run: python "${{ inputs.script || 'research/run.py' }}" out
-      - uses: actions/upload-artifact@v4
+      - name: Save to hourly-research-data branch
         if: always()
-        with:
-          name: research-out
-          path: out
-          retention-days: 14
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp=$(date -u +%Y%m%dT%H%MZ)
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          if git fetch origin hourly-research-data 2>/dev/null; then
+            git checkout -q -B data origin/hourly-research-data
+          else
+            git checkout -q --orphan data && git rm -rq --cached . || true
+          fi
+          git clean -fdxq
+          mkdir -p runs && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+          git add runs
+          git commit -qm "research output $stamp" || exit 0
+          git push origin HEAD:hourly-research-data
