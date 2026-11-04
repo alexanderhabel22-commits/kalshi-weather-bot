@@ -29,6 +29,10 @@ max_bet_frac_model = 0.05        # max 5% on one forecast call
 max_event_frac = 0.12            # max 12% on one city-day
 max_open_frac = 0.40             # max 40% of bankroll open at once
 min_expected_profit = 0.02       # skip alerts worth less than 2¢ expected
+near_min_prob = 0.95             # near-lock: model must rate our side at least 95%...
+near_max_hours = 9               # ...with at most 9 hours left in the climate day...
+near_min_price = 0.80            # ...priced 80¢-97¢ (max_price_lock)...
+min_edge_near = 0.02             # ...and 2¢+ edge after fees, blended with the market
 
 [strategy_aggressive]
 # Used instead of the matching [strategy] values when risk level is "aggressive"
@@ -49,6 +53,8 @@ max_alerts_per_day = 15
 realert_edge_gain = 0.05         # re-alert the same contract only if edge grows 5¢+
 edge_alerts = "shadow"           # forecast-based EDGE alerts: "shadow" = log + grade silently,
                                  # "on" = send them, "off" = ignore. LOCK alerts always send.
+near_lock_alerts = "shadow"      # late-day calls the model rates 95%+ but readings haven't
+                                 # decided yet ("near-locks"): same shadow / on / off choice.
 # The ntfy topic is read from the NTFY_TOPIC environment variable / GitHub secret.
 
 [model]

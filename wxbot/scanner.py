@@ -70,7 +70,7 @@ def _should_alert(state: dict, opp, now: datetime, gain: float) -> bool:
     prev = (state.get("alerted") or {}).get(opp.key)
     if not prev:
         return True
-    if opp.kind == "lock" and prev.get("kind") != "lock":
+    if opp.kind in ("lock", "near") and prev.get("kind") != opp.kind:
         return True
     last = parse_iso(prev.get("at")) or now
     return opp.edge >= float(prev.get("edge", 0)) + gain and now - last >= timedelta(minutes=60)
@@ -144,6 +144,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     quiet_locks_ok = bool(aparams.get("quiet_allows_locks", False))
     gain = float(aparams.get("realert_edge_gain", 0.05))
     edge_mode = str(aparams.get("edge_alerts", "shadow")).lower()   # off | shadow | on
+    modes = {"model": edge_mode,                                       # EDGE calls
+             "near": str(aparams.get("near_lock_alerts", "shadow")).lower()}
     candidates = []
     shadow_logged = 0
 
@@ -228,12 +230,14 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     #    at most one new alert per city-day per scan
     candidates.sort(key=lambda c: (c[0].kind != "lock", -c[0].edge))
     events_done: set[str] = set()
-    shadow_events: set[str] = set()
+    shadow_events: set[tuple[str, str]] = set()
     for opp, dm, si in candidates:
-        if opp.kind == "model" and edge_mode != "on":
+        mode = modes.get(opp.kind, "on")
+        if mode != "on":
             # Forecast calls are unproven: log them silently and grade them,
-            # but don't send them (edge_alerts = "shadow"), or ignore them ("off").
-            if (edge_mode == "shadow" and opp.event not in shadow_events
+            # but don't send them ("shadow"), or ignore them ("off").
+            # One silent call per city-day per kind per scan.
+            if (mode == "shadow" and (opp.kind, opp.event) not in shadow_events
                     and _should_alert(state, opp, now, gain)):
                 strategy.size(opp, bankroll, 0.0, 0.0, None, sparams)
                 if opp.contracts > 0:
@@ -241,7 +245,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
                     state.setdefault("alerted", {})[opp.key] = {
                         "edge": round(opp.edge, 4), "price": opp.price, "kind": opp.kind,
                         "shadow": True, "at": now.isoformat(timespec="seconds")}
-                    shadow_events.add(opp.event)
+                    shadow_events.add((opp.kind, opp.event))
                     shadow_logged += 1
             continue
         if daily["alerts"] >= max_per_day:
@@ -307,7 +311,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         title, body = notify.format_summary(
             ledger.stats(rows), ledger.stats(rows, since=midnight), daily["alerts"],
             scans[local_day], sum(r.get("status") == "open" and not ledger.is_shadow(r) for r in rows),
-            runtime["problems"].get(local_day, []), ledger.stats(rows, mode="shadow"))
+            runtime["problems"].get(local_day, []), ledger.stats(rows, kind="model", mode="shadow"))
         url = reportmod.report_url()
         if url:
             body += "\nTap for the full report."

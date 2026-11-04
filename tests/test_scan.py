@@ -35,7 +35,7 @@ def test_scan_alerts_dedupes_and_settles(monkeypatch):
     assert high["topic"] == "test-topic-xyz"
     assert high["click"] == "https://kalshi.com/markets/kxhighny"
 
-    rows = ledger.load()
+    rows = [r for r in ledger.load() if not ledger.is_shadow(r)]   # near-locks log silently
     assert len(rows) == 2 and all(r["status"] == "open" for r in rows)
     assert all(int(r["contracts"]) >= 1 for r in rows)
     assert ledger.open_exposure(rows) <= 0.40 * cfg.bankroll
@@ -62,7 +62,8 @@ def test_scan_alerts_dedupes_and_settles(monkeypatch):
     rows = ledger.load()
     assert all(r["status"] == "won" for r in rows)
     s = ledger.stats(rows)
-    assert s["wins"] == len(rows) and s["pnl"] > 0
+    live = [r for r in rows if not ledger.is_shadow(r)]
+    assert s["wins"] == len(live) and s["pnl"] > 0
 
 
 def test_quiet_hours_and_summary(monkeypatch):
@@ -175,8 +176,11 @@ def test_edge_alerts_are_silent_by_default(monkeypatch):
     rows = ledger.load()
     shadow = [r for r in rows if ledger.is_shadow(r)]
     live = [r for r in rows if not ledger.is_shadow(r)]
-    assert shadow and all(r["kind"] == "model" for r in shadow)
-    assert any(r["ticker"].endswith("B61.5") for r in shadow)
+    assert shadow and all(r["kind"] in ("model", "near") for r in shadow)
+    assert any(r["ticker"].endswith("B61.5") and r["kind"] == "model" for r in shadow)
+    # late afternoon, 63-64 NO at 90¢ is a near-lock: logged silently, kept apart from EDGE
+    assert any(r["ticker"].endswith("B63.5") and r["side"] == "no" and r["kind"] == "near"
+               for r in shadow)
     assert all(r["kind"] == "lock" for r in live)
     # silent entries never count as money at risk, and are logged once
     assert abs(ledger.open_exposure(rows) - sum(float(r["cost"]) for r in live)) < 1e-9

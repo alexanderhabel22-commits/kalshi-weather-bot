@@ -63,6 +63,12 @@ record earns it. Be candid about odds and risk; no hype.
   `config.toml`): logged and graded but not sent. Day one sent 11 EDGE alerts
   that all disagreed with the market the same way (model's day-ahead spread
   too wide, e.g. Denver low 80% range 25–40°F); they were moved to shadow.
+- **NEAR-LOCK** (added Nov 4): same-day bracket the model rates 95%+ with at
+  most 9 h left in the climate day, priced 80-97¢, 2¢+ edge after fees.
+  **Silent** (`near_lock_alerts = "shadow"`), graded in its own REPORT.md
+  section. Idea: catch brackets that are near-certain before the market
+  fully prices them, since pure LOCKs were all ≥98¢ by the time we saw them.
+  Same bar as EDGE before turning on: 50+ settled, profit, Brier beats market.
 - Risk level: normal.
 
 ## Grading data (all in `data/`, committed by the bot)

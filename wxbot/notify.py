@@ -64,7 +64,7 @@ def format_trade(opp, dm, st_name: str, st_tz: str, bankroll: float, record_line
                  now: datetime) -> tuple[str, str]:
     what = "high" if opp.metric == "high" else "low"
     when = _when(opp.date, st_tz, now)
-    tag = "LOCK" if opp.kind == "lock" else "EDGE"
+    tag = {"lock": "LOCK", "near": "NEAR-LOCK"}.get(opp.kind, "EDGE")
     title = f"{tag}: Buy {opp.side.upper()} · {opp.city} {what} {when} · {opp.label}"
 
     lines = [

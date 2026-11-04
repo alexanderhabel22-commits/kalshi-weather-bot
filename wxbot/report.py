@@ -61,7 +61,7 @@ def _live_section(rows: list[dict], tz: ZoneInfo) -> list[str]:
                f"({s['roi'] * 100:+.1f}% on ${s['staked']:.2f} staked). "
                f"Open: {s['open']} (${s['open_cost']:.2f}).")
     by_kind = []
-    for kind in ("lock", "model"):
+    for kind in ("lock", "near", "model"):
         k = ledger.stats(rows, kind=kind)
         if k["n"]:
             by_kind.append(f"{kind.upper()} {k['wins']}-{k['losses']} ({_money(k['pnl'])})")
@@ -164,19 +164,32 @@ def _my_trades_section(rows: list[dict], mine: list[dict]) -> list[str]:
     return out + [""]
 
 
-def _shadow_section(rows: list[dict]) -> list[str]:
-    s = ledger.stats(rows, mode="shadow")
-    out = ["## Silent EDGE test (forecast calls logged but not sent)", ""]
+SHADOW_KINDS = {
+    "model": ("Silent EDGE test (forecast calls logged but not sent)", "EDGE"),
+    "near": ("Silent near-lock test (late-day calls the model rates 95%+, not yet certain)",
+             "near-lock"),
+}
+
+
+def _shadow_section(rows: list[dict], kind: str = "model") -> list[str]:
+    title, name = SHADOW_KINDS[kind]
+    s = ledger.stats(rows, kind=kind, mode="shadow")
+    out = [f"## {title}", ""]
     if not s["n"]:
-        return out + [f"Nothing settled yet ({s['open']} pending).", ""]
+        pending = sum(1 for r in rows if ledger.is_shadow(r) and r.get("kind") == kind
+                      and r.get("status") == "open")
+        return out + [f"Nothing settled yet ({pending} pending).", ""]
+    pending = sum(1 for r in rows if ledger.is_shadow(r) and r.get("kind") == kind
+                  and r.get("status") == "open")
     out.append(f"**Record: {s['wins']}-{s['losses']}**, {_money(s['pnl'])} if you had taken them "
-               f"({s['roi'] * 100:+.1f}%). Pending: {s['open']}.")
+               f"({s['roi'] * 100:+.1f}%). Pending: {pending}.")
     better = False
     if s["brier_model"] is not None and s["brier_market"] is not None:
         better = s["brier_model"] < s["brier_market"]
         out.append(f"Accuracy (Brier, lower is better): model {s['brier_model']:.3f} vs market "
                    f"{s['brier_market']:.3f} → **{'model ahead' if better else 'market ahead'}**.")
-    done = [r for r in rows if ledger.is_shadow(r) and r["status"] in ("won", "lost")]
+    done = [r for r in rows if ledger.is_shadow(r) and r.get("kind") == kind
+            and r["status"] in ("won", "lost")]
     bins = defaultdict(list)
     for r in done:
         p = _f(r["model_p"], 0)
@@ -189,8 +202,8 @@ def _shadow_section(rows: list[dict]) -> list[str]:
                    f"{(sum(mk) / len(mk) * 100) if mk else 0:.0f}% | "
                    f"{_pct(sum(r['status'] == 'won' for r in g), len(g))} |")
     ok = s["n"] >= 50 and s["pnl"] > 0 and better
-    out += ["", "Verdict: " + ("worth considering turning EDGE alerts on (small sizes)." if ok else
-                               "keep EDGE alerts silent. Needs 50+ settled calls, a profit, and the "
+    out += ["", "Verdict: " + (f"worth considering turning {name} alerts on (small sizes)." if ok else
+                               f"keep {name} alerts silent. Needs 50+ settled calls, a profit, and the "
                                "model beating the market.")]
     return out + [""]
 
@@ -240,7 +253,8 @@ def build_report(rows: list[dict], census: dict, frows: list[dict], cfg, now: da
     lines += _census_section(census, float(sp.get("min_edge_lock", 0.03)),
                              float(sp.get("max_price_lock", 0.97)))
     lines += _my_trades_section(rows, load_my_trades())
-    lines += _shadow_section(rows)
+    lines += _shadow_section(rows, "model")
+    lines += _shadow_section(rows, "near")
     lines += _forecast_section(frows)
     if runtime:
         scans = runtime.get("scans", {})

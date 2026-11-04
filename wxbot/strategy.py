@@ -23,6 +23,13 @@ DEFAULTS = {
     "max_open_frac": 0.40,
     "min_expected_profit": 0.02,
     "min_volume": 0,
+    # Near-locks: same-day brackets the model rates very likely late in the
+    # climate day (readings plus a few hours of forecast), not yet certain.
+    "near_min_prob": 0.95,
+    "near_max_hours": 9.0,
+    "near_min_price": 0.80,
+    "near_max_fair": 0.99,
+    "min_edge_near": 0.02,
 }
 
 
@@ -37,7 +44,7 @@ class Opportunity:
     lo: int | None
     hi: int | None
     side: str               # "yes" or "no"
-    kind: str               # "lock" or "model"
+    kind: str               # "lock", "near" (near-lock) or "model" (EDGE)
     price: float            # ask we'd pay, dollars
     model_p: float          # model probability our side wins
     fair_p: float           # after blending with the market
@@ -122,6 +129,17 @@ def evaluate_event(markets: list[dict], dm: DayModel, *, series: str, city: str,
                 if ask > P["max_price_lock"]:
                     continue
                 threshold = P["min_edge_lock"]
+            elif (not locks_only and not day_ahead
+                  and dm.remaining_hours <= P["near_max_hours"]
+                  and model_p >= P["near_min_prob"]
+                  and P["near_min_price"] <= ask <= P["max_price_lock"]):
+                kind = "near"
+                if market_p is not None and abs(model_p - market_p) > P["max_model_disagreement"]:
+                    continue
+                fair = model_p if market_p is None else (
+                    (1 - P["market_blend"]) * model_p + P["market_blend"] * market_p)
+                fair = min(fair, P["near_max_fair"])
+                threshold = P["min_edge_near"]
             else:
                 kind = "model"
                 if locks_only:

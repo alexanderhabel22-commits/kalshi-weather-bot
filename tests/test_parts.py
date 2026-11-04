@@ -214,3 +214,45 @@ def test_kelly_and_caps():
                      0.95, 0.995, 0.995, 0.935, 0.04)
     strategy.size(o2, 35, 0, 0, depth=2)
     assert o2.contracts == 2 and o2.fee == 0.01 and o2.cost == 1.90
+
+
+def _flat_model(counts, remaining_hours, metric="high"):
+    from wxbot.model import DayModel
+    n = sum(counts.values())
+    return DayModel(metric=metric, counts=counts, n=n, remaining_hours=remaining_hours)
+
+
+def test_near_lock_only_late_in_the_day_and_never_day_ahead():
+    from helpers import mk
+    e = "KXHIGHNY-26NOV03"
+    ms = [mk(f"{e}-T64", e, "greater", floor=64, label="65° or above",
+             yb=.07, ya=.09, nb=.91, na=.92)]
+    dm = _flat_model({62: 980, 65: 20}, remaining_hours=6)     # 98% it stays under 65
+    opps, _ = strategy.evaluate_event(ms, dm, series="KXHIGHNY", city="NYC", metric="high",
+                                      date="2026-11-03", day_ahead=False)
+    near = [o for o in opps if o.kind == "near"]
+    assert len(near) == 1 and near[0].side == "no" and near[0].price == 0.92
+    assert near[0].fair_p == pytest.approx(0.75 * 0.98 + 0.25 * 0.92, abs=1e-6)
+    # too early in the day, or tomorrow's market: not a near-lock
+    for hours, ahead in ((12, False), (6, True)):
+        dm = _flat_model({62: 980, 65: 20}, remaining_hours=hours)
+        opps, _ = strategy.evaluate_event(ms, dm, series="KXHIGHNY", city="NYC", metric="high",
+                                          date="2026-11-03", day_ahead=ahead)
+        assert not any(o.kind == "near" for o in opps)
+    # incomplete data: locks only
+    dm = _flat_model({62: 980, 65: 20}, remaining_hours=6)
+    opps, _ = strategy.evaluate_event(ms, dm, series="KXHIGHNY", city="NYC", metric="high",
+                                      date="2026-11-03", day_ahead=False, locks_only=True)
+    assert opps == []
+
+
+def test_report_keeps_near_locks_apart_from_edge():
+    from wxbot import report
+    base = {"mode": "shadow", "status": "won", "pnl": "0.05", "cost": "0.92", "fee": "0.01",
+            "price": "0.92", "market_p": "0.91", "model_p": "0.98"}
+    rows = [dict(base, kind="near"), dict(base, kind="model", status="lost", pnl="-0.50",
+                                          model_p="0.60", market_p="0.40")]
+    edge = "\n".join(report._shadow_section(rows, "model"))
+    near = "\n".join(report._shadow_section(rows, "near"))
+    assert "Record: 0-1" in edge and "Record: 1-0" in near
+    assert "near-lock alerts silent" in near
