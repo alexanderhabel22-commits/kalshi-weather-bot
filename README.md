@@ -25,8 +25,9 @@ below the listed price.
 ## Setup (about 10 minutes)
 
 1. **Phone:** install the free **ntfy** app (App Store / Play Store). Tap **+**,
-   subscribe to topic `wx-alerts-wzszi9l3sxcx` (or any long random name you
-   like; whoever knows the name can read it, so keep it unguessable).
+   subscribe to a long random topic name of your own (anyone who knows the
+   name can read your alerts or send fake ones, so keep it unguessable and
+   never write it in this public repo; it lives only in the GitHub secret).
 2. **GitHub:** create a new repository and put these files in it. A **public**
    repo gets free unlimited scans. Your secrets stay hidden either way, but the
    code and `data/alerts.csv` are visible.
