@@ -1,0 +1,58 @@
+# Kalshi weather alert bot settings. Edit and commit; the next scan picks it up.
+
+[account]
+bankroll = 35.0                  # update as your balance changes (sizes scale with it)
+timezone = "America/New_York"    # for quiet hours and the daily summary
+risk_level = "normal"            # "normal" or "aggressive" (see [strategy_aggressive])
+nws_contact = ""                 # optional: weather.gov asks bots to include a contact
+
+[markets]
+include_lows = true              # daily LOW markets too (7 cities)
+max_days_ahead = 1               # 0 = today only, 1 = today + tomorrow
+series = []                      # e.g. ["KXHIGHNY", "KXHIGHCHI"] to limit; empty = all
+skip_cities = []                 # e.g. ["Denver"]
+auto_discover = true             # pick up new/renamed weather series from Kalshi daily
+
+[strategy]
+# Edges are in dollars per contract after fees (0.03 = 3¢).
+min_edge_lock = 0.03             # observations already decide the bracket
+min_edge_model = 0.07            # forecast-based call
+day_ahead_extra_edge = 0.03      # extra edge required for tomorrow's markets
+market_blend = 0.25              # shrink model toward the market price (humility)
+max_model_disagreement = 0.35    # ignore if model and market differ by more than this
+min_price_model = 0.10           # no forecast-based longshots below 10¢
+max_price_model = 0.95
+max_price_lock = 0.97
+kelly_fraction = 0.25            # quarter Kelly
+max_bet_frac_lock = 0.10         # max 10% of bankroll on one lock
+max_bet_frac_model = 0.05        # max 5% on one forecast call
+max_event_frac = 0.12            # max 12% on one city-day
+max_open_frac = 0.40             # max 40% of bankroll open at once
+min_expected_profit = 0.02       # skip alerts worth less than 2¢ expected
+
+[strategy_aggressive]
+# Used instead of the matching [strategy] values when risk level is "aggressive"
+# (GitHub variable RISK_LEVEL=aggressive, or risk_level below). Only LOCK sizing
+# gets bigger; forecast (EDGE) calls stay small until they prove themselves.
+kelly_fraction = 0.5             # half Kelly
+max_bet_frac_lock = 0.20         # up to 20% on one lock
+max_event_frac = 0.25            # up to 25% on one city-day
+max_open_frac = 0.60             # up to 60% open at once
+min_edge_lock = 0.02             # take locks with 2¢+ edge after fees
+
+[alerts]
+quiet_start = 0                  # no alerts from midnight...
+quiet_end = 7                    # ...to 7 AM (local)
+quiet_allows_locks = false
+summary_hour = 21                # daily summary / heartbeat after 9 PM
+max_alerts_per_day = 15
+realert_edge_gain = 0.05         # re-alert the same contract only if edge grows 5¢+
+# The ntfy topic is read from the NTFY_TOPIC environment variable / GitHub secret.
+
+[model]
+ensemble_models = "gfs025,ecmwf_ifs025,icon_seamless,gem_global"
+forecast_cache_minutes = 90
+samples = 20000
+sigma_base = 1.0
+sigma_per_hour = 0.045
+spread_inflation = 1.15
