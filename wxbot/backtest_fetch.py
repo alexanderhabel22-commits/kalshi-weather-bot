@@ -26,6 +26,8 @@ UTC = timezone.utc
 PREV_RUNS = "https://previous-runs-api.open-meteo.com/v1/forecast"
 OM_MODELS = ["gfs_seamless", "ecmwf_ifs025", "icon_seamless", "gem_seamless"]
 IEM = "https://mesonet.agron.iastate.edu/cgi-bin/request/asos.py"
+IEM_MOS = "https://mesonet.agron.iastate.edu/cgi-bin/request/mos.py"
+MOS_MODELS = ["NBS", "GFS"]     # National Blend of Models, GFS MOS (MAV)
 
 
 def _write(path: Path, obj) -> None:
@@ -157,6 +159,40 @@ def fetch_readings(http: Http, st, out: Path, start: datetime, end: datetime) ->
     return f"{st.icao} readings: {r.text.count(chr(10))} lines"
 
 
+def _iem_get(http: Http, url: str, params, label: str):
+    for attempt in range(6):
+        time.sleep(3 + 15 * attempt)          # IEM asks for gentle, serial requests
+        try:
+            r = http.session.get(url, params=params, timeout=180)
+            if r.status_code == 429:
+                continue
+            r.raise_for_status()
+            return r.text
+        except Exception as exc:  # noqa: BLE001 - log and retry
+            log.warning("%s: %s", label, exc)
+    return None
+
+
+def fetch_mos(http: Http, st, out: Path, start: datetime, end: datetime) -> str:
+    """NWS model output statistics (incl. the National Blend) from the IEM archive."""
+    msgs = []
+    for model in MOS_MODELS:
+        path = out / "mos" / f"{st.icao}_{model}.csv.gz"
+        if path.exists():
+            msgs.append(f"{model} cached")
+            continue
+        text = _iem_get(http, IEM_MOS, [
+            ("station", st.icao), ("model", model), ("format", "csv"),
+            ("sts", start.strftime("%Y-%m-%dT%H:%MZ")), ("ets", end.strftime("%Y-%m-%dT%H:%MZ"))],
+            f"mos {st.icao} {model}")
+        if text is None:
+            msgs.append(f"{model} failed")
+            continue
+        _write(path, text)
+        msgs.append(f"{model} {text.count(chr(10))} lines")
+    return f"{st.icao} mos: " + ", ".join(msgs)
+
+
 # ---------------------------------------------------------------- main
 
 def run(out: Path, days: int, user_agent: str, workers: int = 2) -> list[str]:
@@ -173,7 +209,7 @@ def run(out: Path, days: int, user_agent: str, workers: int = 2) -> list[str]:
     http = Http(user_agent, timeout=60)
     stations = {si.station.icao: si.station for si in catalog}
     for st in stations.values():
-        for fn in (fetch_forecasts, fetch_readings):
+        for fn in (fetch_forecasts, fetch_readings, fetch_mos):
             msg = fn(http, st, out, start - timedelta(days=3), end)
             log.info(msg)
             lines.append(msg)
