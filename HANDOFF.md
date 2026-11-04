@@ -85,26 +85,31 @@ record earns it. Be candid about odds and risk; no hype.
    prices lasted, census (how many locks were cheap enough), silent EDGE
    record vs market, forecast bias/coverage, bot health. Then recommend.
 
-## Status at handoff (Nov 3, 2026, ~11:40 PM ET)
-- Setup done: repo pushed, secrets/variables set, test alerts reach Alex's
-  phone on the new topic, manual runs all succeed (29 series, 54 city-days
-  priced per scan, no errors).
-- **Open item: automatic runs hadn't started yet.** Only manual
-  (`workflow_dispatch`) runs existed. Alex edited `scan.yml` himself at
-  ~11:31 PM ET to fix the schedule-actor issue. First thing to check: are there
-  runs with event `schedule`?
-  `gh api "repos/alexanderhabel22-commits/kalshi-weather-bot/actions/runs?event=schedule&per_page=3"`
-  If still none, Plan B: a free external timer (e.g. cron-job.org) that POSTs
-  to `/repos/alexanderhabel22-commits/kalshi-weather-bot/actions/workflows/scan.yml/dispatches`
-  every 5 minutes with body `{"ref":"main","inputs":{"command":"scan"}}`,
-  using a fine-grained GitHub token limited to this repo with Actions: write.
-- Ledger: 0 live alerts; ~36 silent EDGE calls logged (including day one's 11).
-- **Still to verify with real data:** the first settlements (morning of Nov 4)
-  — that Kalshi's `result` and `expiration_value` fields fill in as expected
-  so `alerts.csv`, `forecasts.csv` and REPORT.md grade correctly. Until now
-  grading was only tested against sample data.
-- No real trades placed through the bot yet. Alex's one earlier manual trade
-  (NY governor, Hochul YES, +$1.13) is unrelated to the bot.
+## Status (Nov 4, 2026, ~10:30 AM ET)
+- **Automatic runs: unreliable.** Only one `schedule` run (7:26 AM ET Nov 4)
+  in ~11 h after Alex re-saved `scan.yml`. Alex was asked to set up Plan B:
+  cron-job.org POSTing every 5 min to
+  `/repos/alexanderhabel22-commits/kalshi-weather-bot/actions/workflows/scan.yml/dispatches`
+  with body `{"ref":"main","inputs":{"command":"scan"}}` and a fine-grained
+  token (this repo only, Actions: read and write). Steps:
+  `/mnt/project-files/setup/plan-b-timer.md`. Confirm runs arrive every ~5 min.
+- **Grading verified on real data (Nov 3 settlements):** Kalshi `result` and
+  `expiration_value` fill in; alerts.csv, forecasts.csv and REPORT.md grade
+  correctly. No code change needed.
+- **Finding to watch:** on Nov 3 the official highs came in 1-2°F above the
+  bot's observed max in 5 of 7 graded East Coast cities (e.g. Philadelphia
+  69.1 → 71). That's the safe direction for LOCKs (they only ever say "at
+  least X") but it means missed locks. Model log lines now show the source of
+  the observed extreme and the count of 6-hour groups. Suspected bug:
+  6-hour groups are stamped ~:53 past the hour, so the filter
+  `o.time - 6h >= window_start - 5 min` drops the first group of the day for
+  Central-time stations (0 groups seen at 10 AM CT). Loosening the tolerance
+  touches LOCK logic: ask Alex before changing it.
+- Lock census so far: 65 decided brackets, 0 cheap enough (all ≥98¢ when
+  first seen; Nov 3 was only scanned after 10 PM).
+- Silent EDGE: 1-2, market's Brier 0.16 vs model 0.38. ~70 pending.
+- No real trades yet. Alex's one earlier manual trade (NY governor, Hochul
+  YES, +$1.13) is unrelated to the bot.
 
 ## Game plan
 - **Now → ~Nov 17:** LOCKs only, normal risk. Alex uses limit orders at or
