@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import kalshi, ledger, notify, report as reportmod, strategy, tracking
+from . import kalshi, ledger, notify, rain, report as reportmod, strategy, tracking
 from .model import build_day_model
 from .stations import (SeriesInfo, Station, cli_window, climate_day_of,
                        default_catalog, series_from_kalshi)
@@ -280,6 +280,15 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
 
     ledger.track_prices(rows, quotes, now)
 
+    # silent rain census (no alerts), every 15 minutes
+    rain_census = None
+    if cfg.get("markets", "rain_census", True) and now.minute % 15 < 5:
+        rain_census = rain.load()
+        try:
+            rain.census_scan(http, state, rain_census, now)
+        except Exception as exc:  # never let the test break the scan
+            log.warning("rain census failed: %s", exc)
+
     # 4) health checks
     if catalog and kalshi_ok == 0:
         problems.append("could not reach Kalshi")
@@ -328,6 +337,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         tracking.save_census(census)
         tracking.save_forecasts(frows, now=now)
         reportmod.ensure_my_trades_file()
+        if rain_census is not None:
+            rain.save(rain_census)
     write_json(RUNTIME, runtime)
     write_json(LAST_SCAN, {"at": now.isoformat(), "events": report, "problems": problems})
     log.info("scan done: %d series, %d events, %d alerts, %d silent EDGE logged, problems=%s",

@@ -69,6 +69,14 @@ record earns it. Be candid about odds and risk; no hype.
   section. Idea: catch brackets that are near-certain before the market
   fully prices them, since pure LOCKs were all ≥98¢ by the time we saw them.
   Same bar as EDGE before turning on: 50+ settled, profit, Brier beats market.
+- **RAIN CENSUS** (added Nov 4, Alex OK'd, ~1 week test): `wxbot/rain.py`,
+  every 15 min. For the 12 monthly rain series that settle on NWS climate
+  sites (KXRAIN*M), logs each "above X inches" threshold the month's rain has
+  already passed: *provisional* (latest NWS CLI month-to-date + hourly station
+  rain since) and *official* (CLI total), with the ask then, cheapest ask
+  later, and depth. Never alerts. Goal: are rain locks ever cheap (≤95¢) or
+  priced in like temperature locks? Turn off with `rain_census = false`.
+  Daily rain series (Weather Company source) are not covered.
 - Risk level: normal.
 
 ## Grading data (all in `data/`, committed by the bot)
@@ -77,6 +85,7 @@ record earns it. Be candid about odds and risk; no hype.
   price stayed buyable.
 - `census.json`: every locked bracket per day with first and lowest ask
   (priced-in vs tradeable).
+- `rain_census.json`: rain thresholds passed, first/cheapest ask (see above).
 - `forecasts.csv`: model median/p10/p90 + NWS per city-day every 6 h, graded
   with the settlement value.
 - `my_trades.csv`: Alex's real fills (`ticker,side,contracts,price,note`).
