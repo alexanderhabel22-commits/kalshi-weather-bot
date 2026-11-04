@@ -4,7 +4,7 @@ on:
   schedule:
     # Every 5 minutes (GitHub's fastest), offset 2 minutes from the busy :00/:05 marks.
     # GitHub can still start runs late or skip one under load.
-    - cron: "2-59/5 * * * *"
+    - cron: "3-59/5 * * * *"
   workflow_dispatch:            # "Run workflow" button (works from the GitHub app)
     inputs:
       command:
