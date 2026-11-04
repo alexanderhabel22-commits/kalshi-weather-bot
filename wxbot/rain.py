@@ -37,7 +37,13 @@ DEFAULT_SERIES = {
     "KXRAINSGFM": "SGF", "KXRAINWPBM": "PBI", "KXRAINNOLAM": "MSY", "KXRAINLEXM": "LEX",
     "KXRAINPVDM": "PVD", "KXRAINCLLM": "CLL", "KXRAINAUSM": "AUS", "KXRAINLAXM": "LAX",
 }
-_CODE_FIX = {"WPB": "PBI", "NOLA": "MSY"}
+_CODE_FIX = {"WPB": "PBI", "NOLA": "MSY", "CHI": "ORD", "MIN": "MSP"}
+# Time zone per CLI site (all we need from the station); others are looked up.
+_TZ = {"NYC": "America/New_York", "EWR": "America/New_York", "TTN": "America/New_York",
+       "IND": "America/Indiana/Indianapolis", "SGF": "America/Chicago", "PBI": "America/New_York",
+       "MSY": "America/Chicago", "LEX": "America/New_York", "PVD": "America/New_York",
+       "CLL": "America/Chicago", "AUS": "America/Chicago", "LAX": "America/Los_Angeles",
+       "ORD": "America/Chicago", "MSP": "America/Chicago", "MIA": "America/New_York"}
 _MONTHS = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST",
            "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"]
 _MON3 = {m[:3]: i for i, m in enumerate(_MONTHS, 1)}
@@ -231,9 +237,12 @@ def census_scan(http: Http, state: dict, census: dict, now: datetime) -> int:
         if not live:
             continue
         icao = "K" + code
-        st = KNOWN_STATIONS.get(icao) or fetch_station(http, icao)
-        if st is None:
-            continue
+        tz = _TZ.get(code)
+        if tz is None:
+            st = KNOWN_STATIONS.get(icao) or fetch_station(http, icao)
+            if st is None:
+                continue
+            tz = st.tz
         try:
             cli = fetch_cli(http, code)
         except HttpError as exc:
@@ -241,7 +250,7 @@ def census_scan(http: Http, state: dict, census: dict, now: datetime) -> int:
             continue
         if cli is None:
             continue
-        since = cli_covers_until(cli, st.tz)
+        since = cli_covers_until(cli, tz)
         try:
             obs = http.get_json(f"{NWS}/stations/{icao}/observations",
                                 params={"start": since.strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -254,7 +263,7 @@ def census_scan(http: Http, state: dict, census: dict, now: datetime) -> int:
         for (y, mo), m in live:
             official = cli["mtd"] if (cli["year"], cli["month"]) == (y, mo) else None
             official_base = official
-            if official is None and since >= cli_window(date(y, mo, 1), st.tz)[0]:
+            if official is None and since >= cli_window(date(y, mo, 1), tz)[0]:
                 official_base = 0.0        # last month's final report; this month starts at zero
             if official_base is None:
                 continue

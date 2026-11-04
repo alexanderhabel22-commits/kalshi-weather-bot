@@ -153,3 +153,9 @@ def test_save_keeps_recent_months(tmp_path):
     census = {f"X-{m}": {"month": f"2026-{m:02d}", "min_ask": 1.0} for m in range(1, 8)}
     rain.save(census)
     assert sorted(v["month"] for v in rain.load().values()) == ["2026-04", "2026-05", "2026-06", "2026-07"]
+
+
+def test_discovered_city_codes():
+    assert rain.cli_code_for("KXRAINCHIM") == "ORD"
+    assert rain.cli_code_for("KXRAINMINM") == "MSP"
+    assert rain.cli_code_for("KXRAINMIAM") == "MIA"
