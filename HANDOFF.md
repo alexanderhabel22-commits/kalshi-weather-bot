@@ -25,9 +25,15 @@ record earns it. Be candid about odds and risk; no hype.
 - Secrets: `NTFY_TOPIC` (Alex's private ntfy topic; never write it in the
   repo), optional `NTFY_TOKEN`. Variables: `BANKROLL`, optional `RISK_LEVEL`.
 - The bot commits `data/` after scans, so always `git pull --rebase` before
-  pushing. GitHub ties the schedule to whoever last edited the workflow file;
-  if scheduled runs stop after Claude edits `scan.yml`, have Alex make a tiny
-  edit to it on github.com.
+  pushing.
+- **Don't edit `scan.yml` from Claude.** GitHub ties the schedule to whoever
+  last edited the workflow file, and Claude's account doesn't trigger
+  scheduled runs. If it must change, have Alex commit the edit (or re-save the
+  file) on github.com afterward. The "Node.js 20 is deprecated" and "Ubuntu 26"
+  annotations on runs are harmless; fixing the first means bumping action
+  versions in `scan.yml`, so leave it to Alex or skip it.
+- ntfy topic was rotated on Nov 3 after the old one appeared in the public
+  README. The topic lives only in the `NTFY_TOPIC` secret and Alex's ntfy app.
 
 ## How it works (code map)
 - `wxbot/kalshi.py`: public market data (no key), bracket parsing
@@ -78,6 +84,27 @@ record earns it. Be candid about odds and risk; no hype.
 3. Report to Alex in plain words: LOCK record and any loss explained, whether
    prices lasted, census (how many locks were cheap enough), silent EDGE
    record vs market, forecast bias/coverage, bot health. Then recommend.
+
+## Status at handoff (Nov 3, 2026, ~11:40 PM ET)
+- Setup done: repo pushed, secrets/variables set, test alerts reach Alex's
+  phone on the new topic, manual runs all succeed (29 series, 54 city-days
+  priced per scan, no errors).
+- **Open item: automatic runs hadn't started yet.** Only manual
+  (`workflow_dispatch`) runs existed. Alex edited `scan.yml` himself at
+  ~11:31 PM ET to fix the schedule-actor issue. First thing to check: are there
+  runs with event `schedule`?
+  `gh api "repos/alexanderhabel22-commits/kalshi-weather-bot/actions/runs?event=schedule&per_page=3"`
+  If still none, Plan B: a free external timer (e.g. cron-job.org) that POSTs
+  to `/repos/alexanderhabel22-commits/kalshi-weather-bot/actions/workflows/scan.yml/dispatches`
+  every 5 minutes with body `{"ref":"main","inputs":{"command":"scan"}}`,
+  using a fine-grained GitHub token limited to this repo with Actions: write.
+- Ledger: 0 live alerts; ~36 silent EDGE calls logged (including day one's 11).
+- **Still to verify with real data:** the first settlements (morning of Nov 4)
+  — that Kalshi's `result` and `expiration_value` fields fill in as expected
+  so `alerts.csv`, `forecasts.csv` and REPORT.md grade correctly. Until now
+  grading was only tested against sample data.
+- No real trades placed through the bot yet. Alex's one earlier manual trade
+  (NY governor, Hochul YES, +$1.13) is unrelated to the bot.
 
 ## Game plan
 - **Now → ~Nov 17:** LOCKs only, normal risk. Alex uses limit orders at or
