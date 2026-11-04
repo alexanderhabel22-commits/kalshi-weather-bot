@@ -7,6 +7,7 @@
   python bot.py report          paper-trading record + last scan's model view
   python bot.py settle          grade finished alerts now
   python bot.py test-notify     send a test notification to your phone
+  python bot.py backtest-fetch  download history for a backtest (--days, --out)
 """
 from __future__ import annotations
 
@@ -22,10 +23,13 @@ from wxbot.util import Http, load_config, parse_iso, read_json, utcnow
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify"])
+    ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify",
+                                            "backtest-fetch"])
     ap.add_argument("--dry-run", action="store_true", help="don't send or save anything")
     ap.add_argument("--every", type=int, default=300, help="loop interval in seconds")
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
+    ap.add_argument("--days", type=int, default=400, help="backtest-fetch: days of history")
+    ap.add_argument("--out", default="backtest", help="backtest-fetch: output folder")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -37,6 +41,13 @@ def main(argv=None) -> int:
         out = run_scan(cfg, now=parse_iso(args.now) if args.now else None, dry_run=args.dry_run)
         print(f"{len(out['events'])} city-days priced, {len(out['sent'])} alerts"
               + (f", problems: {out['problems']}" if out["problems"] else ""))
+        return 0
+
+    if args.command == "backtest-fetch":
+        from pathlib import Path
+        from wxbot import backtest_fetch
+        for line in backtest_fetch.run(Path(args.out), args.days, cfg.user_agent):
+            print(line)
         return 0
 
     if args.command == "loop":

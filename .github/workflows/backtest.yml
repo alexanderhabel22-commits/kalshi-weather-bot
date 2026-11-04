@@ -1,0 +1,52 @@
+name: backtest-fetch
+
+# Manual only. Downloads history for the backtest and saves it to the
+# `backtest-data` branch (kept off main so the bot's repo stays small).
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Days of history"
+        default: "400"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: backtest-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Restore earlier downloads
+        run: |
+          if git fetch origin backtest-data 2>/dev/null; then
+            git --work-tree=. checkout origin/backtest-data -- backtest || true
+          fi
+
+      - name: Download
+        run: python bot.py backtest-fetch --days "${{ inputs.days }}" --out backtest -v
+
+      - name: Save to backtest-data branch
+        if: always()
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          git checkout --orphan backtest-data-new
+          git rm -rq --cached . || true
+          git clean -fdxq -e backtest
+          git add backtest
+          git commit -qm "backtest data $(date -u +%F)" || exit 0
+          git push -f origin HEAD:backtest-data
