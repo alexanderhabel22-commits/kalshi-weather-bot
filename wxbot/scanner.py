@@ -224,9 +224,12 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             continue
         title, body = notify.format_trade(opp, dm, si.station.name, si.station.tz, bankroll,
                                           ledger.record_line(rows), now)
-        notify.send(http, cfg, title, body, priority=4 if opp.kind == "lock" else 3,
-                    tags=["lock" if opp.kind == "lock" else "chart_with_upwards_trend"],
-                    click=kalshi.market_url(opp.series), dry_run=dry_run)
+        delivered = notify.send(http, cfg, title, body, priority=4 if opp.kind == "lock" else 3,
+                                tags=["lock" if opp.kind == "lock" else "chart_with_upwards_trend"],
+                                click=kalshi.market_url(opp.series), dry_run=dry_run)
+        if not delivered and not dry_run:
+            problems.append("alert not delivered (is NTFY_TOPIC set?)")
+            continue   # don't log or dedupe an alert you never saw; retry next scan
         ledger.record(rows, opp, dm, now)
         state.setdefault("alerted", {})[opp.key] = {
             "edge": round(opp.edge, 4), "price": opp.price, "kind": opp.kind,
@@ -247,10 +250,10 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     runtime["consecutive_failures"] = fails + 1 if (catalog and kalshi_ok == 0) else 0
     last_err = parse_iso(state.get("last_error_alert"))
     if runtime["consecutive_failures"] >= 3 and (not last_err or now - last_err > timedelta(hours=6)):
-        notify.send(http, cfg, "Weather bot problem",
-                    "The bot has failed 3 scans in a row: " + "; ".join(problems),
-                    priority=4, tags=["warning"], dry_run=dry_run)
-        state["last_error_alert"] = now.isoformat(timespec="seconds")
+        if notify.send(http, cfg, "Weather bot problem",
+                       "The bot has failed 3 scans in a row: " + "; ".join(problems),
+                       priority=4, tags=["warning"], dry_run=dry_run):
+            state["last_error_alert"] = now.isoformat(timespec="seconds")
 
     scans = runtime.setdefault("scans", {})
     scans[local_day] = scans.get(local_day, 0) + 1
@@ -267,8 +270,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             ledger.stats(rows), ledger.stats(rows, since=midnight), daily["alerts"],
             scans[local_day], sum(r.get("status") == "open" for r in rows),
             runtime["problems"].get(local_day, []))
-        notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], dry_run=dry_run)
-        state["last_summary"] = local_day
+        if notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], dry_run=dry_run):
+            state["last_summary"] = local_day
 
     _prune(state, now)
     if not dry_run:

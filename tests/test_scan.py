@@ -143,3 +143,18 @@ def test_aggressive_mode_sizes_locks_bigger_only(monkeypatch):
     assert aggressive[t] * 0.95 <= 0.20 * 35 + 1e-9               # 20% per-lock cap
     assert p_aggr["max_bet_frac_model"] == p_normal["max_bet_frac_model"] == 0.05
     assert p_aggr["min_edge_model"] == p_normal["min_edge_model"]
+
+
+def test_nothing_logged_until_alerts_can_be_delivered(monkeypatch):
+    monkeypatch.delenv("NTFY_TOPIC", raising=False)
+    cfg = cfg_for_test()
+    now = datetime(2026, 11, 3, 21, 30, tzinfo=UTC)
+    out = run_scan(cfg, now=now, http=FakeHttp(now))
+    assert ledger.load() == [] and not (read_json(STATE) or {}).get("alerted")
+    assert any("not delivered" in p for p in out["problems"])
+    # once the topic is set, the same locks still go out
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+    later = datetime(2026, 11, 3, 21, 35, tzinfo=UTC)
+    http = FakeHttp(later)
+    run_scan(cfg, now=later, http=http)
+    assert len([p for p in http.posts if p["title"].startswith("LOCK")]) == 2
