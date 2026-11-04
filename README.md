@@ -62,6 +62,29 @@ bankroll per lock, 25% per city-day, 60% open, half Kelly, locks from 2¢ edge.
 Forecast (EDGE) sizing doesn't change. Delete the variable to go back.
 Suggested: switch only after about 20 LOCK alerts have settled correctly.
 
+## How the bot grades itself
+
+Everything lands in the `data/` folder of the repo, and **`data/REPORT.md`** is
+rewritten every night (tap the 9 PM summary to open it):
+
+- **Alerts sent to your phone:** every alert, won/lost, profit at the suggested
+  size, and an explanation of every loss.
+- **Did the prices last?** After each alert the bot keeps checking the price,
+  so you can see if locks are still buyable 15 and 60 minutes later. This is
+  what decides whether a faster paid server is worth it.
+- **Lock census:** every bracket the readings had already decided, and how many
+  were ever cheap enough to buy versus already priced in by other traders.
+- **Your actual trades:** add a line to `data/my_trades.csv` for each trade you
+  place (`ticker,side,contracts,price,note`, price like `0.94`), or tell Claude
+  and it will add them. The report shows your real record separately.
+- **Silent EDGE test:** the forecast calls it didn't send, graded, with model
+  vs. market accuracy.
+- **Forecast accuracy:** the model's forecast for every city-day versus the
+  official result (bias, average miss, whether its ranges are honest), next to
+  the NWS forecast's miss.
+
+Run the workflow with `report` to refresh it any time.
+
 ## Settings (`config.toml`)
 
 | Setting | Default | What it does |

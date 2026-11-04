@@ -16,7 +16,9 @@ LEDGER = DATA_DIR / "alerts.csv"
 FIELDS = ["id", "alerted_at", "ticker", "event", "series", "city", "metric", "date",
           "bracket", "side", "kind", "price", "model_p", "fair_p", "market_p", "edge",
           "contracts", "cost", "fee", "pred_median", "obs_extreme", "status",
-          "settled_at", "cli_value", "pnl", "mode"]   # mode: "live" (sent) or "shadow" (logged only)
+          "settled_at", "cli_value", "pnl", "mode",   # mode: "live" (sent) or "shadow" (logged only)
+          # follow-up price checks after the alert (did the price stick around?)
+          "avail_min", "ask_15m", "ask_60m", "last_ask"]
 
 
 def is_shadow(r: dict) -> bool:
@@ -134,3 +136,36 @@ def record_line(rows: list[dict]) -> str:
     sign = "+" if s["pnl"] >= 0 else "-"
     return (f"Record: {s['wins']}-{s['losses']}, {sign}${abs(s['pnl']):.2f} "
             f"({s['roi'] * 100:+.1f}% on ${s['staked']:.2f})")
+
+
+def track_prices(rows: list[dict], quotes: dict[str, tuple], now: datetime,
+                 window_h: float = 3.0) -> int:
+    """Follow up on recent alerts using this scan's prices.
+
+    avail_min: minutes after the alert that the alert price was still buyable
+               (a lower bound: we only look every few minutes)
+    ask_15m / ask_60m: the ask for our side ~15 and ~60 minutes later
+    """
+    updated = 0
+    for r in rows:
+        if r.get("status") != "open" or r["ticker"] not in quotes:
+            continue
+        at = parse_iso(r.get("alerted_at"))
+        if not at:
+            continue
+        mins = (now - at).total_seconds() / 60
+        if mins <= 0 or mins > window_h * 60:
+            continue
+        yes_ask, no_ask = quotes[r["ticker"]]
+        ask = yes_ask if r["side"] == "yes" else no_ask
+        if ask is None or not (0 < ask < 0.995):
+            ask = 1.0   # nothing for sale
+        r["last_ask"] = f"{ask:.4f}"
+        if ask <= float(r["price"]) + 1e-9:
+            r["avail_min"] = f"{max(float(r.get('avail_min') or 0), mins):.0f}"
+        if mins >= 15 and not r.get("ask_15m"):
+            r["ask_15m"] = f"{ask:.4f}"
+        if mins >= 60 and not r.get("ask_60m"):
+            r["ask_60m"] = f"{ask:.4f}"
+        updated += 1
+    return updated

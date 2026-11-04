@@ -128,7 +128,9 @@ def nyc_low_markets():
 class FakeHttp:
     """Routes URLs to fixture data; records ntfy posts."""
 
-    def __init__(self, now: datetime, settled: dict | None = None, kalshi_down=False, ens_down=False):
+    def __init__(self, now: datetime, settled: dict | None = None, kalshi_down=False, ens_down=False,
+                 overrides: dict | None = None):
+        self.overrides = overrides or {}   # ticker -> fields to change (e.g. a price that moved)
         self.now = now
         self.posts = []
         self.calls = []
@@ -154,7 +156,10 @@ class FakeHttp:
             if url.endswith("/markets"):
                 s = params.get("series_ticker")
                 if s == "KXHIGHNY":
-                    return {"markets": nyc_high_markets(), "cursor": ""}
+                    ms = nyc_high_markets()
+                    for m in ms:
+                        m.update(self.overrides.get(m["ticker"], {}))
+                    return {"markets": ms, "cursor": ""}
                 if s == "KXLOWTNYC":
                     return {"markets": nyc_low_markets(), "cursor": ""}
                 return {"markets": [], "cursor": ""}

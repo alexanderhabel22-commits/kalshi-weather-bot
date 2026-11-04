@@ -46,6 +46,16 @@ mode (logged + graded, not sent). Those 11 were moved to shadow in the ledger.
 The scan log (`gh run view --log`) now prints a "model ..." line per city-day
 (median, 80% range, NWS, obs, bias, sigma) for calibration.
 
+## Grading data (all in data/, committed by the bot)
+- `alerts.csv`: every alert (mode live/shadow), settlement, P&L, plus follow-up
+  prices (`avail_min`, `ask_15m`, `ask_60m`) showing how long locks stayed buyable.
+- `census.json`: every locked bracket seen per day with first/min ask.
+- `forecasts.csv`: model median/p10/p90 + NWS per city-day every 6h, graded
+  with the settlement value (`actual`).
+- `my_trades.csv`: Alex's real fills (ticker,side,contracts,price,note).
+- `REPORT.md`: written nightly and by the `report` command.
+To review: pull the repo and read REPORT.md, or run `python bot.py report`.
+
 ## Next steps
 1. After 2–3 weeks: review `data/alerts.csv` (`report` command). Compare
    `pred_median` vs `cli_value` to tune `sigma_base` / `sigma_per_hour`.

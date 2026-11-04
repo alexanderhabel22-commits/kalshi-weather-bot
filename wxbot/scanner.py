@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import kalshi, ledger, notify, strategy
+from . import kalshi, ledger, notify, report as reportmod, strategy, tracking
 from .model import build_day_model
 from .stations import (SeriesInfo, Station, cli_window, climate_day_of,
                        default_catalog, series_from_kalshi)
@@ -105,6 +105,10 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     state = read_json(STATE, {}) or {}
     runtime = read_json(RUNTIME, {}) or {}
     rows = ledger.load()
+    census = tracking.load_census()
+    frows = tracking.load_forecasts()
+    fblocks = tracking.forecast_blocks(frows)
+    quotes: dict[str, tuple] = {}
     problems: list[str] = []
     sent: list[dict] = []
     report: list[dict] = []
@@ -122,6 +126,10 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             log.info("settled %d alerts", len(newly))
     except Exception as exc:
         problems.append(f"settling failed: {exc}")
+    try:
+        tracking.settle_forecasts(http, frows, now)
+    except Exception as exc:
+        log.warning("grading forecasts failed: %s", exc)
 
     # 2) what to scan
     catalog = get_catalog(http, cfg, state, now)
@@ -152,6 +160,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             continue
         by_event: dict[str, list[dict]] = defaultdict(list)
         for m in markets:
+            quotes[m.get("ticker", "")] = (kalshi.price(m, "yes_ask"), kalshi.price(m, "no_ask"))
             close = parse_iso(m.get("close_time"))
             if close and close <= now:
                 continue
@@ -199,6 +208,10 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             opps, rows_eval = strategy.evaluate_event(
                 ms, dm, series=si.ticker, city=si.city, metric=si.metric,
                 date=d.isoformat(), day_ahead=ahead > 0, params=sparams, locks_only=locks_only)
+            tracking.census_update(census, local_day, ev, si.city, si.metric, rows_eval, now)
+            tracking.log_forecast(frows, fblocks, event=ev, series=si.ticker, city=si.city,
+                                  metric=si.metric, date=d.isoformat(), dm=dm, nws=nws_val,
+                                  window_end=we, now=now, sample_ticker=ms[0].get("ticker", ""))
             report.append({"event": ev, "city": si.city, "metric": si.metric,
                            "median": dm.median, "p10": dm.quantile(0.1), "p90": dm.quantile(0.9),
                            "obs_extreme": dm.obs_extreme, "guaranteed": dm.guaranteed,
@@ -259,6 +272,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         events_done.add(opp.event)
         sent.append({"title": title, "body": body})
 
+    ledger.track_prices(rows, quotes, now)
+
     # 4) health checks
     if catalog and kalshi_ok == 0:
         problems.append("could not reach Kalshi")
@@ -291,13 +306,22 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             ledger.stats(rows), ledger.stats(rows, since=midnight), daily["alerts"],
             scans[local_day], sum(r.get("status") == "open" and not ledger.is_shadow(r) for r in rows),
             runtime["problems"].get(local_day, []), ledger.stats(rows, mode="shadow"))
-        if notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], dry_run=dry_run):
+        url = reportmod.report_url()
+        if url:
+            body += "\nTap for the full report."
+        if not dry_run:
+            reportmod.write_report(rows, census, frows, cfg, now, runtime)
+        if notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], click=url,
+                       dry_run=dry_run):
             state["last_summary"] = local_day
 
     _prune(state, now)
     if not dry_run:
         ledger.save(rows)
         write_json(STATE, state)
+        tracking.save_census(census)
+        tracking.save_forecasts(frows, now=now)
+        reportmod.ensure_my_trades_file()
     write_json(RUNTIME, runtime)
     write_json(LAST_SCAN, {"at": now.isoformat(), "events": report, "problems": problems})
     log.info("scan done: %d series, %d events, %d alerts, %d silent EDGE logged, problems=%s",

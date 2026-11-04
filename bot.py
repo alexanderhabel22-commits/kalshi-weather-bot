@@ -57,6 +57,12 @@ def main(argv=None) -> int:
         return 0
 
     if args.command == "report":
+        from wxbot import report as reportmod, tracking
+        from wxbot.scanner import RUNTIME
+        text = reportmod.write_report(ledger.load(), tracking.load_census(), tracking.load_forecasts(),
+                                      cfg, utcnow(), read_json(RUNTIME, {}))
+        print(text)
+        print("\n----- last scan -----")
         rows = ledger.load()
         s = ledger.stats(rows)
         print(ledger.record_line(rows))
