@@ -124,3 +124,99 @@ record earns it. Be candid about odds and risk; no hype.
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong
 lock costs ~$3. Order books are thin (some ~5 contracts at the alert price),
 so the ceiling is tens of dollars per trade. Not financial advice.
+
+## Background from the original chat (Nov 3, 2026)
+This project continues a long chat that sits outside the project (project
+chats can't search it), so this section is the bridge.
+
+**How we got here**
+- Alex asked how Kalshi makes money (trading fees on every contract, interest
+  on idle cash; it isn't the house) and how to profit. We covered: real edge =
+  specialized knowledge, market making, the favorite-longshot bias, speed on
+  news. A 95¢ favorite risks 95¢ to make 5¢, so one loss erases ~19 wins.
+- Alex's first trade: NY governor, Hochul YES at ~97¢, $35.56 → $36.69
+  (+$1.13, +3.18%), closed the same night. "3% a day" compounding was shown
+  to be a mirage (survival odds, few markets, capital lock-up, fees).
+- Sizing advice given: 2–5% of bankroll per trade, 10% max; Kelly is very
+  sensitive to a 1-point error in the probability estimate.
+- Kalshi vs Polymarket arbitrage: real but thin; fees, different resolution
+  rules, execution risk; Polymarket's international site isn't available to
+  US users.
+
+**What Alex wants**
+- As much money as possible, with alerts making it "that easy." Wants it as
+  good as it can be. Willing to be more aggressive once it's proven.
+- Using real money (~$37) as the test instead of paper trading; will add
+  money if confident. OK paying a bit per month if confident it beats the
+  market.
+- Wants Claude to analyze results, grade itself, and track the alerts he
+  skips (the ledger grades every alert, taken or not).
+
+**Rules Alex was given**
+- LOCK alert → limit order at or below the alert price, suggested size, never
+  chase a moved price, log what he took (tell Claude, screenshot, or
+  `data/my_trades.csv`).
+- Ignore EDGE. Don't size above the bot. If a LOCK ever loses, stop and
+  diagnose before the next one.
+- Update `BANKROLL` only on a deposit/withdrawal or a ~20% balance change.
+- When to expect locks: daily-low locks ~7–10 AM ET (quiet hours end at 7);
+  daily-high locks ~1–5 PM ET for East Coast cities, up to ~7–8 PM ET for
+  the West.
+- Expectations given: 0–3 locks/day, ~10–15¢ expected each, roughly $5–8 a
+  month at this bankroll; caps ≈ $3.50 per lock and ≈ $14.50 open at once.
+  Day-one view: software solid; whether enough cheap locks exist is a
+  toss-up at best.
+
+**Offers Alex hasn't answered yet (raise when relevant)**
+- Ledger-based automatic bankroll (start value + settled P&L). Only accurate
+  if he takes every alert.
+- A weekly scheduled review (e.g. Sunday evening report to his phone).
+- Later, if earned: a Kalshi API key for the real balance/fills and
+  auto-buying locks. Kalshi keys can also trade, so storing one on GitHub is
+  a trust decision.
+- A speed upgrade if locks vanish before he can buy: DigitalOcean $4/mo
+  (512 MB) or $6/mo (1 GB, preferred), running
+  `python bot.py loop --every 60`. GitHub Actions' minimum is 5 minutes, and
+  runs can start 5–20 minutes late or be skipped under load.
+
+**Research notes**
+- Kalshi creates every market itself. Users can only suggest ideas
+  (kalshi.com/ideas/feed); Kalshi reviews them for manipulation risk, harm,
+  and a reliable settlement source; most don't make it.
+- Liquidity Incentive Program: pays for resting orders near the price, even
+  unfilled; listed end date Jan 1, 2027 (Kalshi can change it). The separate
+  volume-based rewards program ended in October 2026 amid wash-trading
+  scrutiny.
+- Fees: taker 0.07·C·P·(1−P) rounded up to the cent; resting (maker) orders
+  pay less or nothing on many markets; no settlement fee; ACH free. Selling
+  early pays a second fee.
+- Weather settlement: NWS Daily Climate Report, whole °F, usually the next
+  morning. Hourly temperature markets settle on The Weather Company instead,
+  and the bot doesn't trade them.
+- Why this won't scale far: thin books (~5 contracts at the alert price on
+  some brackets), few chances a day, bot competition, capital tied up
+  overnight. Ceiling ≈ tens of dollars per trade.
+- Scaling ideas, in order: rain markets (same lock logic, about a dozen
+  cities), then market making (resting orders + liquidity rewards; risk of
+  getting picked off; needs a server and an API key), then markets that
+  settle on a public number (research each), and cross-venue arbitrage
+  (thin).
+- EDGE policy: not now. Turn it on only after 50+ settled silent calls with a
+  profit and a Brier score better than the market's, and even then cap it
+  at 5%.
+
+**Live calibration notes (first real scan, Nov 4 03:06 UTC)**
+- All 143 ensemble members loaded, NWS forecasts present, medians mostly
+  within 1–2°F of NWS.
+- Day-ahead 80% ranges were 6–9°F wide for highs and much wider for lows
+  (Denver low 25–40, Austin low 48–60, LA low 52–65), while markets put
+  50–60% on a single 2°F bracket. Likely fixes: anchor harder to NWS,
+  shrink sigma/spread inflation, especially for lows (the low window
+  includes late evening, when front timing is uncertain).
+- Discovery found 29 series, including a couple of unexpected tickers
+  (e.g. KXHIGHOU next to KXHIGHTHOU). Worth a look.
+
+**Alex's setup**
+- GitHub account `alexanderhabel22-commits`. A local copy in GitHub Desktop
+  on his Windows PC is behind; Fetch/Pull before editing there.
+- ntfy on iPhone (new private topic), Kalshi app on phone.
