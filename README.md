@@ -11,8 +11,11 @@ actually works before you trust it with money.
 - **LOCK**: today's official station readings have already decided the
   bracket. Example: Central Park already hit 61.2°F, so "59° to 60°" can't win,
   but NO is still selling at 95¢. These are the core idea.
-- **EDGE**: a forecast-based call where the model disagrees with the price by
-  a lot. Riskier. Treat these as unproven until the record says otherwise.
+- **EDGE**: a forecast-based call where the model disagrees with the price.
+  These are **silent by default** (`edge_alerts = "shadow"` in `config.toml`):
+  the bot logs and grades them without sending them. The nightly summary shows
+  their record ("Silent EDGE test"). Only switch them `"on"` once that record
+  shows the model beating the market over a few weeks.
 
 Each alert tells you the bracket, YES or NO, the highest price to pay, how many
 contracts (sized from your bankroll), the expected profit, and why. Tap

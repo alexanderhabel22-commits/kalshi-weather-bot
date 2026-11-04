@@ -117,7 +117,7 @@ def explain(opp, dm, st_name: str, st_tz: str) -> str:
 
 
 def format_summary(stats_all: dict, stats_today: dict, alerts_today: int, scans_today: int,
-                   open_rows: int, problems: list[str]) -> tuple[str, str]:
+                   open_rows: int, problems: list[str], shadow: dict | None = None) -> tuple[str, str]:
     title = "Weather bot daily summary"
     lines = [f"Alerts sent today: {alerts_today} · scans: {scans_today}"]
     if stats_today["n"]:
@@ -134,7 +134,17 @@ def format_summary(stats_all: dict, stats_today: dict, alerts_today: int, scans_
                          f" → {'model is beating the market' if better else 'market is beating the model'}")
     else:
         lines.append("No settled alerts yet.")
-    lines.append(f"Open positions: {open_rows} (${stats_all['open_cost']:.2f})")
+    lines.append(f"Open alerts: {open_rows} (${stats_all['open_cost']:.2f} if you took them all)")
+    if shadow and (shadow["n"] or shadow["open"]):
+        if shadow["n"]:
+            line = (f"Silent EDGE test: {shadow['wins']}-{shadow['losses']}, "
+                    f"{'+' if shadow['pnl'] >= 0 else '-'}${abs(shadow['pnl']):.2f}")
+            if shadow["brier_model"] is not None and shadow["brier_market"] is not None:
+                line += (" · " + ("model beating market" if shadow["brier_model"] < shadow["brier_market"]
+                                  else "market beating model"))
+        else:
+            line = "Silent EDGE test: nothing settled yet"
+        lines.append(line + f" ({shadow['open']} pending)")
     for p in problems[:5]:
         lines.append(f"Problem: {p}")
     return title, "\n".join(lines)

@@ -67,6 +67,11 @@ def main(argv=None) -> int:
         if s["brier_model"] is not None:
             print(f"  Brier: model {s['brier_model']:.3f} vs market {s['brier_market'] or float('nan'):.3f}")
         print(f"  open: {s['open']} (${s['open_cost']:.2f})")
+        sh = ledger.stats(rows, mode="shadow")
+        if sh["n"] or sh["open"]:
+            print(f"Silent EDGE test: {sh['wins']}-{sh['losses']}  pnl ${sh['pnl']:+.2f}  pending {sh['open']}")
+            if sh["brier_model"] is not None and sh["brier_market"] is not None:
+                print(f"  Brier: model {sh['brier_model']:.3f} vs market {sh['brier_market']:.3f}")
         last = read_json(LAST_SCAN, {})
         if last:
             print(f"\nLast scan {last.get('at')}:")

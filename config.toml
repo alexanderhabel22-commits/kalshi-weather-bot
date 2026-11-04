@@ -47,6 +47,8 @@ quiet_allows_locks = false
 summary_hour = 21                # daily summary / heartbeat after 9 PM
 max_alerts_per_day = 15
 realert_edge_gain = 0.05         # re-alert the same contract only if edge grows 5¢+
+edge_alerts = "shadow"           # forecast-based EDGE alerts: "shadow" = log + grade silently,
+                                 # "on" = send them, "off" = ignore. LOCK alerts always send.
 # The ntfy topic is read from the NTFY_TOPIC environment variable / GitHub secret.
 
 [model]

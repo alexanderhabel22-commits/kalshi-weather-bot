@@ -16,7 +16,11 @@ LEDGER = DATA_DIR / "alerts.csv"
 FIELDS = ["id", "alerted_at", "ticker", "event", "series", "city", "metric", "date",
           "bracket", "side", "kind", "price", "model_p", "fair_p", "market_p", "edge",
           "contracts", "cost", "fee", "pred_median", "obs_extreme", "status",
-          "settled_at", "cli_value", "pnl"]
+          "settled_at", "cli_value", "pnl", "mode"]   # mode: "live" (sent) or "shadow" (logged only)
+
+
+def is_shadow(r: dict) -> bool:
+    return (r.get("mode") or "live") == "shadow"
 
 
 def load() -> list[dict]:
@@ -36,7 +40,7 @@ def save(rows: list[dict]) -> None:
     tmp.replace(LEDGER)
 
 
-def record(rows: list[dict], opp, dm, now: datetime) -> dict:
+def record(rows: list[dict], opp, dm, now: datetime, mode: str = "live") -> dict:
     row = {
         "id": f"{opp.ticker}|{opp.side}|{now.strftime('%Y%m%dT%H%M')}",
         "alerted_at": now.isoformat(timespec="seconds"),
@@ -48,15 +52,18 @@ def record(rows: list[dict], opp, dm, now: datetime) -> dict:
         "edge": f"{opp.edge:.4f}", "contracts": opp.contracts, "cost": f"{opp.cost:.2f}",
         "fee": f"{opp.fee:.2f}", "pred_median": dm.median if dm else "",
         "obs_extreme": "" if not dm or dm.obs_extreme is None else f"{dm.obs_extreme:.1f}",
-        "status": "open", "settled_at": "", "cli_value": "", "pnl": "",
+        "status": "open", "settled_at": "", "cli_value": "", "pnl": "", "mode": mode,
     }
     rows.append(row)
     return row
 
 
 def open_exposure(rows: list[dict], event: str | None = None) -> float:
+    """Money tied up in sent (live) alerts that haven't settled."""
     tot = 0.0
     for r in rows:
+        if is_shadow(r):
+            continue
         if r.get("status") == "open" and (event is None or r.get("event") == event):
             tot += float(r.get("cost") or 0)
     return tot
@@ -98,7 +105,9 @@ def settle(http: Http, rows: list[dict], now: datetime | None = None) -> list[di
     return newly
 
 
-def stats(rows: list[dict], kind: str | None = None, since: datetime | None = None) -> dict:
+def stats(rows: list[dict], kind: str | None = None, since: datetime | None = None,
+          mode: str = "live") -> dict:
+    rows = [r for r in rows if is_shadow(r) == (mode == "shadow")]
     done = [r for r in rows if r.get("status") in ("won", "lost")
             and (kind is None or r.get("kind") == kind)
             and (since is None or (parse_iso(r.get("settled_at")) or since) >= since)]
@@ -121,7 +130,7 @@ def stats(rows: list[dict], kind: str | None = None, since: datetime | None = No
 def record_line(rows: list[dict]) -> str:
     s = stats(rows)
     if not s["n"]:
-        return f"Paper record: no settled alerts yet ({s['open']} open)"
+        return f"Record: no settled alerts yet ({s['open']} open)"
     sign = "+" if s["pnl"] >= 0 else "-"
-    return (f"Paper record: {s['wins']}-{s['losses']}, {sign}${abs(s['pnl']):.2f} "
+    return (f"Record: {s['wins']}-{s['losses']}, {sign}${abs(s['pnl']):.2f} "
             f"({s['roi'] * 100:+.1f}% on ${s['staked']:.2f})")

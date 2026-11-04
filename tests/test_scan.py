@@ -19,6 +19,7 @@ def cfg_for_test():
 def test_scan_alerts_dedupes_and_settles(monkeypatch):
     monkeypatch.setenv("NTFY_TOPIC", "test-topic-xyz")
     cfg = cfg_for_test()
+    cfg.raw["alerts"]["edge_alerts"] = "on"
     now = datetime(2026, 11, 3, 21, 30, tzinfo=UTC)          # 4:30 PM ET
     http = FakeHttp(now)
     out = run_scan(cfg, now=now, http=http)
@@ -29,7 +30,7 @@ def test_scan_alerts_dedupes_and_settles(monkeypatch):
     assert any("LOCK: Buy NO · NYC high today · 59° to 60°" == t for t in titles)
     assert any("LOCK: Buy YES · NYC low today · 48° or below" == t for t in titles)
     high = next(p for p in http.posts if "NYC high" in p["title"])
-    assert "Limit price: 95¢ or less" in high["message"] and "Paper record:" in high["message"]
+    assert "Limit price: 95¢ or less" in high["message"] and "Record:" in high["message"]
     assert "can't come in below 61°F" in high["message"]
     assert high["topic"] == "test-topic-xyz"
     assert high["click"] == "https://kalshi.com/markets/kxhighny"
@@ -71,7 +72,7 @@ def test_quiet_hours_and_summary(monkeypatch):
     quiet = datetime(2026, 11, 3, 7, 30, tzinfo=UTC)
     http = FakeHttp(quiet)
     run_scan(cfg, now=quiet, http=http)
-    assert http.posts == [] and ledger.load() == []
+    assert http.posts == [] and [r for r in ledger.load() if not ledger.is_shadow(r)] == []
 
     # 9:15 PM ET -> daily summary goes out once
     evening = datetime(2026, 11, 4, 2, 15, tzinfo=UTC)
@@ -150,7 +151,9 @@ def test_nothing_logged_until_alerts_can_be_delivered(monkeypatch):
     cfg = cfg_for_test()
     now = datetime(2026, 11, 3, 21, 30, tzinfo=UTC)
     out = run_scan(cfg, now=now, http=FakeHttp(now))
-    assert ledger.load() == [] and not (read_json(STATE) or {}).get("alerted")
+    live = [r for r in ledger.load() if not ledger.is_shadow(r)]
+    alerted = (read_json(STATE) or {}).get("alerted") or {}
+    assert live == [] and all(v.get("shadow") for v in alerted.values())
     assert any("not delivered" in p for p in out["problems"])
     # once the topic is set, the same locks still go out
     monkeypatch.setenv("NTFY_TOPIC", "t")
@@ -158,3 +161,30 @@ def test_nothing_logged_until_alerts_can_be_delivered(monkeypatch):
     http = FakeHttp(later)
     run_scan(cfg, now=later, http=http)
     assert len([p for p in http.posts if p["title"].startswith("LOCK")]) == 2
+
+
+def test_edge_alerts_are_silent_by_default(monkeypatch):
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+    cfg = cfg_for_test()                       # default edge_alerts = "shadow"
+    assert cfg.get("alerts", "edge_alerts") == "shadow"
+    for minute in (30, 40):
+        now = datetime(2026, 11, 3, 21, minute, tzinfo=UTC)
+        http = FakeHttp(now)
+        run_scan(cfg, now=now, http=http)
+        assert all(p["title"].startswith("LOCK") or "summary" in p["title"] for p in http.posts)
+    rows = ledger.load()
+    shadow = [r for r in rows if ledger.is_shadow(r)]
+    live = [r for r in rows if not ledger.is_shadow(r)]
+    assert shadow and all(r["kind"] == "model" for r in shadow)
+    assert any(r["ticker"].endswith("B61.5") for r in shadow)
+    assert all(r["kind"] == "lock" for r in live)
+    # silent entries never count as money at risk, and are logged once
+    assert abs(ledger.open_exposure(rows) - sum(float(r["cost"]) for r in live)) < 1e-9
+    assert len({(r["ticker"], r["side"]) for r in shadow}) == len(shadow)
+    # they still get graded, separately from the real record
+    settled = {r["ticker"]: {"result": "yes", "expiration_value": "61"} for r in rows}
+    morning = datetime(2026, 11, 4, 14, 0, tzinfo=UTC)
+    run_scan(cfg, now=morning, http=FakeHttp(morning, settled=settled))
+    rows = ledger.load()
+    assert ledger.stats(rows, mode="shadow")["n"] == len(shadow)
+    assert ledger.stats(rows)["n"] == len(live)

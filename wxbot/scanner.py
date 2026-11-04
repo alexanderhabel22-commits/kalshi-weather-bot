@@ -135,7 +135,9 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     quiet = _in_quiet(local.hour, int(aparams.get("quiet_start", 0)), int(aparams.get("quiet_end", 7)))
     quiet_locks_ok = bool(aparams.get("quiet_allows_locks", False))
     gain = float(aparams.get("realert_edge_gain", 0.05))
+    edge_mode = str(aparams.get("edge_alerts", "shadow")).lower()   # off | shadow | on
     candidates = []
+    shadow_logged = 0
 
     for si in catalog:
         st = si.station
@@ -189,6 +191,10 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             dm = build_day_model(si.metric, ws, we, now, obs, ens, nws_val, mparams, seed)
             if dm is None:
                 continue
+            log.info("model %s %s: median %s [%s-%s] nws %s obs %s bias %+.1f sigma %.1f members %d",
+                     ev, si.metric, dm.median, dm.quantile(0.1), dm.quantile(0.9),
+                     None if nws_val is None else round(nws_val), None if dm.obs_extreme is None
+                     else round(dm.obs_extreme, 1), dm.bias, dm.sigma, dm.members)
             locks_only = ens is None or bool(dm.notes)   # missing forecast / readings
             opps, rows_eval = strategy.evaluate_event(
                 ms, dm, series=si.ticker, city=si.city, metric=si.metric,
@@ -207,9 +213,24 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     #    at most one new alert per city-day per scan
     candidates.sort(key=lambda c: (c[0].kind != "lock", -c[0].edge))
     events_done: set[str] = set()
+    shadow_events: set[str] = set()
     for opp, dm, si in candidates:
+        if opp.kind == "model" and edge_mode != "on":
+            # Forecast calls are unproven: log them silently and grade them,
+            # but don't send them (edge_alerts = "shadow"), or ignore them ("off").
+            if (edge_mode == "shadow" and opp.event not in shadow_events
+                    and _should_alert(state, opp, now, gain)):
+                strategy.size(opp, bankroll, 0.0, 0.0, None, sparams)
+                if opp.contracts > 0:
+                    ledger.record(rows, opp, dm, now, mode="shadow")
+                    state.setdefault("alerted", {})[opp.key] = {
+                        "edge": round(opp.edge, 4), "price": opp.price, "kind": opp.kind,
+                        "shadow": True, "at": now.isoformat(timespec="seconds")}
+                    shadow_events.add(opp.event)
+                    shadow_logged += 1
+            continue
         if daily["alerts"] >= max_per_day:
-            break
+            continue
         if opp.event in events_done:
             continue
         if not _should_alert(state, opp, now, gain):
@@ -268,8 +289,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
         title, body = notify.format_summary(
             ledger.stats(rows), ledger.stats(rows, since=midnight), daily["alerts"],
-            scans[local_day], sum(r.get("status") == "open" for r in rows),
-            runtime["problems"].get(local_day, []))
+            scans[local_day], sum(r.get("status") == "open" and not ledger.is_shadow(r) for r in rows),
+            runtime["problems"].get(local_day, []), ledger.stats(rows, mode="shadow"))
         if notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], dry_run=dry_run):
             state["last_summary"] = local_day
 
@@ -279,6 +300,6 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         write_json(STATE, state)
     write_json(RUNTIME, runtime)
     write_json(LAST_SCAN, {"at": now.isoformat(), "events": report, "problems": problems})
-    log.info("scan done: %d series, %d events, %d alerts, problems=%s",
-             len(catalog), len(report), len(sent), problems)
-    return {"events": report, "sent": sent, "problems": problems}
+    log.info("scan done: %d series, %d events, %d alerts, %d silent EDGE logged, problems=%s",
+             len(catalog), len(report), len(sent), shadow_logged, problems)
+    return {"events": report, "sent": sent, "problems": problems, "shadow": shadow_logged}
