@@ -11,6 +11,7 @@ from __future__ import annotations
 import gzip
 import json
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -50,14 +51,18 @@ def _ts(s: str | None) -> int | None:
 
 # ---------------------------------------------------------------- Kalshi
 
-def settled_markets(http: Http, series: str, since: datetime) -> list[dict]:
+def settled_markets(http: Http, series: str, since: datetime, historical: bool = False) -> list[dict]:
+    """Live endpoint covers roughly the last two months; older markets live
+    under /historical."""
     out, cursor = [], None
+    url = f"{kalshi.BASE}/historical/markets" if historical else f"{kalshi.BASE}/markets"
     for _ in range(50):
-        params = {"series_ticker": series, "status": "settled", "limit": 1000,
-                  "min_close_ts": int(since.timestamp())}
+        params = {"series_ticker": series, "limit": 1000, "min_close_ts": int(since.timestamp())}
+        if not historical:
+            params["status"] = "settled"
         if cursor:
             params["cursor"] = cursor
-        js = http.get_json(f"{kalshi.BASE}/markets", params=params)
+        js = http.get_json(url, params=params)
         out.extend(js.get("markets") or [])
         cursor = js.get("cursor")
         if not cursor:
@@ -65,33 +70,40 @@ def settled_markets(http: Http, series: str, since: datetime) -> list[dict]:
     return out
 
 
-def market_candles(http: Http, series: str, m: dict) -> list[dict]:
+def market_candles(http: Http, series: str, m: dict, historical: bool = False) -> list[dict]:
     start = _ts(m.get("open_time")) or (_ts(m.get("close_time")) - 3 * 86400)
     end = _ts(m.get("close_time"))
-    js = http.get_json(f"{kalshi.BASE}/series/{series}/markets/{m['ticker']}/candlesticks",
-                       params={"start_ts": start, "end_ts": end, "period_interval": 60})
+    url = (f"{kalshi.BASE}/historical/markets/{m['ticker']}/candlesticks" if historical
+           else f"{kalshi.BASE}/series/{series}/markets/{m['ticker']}/candlesticks")
+    js = http.get_json(url, params={"start_ts": start, "end_ts": end, "period_interval": 60})
     return js.get("candlesticks") or []
 
 
-def fetch_series(series: str, out: Path, since: datetime, user_agent: str) -> str:
-    path = out / "kalshi" / f"{series}.json.gz"
+def fetch_series(series: str, out: Path, since: datetime, user_agent: str,
+                 historical: bool = False) -> str:
+    sub = "kalshi_hist" if historical else "kalshi"
+    path = out / sub / f"{series}.json.gz"
     if path.exists():
-        return f"{series}: cached"
-    http = Http(user_agent, min_interval=0.25)
+        return f"{series} ({sub}): cached"
+    http = Http(user_agent, min_interval=0.4, retries=8)
     try:
-        markets = settled_markets(http, series, since)
+        markets = settled_markets(http, series, since, historical)
     except HttpError as exc:
-        return f"{series}: markets failed ({exc})"
+        return f"{series} ({sub}): markets failed ({exc})"
+    if historical:
+        live = out / "kalshi" / f"{series}.json.gz"
+        have = {m["ticker"] for m in read(live)["markets"]} if live.exists() else set()
+        markets = [m for m in markets if m.get("ticker") not in have]
     candles, failed = {}, 0
     for m in markets:
         try:
-            candles[m["ticker"]] = market_candles(http, series, m)
+            candles[m["ticker"]] = market_candles(http, series, m, historical)
         except HttpError as exc:
             failed += 1
             if failed <= 3:
                 log.warning("candles %s: %s", m.get("ticker"), exc)
     _write(path, {"series": series, "markets": markets, "candles": candles})
-    return f"{series}: {len(markets)} markets, {len(candles)} with prices, {failed} failed"
+    return f"{series} ({sub}): {len(markets)} markets, {len(candles)} with prices, {failed} failed"
 
 
 # ---------------------------------------------------------------- forecasts
@@ -127,26 +139,37 @@ def fetch_readings(http: Http, st, out: Path, start: datetime, end: datetime) ->
               ("report_type", "3"), ("report_type", "4"),
               ("year1", start.year), ("month1", start.month), ("day1", start.day),
               ("year2", end.year), ("month2", end.month), ("day2", end.day)]
-    try:
-        r = http.session.get(IEM, params=params, timeout=120)
-        r.raise_for_status()
-    except Exception as exc:  # noqa: BLE001 - log and move on
-        return f"{st.icao} readings: failed ({exc})"
+    r = None
+    for attempt in range(6):
+        time.sleep(3 + 15 * attempt)          # IEM asks for gentle, serial requests
+        try:
+            r = http.session.get(IEM, params=params, timeout=180)
+            if r.status_code == 429:
+                continue
+            r.raise_for_status()
+            break
+        except Exception as exc:  # noqa: BLE001 - log and retry
+            log.warning("readings %s: %s", st.icao, exc)
+            r = None
+    if r is None or r.status_code != 200:
+        return f"{st.icao} readings: failed"
     _write(path, r.text)
     return f"{st.icao} readings: {r.text.count(chr(10))} lines"
 
 
 # ---------------------------------------------------------------- main
 
-def run(out: Path, days: int, user_agent: str, workers: int = 4) -> list[str]:
+def run(out: Path, days: int, user_agent: str, workers: int = 2) -> list[str]:
     end = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     start = end - timedelta(days=days)
     catalog = default_catalog()
     lines = []
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        for msg in pool.map(lambda si: fetch_series(si.ticker, out, start, user_agent), catalog):
-            log.info(msg)
-            lines.append(msg)
+        for hist in (False, True):
+            for msg in pool.map(lambda si: fetch_series(si.ticker, out, start, user_agent, hist),
+                                catalog):
+                log.info(msg)
+                lines.append(msg)
     http = Http(user_agent, timeout=60)
     stations = {si.station.icao: si.station for si in catalog}
     for st in stations.values():
