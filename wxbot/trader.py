@@ -26,6 +26,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import logging
+import math
 import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -310,6 +311,82 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
     return n
 
 
+def _fee(p: float) -> float:
+    return math.ceil(round(0.07 * p * (1 - p) * 100, 6)) / 100
+
+
+def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple[float, str] | None:
+    """(sell price, reason) if selling now beats holding to settlement.
+
+    Hold value = the market's mid for our side + this strategy's historical edge
+    (`hold_edge`, what holding has earned on average beyond the price). We sell
+    at the bid only when the bid after the taker fee is worth more than that.
+    Since a bid sits below the mid, this fires only when the book is lopsided in
+    our favour, so in practice we hold through swings ("diamond hands").
+    When the overall cap is blocking new orders, a nearly-won position (bid 98c+)
+    is sold to free the money. Fixed stop-losses are deliberately absent: in the
+    backtest they cost money (they sell after a bad swing, at a bad price). The
+    daily/total loss stops remain the backstop if a strategy is getting killed."""
+    if not m or str(sp.get("exit", "ev")).lower() == "hold":
+        return None
+    yb, ya = kalshi.price(m, "yes_bid"), kalshi.price(m, "yes_ask")
+    if yb is None or ya is None or not (0 < yb < ya <= 1):
+        return None
+    side = r.get("side")
+    bid = yb if side == "yes" else round(1 - ya, 2)
+    ask = ya if side == "yes" else round(1 - yb, 2)
+    if not (0.01 <= bid <= 0.99):
+        return None
+    net = bid - _fee(bid)
+    hold = (bid + ask) / 2 + float(sp.get("hold_edge", 0.03))
+    if net > min(hold, 1.0) + 0.01:
+        return bid, f"bid {bid:.2f} beats hold value {hold:.2f}"
+    if cap_blocked and bid >= 0.98:
+        return bid, "free money for new orders (bid 98c+)"
+    return None
+
+
+def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int:
+    n = 0
+    for r in rows:
+        if r.get("status") != "filled" or r.get("mode") not in ("paper", "live"):
+            continue
+        sp = specs.get(r.get("strategy"), {})
+        m = kalshi.get_market(http, r["ticker"])
+        if (m or {}).get("result"):
+            continue                      # settling anyway
+        d = exit_decision(r, m, sp, r["mode"] in cap_blocked)
+        if not d:
+            continue
+        price, why = d
+        count = int(_f(r.get("filled")))
+        if r["mode"] == "live":
+            if dry_run or client is None:
+                continue
+            try:
+                o = client.sell_now(r["ticker"], r["side"], price, count, f"x-{r['client_id']}"[:60])
+            except (HttpError, OrderRejected) as exc:
+                log.warning("exit %s rejected: %s", r["ticker"], exc)
+                continue
+            sold = order_fill_count(o, count)
+            if sold <= 0:
+                continue
+            count = sold
+        pnl = count * (price - _fee(price) - _f(r["price"]))
+        if count < int(_f(r.get("filled"))):
+            # partial exit: keep the rest open on this row, book the sold part on a new row
+            r["filled"] = int(_f(r["filled"])) - count
+            r = dict(r, id=r["id"] + "|exit", filled=count, count=count)
+            rows.append(r)
+        r.update(status="settled", result="exit", pnl=f"{pnl:.2f}",
+                 settled_at=now.isoformat(timespec="seconds"),
+                 note=(r.get("note") or "") + f" | sold {count} @ {price:.2f}: {why}")
+        n += 1
+        if r["mode"] == "live":
+            _alert(http, cfg, f"Sold early ${pnl:+.2f}", f"{r['title'] or r['ticker']} · {why}", dry_run)
+    return n
+
+
 def cancel_all(client: KalshiClient | None, rows: list[dict], mode: str) -> int:
     n = 0
     for r in rows:
@@ -449,6 +526,15 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             row["order_id"] = o.get("order_id", "")
         rows.append(row)
         out["placed"].append(row)
+
+    # ---- early exits (judgement: sell only when it beats holding)
+    if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") == "filled" for r in rows):
+        cap_blocked = {m for m in ("paper", "live")
+                       if any("open-$ cap" in why and "event" not in why for *_, why in out["skipped"])}
+        try:
+            out["exits"] = exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked)
+        except Exception as exc:
+            log.warning("exits failed: %s", exc)
 
     if not dry_run:
         save(rows)

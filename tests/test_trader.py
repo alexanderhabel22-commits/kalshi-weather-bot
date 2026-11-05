@@ -342,3 +342,47 @@ def test_global_event_cap_applies_to_every_strategy():
     it = trader.Intent("anything", "T1", "E1", "no", 0.80, 1, CLOSE)
     assert trader.vet(it, rows, t, {}, NOW, [], "paper") == "event open-$ cap"
     assert trader.vet(it, rows, t, {"max_event_dollars": 50}, NOW, [], "paper") == "event open-$ cap"
+
+
+def _book(yb, ya):
+    return {"yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "result": ""}
+
+
+def test_exit_holds_through_normal_swings():
+    r = {"side": "no", "price": "0.85"}
+    # NO fell from 85c to ~60c: no panic sale
+    assert trader.exit_decision(r, _book(0.38, 0.42), {}, cap_blocked=False) is None
+    # NO rose to 95c: still hold, the bid never beats mid + edge
+    assert trader.exit_decision(r, _book(0.04, 0.06), {}, cap_blocked=False) is None
+    # 98c+ but the cap is not blocking anything: hold to settle
+    assert trader.exit_decision(r, _book(0.01, 0.02), {}, cap_blocked=False) is None
+
+
+def test_exit_frees_money_when_cap_blocks_and_nearly_won():
+    r = {"side": "no", "price": "0.85"}
+    d = trader.exit_decision(r, _book(0.01, 0.02), {}, cap_blocked=True)
+    assert d and d[0] == 0.98
+    assert trader.exit_decision(r, _book(0.01, 0.02), {"exit": "hold"}, cap_blocked=True) is None
+
+
+def test_exit_sells_when_bid_clearly_beats_hold_value():
+    # lopsided book: a YES bid of 70c with nobody offering below 99c
+    r = {"side": "yes", "price": "0.50"}
+    d = trader.exit_decision(r, _book(0.70, 0.99), {"hold_edge": 0.0}, cap_blocked=False)
+    assert d is None                              # 0.70 - fee < mid 0.845: hold
+    d = trader.exit_decision(r, _book(0.97, 0.99), {"hold_edge": -0.05}, cap_blocked=False)
+    assert d and d[0] == 0.97
+
+
+def test_paper_exit_books_pnl():
+    class H:
+        def get_json(self, url, params=None, headers=None):
+            return {"market": dict(_book(0.01, 0.02), ticker=url.rsplit("/", 1)[1])}
+    rows = [{"id": "A|no", "client_id": "c1", "mode": "paper", "strategy": "mentions",
+             "ticker": "A", "side": "no", "price": "0.85", "count": 2, "filled": 2,
+             "status": "filled", "title": "t", "note": ""}]
+    n = trader.exits(H(), rows, NOW, {"mentions": {}}, None, cfg(), False, {"paper"})
+    assert n == 1 and rows[0]["status"] == "settled" and rows[0]["result"] == "exit"
+    assert float(rows[0]["pnl"]) == pytest.approx(2 * (0.98 - 0.01 - 0.85))
+    rows[0]["status"] = "filled"
+    assert trader.exits(H(), rows, NOW, {"mentions": {}}, None, cfg(), False, set()) == 0

@@ -105,6 +105,20 @@ class KalshiClient:
         return js.get("order") or {}
 
 
+    def sell_now(self, ticker: str, side: str, price: float, count: int,
+                 client_order_id: str) -> dict:
+        """Sell contracts we hold, at `price` or better, immediately; whatever
+        doesn't fill right away is cancelled (never left resting)."""
+        check_order(side, price, count)
+        cents = int(round(price * 100))
+        payload = {"ticker": ticker, "client_order_id": client_order_id, "action": "sell",
+                   "side": side, "count": int(count), "type": "limit",
+                   "time_in_force": "immediate_or_cancel",
+                   ("yes_price" if side == "yes" else "no_price"): cents}
+        js = self._post("/portfolio/orders", payload)
+        return js.get("order") or {}
+
+
 def check_order(side: str, price: float, count: int) -> None:
     if side not in ("yes", "no"):
         raise OrderRejected(f"bad side {side!r}")
