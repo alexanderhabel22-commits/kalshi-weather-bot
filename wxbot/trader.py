@@ -55,7 +55,12 @@ DEFAULTS = {"mode": "off", "max_contracts_per_order": 3, "max_orders_per_run": 1
             "max_event_pct": 0.20,        # at most 20% on any one event (all strategies)
             "paper_max_open_pct": 1.00,   # paper may use the whole bankroll (Alex, Nov 5)
             "daily_loss_pct": 0.10,       # down 10% today -> no new orders until tomorrow
-            "total_loss_pct": 0.25}       # down 25% overall -> HALT and cancel everything
+            "total_loss_pct": 0.25,       # down 25% overall -> HALT and cancel everything
+            # capacity (scale study, Nov 5): never be more than ~10% of a market's
+            # traded volume, so we don't become the price as the bankroll grows
+            "max_volume_share": 0.10,
+            "min_market_contracts": 50,   # always allowed up to this per market
+            "max_market_contracts": 1000}  # never more than this in one market
 PCT_KEYS = {"max_open_pct": "max_open_dollars", "max_event_pct": "max_event_dollars"}
 
 
@@ -70,6 +75,7 @@ class Intent:
     close: str = ""
     title: str = ""
     note: str = ""
+    volume: float = 0.0     # contracts the market has traded so far (0 = unknown)
 
 
 @dataclass
@@ -214,6 +220,31 @@ def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
             pend(lambda p: p.event == intent.event) + cost > float(ev_cap) + 1e-9:
         return "event open-$ cap"
     return None
+
+
+def capacity(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
+             planned: list[Intent]) -> tuple[int, str]:
+    """How many contracts this intent may still add, from the capacity limits:
+    our share of the market's traded volume (max_volume_share, at least
+    min_market_contracts, at most max_market_contracts) and the strategy's
+    weekly contract ceiling (max_week_contracts, its fair share of the flow)."""
+    share = float(sp.get("max_volume_share", t["max_volume_share"]))
+    floor = int(sp.get("min_market_contracts", t["min_market_contracts"]))
+    ceil_ = int(sp.get("max_market_contracts", t["max_market_contracts"]))
+    lim = min(ceil_, max(floor, int(share * float(intent.volume or 0))))
+    held = sum(int(_f(r.get("count"))) for r in rows if r.get("ticker") == intent.ticker
+               and r.get("status") in ("resting", "filled")) + \
+        sum(p.count for p in planned if p.ticker == intent.ticker)
+    room, why = lim - held, f"market capacity ({lim} contracts)"
+    week = sp.get("max_week_contracts")
+    if week is not None:
+        since = now - timedelta(days=7)
+        used = sum(int(_f(r.get("count"))) for r in rows if r.get("strategy") == intent.strategy
+                   and (parse_iso(r.get("placed_at")) or since) > since) + \
+            sum(p.count for p in planned if p.strategy == intent.strategy)
+        if int(week) - used < room:
+            room, why = int(week) - used, f"weekly capacity ({int(week)} contracts)"
+    return max(0, room), why
 
 
 def client_id(intent: Intent, mode: str) -> str:
@@ -498,6 +529,12 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             if len(planned) >= int(t["max_orders_per_run"]):
                 break
             same = [r for r in rows if r.get("mode") == mode]
+            room, cwhy = capacity(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode])
+            if room < 1:
+                out["skipped"].append((it.ticker, it.side, cwhy))
+                continue
+            if it.count > room:
+                it.count = room             # shrink to what the market can take
             why = vet(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode], mode)
             if why:
                 out["skipped"].append((it.ticker, it.side, why))

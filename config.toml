@@ -84,6 +84,13 @@ max_orders_per_run = 15
 # Limits scale with the bankroll ([account] bankroll or the BANKROLL variable):
 max_open_pct = 0.75              # live: at most 75% of the bankroll at risk at once (Alex, Nov 5)
 max_event_pct = 0.20             # any strategy: at most 20% on one event, unless its table sets less
+# Capacity (scale study, Nov 5): as the bankroll grows, never take more than 10%
+# of a market's traded volume (at least 50, at most 1,000 contracts per market).
+# Each strategy also has a weekly contract ceiling (max_week_contracts) = its
+# fair share of the flow; sizes shrink to fit instead of moving the market.
+max_volume_share = 0.10
+min_market_contracts = 50
+max_market_contracts = 1000
 paper_max_open_pct = 1.00        # paper: may use the whole bankroll (strategy caps still apply)
 daily_loss_pct = 0.10            # down 10% today: no new orders until tomorrow
 total_loss_pct = 0.25            # down 25% overall: HALT, cancel all resting orders
@@ -91,6 +98,8 @@ reset_halt = false               # set true (once) to clear a halt after checkin
 
 [trading.mentions]
 # Mentions NO limit orders (research: about +4c per filled contract over 21 months).
+max_week_contracts = 5000        # fair share of the flow (scale study)
+max_market_contracts = 200       # per-market ceiling (scale study)
 enabled = true
 live = false                     # true = real orders (when [trading] mode is "live")
 contracts = 3                    # max contracts per word (also capped by max_contracts_per_order)
@@ -110,6 +119,8 @@ max_event_pct = 0.20             # at most 20% of the bankroll on one event (one
 # Fade longshots in Fed and CPI/PCE markets: resting NO at 71-95c (YES 5-29c).
 # Research: +5-12c per filled contract after maker fees, Feb 2025-Oct 2026, but
 # few independent releases, so one surprise can hit a whole event. Paper only.
+max_week_contracts = 4000        # fair share of the flow (scale study)
+max_market_contracts = 1000      # per-market ceiling (scale study)
 enabled = true
 live = false                     # stays false until the paper test passes and Alex says go
 series = ["KXFED", "KXFEDDECISION", "KXCPI", "KXCPIYOY", "KXCPICORE", "KXPCECORE"]
@@ -128,6 +139,8 @@ max_event_pct = 0.10             # at most 10% on one release / one Fed meeting
 # Resting bids on the 85-96c favorite in BIG Elections / Politics / Entertainment
 # events (research: about +3.7c per filled contract in events with 1M+ contracts
 # traded, Feb 2025 - Oct 2026; small events lost). Paper test first.
+max_week_contracts = 8000        # fair share of the flow (scale study)
+max_market_contracts = 1000      # per-market ceiling (scale study)
 enabled = true
 live = false                     # true = real orders (when [trading] mode is "live")
 categories = ["Elections", "Politics", "Entertainment"]
@@ -145,6 +158,8 @@ max_event_pct = 0.10             # at most 10% on one event
 [trading.weather]
 # Day-before weather limit orders (mirrors the paper orders). Off until the
 # weekend verdict on the paper results.
+max_week_contracts = 4000        # fair share of the flow (scale study)
+max_market_contracts = 50        # per-market ceiling (scale study)
 enabled = false
 live = false
 contracts = 1

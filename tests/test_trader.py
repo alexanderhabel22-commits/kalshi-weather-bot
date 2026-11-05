@@ -386,3 +386,29 @@ def test_paper_exit_books_pnl():
     assert float(rows[0]["pnl"]) == pytest.approx(2 * (0.98 - 0.01 - 0.85))
     rows[0]["status"] = "filled"
     assert trader.exits(H(), rows, NOW, {"mentions": {}}, None, cfg(), False, set()) == 0
+
+
+def test_capacity_scales_with_market_volume():
+    t = trader.settings(cfg())
+    it = trader.Intent("mentions", "A", "E", "no", 0.80, 3, CLOSE, volume=5000)
+    sp = {"max_market_contracts": 200}
+    assert trader.capacity(it, [], t, sp, NOW, [])[0] == 200          # 10% of 5000 = 500, capped 200
+    it.volume = 800
+    assert trader.capacity(it, [], t, sp, NOW, [])[0] == 80           # 10% of volume
+    it.volume = 0
+    assert trader.capacity(it, [], t, sp, NOW, [])[0] == 50           # unknown: the floor
+    held = [{"ticker": "A", "status": "filled", "count": 45, "strategy": "mentions",
+             "placed_at": NOW.isoformat()}]
+    room, why = trader.capacity(it, held, t, sp, NOW, [])
+    assert room == 5 and "market" in why
+
+
+def test_weekly_capacity_ceiling():
+    t = trader.settings(cfg())
+    it = trader.Intent("mentions", "B", "E", "no", 0.80, 3, CLOSE, volume=10_000)
+    old = (NOW - timedelta(days=8)).isoformat()
+    rows = [{"ticker": f"X{i}", "status": "settled", "count": 10, "strategy": "mentions",
+             "placed_at": NOW.isoformat()} for i in range(10)] + \
+           [{"ticker": "Y", "status": "settled", "count": 500, "strategy": "mentions", "placed_at": old}]
+    room, why = trader.capacity(it, rows, t, {"max_week_contracts": 102}, NOW, [])
+    assert room == 2 and "weekly" in why

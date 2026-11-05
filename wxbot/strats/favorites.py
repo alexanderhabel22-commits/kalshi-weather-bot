@@ -145,7 +145,7 @@ def candidates(events: list[dict], now, p: dict) -> list[Intent]:
             picks.append(Intent(
                 NAME, m["ticker"], ev.get("event_ticker") or m.get("event_ticker") or "", side,
                 px, count, m.get("close_time") or "", f"{title} {sub}".strip()[:120],
-                f"{ev.get('category')} · {side} bid {bid:.2f} / ask {ask:.2f}"))
+                f"{ev.get('category')} · {side} bid {bid:.2f} / ask {ask:.2f}", _vol(m)))
         out += sorted(picks, key=lambda i: -i.price)[:per_event]
     return out
 
