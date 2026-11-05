@@ -142,7 +142,7 @@ record earns it. Be candid about odds and risk; no hype.
 - Live needs secrets KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY. Ledger:
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
-- Strategies: mentions (paper, Nov 5), weather day-before (off until verdict).
+- Strategies: mentions (paper, Nov 5), weather day-before (off until verdict). Mentions settings re-tuned Nov 5 by walk-forward (research_mn/RESULTS.md): min_volume 1000, size 5% of bankroll per word.
 
 - **Paper trading, Nov 5 → weekend Nov 7-8:** `wxbot/daybefore.py` rests paper
   limit orders 1c inside the spread ~36h before close when a market+model

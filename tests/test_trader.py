@@ -20,7 +20,7 @@ def cfg(mode="paper", bankroll=40.0, **mentions_kw):
     return c
 
 
-def mkt(word, yb, ya, ev="KXTRUMPMENTION-26NOV06", vol=500):
+def mkt(word, yb, ya, ev="KXTRUMPMENTION-26NOV06", vol=5000):
     return {"ticker": f"{ev}-{word}", "event_ticker": ev, "close_time": CLOSE,
             "occurrence_datetime": (NOW + timedelta(hours=10)).isoformat().replace("+00:00", "Z"),
             "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": vol,
@@ -105,10 +105,20 @@ def test_mentions_picks_band_cheapest_three_per_event():
     assert mentions.candidates([mkt("d", 0.12, 0.13)], {"KXTRUMPMENTION"}, {})[0].price == 0.87
 
 
+def test_mentions_size_scales_with_bankroll():
+    p = {"contracts": 3, "word_pct": 0.05}
+    assert mentions.word_count(0.80, p, 37) == 2       # $1.85 / 80c
+    assert mentions.word_count(0.80, p, 10) == 1       # never below 1
+    assert mentions.word_count(0.80, p, 500) == 3      # capped by contracts
+    assert mentions.word_count(0.80, {"contracts": 2}, 500) == 2   # no word_pct: fixed
+    out = mentions.candidates([mkt("a", 0.12, 0.16)], {"KXTRUMPMENTION"}, p, 100)
+    assert out[0].count == 3                           # 5% of $100 / 85c = 5.9 -> cap 3
+
+
 def test_paper_run_caps_dedupes_then_settles():
     ms = [mkt(w, 0.12, 0.16) for w in "abc"] + [mkt(w, 0.12, 0.16, ev=f"KXTRUMPMENTION-26NOV0{i}")
                                                for i, w in enumerate("defgh", 1)]
-    c = cfg(bankroll=20)                  # open cap 12, mentions 10, per event 5
+    c = cfg(bankroll=20, contracts=2, word_pct=None)  # fixed 2/word; open cap 12, mentions 10, per event 5
     # one speech: three words at 1.70 each would be 5.10 > the 5.00 event cap
     one = trader.run(c, now=NOW, http=Http(ms[:3]), dry_run=True)
     assert len(one["placed"]) == 2 and one["skipped"][0][2] == "event open-$ cap"
