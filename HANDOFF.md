@@ -129,7 +129,21 @@ record earns it. Be candid about odds and risk; no hype.
 - No real trades yet. Alex's one earlier manual trade (NY governor, Hochul
   YES, +$1.13) is unrelated to the bot.
 
-## Game plan
+## Automatic trading (built Nov 5, 2026)
+- `wxbot/trader.py` runs after every scan via `.github/workflows/trade.yml`
+  (workflow_run; scan.yml untouched). Strategies are plug-ins in
+  `wxbot/strats/` (NAME + propose) with a `[trading.<NAME>]` config table.
+- Global `[trading] mode` (or TRADING_MODE variable): off (kill switch) /
+  paper / live. A strategy trades real money only if mode is live AND its
+  table says `live = true`; otherwise paper. New edges start on paper.
+- Limits are % of bankroll: open 60%, daily stop 10%, total stop 25% (halt +
+  cancel all; clear with reset_halt). Limit, post-only orders only; one order
+  per market+side; per-strategy and per-event caps; ntfy on fills and stops.
+- Live needs secrets KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY. Ledger:
+  `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
+  `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
+- Strategies: mentions (paper, Nov 5), weather day-before (off until verdict).
+
 - **Paper trading, Nov 5 → weekend Nov 7-8:** `wxbot/daybefore.py` rests paper
   limit orders 1c inside the spread ~36h before close when a market+model
   blend (logistic, fit on the 1-year backtest) says the side is worth 6c+ more.

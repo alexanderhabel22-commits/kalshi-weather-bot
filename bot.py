@@ -8,6 +8,7 @@
   python bot.py settle          grade finished alerts now
   python bot.py test-notify     send a test notification to your phone
   python bot.py backtest-fetch  download history for a backtest (--days, --out)
+  python bot.py trade           automatic orders (mode in config [trading]; --dry-run prints only)
 """
 from __future__ import annotations
 
@@ -24,7 +25,7 @@ from wxbot.util import Http, load_config, parse_iso, read_json, utcnow
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify",
-                                            "backtest-fetch"])
+                                            "backtest-fetch", "trade"])
     ap.add_argument("--dry-run", action="store_true", help="don't send or save anything")
     ap.add_argument("--every", type=int, default=300, help="loop interval in seconds")
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
@@ -41,6 +42,21 @@ def main(argv=None) -> int:
         out = run_scan(cfg, now=parse_iso(args.now) if args.now else None, dry_run=args.dry_run)
         print(f"{len(out['events'])} city-days priced, {len(out['sent'])} alerts"
               + (f", problems: {out['problems']}" if out["problems"] else ""))
+        return 0
+
+    if args.command == "trade":
+        from wxbot import trader
+        from wxbot import digest
+        now = parse_iso(args.now) if args.now else utcnow()
+        http = Http(cfg.user_agent)
+        out = trader.run(cfg, now=now, http=http, dry_run=args.dry_run)
+        try:
+            for path in digest.run_due(cfg, now, http, dry_run=args.dry_run):
+                print(f"report written: {path}")
+        except Exception as exc:  # reports must never break trading
+            logging.exception("reports failed: %s", exc)
+        print(f"trade ({out['mode']}): placed {len(out['placed'])}, skipped {len(out['skipped'])}"
+              + (f", stops: {out['stops']}" if out["stops"] else ""))
         return 0
 
     if args.command == "backtest-fetch":
