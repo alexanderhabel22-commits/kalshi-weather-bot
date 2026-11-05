@@ -5,7 +5,8 @@ events): a resting order to buy NO at 70-98c made about +4c per filled
 contract; the 75-90c band paid +5.7-6c. People overpay for long-shot words.
 
 Rules here:
-  - Mentions-category markets that close in 1-72 hours, with some trading
+  - Mentions-category markets whose event happens in 1-72 hours
+    (occurrence_datetime), with some trading
   - our NO price = best NO bid + 1c (still below the NO ask: we never cross)
   - NO price within [min_price, max_price] (default 75-90c)
   - at most max_words_per_event words per event, cheapest NO first
@@ -35,6 +36,12 @@ def mentions_series(ctx) -> set[str]:
         if found:
             st["series"], st["series_day"] = found, day
     return set(st.get("series") or [])
+
+
+def event_time(m: dict):
+    """When the speech/broadcast happens. Mentions markets close ~2 weeks after
+    the event (and settle early), so close_time is not the event time."""
+    return parse_iso(m.get("occurrence_datetime")) or parse_iso(m.get("close_time"))
 
 
 def _series_markets(ctx, series: str) -> list[dict]:
@@ -69,7 +76,7 @@ def open_markets(ctx, series: set[str], min_h: float, max_h: float) -> list[dict
             continue
         if ms:
             active.append(s_)
-        out += [m for m in ms if (c := parse_iso(m.get("close_time"))) and lo <= c <= hi]
+        out += [m for m in ms if (c := event_time(m)) and lo <= c <= hi]
     if refresh:
         st["active"], st["active_at"] = active, ctx.now.isoformat(timespec="seconds")
     return out

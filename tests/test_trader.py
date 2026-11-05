@@ -22,6 +22,7 @@ def cfg(mode="paper", bankroll=40.0, **mentions_kw):
 
 def mkt(word, yb, ya, ev="KXTRUMPMENTION-26NOV06", vol=500):
     return {"ticker": f"{ev}-{word}", "event_ticker": ev, "close_time": CLOSE,
+            "occurrence_datetime": (NOW + timedelta(hours=10)).isoformat().replace("+00:00", "Z"),
             "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": vol,
             "title": f"Will Trump say {word}?"}
 
@@ -81,6 +82,15 @@ def test_strategy_stays_paper_until_cleared_for_live():
     out = trader.run(cfg(mode="live"), now=NOW, http=Http([mkt("a", 0.12, 0.16)]), client=cl)
     assert not cl.placed and [r["mode"] for r in out["placed"]] == ["paper"]
     assert "mentions" in trader.strategies() and "weather" in trader.strategies()
+
+
+def test_mentions_uses_event_time_not_close_time():
+    class Ctx:
+        state, now = {}, NOW
+        http = Http([mkt("a", 0.12, 0.16) | {"close_time": "2026-11-20T15:00:00Z"},
+                     mkt("b", 0.12, 0.16) | {"occurrence_datetime": "2026-11-18T15:00:00Z"}])
+    got = [m["ticker"][-1] for m in mentions.open_markets(Ctx, {"KXTRUMPMENTION"}, 1, 72)]
+    assert got == ["a"]
 
 
 def test_mentions_picks_band_cheapest_three_per_event():

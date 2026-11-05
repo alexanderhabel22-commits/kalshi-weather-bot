@@ -255,15 +255,18 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
         if r.get("status") not in OPEN:
             continue
         close = parse_iso(r.get("close"))
-        if close and now < close:
+        placed = parse_iso(r.get("placed_at")) or now
+        if now - placed < timedelta(minutes=30):
             continue
+        # markets can settle before their close time (Mentions settle right after
+        # the speech), so ask for the result whenever we grade
         m = kalshi.get_market(http, r["ticker"])
         res = ((m or {}).get("result") or "").lower()
         if res not in ("yes", "no"):
             continue
         if r["mode"] == "paper":
             try:
-                prints = trade_prices(http, r["ticker"], parse_iso(r["placed_at"]), close or now)
+                prints = trade_prices(http, r["ticker"], placed, min(close or now, now))
             except HttpError as exc:
                 log.warning("paper trades %s: %s", r["ticker"], exc)
                 continue
