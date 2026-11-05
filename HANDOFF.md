@@ -166,6 +166,24 @@ record earns it. Be candid about odds and risk; no hype.
 - **Later, if proven:** rain markets (same lock logic), then market making
   (resting orders + Kalshi liquidity rewards) with more capital and an API key.
 
+## Dashboard (built Nov 5, 2026)
+
+Read-only, mobile-first monitor in `dashboard/` (one static `index.html`, no build). It reads the
+repo's public data files from raw.githubusercontent.com every 2 minutes (pinned to the latest main
+commit, so no stale cache) and the GitHub Actions API every 6 minutes (60 requests/hour limit per
+IP without a token). It never places, changes or cancels anything and needs no secrets.
+
+- Hosted on GitHub Pages by `.github/workflows/pages.yml`, which deploys only when `dashboard/`
+  changes (not on bot data commits). One-time setup: Settings -> Pages -> Source: GitHub Actions.
+  URL: https://alexanderhabel22-commits.github.io/kalshi-weather-bot/
+- LIVE / PAPER switch: same layout for both. LIVE = `mode=live` rows of `data/trade_orders.csv`
+  plus `data/my_trades.csv`; PAPER = paper rows plus `data/paper_orders.csv` (weather day-before).
+  Silent EDGE / near-lock calls (`data/alerts.csv`) are shown separately as signals, not trades.
+- Research tab reads `dashboard/verdicts.json` (verdicts, checkpoints, backtest edge per
+  strategy). Update it when a research verdict lands or a strategy is added.
+- The repo is public, so everything the page shows is already public. Never put NTFY_TOPIC or
+  API keys in `dashboard/`.
+
 ## Expectations to keep honest
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong
 lock costs ~$3. Order books are thin (some ~5 contracts at the alert price),
