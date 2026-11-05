@@ -63,12 +63,17 @@ class Day:
     city: str
     metric: str
     day: date
-    actual: float
+    actual: float | None
     fc: dict          # model -> {"d1": value, "d2": value}
     brackets: list    # (ticker, lo, hi, result_yes, quotes{h: (bid, ask)})
 
 
-def load(root: Path, hours=(36, 24, 12)) -> list[Day]:
+def _px(side: dict | None):
+    side = side or {}
+    return _f(side.get("close_dollars", side.get("close")))
+
+
+def load(root: Path, hours=(36, 24, 12), since: date | None = None) -> list[Day]:
     cat = {si.ticker: si for si in default_catalog()}
     fc_cache: dict[str, dict] = {}
     days: dict[tuple, Day] = {}
@@ -84,7 +89,7 @@ def load(root: Path, hours=(36, 24, 12)) -> list[Day]:
         for m in d["markets"]:
             res = m.get("result")
             val = _f(m.get("expiration_value"))
-            if res not in ("yes", "no") or val is None:
+            if res not in ("yes", "no"):
                 continue
             br = kalshi.parse_bracket(m)
             if br is None:
@@ -92,10 +97,14 @@ def load(root: Path, hours=(36, 24, 12)) -> list[Day]:
             dd = kalshi.event_date(m.get("event_ticker", ""))
             if dd is None:
                 continue
+            if since and dd < since:
+                continue
             key = (d["series"], dd)
             if key not in days:
                 days[key] = Day(d["series"], si.city, si.metric, dd, val,
                                 day_forecasts(fc_cache[st.icao], dd, st.tz, si.metric), [])
+            elif days[key].actual is None and val is not None:
+                days[key].actual = val
             close = datetime.fromisoformat(m["close_time"].replace("Z", "+00:00")).timestamp()
             cs = d["candles"].get(m["ticker"]) or []
             quotes = {}
@@ -105,13 +114,14 @@ def load(root: Path, hours=(36, 24, 12)) -> list[Day]:
                 if not prior:
                     continue
                 c = prior[-1]
-                bid = _f((c.get("yes_bid") or {}).get("close_dollars"))
-                ask = _f((c.get("yes_ask") or {}).get("close_dollars"))
+                bid = _px(c.get("yes_bid"))
+                ask = _px(c.get("yes_ask"))
                 if bid is None or ask is None:
                     continue
                 quotes[h] = (bid, ask)
             days[key].brackets.append((m["ticker"], br[0], br[1], res == "yes", quotes))
-    return sorted(days.values(), key=lambda x: (x.day, x.series))
+    return sorted((d for d in days.values() if d.actual is not None),
+                  key=lambda x: (x.day, x.series))
 
 
 def day_forecasts(fc: dict, d: date, tz: str, metric: str) -> dict:
