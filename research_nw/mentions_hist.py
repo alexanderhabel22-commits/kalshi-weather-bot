@@ -74,11 +74,20 @@ def main():
 
     with ThreadPoolExecutor(6) as ex:
         res = list(ex.map(trades, rows))
-    with gzip.open(OUT / "trades.csv.gz", "wt", newline="") as fh:
+    # raw trades are too big for a git file; keep contracts per (ticker, taker side, price)
+    agg = {}
+    for x in res:
+        for tk, _, yp, cnt, side in x:
+            try:
+                k = (tk, side, round(float(yp), 2))
+                agg[k] = agg.get(k, 0.0) + float(cnt)
+            except (TypeError, ValueError):
+                continue
+    with gzip.open(OUT / "trades_agg.csv.gz", "wt", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["ticker", "time", "yes_price", "count", "taker_side"])
-        for x in res:
-            w.writerows(x)
+        w.writerow(["ticker", "taker_side", "yes_price", "count"])
+        for (tk, side, yp), cnt in agg.items():
+            w.writerow([tk, side, yp, cnt])
     with open(OUT / "sample.csv", "w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["ticker", "truncated", "in_top"])
