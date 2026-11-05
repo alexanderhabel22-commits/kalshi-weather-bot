@@ -45,7 +45,7 @@ def run(D, city_series, idx, split, L=3, h=0.03, Q=10, TIE=0.3, maxpos=50, maker
     trades = collections.defaultdict(list)
     for r in csv.DictReader(open(f'{D}/tr_{city_series}.csv')):
         trades[r['ticker']].append((T(r['time']), float(r['yes_price']), float(r['count']), r['taker_side']))
-    day = collections.defaultdict(float); fills = 0; vol = 0; cap = collections.defaultdict(float)
+    day = collections.defaultdict(float); fills = 0; vol = 0
     per_mkt = []
     for tk, m in mk.items():
         S = m['S']
