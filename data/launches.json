@@ -795,6 +795,7 @@
   "KX10YRDIRLM",
   "KX10YRDIRLW",
   "KX10YRRATE15M",
+  "KX10YRRATEEVENT",
   "KX10YRRATEH",
   "KX10YUSTSRY",
   "KX14AMENDCASE",
@@ -852,6 +853,7 @@
   "KX2YRDIRHM",
   "KX2YRDIRLM",
   "KX2YRRATE15M",
+  "KX2YRRATEEVENT",
   "KX2YRRATEH",
   "KX2YTEST",
   "KX30CRIME",
@@ -862,6 +864,7 @@
   "KX30YRDIRHM",
   "KX30YRDIRLM",
   "KX30YRRATE15M",
+  "KX30YRRATEEVENT",
   "KX30YRRATEH",
   "KX30YUSTW",
   "KX3MTBILL",
@@ -13026,6 +13029,7 @@
   "KXTARIFFREFUND",
   "KXTARIFFREPEAL",
   "KXTARIFFREVENUE",
+  "KXTARIFFRICEINDIA",
   "KXTARIFFS",
   "KXTARIFFSALUMINUM",
   "KXTARIFFSC",
@@ -14587,6 +14591,7 @@
   "KXVMAVIDEOFORGOOD",
   "KXVMAVOTY",
   "KXVOGUECOVER",
+  "KXVOICELIMINATION",
   "KXVOLLEYBALLMATCH",
   "KXVONCCAN",
   "KXVONCFR",
@@ -16021,11 +16026,41 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-05T21:33:50+00:00",
+ "last_check": "2026-11-05T22:00:28+00:00",
  "pending": {
+  "KX10YRRATEEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-05T22:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T22:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KX10YRRATEEVENT",
+   "title": "US 10Y Treasury yield after events"
+  },
+  "KX2YRRATEEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-05T22:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T22:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KX2YRRATEEVENT",
+   "title": "US 2Y Treasury yield after events"
+  },
+  "KX30YRRATEEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-05T22:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T22:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KX30YRRATEEVENT",
+   "title": "US 30Y Treasury yield after events"
+  },
   "KXACASUBSIDYHOUSE": {
    "category": "Politics",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:00:30+00:00",
    "frequency": "one_off",
@@ -16035,7 +16070,7 @@
   },
   "KXAFCCL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16045,7 +16080,7 @@
   },
   "KXAFCCL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16055,7 +16090,7 @@
   },
   "KXAFCCL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16085,7 +16120,7 @@
   },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16095,7 +16130,7 @@
   },
   "KXBELCHALLBTTS": {
    "category": "Sports",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16135,7 +16170,7 @@
   },
   "KXBOTOLAADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16245,7 +16280,7 @@
   },
   "KXDEMFIRSTWINNOM": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:00:30+00:00",
    "frequency": "custom",
@@ -16255,7 +16290,7 @@
   },
   "KXDPRESFRACTURED": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:30:30+00:00",
    "frequency": "one_off",
@@ -16365,7 +16400,7 @@
   },
   "KXGOPDELMAJ": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:00:30+00:00",
    "frequency": "one_off",
@@ -16375,7 +16410,7 @@
   },
   "KXGOPFIRSTWINNOM": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:00:30+00:00",
    "frequency": "custom",
@@ -16435,7 +16470,7 @@
   },
   "KXJEFFRIESFIRST": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:00:30+00:00",
    "frequency": "one_off",
@@ -16585,7 +16620,7 @@
   },
   "KXRPRESFRACTURED": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:30:30+00:00",
    "frequency": "one_off",
@@ -16595,7 +16630,7 @@
   },
   "KXRPRESPRIMWIN": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -16605,7 +16640,7 @@
   },
   "KXRPRESSWEEP": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -16615,7 +16650,7 @@
   },
   "KXRPRESWINCOUNT": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -16753,9 +16788,19 @@
    "series": "KXSVK1LTOTAL",
    "title": "Total"
   },
+  "KXTARIFFRICEINDIA": {
+   "category": "Politics",
+   "checked": "2026-11-05T22:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T22:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTARIFFRICEINDIA",
+   "title": "Tariff rate on Indian rice"
+  },
   "KXTHIRDPARTYSTATE": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -16775,7 +16820,7 @@
   },
   "KXTPPRESPCT": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -16785,7 +16830,7 @@
   },
   "KXTRUMPFIRSTENDORSE": {
    "category": "Elections",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T18:00:30+00:00",
    "frequency": "one_off",
@@ -16843,6 +16888,16 @@
    "series": "KXURC",
    "title": "United Rugby Championship Rugby Champion"
   },
+  "KXVOICELIMINATION": {
+   "category": "Entertainment",
+   "checked": "2026-11-05T22:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T22:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXVOICELIMINATION",
+   "title": "who will be eliminated from the voice"
+  },
   "KXWBBALLTEAMUSA": {
    "category": "Sports",
    "checked": "2026-11-05T21:33:50+00:00",
@@ -16865,7 +16920,7 @@
   },
   "KXWIMEDICAIDEXP": {
    "category": "Politics",
-   "checked": "2026-11-05T20:30:25+00:00",
+   "checked": "2026-11-05T22:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
