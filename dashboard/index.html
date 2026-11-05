@@ -474,7 +474,7 @@ function lineChart(el, series, o={}){
   const W = el.clientWidth || 340, H = o.h || 190, P = {l:44, r:12, t:12, b:24};
   const pts = series.flatMap(s => s.pts); if (!pts.length){ el.innerHTML = `<div class="empty">${o.empty || "No data yet"}</div>`; return; }
   let x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x)); if (x1 === x0){ x0 -= 3600e3; x1 += 3600e3; }
-  const z = o.zero === false ? [] : [0]; let y0 = Math.min(...z, ...pts.map(p => p.y)), y1 = Math.max(...z, ...pts.map(p => p.y)); if (y1 - y0 < 0.5){ y1 += .25; y0 -= .25; }
+  const z = o.zero === false ? [] : [0]; let y0 = Math.min(...z, ...pts.map(p => p.y)), y1 = Math.max(...z, ...pts.map(p => p.y)); const minSpan = o.minSpan ?? 0.04; if (y1 - y0 < minSpan){ const mid = (y0 + y1) / 2; y0 = mid - minSpan / 2; y1 = mid + minSpan / 2; } // scale to the data, not a fixed 50c window
   if (o.y0 != null) y0 = Math.min(y0, o.y0); if (o.y1 != null) y1 = Math.max(y1, o.y1);
   const pad = (y1 - y0) * .08; y0 -= pad; y1 += pad;
   const X = x => P.l + (x - x0) / (x1 - x0) * (W - P.l - P.r), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
@@ -683,7 +683,7 @@ function renderOverview(){
 
   if ($("#upAll")) $("#upAll").onclick = () => { S.upAll = !S.upAll; renderOverview(); };
   if ($("#upc")){
-    lineChart($("#upc"), [{name:"Up/down", c:upC, w:2.5, pts:upPts}], {h:180, refs:upPts.length > 1 ? [{y:upPts[0].y, c:"#6b7699", label:"start"}] : [],
+    lineChart($("#upc"), [{name:"Up/down", c:upC, w:2.5, pts:upPts}], {h:180, zero:false, refs:upPts.length > 1 ? [{y:upPts[0].y, c:"#6b7699", label:"start"}] : [],
       empty:mk.priced.length ? "Building history: a point every 30 s while open, every 5 min from the bot." : "No open bets right now."});
     $("#upRng").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("upRange", b.dataset.r); renderOverview(); };
   }
@@ -851,7 +851,7 @@ function renderWeather(){
   $("#wxd").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.wxDay = b.dataset.d; renderWeather(); };
   $("#fcl").onclick = e => { const row = e.target.closest(".fc"); if (!row) return; row.classList.toggle("open"); if (row.classList.contains("open")){ const ev = row.dataset.e, el = row.querySelector("[data-ch]");
     const pts = fc.filter(r => r.event === ev).map(r => ({x:+pdate(r.scan_at), y:num(r.median), lo:num(r.p10), hi:num(r.p90)})).sort((a, b) => a.x - b.x);
-    const yv = pts.flatMap(p => [p.lo, p.hi]); lineChart(el, [{name:"model", c:"#f5b335", pts}, {name:"p90", c:"#f5b33555", w:1, dash:1, pts:pts.map(p => ({x:p.x, y:p.hi}))}, {name:"p10", c:"#f5b33555", w:1, dash:1, pts:pts.map(p => ({x:p.x, y:p.lo}))}], {h:140, area:false, zero:false, y0:Math.min(...yv), y1:Math.max(...yv), fy:v => v.toFixed(0) + "°", fv:v => v.toFixed(0) + "°F"}); } };
+    const yv = pts.flatMap(p => [p.lo, p.hi]); lineChart(el, [{name:"model", c:"#f5b335", pts}, {name:"p90", c:"#f5b33555", w:1, dash:1, pts:pts.map(p => ({x:p.x, y:p.hi}))}, {name:"p10", c:"#f5b33555", w:1, dash:1, pts:pts.map(p => ({x:p.x, y:p.lo}))}], {h:140, area:false, zero:false, minSpan:2, y0:Math.min(...yv), y1:Math.max(...yv), fy:v => v.toFixed(0) + "°", fv:v => v.toFixed(0) + "°F"}); } };
   const bins = {}; miss.forEach(m => { const b = Math.max(-5, Math.min(5, Math.round(m))); bins[b] = (bins[b] || 0) + 1; });
   barChart($("#missH"), [-5,-4,-3,-2,-1,0,1,2,3,4,5].map(b => ({label:(b > 0 ? "+" : "") + b + "°F" + (Math.abs(b) === 5 ? " or more" : ""), short:(b > 0 ? "+" : "") + b, v:bins[b] || 0, c:b === 0 ? "#34d399" : Math.abs(b) <= 1 ? "#22d3ee" : Math.abs(b) <= 2 ? "#8b8cf8" : "#e050f0"})), {h:120, fy:v => v.toFixed(0), fv:v => v + " city-days", empty:"No graded city-days yet"});
   barChart($("#lockC"), cd.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:Object.keys(cen[d] || {}).length, c:"#22d3ee", extra:Object.values(cen[d] || {}).filter(x => num(x.min_ask, 1) < .98).length + " below 98¢"})), {h:120, fy:v => v.toFixed(0), fv:v => v + " locks", empty:"No locks logged yet"});
