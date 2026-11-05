@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import daybefore, kalshi, ledger, notify, rain, report as reportmod, strategy, tracking
+from . import daybefore, kalshi, launches, ledger, notify, rain, report as reportmod, strategy, tracking
 from .model import build_day_model
 from .stations import (SeriesInfo, Station, cli_window, climate_day_of,
                        default_catalog, series_from_kalshi)
@@ -305,6 +305,15 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         except Exception as exc:  # never let the test break the scan
             log.warning("rain census failed: %s", exc)
 
+    # new-market watcher (silent unless launch_alerts = "on"), every 30 minutes
+    launch_db = None
+    if cfg.get("markets", "launch_watch", True) and now.minute % 30 < 5:
+        launch_db = launches.load()
+        try:
+            launches.watch(http, cfg, launch_db, now, quiet=quiet, dry_run=dry_run)
+        except Exception as exc:  # never let the watcher break the scan
+            log.warning("launch watch failed: %s", exc)
+
     # 4) health checks
     if catalog and kalshi_ok == 0:
         problems.append("could not reach Kalshi")
@@ -355,6 +364,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         reportmod.ensure_my_trades_file()
         if rain_census is not None:
             rain.save(rain_census)
+        if launch_db is not None:
+            launches.save(launch_db)
         if paper is not None:
             daybefore.save_orders(paper)
     write_json(RUNTIME, runtime)

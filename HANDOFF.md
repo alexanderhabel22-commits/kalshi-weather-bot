@@ -78,6 +78,14 @@ record earns it. Be candid about odds and risk; no hype.
   rain since) and *official* (CLI total), with the ask then, cheapest ask
   later, and depth. Never alerts. Goal: are rain locks ever cheap (≤95¢) or
   priced in like temperature locks? Turn off with `rain_census = false`.
+- **LAUNCH WATCHER** (added Nov 5): `wxbot/launches.py`, every 30 min. Pulls
+  Kalshi's full series list, notices new series and new categories, waits for
+  their first open markets, and logs spread/volume plus a recommended test to
+  `data/launches.json` and REPORT.md. First run is a silent baseline.
+  `launch_alerts = "shadow"` (default) never pushes; `"on"` pushes one short
+  note for new categories, weather series and 15-min/hourly/daily/weekly
+  series (max 4/day, not in quiet hours). Turn off with `launch_watch = false`.
+  Research behind it: `research_launch/` (backtest of first weeks after launch).
   Daily rain series (Weather Company source) are not covered.
 - Risk level: normal.
 
