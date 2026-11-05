@@ -22,7 +22,26 @@
   "Transportation",
   "World"
  ],
- "found": [],
+ "found": [
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-05T17:00:30+00:00",
+   "example": "KXPARAGUAYNEXT-29JAN01-YPAR",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T16:30:31+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-05T17:00:30+00:00",
+   "median_spread": 1.0,
+   "n_open": 14,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (100c), so makers haven't arrived yet.",
+   "series": "KXPARAGUAYNEXT",
+   "status": "live",
+   "title": "Next President of Paraguay",
+   "volume": 0.0
+  }
+ ],
  "known": [
   "10Y2Y",
   "10Y3M",
@@ -7690,6 +7709,7 @@
   "KXMEDIARELEASEST",
   "KXMEDIARELEASEUPONLY",
   "KXMEDICAIDCUTS",
+  "KXMEDICAIDWORKHOUSE",
   "KXMEDICARENEG",
   "KXMEDNOMJUL",
   "KXMEEKMILLAI",
@@ -10272,6 +10292,7 @@
   "KXPAMAILMARGIN",
   "KXPAMAILREQ",
   "KXPAMFGEMP",
+  "KXPAMINWAGE",
   "KXPANAMATRAFFIC",
   "KXPANAMAWEEKLY",
   "KXPAPER",
@@ -15747,11 +15768,21 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-05T16:30:31+00:00",
+ "last_check": "2026-11-05T17:00:30+00:00",
  "pending": {
+  "KXMEDICAIDWORKHOUSE": {
+   "category": "Politics",
+   "checked": "2026-11-05T17:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T17:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEDICAIDWORKHOUSE",
+   "title": "House passage of a bill repealing Medicaid work requirements"
+  },
   "KXNBAPRAPROT": {
    "category": "Sports",
-   "checked": "2026-11-05T16:30:31+00:00",
+   "checked": "2026-11-05T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "custom",
@@ -15759,25 +15790,25 @@
    "series": "KXNBAPRAPROT",
    "title": "Pts + Reb + Ast Protected"
   },
+  "KXPAMINWAGE": {
+   "category": "Politics",
+   "checked": "2026-11-05T17:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T17:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXPAMINWAGE",
+   "title": "Will Pennsylvania raise its minimum wage?"
+  },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
-   "checked": "2026-11-05T16:30:31+00:00",
+   "checked": "2026-11-05T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "one_off",
    "new_category": false,
    "series": "KXPARAGUAYIMPEACH",
    "title": "Will Santiago Pe\u00f1a be impeached?"
-  },
-  "KXPARAGUAYNEXT": {
-   "category": "Elections",
-   "checked": "2026-11-05T16:30:31+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-05T16:30:31+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXPARAGUAYNEXT",
-   "title": "Next President of Paraguay"
   }
  },
  "queue": []
