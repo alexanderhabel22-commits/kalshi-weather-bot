@@ -69,7 +69,7 @@ def _f(x, d=None):
         return d
 
 
-def collect(tz: ZoneInfo) -> list[Result]:
+def collect(tz: ZoneInfo, include_edge: bool = False) -> list[Result]:
     out: list[Result] = []
 
     def local(s):
@@ -84,6 +84,8 @@ def collect(tz: ZoneInfo) -> list[Result]:
             continue
         name = {"lock": "LOCK alerts", "model": "EDGE (silent)", "near": "Near-lock (silent)"}.get(
             r.get("kind"), "EDGE (silent)")
+        if name == "EDGE (silent)" and not include_edge:
+            continue                      # EDGE test turned off (Nov 5)
         if r.get("kind") == "lock" and ledger.is_shadow(r):
             continue
         cost = (_f(r.get("cost"), 0) or 0) + (_f(r.get("fee"), 0) or 0)
@@ -268,7 +270,7 @@ def run_due(cfg, now: datetime, http, dry_run: bool = False) -> list[Path]:
     todo = due(now, tz, state)
     if not todo:
         return []
-    results = collect(tz)
+    results = collect(tz, str(cfg.get("alerts", "edge_alerts", "off")).lower() == "shadow")
     written = []
     for kind, start, end, tag in todo:
         text, phone = build(kind, start, end, results, cfg)

@@ -54,7 +54,7 @@ quiet_allows_locks = false
 summary_hour = 21                # daily summary / heartbeat after 9 PM
 max_alerts_per_day = 15
 realert_edge_gain = 0.05         # re-alert the same contract only if edge grows 5¢+
-edge_alerts = "shadow"           # forecast-based EDGE alerts: "shadow" = log + grade silently,
+edge_alerts = "off"           # off since Nov 5 (95 silent calls: -$22, market beats it). "shadow" = log + grade silently,
                                  # "on" = send them, "off" = ignore. LOCK alerts always send.
 near_lock_alerts = "shadow"      # late-day calls the model rates 95%+ but readings haven't
                                  # decided yet ("near-locks"): same shadow / on / off choice.

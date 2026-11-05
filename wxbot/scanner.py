@@ -345,7 +345,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         title, body = notify.format_summary(
             ledger.stats(rows), ledger.stats(rows, since=midnight), daily["alerts"],
             scans[local_day], sum(r.get("status") == "open" and not ledger.is_shadow(r) for r in rows),
-            runtime["problems"].get(local_day, []), ledger.stats(rows, kind="model", mode="shadow"))
+            runtime["problems"].get(local_day, []),
+            ledger.stats(rows, kind="model", mode="shadow") if edge_mode == "shadow" else None)
         url = reportmod.report_url()
         if url:
             body += "\nTap for the full report."

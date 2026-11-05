@@ -253,7 +253,8 @@ def build_report(rows: list[dict], census: dict, frows: list[dict], cfg, now: da
     lines += _census_section(census, float(sp.get("min_edge_lock", 0.03)),
                              float(sp.get("max_price_lock", 0.97)))
     lines += _my_trades_section(rows, load_my_trades())
-    lines += _shadow_section(rows, "model")
+    if str(cfg.get("alerts", "edge_alerts", "shadow")).lower() == "shadow":
+        lines += _shadow_section(rows, "model")   # silent EDGE test (off since Nov 5)
     lines += _shadow_section(rows, "near")
     lines += _forecast_section(frows)
     lines += rain.report_section(rain.load())
