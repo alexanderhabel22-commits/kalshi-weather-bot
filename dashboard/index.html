@@ -381,7 +381,7 @@ function model(){
     side:(r.side || "").toLowerCase(), price:num(r.price), count:num(r.contracts), filled:num(r.contracts), status:"filled", pnl:null}));
   _model = {rows, manual}; _modelKey = S.lastData; return _model;
 }
-function exposureOf(r){ return r.status === "open" ? r.count * r.price : r.status === "filled" ? r.filled * r.price : 0; }
+function exposureOf(r){ return r.status === "open" ? Math.max(r.count, r.filled) * r.price : r.status === "filled" ? r.filled * r.price : 0; }
 function stats(rows){
   const settled = rows.filter(r => r.status === "settled" && r.pnl != null);
   const pnl = settled.reduce((a, r) => a + r.pnl, 0);
@@ -403,11 +403,12 @@ function markPrice(r){ // value of our side now: mid of bid/ask, or the bid alon
   return sq.bid != null ? sq.bid : null;
 }
 function unrealized(r){
-  if (r.status !== "filled") return null;
-  const m = markPrice(r); return m == null ? null : (m - r.price) * (r.filled || r.count);
+  const n = r.status === "filled" ? (r.filled || r.count) : r.status === "open" ? r.filled : 0;
+  if (!n) return null;
+  const m = markPrice(r); return m == null ? null : (m - r.price) * n;
 }
 function marked(rows){
-  const held = rows.filter(r => r.status === "filled"), priced = held.filter(r => unrealized(r) != null);
+  const held = rows.filter(r => r.status === "filled" || (r.status === "open" && r.filled > 0)), priced = held.filter(r => unrealized(r) != null);
   const tot = priced.reduce((a, r) => a + unrealized(r), 0), cost = priced.reduce((a, r) => a + r.price * (r.filled || r.count), 0);
   return {held, priced, tot, cost, up:priced.filter(r => unrealized(r) > 0.004).length, down:priced.filter(r => unrealized(r) < -0.004).length};
 }
@@ -606,7 +607,7 @@ function renderOverview(){
 
 function orderItem(r, i){
   const sq = sideQuote(r), u = unrealized(r), now = sq ? sq.bid : null, c = v => v == null ? "—" : Math.round(v * 100) + "¢";
-  const sub = [r.status === "open" ? "resting" : r.status === "filled" ? (r.filledAt ? "filled " + ago(r.filledAt) : "filled") + " · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
+  const sub = [r.status === "open" ? (r.filled > 0 ? `resting · ${r.filled} of ${r.count} filled` : "resting") : r.status === "filled" ? (r.filledAt ? "filled " + ago(r.filledAt) : "filled") + " · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
   let mkt = "";
   if (r.status === "open"){
     if (sq && sq.bid != null){
