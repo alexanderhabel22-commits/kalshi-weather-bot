@@ -50,7 +50,8 @@ OPEN = ("resting", "filled")
 # Limits are fractions of the bankroll ([account] bankroll / BANKROLL variable),
 # so they scale as the bankroll grows. settings() turns them into dollars.
 DEFAULTS = {"mode": "off", "max_contracts_per_order": 3, "max_orders_per_run": 15,
-            "max_open_pct": 0.60,         # at most 60% of the bankroll at risk at once (live)
+            "max_open_pct": 0.75,         # at most 75% of the bankroll at risk at once (live)
+            "max_event_pct": 0.20,        # at most 20% on any one event (all strategies)
             "paper_max_open_pct": 1.00,   # paper may use the whole bankroll (Alex, Nov 5)
             "daily_loss_pct": 0.10,       # down 10% today -> no new orders until tomorrow
             "total_loss_pct": 0.25}       # down 25% overall -> HALT and cancel everything
@@ -149,6 +150,7 @@ def settings(cfg: Config) -> dict:
     b = t["bankroll"] = float(cfg.bankroll)
     t["max_open_dollars"] = round(float(t["max_open_pct"]) * b, 2)
     t["paper_max_open_dollars"] = round(float(t["paper_max_open_pct"]) * b, 2)
+    t["max_event_dollars"] = round(float(t["max_event_pct"]) * b, 2)
     t["daily_loss_stop"] = -round(float(t["daily_loss_pct"]) * b, 2)
     t["total_loss_stop"] = -round(float(t["total_loss_pct"]) * b, 2)
     return t
@@ -206,8 +208,8 @@ def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
     if exposure(rows, intent.strategy) + pend(lambda p: p.strategy == intent.strategy) + cost \
             > float(sp.get("max_open_dollars", t["max_open_dollars"])) + 1e-9:
         return "strategy open-$ cap"
-    ev_cap = sp.get("max_event_dollars")
-    if ev_cap is not None and exposure(rows, event=intent.event) + \
+    ev_cap = min(float(sp.get("max_event_dollars", t["max_event_dollars"])), float(t["max_event_dollars"]))
+    if exposure(rows, event=intent.event) + \
             pend(lambda p: p.event == intent.event) + cost > float(ev_cap) + 1e-9:
         return "event open-$ cap"
     return None

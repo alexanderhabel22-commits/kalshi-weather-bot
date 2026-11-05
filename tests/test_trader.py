@@ -60,7 +60,8 @@ def no_env(monkeypatch):
 
 def test_limits_scale_with_bankroll():
     t = trader.settings(cfg(bankroll=40))
-    assert (t["max_open_dollars"], t["daily_loss_stop"], t["total_loss_stop"]) == (24.0, -4.0, -10.0)
+    assert (t["max_open_dollars"], t["daily_loss_stop"], t["total_loss_stop"]) == (30.0, -4.0, -10.0)
+    assert t["max_event_dollars"] == 8.0
     t = trader.settings(cfg(bankroll=400))
     assert t["total_loss_stop"] == -100.0
     assert trader.strategy_settings(cfg(bankroll=40), "mentions", t | {"bankroll": 40})["max_event_dollars"] == 10.0
@@ -324,11 +325,20 @@ def test_paper_fill_when_quotes_move_through_our_bid():
     assert trader.crossed({"side": "yes", "price": "0.30"}, {"yes_bid_dollars": "0.25", "yes_ask_dollars": "0.29"})
 
 
-def test_overall_cap_is_60pct_live_but_100pct_paper():
+def test_overall_cap_is_75pct_live_but_100pct_paper():
     t = trader.settings(cfg(bankroll=10))
     sp = {"max_open_dollars": 100}
     rows = [{"strategy": "x", "event": "E0", "ticker": "T0", "side": "no", "price": "0.80",
-             "count": 7, "filled": 7, "status": "filled"}]                   # $5.60 open
-    it = trader.Intent("mentions", "T1", "E1", "no", 0.80, 1, CLOSE)       # +$0.80 -> $6.40
-    assert trader.vet(it, rows, t, sp, NOW, [], "live") == "overall open-$ cap"   # > $6.00
+             "count": 9, "filled": 9, "status": "filled"}]                   # $7.20 open
+    it = trader.Intent("mentions", "T1", "E1", "no", 0.80, 1, CLOSE)       # +$0.80 -> $8.00
+    assert trader.vet(it, rows, t, sp, NOW, [], "live") == "overall open-$ cap"   # > $7.50
     assert trader.vet(it, rows, t, sp, NOW, [], "paper") is None                  # <= $10.00
+
+
+def test_global_event_cap_applies_to_every_strategy():
+    t = trader.settings(cfg(bankroll=10))                                 # 20% -> $2.00 per event
+    rows = [{"strategy": "x", "event": "E1", "ticker": "T0", "side": "no", "price": "0.80",
+             "count": 2, "filled": 2, "status": "filled"}]                   # $1.60 on E1
+    it = trader.Intent("anything", "T1", "E1", "no", 0.80, 1, CLOSE)
+    assert trader.vet(it, rows, t, {}, NOW, [], "paper") == "event open-$ cap"
+    assert trader.vet(it, rows, t, {"max_event_dollars": 50}, NOW, [], "paper") == "event open-$ cap"
