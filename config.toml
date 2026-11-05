@@ -87,13 +87,16 @@ reset_halt = false               # set true (once) to clear a halt after checkin
 # Mentions NO limit orders (research: about +4c per filled contract over 21 months).
 enabled = true
 live = false                     # true = real orders (when [trading] mode is "live")
-contracts = 2                    # per word
+contracts = 3                    # max contracts per word (also capped by max_contracts_per_order)
+word_pct = 0.05                  # size each word at 5% of the bankroll (~2 contracts at $37);
+                                 # raise `contracts` as the bankroll grows
 max_words_per_event = 3
 min_price = 0.75                 # NO price band
 max_price = 0.90
 min_hours = 1                    # event (speech, broadcast) happens 1-168 hours from now
 max_hours = 168                  # research scored fills at any time before the event
-min_volume = 100                 # contracts traded so far
+min_volume = 1000                # contracts traded so far (Nov 5 walk-forward: busier words
+                                 # paid more in 10 of 14 months; see research_mn/)
 max_open_pct = 0.50              # at most 50% of the bankroll in Mentions
 max_event_pct = 0.25             # at most 25% of the bankroll on one event (one speech)
 
