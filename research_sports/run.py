@@ -2,5 +2,5 @@
 import runpy
 from pathlib import Path
 
-STAGE = "stage_a.py"
+STAGE = "stage_b.py"
 runpy.run_path(str(Path(__file__).parent / STAGE), run_name="__main__")
