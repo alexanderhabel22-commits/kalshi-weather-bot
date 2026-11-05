@@ -1,0 +1,64 @@
+name: cat-research
+
+# Research only (Politics / Elections / Entertainment / Tech / other categories
+# for the longshot-fade and favorite tests). Read-only public data; never
+# trades, never alerts. Runs only on push to this research branch. Output goes
+# to the cat-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-hwu2ed"]
+    paths: ["research_cat/fetch.py", ".github/workflows/cat-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cat-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {label: Elections, cats: "Elections", minvol: "20000"}
+          - {label: Politics, cats: "Politics", minvol: "20000"}
+          - {label: Entertainment, cats: "Entertainment", minvol: "20000"}
+          - {label: Tech-Companies, cats: "Science and Technology,Companies", minvol: "10000"}
+          - {label: Other, cats: "World,Health,Social,Transportation,Exotics,Culture,Education,Business", minvol: "3000"}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        env:
+          MIN_SERIES_VOL: ${{ matrix.minvol }}
+          BUDGET_H: "3.6"
+        run: python research_cat/fetch.py "${{ matrix.cats }}" out
+      - name: Save to cat-research-data branch
+        # only a finished pull is saved (a cancelled rerun must not wipe good data)
+        if: always() && hashFiles('out/trades_agg.csv.gz') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d)-${{ matrix.label }}"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin cat-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/cat-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp" || exit 0
+            git push origin HEAD:cat-research-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1

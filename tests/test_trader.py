@@ -4,7 +4,7 @@ import pytest
 
 from wxbot import trader
 from wxbot.kalshi_api import KalshiClient, OrderRejected, check_order, order_fill_count
-from wxbot.strats import mentions
+from wxbot.strats import favorites, mentions
 from wxbot.util import load_config
 
 UTC = timezone.utc
@@ -20,7 +20,7 @@ def cfg(mode="paper", bankroll=40.0, **mentions_kw):
     return c
 
 
-def mkt(word, yb, ya, ev="KXTRUMPMENTION-26NOV06", vol=500):
+def mkt(word, yb, ya, ev="KXTRUMPMENTION-26NOV06", vol=5000):
     return {"ticker": f"{ev}-{word}", "event_ticker": ev, "close_time": CLOSE,
             "occurrence_datetime": (NOW + timedelta(hours=10)).isoformat().replace("+00:00", "Z"),
             "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": vol,
@@ -32,6 +32,8 @@ class Http:
         self.markets, self.results, self.trades, self.posts = markets, results or {}, list(trades), []
 
     def get_json(self, url, params=None, headers=None):
+        if url.endswith("/events"):
+            return {"events": [], "cursor": ""}
         if url.endswith("/series"):
             return {"series": [{"ticker": "KXTRUMPMENTION", "category": "Mentions"}]}
         if url.endswith("/markets"):
@@ -105,10 +107,20 @@ def test_mentions_picks_band_cheapest_three_per_event():
     assert mentions.candidates([mkt("d", 0.12, 0.13)], {"KXTRUMPMENTION"}, {})[0].price == 0.87
 
 
+def test_mentions_size_scales_with_bankroll():
+    p = {"contracts": 3, "word_pct": 0.05}
+    assert mentions.word_count(0.80, p, 37) == 2       # $1.85 / 80c
+    assert mentions.word_count(0.80, p, 10) == 1       # never below 1
+    assert mentions.word_count(0.80, p, 500) == 3      # capped by contracts
+    assert mentions.word_count(0.80, {"contracts": 2}, 500) == 2   # no word_pct: fixed
+    out = mentions.candidates([mkt("a", 0.12, 0.16)], {"KXTRUMPMENTION"}, p, 100)
+    assert out[0].count == 3                           # 5% of $100 / 85c = 5.9 -> cap 3
+
+
 def test_paper_run_caps_dedupes_then_settles():
     ms = [mkt(w, 0.12, 0.16) for w in "abc"] + [mkt(w, 0.12, 0.16, ev=f"KXTRUMPMENTION-26NOV0{i}")
                                                for i, w in enumerate("defgh", 1)]
-    c = cfg(bankroll=20)                  # open cap 12, mentions 10, per event 5
+    c = cfg(bankroll=20, contracts=2, word_pct=None)  # fixed 2/word; open cap 12, mentions 10, per event 5
     # one speech: three words at 1.70 each would be 5.10 > the 5.00 event cap
     one = trader.run(c, now=NOW, http=Http(ms[:3]), dry_run=True)
     assert len(one["placed"]) == 2 and one["skipped"][0][2] == "event open-$ cap"
@@ -232,3 +244,29 @@ def test_macro_fade_band_window_and_per_event_cap():
     assert "macro_fade" in trader.strategies()
     sp = trader.strategy_settings(cfg(), "macro_fade", trader.settings(cfg()))
     assert sp.get("live") is False
+
+
+def fav_event(markets, cat="Politics", ev="KXSHUTDOWN-26NOV"):
+    return {"event_ticker": ev, "category": cat, "title": "Shutdown ends?", "markets": markets}
+
+
+def fav_mkt(name, yb, ya, vol=600_000, hours=20, ev="KXSHUTDOWN-26NOV"):
+    close = (NOW + timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
+    return {"ticker": f"{ev}-{name}", "event_ticker": ev, "close_time": close, "status": "active",
+            "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": vol}
+
+
+def test_favorites_picks_big_event_favorites_only():
+    p = {"contracts": 2}
+    evs = [fav_event([fav_mkt("a", 0.88, 0.91), fav_mkt("b", 0.05, 0.08),   # NO fav at 93c
+                      fav_mkt("c", 0.50, 0.55), fav_mkt("d", 0.97, 0.98),   # not a favorite / too dear
+                      fav_mkt("e", 0.90, 0.92, hours=400)]),                 # closes too late
+           fav_event([fav_mkt("f", 0.90, 0.93, vol=1000, ev="KXSMALL")], ev="KXSMALL"),  # small event
+           fav_event([fav_mkt("g", 0.90, 0.93, vol=2_000_000, ev="KXNBA")], cat="Sports", ev="KXNBA")]
+    out = favorites.candidates(evs, NOW, p)
+    assert [(i.ticker[-1], i.side, i.price) for i in out] == [("b", "no", 0.93), ("a", "yes", 0.89)]
+    assert all(i.count == 2 and i.strategy == "favorites" for i in out)
+    # 1c spread: join the bid
+    one = favorites.candidates([fav_event([fav_mkt("a", 0.90, 0.91, vol=2_000_000)])], NOW, p)
+    assert one[0].price == 0.90
+    assert "favorites" in trader.strategies()

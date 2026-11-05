@@ -36,8 +36,8 @@ def test_reports_cover_paper_and_live_and_get_written(monkeypatch):
     names = sorted(p.parent.name for p in paths)
     assert names == ["daily", "weekly"]
     weekly = next(p for p in paths if p.parent.name == "weekly").read_text()
-    assert "Weather day-before | paper | 1 | 1 | +$0.70" in weekly
-    assert "Mentions NO | live | 1 | 1 | +$0.30" in weekly
+    assert "Weather day-before | practice, no money | 1 | 1 | +$0.70" in weekly
+    assert "Mentions NO | REAL money | 1 | 1 | +$0.30" in weekly
     assert "Real money" in weekly and "## Reasoning by strategy" in weekly and "## Biggest results" in weekly
     # already sent: nothing due on the next run
     assert digest.run_due(cfg, datetime(2026, 11, 9, 15, 5, tzinfo=UTC), None) == []

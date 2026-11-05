@@ -99,10 +99,20 @@ def _vol(m: dict) -> float:
     return 0.0
 
 
-def candidates(markets: list[dict], series: set[str], p: dict) -> list[Intent]:
+def word_count(px: float, p: dict, bankroll: float | None) -> int:
+    """Contracts per word: word_pct of the bankroll (so size grows with it),
+    at least 1, at most `contracts`. Without word_pct: `contracts`."""
+    cap = int(p.get("contracts", 2))
+    pct = p.get("word_pct")
+    if pct is None or not bankroll or px <= 0:
+        return cap
+    return max(1, min(cap, int(float(pct) * float(bankroll) / px + 1e-9)))
+
+
+def candidates(markets: list[dict], series: set[str], p: dict,
+               bankroll: float | None = None) -> list[Intent]:
     lo, hi = float(p.get("min_price", 0.75)), float(p.get("max_price", 0.90))
     n_words = int(p.get("max_words_per_event", 3))
-    count = int(p.get("contracts", 2))
     min_vol = float(p.get("min_volume", 100))
     by_event: dict[str, list] = {}
     for m in markets:
@@ -122,7 +132,7 @@ def candidates(markets: list[dict], series: set[str], p: dict) -> list[Intent]:
             continue
         title = m.get("title") or m.get("yes_sub_title") or m.get("ticker", "")
         by_event.setdefault(ev, []).append(Intent(
-            "mentions", m["ticker"], ev, "no", px, count, m.get("close_time") or "",
+            "mentions", m["ticker"], ev, "no", px, word_count(px, p, bankroll), m.get("close_time") or "",
             title[:120], f"no bid {no_bid:.2f} / ask {no_ask:.2f}"))
     out = []
     for ev in sorted(by_event):
@@ -142,7 +152,7 @@ def propose(ctx) -> list[Intent]:
         return []
     # skip markets whose close we can't read
     markets = [m for m in markets if parse_iso(m.get("close_time"))]
-    out = candidates(markets, series, p)
+    out = candidates(markets, series, p, getattr(ctx.cfg, "bankroll", None))
     band = sum(1 for m in markets if (ya := kalshi.price(m, "yes_ask")) and
                float(p.get("min_price", 0.75)) <= 1 - ya + 0.01 <= float(p.get("max_price", 0.90)))
     log.info("mentions: %d series (%d active), %d markets closing soon, %d near the price band, "
