@@ -217,6 +217,9 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 const REPO = "alexanderhabel22-commits/kalshi-weather-bot";
 const API = "https://api.github.com/repos/" + REPO;
 const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
+// Read-only Cloudflare relay for Kalshi's public prices (Kalshi blocks browser calls).
+// Source: tools/kalshi-relay-worker.js (only GET /markets is allowed).
+const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
 const COLORS = {mentions:"#22d3ee", weather:"#e050f0", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
@@ -329,14 +332,28 @@ async function loadQuotes(){
   const open = model().rows.filter(r => r.status === "open" || r.status === "filled").map(r => r.ticker);
   const tk = [...new Set(open)].slice(0, 40);
   if (!tk.length || S.noQuotes) return;
-  if (S.qBlocked){ // last try was blocked: probe with one request before sending them all
-    try { await getJSON(KALSHI + "/markets/" + encodeURIComponent(tk[0])); S.qBlocked = false; } catch(e){ S.noQuotes = true; return; }
-  }
-  const res = await Promise.allSettled(tk.map(t => getJSON(KALSHI + "/markets/" + encodeURIComponent(t))));
+  const put = m => { const p = k => m[k + "_dollars"] != null && m[k + "_dollars"] !== "" ? num(m[k + "_dollars"], null) : (m[k] != null ? num(m[k]) / 100 : null);
+    S.quotes[m.ticker] = {yb:p("yes_bid"), ya:p("yes_ask"), last:p("last_price"), status:m.status, at:Date.now(), src:"live"}; };
   let ok = 0;
-  res.forEach(r => { if (r.status !== "fulfilled" || !r.value.market) return; ok++; const m = r.value.market;
-    const p = k => m[k + "_dollars"] != null && m[k + "_dollars"] !== "" ? num(m[k + "_dollars"], null) : (m[k] != null ? num(m[k]) / 100 : null);
-    S.quotes[m.ticker] = {yb:p("yes_bid"), ya:p("yes_ask"), last:p("last_price"), status:m.status, at:Date.now(), src:"live"}; });
+  // 1) the relay: one batched request for every open ticker
+  let relayUp = false;
+  try {
+    const js = await getJSON(RELAY + "/markets?limit=200&tickers=" + encodeURIComponent(tk.join(",")));
+    relayUp = true;
+    for (const m of js.markets || []) if (tk.includes(m.ticker)){ put(m); ok++; }
+  } catch(e){}
+  // relay works but the batch answer didn't cover our tickers: one request per ticker, at most every 2 minutes
+  if (relayUp && ok < tk.length && Date.now() - (S.lastPerTicker || 0) > 120e3){
+    S.lastPerTicker = Date.now();
+    const res = await Promise.allSettled(tk.filter(t => !S.quotes[t] || S.quotes[t].src !== "live" || Date.now() - S.quotes[t].at > 20e3)
+      .map(t => getJSON(RELAY + "/markets/" + encodeURIComponent(t))));
+    res.forEach(r => { if (r.status === "fulfilled" && r.value.market){ put(r.value.market); ok++; } });
+  }
+  // 2) Kalshi directly (works only if the browser is allowed), probing once when it failed before
+  if (!ok && !S.qBlocked){
+    const res = await Promise.allSettled(tk.map(t => getJSON(KALSHI + "/markets/" + encodeURIComponent(t))));
+    res.forEach(r => { if (r.status === "fulfilled" && r.value.market){ put(r.value.market); ok++; } });
+  }
   if (!ok){ S.noQuotes = true; S.qBlocked = true; } // Kalshi blocks browser calls: keep using the bot's snapshot
 }
 function sideQuote(r){ const q = S.quotes[r.ticker]; if (!q) return null;
