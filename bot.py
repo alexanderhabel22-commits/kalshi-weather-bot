@@ -58,9 +58,15 @@ def main(argv=None) -> int:
         if not args.dry_run:
             try:
                 from wxbot import quotes
-                quotes.snapshot(http, now)
+                snap = quotes.snapshot(http, now)
             except Exception as exc:  # dashboard prices must never break trading
                 logging.exception("quotes failed: %s", exc)
+                snap = {}
+            try:
+                from wxbot import equity
+                equity.record(now, (snap or {}).get("quotes") or {})
+            except Exception as exc:  # dashboard history must never break trading
+                logging.exception("equity failed: %s", exc)
         print(f"trade ({out['mode']}): placed {len(out['placed'])}, skipped {len(out['skipped'])}"
               + (f", stops: {out['stops']}" if out["stops"] else ""))
         return 0

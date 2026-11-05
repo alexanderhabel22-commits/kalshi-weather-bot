@@ -125,6 +125,11 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .chart .tip{position:absolute;pointer-events:none;background:rgba(10,14,28,.96);border:1px solid var(--line2);border-radius:9px;padding:7px 9px;font-size:11.5px;font-family:var(--mono);white-space:nowrap;transform:translate(-50%,-100%);display:none;z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.5)}
 .chart .tip .k{display:flex;align-items:center;gap:6px}
 .chart .tip .sw{width:8px;height:3px;border-radius:2px}
+.rh .big{font-family:var(--mono);font-size:34px;font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-top:4px}
+.rh .chg{font-family:var(--mono);font-size:13px;margin:4px 0 10px}
+.rng{display:flex;gap:4px;margin-top:6px}
+.rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
+.rng button.on{background:var(--rc,#34d399);color:#070a12}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2);margin-bottom:8px}
 .legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
 .legend span.off{opacity:.35}
@@ -299,13 +304,13 @@ async function loadData(){
     config:["config.toml"], orders:["data/trade_orders.csv"], tstate:["data/trader_state.json","json"],
     paper:["data/paper_orders.csv"], alerts:["data/alerts.csv"], forecasts:["data/forecasts.csv"],
     census:["data/census.json","json"], rain:["data/rain_census.json","json"], mytrades:["data/my_trades.csv"],
-    report:["data/REPORT.md"], qsnap:["data/quotes.json","json"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"]
+    report:["data/REPORT.md"], qsnap:["data/quotes.json","json"], equity:["data/equity.csv"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"]
   };
   const keys = Object.keys(files), errs = [];
   const res = await Promise.allSettled(keys.map(k => raw(files[k][0], files[k][1])));
   const d = {};
   res.forEach((r, i) => { const k = keys[i]; if (r.status === "fulfilled") d[k] = r.value; else { errs.push(String(r.reason.message || r.reason)); d[k] = S.data["_" + k]; } });
-  for (const k of ["orders","paper","alerts","forecasts","mytrades"]) d[k] = typeof d[k] === "string" ? parseCSV(d[k]) : (d[k] || []);
+  for (const k of ["orders","paper","alerts","forecasts","mytrades","equity"]) d[k] = typeof d[k] === "string" ? parseCSV(d[k]) : (d[k] || []);
   d.config = typeof d.config === "string" ? parseTOML(d.config) : (d.config || {});
   if (!d.verdicts) { try { d.verdicts = await getJSON("verdicts.json"); } catch(e){ d.verdicts = {events:[], checkpoints:[], strategies:{}}; } }
   for (const k of keys) d["_" + k] = d[k];
@@ -439,6 +444,29 @@ function marked(rows){
   return {held, priced, tot, cost, up:priced.filter(r => unrealized(r) > 0.004).length, down:priced.filter(r => unrealized(r) < -0.004).length};
 }
 
+/* ---------------------------------------------------------------- value history */
+// The bot writes one row per mode to data/equity.csv after every trade run (~5 min).
+// While the page is open it also keeps its own point every 30 s (this browser only).
+const RANGES = {"1H":3600e3, "1D":864e5, "1W":7 * 864e5, "ALL":Infinity};
+function browserHist(){ if (!S.hist){ try { S.hist = JSON.parse(ls.get("upHist") || "{}"); } catch(e){ S.hist = {}; } } return S.hist; }
+function noteLive(){
+  const H = browserHist(), now = Date.now();
+  for (const mode of ["paper","live"]){
+    const mk = marked(modeRows(mode)); if (!mk.priced.length) continue;
+    const a = (H[mode] = (H[mode] || []).filter(p => now - p.x < 2 * 864e5));
+    if (a.length && now - a.at(-1).x < 25e3) a.pop();
+    a.push({x:now, y:+mk.tot.toFixed(2)});
+  }
+  ls.set("upHist", JSON.stringify(H));
+}
+function equityRows(mode){ return (S.data.equity || []).filter(r => r.mode === mode).map(r => ({...r, x:+pdate(r.at)})).filter(r => r.x).sort((a, b) => a.x - b.x); }
+function byStrategy(r){ const o = {}; for (const part of String(r.by_strategy || "").split(";")){ const [n, re, un, ex, he] = part.split(":"); if (n) o[n] = {realized:num(re), unrealized:num(un), exposure:num(ex), held:num(he)}; } return o; }
+function upPoints(mode){
+  const pts = equityRows(mode).map(r => ({x:r.x, y:num(r.unrealized)}));
+  for (const p of browserHist()[mode] || []) pts.push({x:p.x, y:p.y});
+  return pts.sort((a, b) => a.x - b.x);
+}
+
 /* ---------------------------------------------------------------- charts */
 function lineChart(el, series, o={}){
   const W = el.clientWidth || 340, H = o.h || 190, P = {l:44, r:12, t:12, b:24};
@@ -564,18 +592,29 @@ function renderOverview(){
       <div><div class="lbl">Open</div><div class="val">${st.open.length}<small> · $${st.exposure.toFixed(2)}</small></div></div>
     </div></div>`;
 
-  const mk = marked(rows);
-  if (mk.held.length){
+  const mk = marked(rows), upAll = upPoints(mode);
+  if (mk.priced.length) upAll.push({x:Date.now(), y:+mk.tot.toFixed(2)});
+  const rng = RANGES[ls.get("upRange")] ? ls.get("upRange") : "1D";
+  let upPts = upAll.filter(p => Date.now() - p.x <= RANGES[rng]);
+  if (upPts.length === 1 && upAll.length > 1) upPts = upAll.slice(-2);
+  const upNow = upPts.length ? upPts.at(-1).y : null, upChg = upPts.length > 1 ? upNow - upPts[0].y : 0, upC = upChg < -0.004 ? "#fb6b7b" : "#34d399";
+  if (mk.held.length || upAll.length){
     const list = mk.priced.slice().sort((x, y) => unrealized(y) - unrealized(x));
     const best = list[0], worst = list.at(-1), c = v => Math.round(v * 100) + "¢";
-    h += `<h2>Live up/down <span class="sub">open bets marked at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></h2><div class="card">
-      <div class="grid g3"><div><div class="lbl">Now</div><div class="val ${cls(mk.tot)}">${mk.priced.length ? money(mk.tot) : "—"}</div></div>
+    h += `<h2>Live up/down <span class="sub">before selling · open bets at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></h2><div class="card rh glow" style="--rc:${upC}">
+      <div class="lbl">If you sold everything now</div>
+      <div class="big ${cls(upNow || 0)}">${upNow == null ? "—" : money(upNow)}</div>
+      <div class="chg ${upChg < -0.004 ? "neg" : "pos"}">${upPts.length > 1 ? `${upChg < -0.004 ? "▼" : "▲"} ${money(upChg)} <span class="mute">${rng === "ALL" ? "all time" : "past " + {"1H":"hour","1D":"day","1W":"week"}[rng]}</span>` : `<span class="mute">history builds every 5 min</span>`}</div>
+      <div class="chart" id="upc"></div>
+      <div class="rng" id="upRng">${Object.keys(RANGES).map(k => `<button data-r="${k}" class="${k === rng ? "on" : ""}">${k}</button>`).join("")}</div>
+      <div class="grid g3" style="margin-top:14px"><div><div class="lbl">Cost held</div><div class="val">${mk.cost ? "$" + mk.cost.toFixed(2) : "—"}</div></div>
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
       <div class="list" style="margin-top:8px">${list.slice(0, 6).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
       ${list.length > 6 ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}. All ${list.length} in Orders.</div>` : ""}</div>`;
   }
+  if (mk.priced.length > 1) h += `<h2>Up/down by bet <span class="sub">${mk.priced.length} held · tap a bar</span></h2><div class="card"><div class="chart" id="upBets"></div></div>`;
   h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
     ${meter("Money at risk (trader orders)", capExp, openCap, {txt:`${pct(capExp / B, 1)} of ${pct(capPct)} cap`, sub:`$${capExp.toFixed(2)} open of $${openCap.toFixed(2)} allowed${mode === "paper" ? ` · paper cap ${pct(capPct)}, live cap ${pct(num(t.max_open_pct, .6))}` : ""}`})}
     ${resExp > 0 ? `<div class="meter"><div class="row"><span class="dim">Weather research log</span><b>$${resExp.toFixed(2)}</b></div><div class="s mute" style="font-size:11px">${research.length} day-before paper orders. Uncapped, no money, not counted against the cap.</div></div>` : ""}
@@ -583,7 +622,9 @@ function renderOverview(){
     ${meter("Total loss vs halt stop", -st.pnl, totStop, {txt:`${money(st.pnl)} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} overall halts everything and cancels resting orders`})}
   </div>`;
 
-  h += `<h2>P&L over time</h2><div class="card"><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div></div>`;
+  const eqRows = equityRows(mode);
+  if (eqRows.length) h += `<h2>Money at risk over time <span class="sub">trader orders · cap $${openCap.toFixed(2)}</span></h2><div class="card"><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div></div>`;
+  h += `<h2>Realized P&L <span class="sub">cashed out at settlement</span></h2><div class="card"><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div></div>`;
   h += `<h2>Daily P&L</h2><div class="card"><div class="chart" id="daily"></div></div>`;
   h += `<h2>Strategies <span class="sub">${strats.length} ${mode}</span></h2><div class="grid cols2">`;
   const bench = (S.data.verdicts || {}).strategies || {};
@@ -622,6 +663,22 @@ function renderOverview(){
   }
   $("#v-overview").innerHTML = h;
 
+  if ($("#upc")){
+    lineChart($("#upc"), [{name:"Up/down", c:upC, w:2.5, pts:upPts}], {h:180, refs:upPts.length > 1 ? [{y:upPts[0].y, c:"#6b7699", label:"start"}] : [],
+      empty:mk.priced.length ? "Building history: a point every 30 s while open, every 5 min from the bot." : "No open bets right now."});
+    $("#upRng").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("upRange", b.dataset.r); renderOverview(); };
+  }
+  if ($("#upBets")){
+    const list = mk.priced.slice().sort((x, y) => unrealized(y) - unrealized(x));
+    barChart($("#upBets"), list.map(r => ({label:r.title, short:"", v:unrealized(r), extra:`${r.side.toUpperCase()} ${r.filled || r.count} @ ${Math.round(r.price * 100)}¢ → ${Math.round(markPrice(r) * 100)}¢ · ${strategyName(r.strategy)}`})), {h:140});
+  }
+  if ($("#exp")){
+    const names = [...new Set(eqRows.flatMap(r => Object.keys(byStrategy(r))))];
+    const ex = [{name:"Total", c:"#e6ecff", w:2.5, pts:eqRows.map(r => ({x:r.x, y:num(r.exposure)}))}];
+    names.forEach(n => ex.push({name:strategyName(n), c:colorOf(n, strats.indexOf(n) < 0 ? names.indexOf(n) : strats.indexOf(n)), pts:eqRows.map(r => ({x:r.x, y:(byStrategy(r)[n] || {}).exposure || 0}))}));
+    $("#expLeg").innerHTML = ex.map(s => `<span><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("");
+    lineChart($("#exp"), ex, {h:170, refs:[{y:openCap, c:"#f5b335", label:"cap"}], y1:openCap * 1.02});
+  }
   const ser = [cumSeries(rows, "Total", "#e6ecff")];
   strats.forEach((n, i) => { const s = cumSeries(rows.filter(r => r.strategy === n), strategyName(n), colorOf(n, i)); if (s.pts.length) ser.push(s); });
   ser[0].w = 2.5;
@@ -840,6 +897,7 @@ async function refresh(force){
     if (force || Date.now() - S.lastData >= DATA_MS - 2e3) await loadData();
     if (force || Date.now() - S.lastApi >= API_MS - 2e3) await loadApi();
     await loadQuotes();
+    noteLive();
     renderAll();
   } catch(e){ S.errors.push(String(e.message || e)); renderAll(); }
   finally { busy = false; }
@@ -855,7 +913,7 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) refr
 let qBusy = false;
 async function refreshQuotes(){
   if (qBusy || busy || S.noQuotes) return; qBusy = true;
-  try { await loadQuotes(); S.lastQuotes = Date.now(); if (["overview","orders"].includes(S.view) && !document.querySelector(".item.tap.open")) renderAll(); }
+  try { await loadQuotes(); noteLive(); S.lastQuotes = Date.now(); if (["overview","orders"].includes(S.view) && !document.querySelector(".item.tap.open")) renderAll(); }
   finally { qBusy = false; }
 }
 setInterval(() => { if (document.hidden) return; if (Date.now() - S.lastData >= DATA_MS) refresh();
