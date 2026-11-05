@@ -588,6 +588,7 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             log.warning("balance check failed: %s", exc)
             cash = 0.0                   # can't see the balance: no live orders this run
             out["stops"].append(f"balance check failed: {exc}")
+    rejected_live: list[str] = []
     for it in planned:
         mode = plan_mode[id(it)]
         if mode == "live" and cash is not None:
@@ -616,6 +617,7 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             except (HttpError, OrderRejected) as exc:
                 log.warning("order %s %s rejected: %s", it.ticker, it.side, exc)
                 out["skipped"].append((it.ticker, it.side, f"rejected: {exc}"))
+                rejected_live.append(f"{it.strategy} {it.ticker}: {str(exc)[:120]}")
                 continue
             row["order_id"] = o.get("order_id", "")
         if it.taker:
@@ -636,6 +638,15 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             cash -= it.count * it.price
         rows.append(row)
         out["placed"].append(row)
+
+    if rejected_live:
+        # Kalshi refused real orders: tell Alex (at most once every 3 hours)
+        last = parse_iso(state.get("reject_alert_at"))
+        if not last or now - last >= timedelta(hours=3):
+            state["reject_alert_at"] = now.isoformat(timespec="seconds")
+            _alert(http, cfg, f"Kalshi rejected {len(rejected_live)} live order(s)",
+                   "\n".join(rejected_live[:4]) + "\nNothing was bought. The bot keeps trying; "
+                   "set TRADING_MODE=off to stop.", dry_run, 4, ["warning"])
 
     # ---- early exits (judgement: sell only when it beats holding)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") == "filled" for r in rows):

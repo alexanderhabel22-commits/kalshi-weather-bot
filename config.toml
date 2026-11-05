@@ -79,8 +79,11 @@ spread_inflation = 1.15
 # Even in "live", a strategy only trades real money once its own table says
 # live = true (it passed its paper test and Alex said go); otherwise paper.
 # New edge = a module in wxbot/strats/ (NAME + propose) + a [trading.<NAME>] table.
-mode = "paper"                   # no real money (Alex, Nov 5 PM: hold until the LOCK
-                                 # reading bug is understood). Kill switch: TRADING_MODE=off.
+mode = "live"                    # REAL money since Nov 5 7 PM ET (Alex's OK) for the strategies
+                                 # whose table says live = true: mentions, favorites, macro_fade.
+                                 # LOCKs and weather stay paper. KILL SWITCH: set the GitHub
+                                 # variable TRADING_MODE to off (Settings > Secrets and variables
+                                 # > Actions > Variables), or paper to go back to paper.
 max_contracts_per_order = 10     # hard per-order size limit (each strategy's own size is smaller)
 max_orders_per_run = 15
 # Limits scale with the bankroll ([account] bankroll or the BANKROLL variable):
@@ -103,7 +106,7 @@ reset_halt = false               # set true (once) to clear a halt after checkin
 max_week_contracts = 5000        # fair share of the flow (scale study)
 max_market_contracts = 200       # per-market ceiling (scale study)
 enabled = true
-live = false                     # true = real orders (when [trading] mode is "live")
+live = true                      # REAL money (Alex, Nov 5 7 PM ET)
 contracts = 3                    # max contracts per word (also capped by max_contracts_per_order)
 word_pct = 0.05                  # size each word at 5% of the bankroll (~3 contracts at $50);
                                  # raise `contracts` as the bankroll grows
@@ -124,7 +127,7 @@ max_event_pct = 0.20             # at most 20% of the bankroll on one event (one
 max_week_contracts = 4000        # fair share of the flow (scale study)
 max_market_contracts = 1000      # per-market ceiling (scale study)
 enabled = true
-live = false                     # stays false until the paper test passes and Alex says go
+live = true                      # REAL money (Alex, Nov 5 7 PM ET)
 series = ["KXFED", "KXFEDDECISION", "KXCPI", "KXCPIYOY", "KXCPICORE", "KXPCECORE"]
 contracts = 1
 max_contracts = 2
@@ -144,7 +147,7 @@ max_event_pct = 0.10             # at most 10% on one release / one Fed meeting
 max_week_contracts = 8000        # fair share of the flow (scale study)
 max_market_contracts = 1000      # per-market ceiling (scale study)
 enabled = true
-live = false                     # true = real orders (when [trading] mode is "live")
+live = true                      # REAL money (Alex, Nov 5 7 PM ET)
 categories = ["Elections", "Politics", "Entertainment"]
 min_event_volume = 1000000       # contracts traded so far across the event's markets
 min_series_volume = 1000000      # only look at series that have traded 1M+ contracts in total

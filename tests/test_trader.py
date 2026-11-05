@@ -16,6 +16,8 @@ def cfg(mode="paper", bankroll=40.0, **mentions_kw):
     c = load_config()
     c.raw["account"]["bankroll"] = bankroll
     c.raw["trading"]["mode"] = mode
+    for name in ("mentions", "favorites", "macro_fade", "locks", "weather"):
+        c.raw["trading"][name]["live"] = False      # tests opt in to real money explicitly
     c.raw["trading"]["mentions"].update(mentions_kw)
     return c
 
@@ -252,8 +254,6 @@ def test_macro_fade_band_window_and_per_event_cap():
     assert [(i.ticker[-1], i.price) for i in out] == [("b", 0.76), ("d", 0.83), ("a", 0.89)]
     assert all(i.side == "no" and i.strategy == "macro_fade" for i in out)
     assert "macro_fade" in trader.strategies()
-    sp = trader.strategy_settings(cfg(), "macro_fade", trader.settings(cfg()))
-    assert sp.get("live") is False
 
 
 def fav_event(markets, cat="Politics", ev="KXSHUTDOWN-26NOV"):
@@ -432,9 +432,26 @@ def lcfg(**kw):
     return c
 
 
-def test_real_money_is_off_by_default():
+def test_only_approved_strategies_trade_real_money():
+    # Alex, Nov 5 7 PM ET: mentions, favorites, macro_fade live; LOCKs and weather paper
     c = load_config()
-    assert c.raw["trading"]["mode"] != "live" and c.raw["trading"]["locks"]["live"] is False
+    live = {n for n in trader.strategies()
+            if trader.strategy_mode(c.raw["trading"]["mode"], c.raw["trading"].get(n, {})) == "live"}
+    assert live == {"mentions", "favorites", "macro_fade"}
+
+
+def test_rejected_live_order_alerts_once(monkeypatch):
+    from wxbot.util import HttpError
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+
+    class Refuse(FakeClient):
+        def place_limit(self, *a):
+            raise HttpError(400, "orders", "bad order")
+    http = Http([mkt("a", 0.12, 0.16)])
+    trader.run(cfg(mode="live", live=True), now=NOW, http=http, client=Refuse())
+    trader.run(cfg(mode="live", live=True), now=NOW + timedelta(minutes=30), http=http, client=Refuse())
+    assert sum("rejected" in p["title"] for p in http.posts) == 1
+    assert not trader.load()
 
 
 LOCK_TK = "KXHIGHPHIL-26NOV06-B74.5"
