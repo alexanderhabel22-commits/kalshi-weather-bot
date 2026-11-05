@@ -6,6 +6,11 @@
       "backtest_c": 4.2,
       "backtest_note": "Resting NO 75-90c on 'Will X say Y?' words, Feb 2025-Oct 2026, 18/21 months up"
     },
+    "favorites": {
+      "label": "Big-event favorites",
+      "backtest_c": 3.7,
+      "backtest_note": "Resting bids on 85-96c favorites in Elections/Politics/Entertainment events with 1M+ contracts traded, Feb 2025-Oct 2026, 317 events, 88% up"
+    },
     "weather": {
       "label": "Weather day-before",
       "backtest_c": 1.3,
@@ -47,6 +52,8 @@
      "summary": "Kalshi beats or matches the nowcasts; no lag edge. Three weak leads to re-test.", "next": "2027-02-01"},
     {"date": "2026-11-05", "title": "Longshot fade in Financials / Econ / Crypto", "verdict": "PENDING", "area": "Financials",
      "summary": "One month showed +4.5c (Econ) and +6.8c (Financials). Full-history check running."},
+    {"date": "2026-11-05", "title": "Longshots and favorites in every other category", "verdict": "GO", "area": "Politics/Entertainment",
+     "summary": "Only favorites at 85-96c in BIG events (1M+ contracts) pay, +3.7c per filled contract; small events lose. Running automatically on paper from Nov 5.", "next": "2026-12-03"},
     {"date": "2026-11-05", "title": "Newly launched markets", "verdict": "PENDING", "area": "Platform",
      "summary": "Launch backtest running; new-market watcher logging in shadow."},
     {"date": "2026-11-05", "title": "Sportsbook odds vs Kalshi", "verdict": "PENDING", "area": "Sports",
