@@ -381,7 +381,7 @@ function model(){
     side:(r.side || "").toLowerCase(), price:num(r.price), count:num(r.contracts), filled:num(r.contracts), status:"filled", pnl:null}));
   _model = {rows, manual}; _modelKey = S.lastData; return _model;
 }
-function exposureOf(r){ return r.status === "open" ? r.count * r.price : r.status === "filled" ? r.filled * r.price : 0; }
+function exposureOf(r){ return r.status === "open" ? Math.max(r.count, r.filled) * r.price : r.status === "filled" ? r.filled * r.price : 0; }
 function stats(rows){
   const settled = rows.filter(r => r.status === "settled" && r.pnl != null);
   const pnl = settled.reduce((a, r) => a + r.pnl, 0);
@@ -397,10 +397,20 @@ function stats(rows){
     winRate: settled.length ? wins / settled.length : null, fillRate: (filledN + unfilled) ? filledN / (filledN + unfilled) : null,
     open, exposure: open.reduce((a, r) => a + exposureOf(r), 0), todayPnl, n: rows.length};
 }
+function markPrice(r){ // value of our side now: mid of bid/ask, or the bid alone
+  const sq = sideQuote(r); if (!sq) return null;
+  if (sq.bid != null && sq.ask != null) return (sq.bid + sq.ask) / 2;
+  return sq.bid != null ? sq.bid : null;
+}
 function unrealized(r){
-  const q = S.quotes[r.ticker]; if (!q || r.status !== "filled") return null;
-  const bid = r.side === "yes" ? q.yb : (q.ya != null ? 1 - q.ya : null);
-  return bid == null ? null : (bid - r.price) * (r.filled || r.count);
+  const n = r.status === "filled" ? (r.filled || r.count) : r.status === "open" ? r.filled : 0;
+  if (!n) return null;
+  const m = markPrice(r); return m == null ? null : (m - r.price) * n;
+}
+function marked(rows){
+  const held = rows.filter(r => r.status === "filled" || (r.status === "open" && r.filled > 0)), priced = held.filter(r => unrealized(r) != null);
+  const tot = priced.reduce((a, r) => a + unrealized(r), 0), cost = priced.reduce((a, r) => a + r.price * (r.filled || r.count), 0);
+  return {held, priced, tot, cost, up:priced.filter(r => unrealized(r) > 0.004).length, down:priced.filter(r => unrealized(r) < -0.004).length};
 }
 
 /* ---------------------------------------------------------------- charts */
@@ -518,13 +528,25 @@ function renderOverview(){
     <div class="big ${cls(st.pnl)}">${money(st.pnl)}</div>
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${st.settled.length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
-    ${unr.length ? `<div class="lbl" style="margin-top:6px">Open, marked</div><div class="val ${cls(unrTot)}" style="font-size:15px">${money(unrTot)}</div>` : ""}</div></div>
+    <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
     <div class="grid g3" style="margin-top:14px">
       <div><div class="lbl">Win rate</div><div class="val">${st.winRate == null ? "—" : pct(st.winRate)}</div></div>
       <div><div class="lbl">Edge / ct</div><div class="val ${cls(st.edgeC)}">${st.contracts ? cents(st.edgeC) : "—"}</div></div>
       <div><div class="lbl">Open</div><div class="val">${st.open.length}<small> · $${st.exposure.toFixed(2)}</small></div></div>
     </div></div>`;
 
+  const mk = marked(rows);
+  if (mk.held.length){
+    const list = mk.priced.slice().sort((x, y) => unrealized(y) - unrealized(x));
+    const best = list[0], worst = list.at(-1), c = v => Math.round(v * 100) + "¢";
+    h += `<h2>Live up/down <span class="sub">open bets marked at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></h2><div class="card">
+      <div class="grid g3"><div><div class="lbl">Now</div><div class="val ${cls(mk.tot)}">${mk.priced.length ? money(mk.tot) : "—"}</div></div>
+      <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
+      <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
+      <div class="list" style="margin-top:8px">${list.slice(0, 6).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div></div>`; }).join("")}</div>
+      ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
+      ${list.length > 6 ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}. All ${list.length} in Orders.</div>` : ""}</div>`;
+  }
   h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
     ${meter("Money at risk", st.exposure, openCap, {txt:`${pct(st.exposure / B, 1)} of ${pct(num(t.max_open_pct, .6))} cap`, sub:`$${st.exposure.toFixed(2)} open of $${openCap.toFixed(2)} allowed`})}
     ${meter("Today's loss vs daily stop", -st.todayPnl, dayStop, {txt:`${money(st.todayPnl)} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} of bankroll in a day pauses new orders until tomorrow`})}
@@ -536,7 +558,7 @@ function renderOverview(){
   h += `<h2>Strategies <span class="sub">${strats.length} ${mode}</span></h2><div class="grid cols2">`;
   const bench = (S.data.verdicts || {}).strategies || {};
   strats.forEach((name, i) => {
-    const r = rows.filter(x => x.strategy === name), s = stats(r), sp = t[name] || {}, m = stratMode(name), b = bench[name] || {};
+    const r = rows.filter(x => x.strategy === name), s = stats(r), mk = marked(r), sp = t[name] || {}, m = stratMode(name), b = bench[name] || {};
     const cap = sp.max_open_pct ? sp.max_open_pct * B : null;
     h += `<div class="card strat"><h3><span class="dot" style="background:${colorOf(name, i)};box-shadow:0 0 8px ${colorOf(name, i)}"></span>${esc(strategyName(name))}
       <span class="chips" style="margin-left:auto"><span class="chip ${m}">${m.toUpperCase()}</span>${sp.enabled === false && name !== "weather" ? '<span class="chip off">DISABLED</span>' : ""}</span></h3>
@@ -547,6 +569,8 @@ function renderOverview(){
         <div><div class="lbl">Edge / ct</div><div class="val ${cls(s.edgeC)}">${s.contracts ? cents(s.edgeC) : "—"}</div></div>
         <div><div class="lbl">Backtest</div><div class="val dim">${b.backtest_c != null ? cents(b.backtest_c) : "—"}</div></div>
         <div><div class="lbl">Fill rate</div><div class="val">${s.fillRate == null ? "—" : pct(s.fillRate)}</div></div>
+        <div><div class="lbl">Live up/down</div><div class="val ${cls(mk.tot)}">${mk.priced.length ? money(mk.tot) : "—"}</div></div>
+        <div><div class="lbl">Held</div><div class="val">${mk.held.length}<small> · ${mk.up}▲ ${mk.down}▼</small></div></div>
       </div>
       ${cap ? meter("Strategy cap", s.exposure, cap, {txt:`$${s.exposure.toFixed(2)} / $${cap.toFixed(2)}`}) : ""}
       ${b.backtest_note ? `<div class="note">${esc(b.backtest_note)}</div>` : ""}
@@ -583,7 +607,7 @@ function renderOverview(){
 
 function orderItem(r, i){
   const sq = sideQuote(r), u = unrealized(r), now = sq ? sq.bid : null, c = v => v == null ? "—" : Math.round(v * 100) + "¢";
-  const sub = [r.status === "open" ? "resting" : r.status === "filled" ? (r.filledAt ? "filled " + ago(r.filledAt) : "filled") + " · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
+  const sub = [r.status === "open" ? (r.filled > 0 ? `resting · ${r.filled} of ${r.count} filled` : "resting") : r.status === "filled" ? (r.filledAt ? "filled " + ago(r.filledAt) : "filled") + " · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
   let mkt = "";
   if (r.status === "open"){
     if (sq && sq.bid != null){
@@ -606,7 +630,8 @@ function renderOrders(){
   const idx = n => strats.indexOf(n);
   let h = `<div class="filters" id="flt"><button data-f="all" class="${f === "all" ? "on" : ""}">All</button>${strats.map(n => `<button data-f="${esc(n)}" class="${f === n ? "on" : ""}">${esc(strategyName(n))}</button>`).join("")}</div>`;
   h += `<h2>Resting orders <span class="sub">${open.length}</span></h2><div class="card list">${open.length ? open.slice(0, 80).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">No resting orders</div>`}</div>`;
-  h += `<h2>Positions held <span class="sub">${held.length} awaiting settlement</span></h2><div class="card list">${held.length ? held.slice(0, 80).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">No open positions</div>`}</div>`;
+  const mkh = marked(held);
+  h += `<h2>Positions held <span class="sub">${held.length} held${mkh.priced.length ? ` · live <span class="${cls(mkh.tot)}">${money(mkh.tot)}</span>` : ""}</span></h2><div class="card list">${held.length ? held.slice(0, 80).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">No open positions</div>`}</div>`;
   h += `<p class="mute" style="font-size:11.5px;margin:6px 2px;line-height:1.5">${S.mode === "paper" ? "Paper orders are not really in Kalshi's order book. The bot counts one as filled when Kalshi's public trade tape shows a trade at our price or better (checked every 30 minutes). " : ""}Market prices are ${S.noQuotes ? "from the bot's snapshot after each trade run (this browser can't reach Kalshi directly)" : "live from Kalshi"}.</p>`;
   h += `<h2>History <span class="sub">${done.length}</span></h2><div class="card list">${done.length ? done.slice(0, 150).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">Nothing settled yet</div>`}</div>`;
   $("#v-orders").innerHTML = h;
