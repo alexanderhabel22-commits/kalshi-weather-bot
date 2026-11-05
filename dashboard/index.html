@@ -306,7 +306,7 @@ async function loadData(){
     config:["config.toml"], orders:["data/trade_orders.csv"], tstate:["data/trader_state.json","json"],
     paper:["data/paper_orders.csv"], alerts:["data/alerts.csv"], forecasts:["data/forecasts.csv"],
     census:["data/census.json","json"], rain:["data/rain_census.json","json"], mytrades:["data/my_trades.csv"],
-    report:["data/REPORT.md"], qsnap:["data/quotes.json","json"], equity:["data/equity.csv"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"]
+    report:["data/REPORT.md"], qsnap:["data/quotes.json","json"], equity:["data/equity.csv"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"], broll:["data/bankroll.json","json"]
   };
   const keys = Object.keys(files), errs = [];
   const res = await Promise.allSettled(keys.map(k => raw(files[k][0], files[k][1])));
@@ -371,6 +371,9 @@ function sideQuote(r){ const q = S.quotes[r.ticker]; if (!q) return null;
 const STATUS = {resting:"open", filled:"filled", settled:"settled", "done-unfilled":"unfilled", cancelled:"cancelled"};
 function strategyName(k){ const v = (S.data.verdicts || {}).strategies || {}; return (v[k] && v[k].label) || k.replace(/(^|[-_])(\w)/g, (m, a, b) => (a ? " " : "") + b.toUpperCase()); }
 function bankroll(){
+  // live Kalshi balance (cash + positions) saved by each trade run; fresh = under 6h
+  const b = S.data.broll || {};
+  if (num(b.total, 0) > 0 && Date.now() - +new Date(b.at) < 6 * 3600e3) return num(b.total, 0);
   const m = (S.data.report || "").match(/bankroll \$([0-9.]+)/);
   return m ? +m[1] : num(((S.data.config || {}).account || {}).bankroll, 35);
 }
