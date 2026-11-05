@@ -520,7 +520,10 @@ function renderBanner(){
 
 function renderOverview(){
   const mode = S.mode, rows = modeRows(mode), st = stats(rows), B = bankroll(), t = tradingCfg();
-  const openCap = num(t.max_open_pct, .6) * B, dayStop = num(t.daily_loss_pct, .1) * B, totStop = num(t.total_loss_pct, .25) * B;
+  const capPct = mode === "paper" ? num(t.paper_max_open_pct, num(t.max_open_pct, .6)) : num(t.max_open_pct, .6);
+  const capped = rows.filter(r => r.src === "trader"), capExp = capped.reduce((a, r) => a + exposureOf(r), 0);
+  const research = rows.filter(r => r.src === "daybefore" && r.status === "open"), resExp = research.reduce((a, r) => a + exposureOf(r), 0);
+  const openCap = capPct * B, dayStop = num(t.daily_loss_pct, .1) * B, totStop = num(t.total_loss_pct, .25) * B;
   const manual = mode === "live" ? model().manual : [];
   const unr = st.open.map(unrealized).filter(v => v != null), unrTot = unr.reduce((a, b) => a + b, 0);
   const strats = strategiesFor(mode);
@@ -548,7 +551,8 @@ function renderOverview(){
       ${list.length > 6 ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}. All ${list.length} in Orders.</div>` : ""}</div>`;
   }
   h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
-    ${meter("Money at risk", st.exposure, openCap, {txt:`${pct(st.exposure / B, 1)} of ${pct(num(t.max_open_pct, .6))} cap`, sub:`$${st.exposure.toFixed(2)} open of $${openCap.toFixed(2)} allowed`})}
+    ${meter("Money at risk (trader orders)", capExp, openCap, {txt:`${pct(capExp / B, 1)} of ${pct(capPct)} cap`, sub:`$${capExp.toFixed(2)} open of $${openCap.toFixed(2)} allowed${mode === "paper" ? ` · paper cap ${pct(capPct)}, live cap ${pct(num(t.max_open_pct, .6))}` : ""}`})}
+    ${resExp > 0 ? `<div class="meter"><div class="row"><span class="dim">Weather research log</span><b>$${resExp.toFixed(2)}</b></div><div class="s mute" style="font-size:11px">${research.length} day-before paper orders. Uncapped, no money, not counted against the cap.</div></div>` : ""}
     ${meter("Today's loss vs daily stop", -st.todayPnl, dayStop, {txt:`${money(st.todayPnl)} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} of bankroll in a day pauses new orders until tomorrow`})}
     ${meter("Total loss vs halt stop", -st.pnl, totStop, {txt:`${money(st.pnl)} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} overall halts everything and cancels resting orders`})}
   </div>`;
@@ -559,7 +563,7 @@ function renderOverview(){
   const bench = (S.data.verdicts || {}).strategies || {};
   strats.forEach((name, i) => {
     const r = rows.filter(x => x.strategy === name), s = stats(r), mk = marked(r), sp = t[name] || {}, m = stratMode(name), b = bench[name] || {};
-    const cap = sp.max_open_pct ? sp.max_open_pct * B : null;
+    const cap = sp.max_open_pct ? sp.max_open_pct * B : null, capS = r.filter(x => x.src === "trader").reduce((a, x) => a + exposureOf(x), 0);
     h += `<div class="card strat"><h3><span class="dot" style="background:${colorOf(name, i)};box-shadow:0 0 8px ${colorOf(name, i)}"></span>${esc(strategyName(name))}
       <span class="chips" style="margin-left:auto"><span class="chip ${m}">${m.toUpperCase()}</span>${sp.enabled === false && name !== "weather" ? '<span class="chip off">DISABLED</span>' : ""}</span></h3>
       <div class="kv">
@@ -572,7 +576,7 @@ function renderOverview(){
         <div><div class="lbl">Live up/down</div><div class="val ${cls(mk.tot)}">${mk.priced.length ? money(mk.tot) : "—"}</div></div>
         <div><div class="lbl">Held</div><div class="val">${mk.held.length}<small> · ${mk.up}▲ ${mk.down}▼</small></div></div>
       </div>
-      ${cap ? meter("Strategy cap", s.exposure, cap, {txt:`$${s.exposure.toFixed(2)} / $${cap.toFixed(2)}`}) : ""}
+      ${cap && (sp.enabled || capS > 0) ? meter("Strategy cap", capS, cap, {txt:`$${capS.toFixed(2)} / $${cap.toFixed(2)}`}) : ""}
       ${b.backtest_note ? `<div class="note">${esc(b.backtest_note)}</div>` : ""}
       ${s.contracts && b.backtest_c != null ? `<div class="note">${s.contracts < 100 ? `Only ${s.contracts} contracts so far: too few to compare with the backtest.` : s.edgeC >= b.backtest_c * .5 ? "Tracking the backtest." : "Running below the backtest."}</div>` : ""}
     </div>`;
