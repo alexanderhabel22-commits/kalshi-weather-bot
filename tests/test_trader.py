@@ -64,7 +64,7 @@ def test_limits_scale_with_bankroll():
     assert t["max_event_dollars"] == 8.0
     t = trader.settings(cfg(bankroll=400))
     assert t["total_loss_stop"] == -100.0
-    assert trader.strategy_settings(cfg(bankroll=40), "mentions", t | {"bankroll": 40})["max_event_dollars"] == 10.0
+    assert trader.strategy_settings(cfg(bankroll=40), "mentions", t | {"bankroll": 40})["max_event_dollars"] == 8.0
 
 
 def test_kill_switch_variable(monkeypatch):
