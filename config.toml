@@ -82,7 +82,8 @@ mode = "paper"
 max_contracts_per_order = 3      # hard per-order size limit
 max_orders_per_run = 15
 # Limits scale with the bankroll ([account] bankroll or the BANKROLL variable):
-max_open_pct = 0.60              # at most 60% of the bankroll at risk at once
+max_open_pct = 0.60              # live: at most 60% of the bankroll at risk at once
+paper_max_open_pct = 1.00        # paper: may use the whole bankroll (strategy caps still apply)
 daily_loss_pct = 0.10            # down 10% today: no new orders until tomorrow
 total_loss_pct = 0.25            # down 25% overall: HALT, cancel all resting orders
 reset_halt = false               # set true (once) to clear a halt after checking why

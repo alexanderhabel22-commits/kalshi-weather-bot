@@ -322,3 +322,13 @@ def test_paper_fill_when_quotes_move_through_our_bid():
     assert trader.crossed(r, {"yes_bid_dollars": "0.31", "yes_ask_dollars": "0.44"})   # NO offered at 69c
     assert not trader.crossed(r, {"yes_bid_dollars": "0.20", "yes_ask_dollars": "0.24"})
     assert trader.crossed({"side": "yes", "price": "0.30"}, {"yes_bid_dollars": "0.25", "yes_ask_dollars": "0.29"})
+
+
+def test_overall_cap_is_60pct_live_but_100pct_paper():
+    t = trader.settings(cfg(bankroll=10))
+    sp = {"max_open_dollars": 100}
+    rows = [{"strategy": "x", "event": "E0", "ticker": "T0", "side": "no", "price": "0.80",
+             "count": 7, "filled": 7, "status": "filled"}]                   # $5.60 open
+    it = trader.Intent("mentions", "T1", "E1", "no", 0.80, 1, CLOSE)       # +$0.80 -> $6.40
+    assert trader.vet(it, rows, t, sp, NOW, [], "live") == "overall open-$ cap"   # > $6.00
+    assert trader.vet(it, rows, t, sp, NOW, [], "paper") is None                  # <= $10.00

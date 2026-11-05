@@ -50,7 +50,8 @@ OPEN = ("resting", "filled")
 # Limits are fractions of the bankroll ([account] bankroll / BANKROLL variable),
 # so they scale as the bankroll grows. settings() turns them into dollars.
 DEFAULTS = {"mode": "off", "max_contracts_per_order": 3, "max_orders_per_run": 15,
-            "max_open_pct": 0.60,         # at most 60% of the bankroll at risk at once
+            "max_open_pct": 0.60,         # at most 60% of the bankroll at risk at once (live)
+            "paper_max_open_pct": 1.00,   # paper may use the whole bankroll (Alex, Nov 5)
             "daily_loss_pct": 0.10,       # down 10% today -> no new orders until tomorrow
             "total_loss_pct": 0.25}       # down 25% overall -> HALT and cancel everything
 PCT_KEYS = {"max_open_pct": "max_open_dollars", "max_event_pct": "max_event_dollars"}
@@ -147,6 +148,7 @@ def settings(cfg: Config) -> dict:
         t["mode"] = "off"
     b = t["bankroll"] = float(cfg.bankroll)
     t["max_open_dollars"] = round(float(t["max_open_pct"]) * b, 2)
+    t["paper_max_open_dollars"] = round(float(t["paper_max_open_pct"]) * b, 2)
     t["daily_loss_stop"] = -round(float(t["daily_loss_pct"]) * b, 2)
     t["total_loss_stop"] = -round(float(t["total_loss_pct"]) * b, 2)
     return t
@@ -178,7 +180,7 @@ def strategies() -> dict:
 # ---------------------------------------------------------------- checks
 
 def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
-        planned: list[Intent]) -> str | None:
+        planned: list[Intent], mode: str = "live") -> str | None:
     """Why this intent is NOT allowed (None = allowed)."""
     try:
         check_order(intent.side, intent.price, intent.count)
@@ -198,7 +200,8 @@ def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
         return "duplicate"
     cost = intent.price * intent.count
     pend = lambda f: sum(p.price * p.count for p in planned if f(p))  # noqa: E731
-    if exposure(rows) + pend(lambda p: True) + cost > float(t["max_open_dollars"]) + 1e-9:
+    cap = float(t["max_open_dollars"] if mode == "live" else t["paper_max_open_dollars"])
+    if exposure(rows) + pend(lambda p: True) + cost > cap + 1e-9:
         return "overall open-$ cap"
     if exposure(rows, intent.strategy) + pend(lambda p: p.strategy == intent.strategy) + cost \
             > float(sp.get("max_open_dollars", t["max_open_dollars"])) + 1e-9:
@@ -416,7 +419,7 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             if len(planned) >= int(t["max_orders_per_run"]):
                 break
             same = [r for r in rows if r.get("mode") == mode]
-            why = vet(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode])
+            why = vet(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode], mode)
             if why:
                 out["skipped"].append((it.ticker, it.side, why))
                 continue
