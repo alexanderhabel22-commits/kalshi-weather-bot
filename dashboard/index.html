@@ -291,7 +291,7 @@ async function loadData(){
     config:["config.toml"], orders:["data/trade_orders.csv"], tstate:["data/trader_state.json","json"],
     paper:["data/paper_orders.csv"], alerts:["data/alerts.csv"], forecasts:["data/forecasts.csv"],
     census:["data/census.json","json"], rain:["data/rain_census.json","json"], mytrades:["data/my_trades.csv"],
-    report:["data/REPORT.md"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"]
+    report:["data/REPORT.md"], qsnap:["data/quotes.json","json"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"]
   };
   const keys = Object.keys(files), errs = [];
   const res = await Promise.allSettled(keys.map(k => raw(files[k][0], files[k][1])));
@@ -314,17 +314,25 @@ async function loadApi(){
   } catch(e){ S.errors.push("GitHub API: " + e.message); }
 }
 async function loadQuotes(){
+  // 1) the bot's snapshot (data/quotes.json, written after every trade run)
+  const snap = S.data.qsnap;
+  if (snap && snap.quotes){ const at = +pdate(snap.at) || 0;
+    for (const [tk, q] of Object.entries(snap.quotes)) if (!S.quotes[tk] || S.quotes[tk].at < at)
+      S.quotes[tk] = {yb:q.yes_bid, ya:q.yes_ask, last:q.last, status:q.status, at, src:"bot"}; }
+  // 2) live from Kalshi's public API, when this browser is allowed to call it
   const open = model().rows.filter(r => r.status === "open" || r.status === "filled").map(r => r.ticker);
-  const tk = [...new Set(open)].slice(0, 100);
+  const tk = [...new Set(open)].slice(0, 40);
   if (!tk.length || S.noQuotes) return;
-  try {
-    const js = await getJSON(KALSHI + "/markets?limit=200&tickers=" + encodeURIComponent(tk.join(",")));
-    for (const m of js.markets || []){
-      const p = k => m[k + "_dollars"] != null ? num(m[k + "_dollars"], null) : (m[k] != null ? num(m[k]) / 100 : null);
-      S.quotes[m.ticker] = {yb:p("yes_bid"), ya:p("yes_ask"), last:p("last_price"), status:m.status, result:m.result, at:Date.now()};
-    }
-  } catch(e){ S.noQuotes = true; } // Kalshi may block browser requests (CORS); then we show the order price only
+  const res = await Promise.allSettled(tk.map(t => getJSON(KALSHI + "/markets/" + encodeURIComponent(t))));
+  let ok = 0;
+  res.forEach(r => { if (r.status !== "fulfilled" || !r.value.market) return; ok++; const m = r.value.market;
+    const p = k => m[k + "_dollars"] != null && m[k + "_dollars"] !== "" ? num(m[k + "_dollars"], null) : (m[k] != null ? num(m[k]) / 100 : null);
+    S.quotes[m.ticker] = {yb:p("yes_bid"), ya:p("yes_ask"), last:p("last_price"), status:m.status, at:Date.now(), src:"live"}; });
+  if (!ok) S.noQuotes = true; // Kalshi blocks browser calls: keep using the bot's snapshot
 }
+function sideQuote(r){ const q = S.quotes[r.ticker]; if (!q) return null;
+  const bid = r.side === "yes" ? q.yb : (q.ya != null ? +(1 - q.ya).toFixed(2) : null), ask = r.side === "yes" ? q.ya : (q.yb != null ? +(1 - q.yb).toFixed(2) : null);
+  return {bid, ask, at:q.at, src:q.src}; }
 
 /* ---------------------------------------------------------------- model */
 const STATUS = {resting:"open", filled:"filled", settled:"settled", "done-unfilled":"unfilled", cancelled:"cancelled"};
@@ -349,7 +357,7 @@ function model(){
     rows.push({src:"trader", strategy:r.strategy, mode:r.mode || "paper", ticker:r.ticker, event:r.event, title:r.title || r.ticker,
       side:(r.side || "").toLowerCase(), price:num(r.price), count:num(r.count), filled:num(r.filled),
       status:STATUS[r.status] || r.status, placed:pdate(r.placed_at), close:pdate(r.close), settled:pdate(r.settled_at),
-      result:r.result, pnl:r.pnl === "" ? null : num(r.pnl), note:r.note});
+      result:r.result, pnl:r.pnl === "" ? null : num(r.pnl), note:r.note, filledAt:pdate(r.filled_at)});
   }
   const traderWx = new Set(rows.filter(r => r.strategy === "weather").map(r => r.ticker + "|" + r.side));
   for (const r of d.paper || []){
@@ -574,13 +582,20 @@ function renderOverview(){
 }
 
 function orderItem(r, i){
-  const q = S.quotes[r.ticker], u = unrealized(r);
-  const now = q ? (r.side === "yes" ? q.yb : (q.ya != null ? 1 - q.ya : null)) : null;
-  const sub = [r.status === "open" ? "resting" : r.status === "filled" ? "filled · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
+  const sq = sideQuote(r), u = unrealized(r), now = sq ? sq.bid : null, c = v => v == null ? "—" : Math.round(v * 100) + "¢";
+  const sub = [r.status === "open" ? "resting" : r.status === "filled" ? (r.filledAt ? "filled " + ago(r.filledAt) : "filled") + " · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
+  let mkt = "";
+  if (r.status === "open"){
+    if (sq && sq.bid != null){
+      const d = Math.round((r.price - sq.bid) * 100), gap = sq.ask != null ? Math.round((sq.ask - r.price) * 100) : null;
+      const pos = d > 0 ? `<span class="pos">${d}¢ above the best bid</span>` : d === 0 ? `<span class="pos">tied with the best bid</span>` : `<span class="neg">${-d}¢ below the best bid</span>`;
+      mkt = `<div class="s" style="white-space:normal">Market ${esc(r.side.toUpperCase())} ${c(sq.bid)} bid / ${c(sq.ask)} ask · ${pos}${gap != null ? ` · ask is ${gap}¢ away` : ""} <span class="mute">(${sq.src === "live" ? "live" : "as of " + ago(sq.at)})</span></div>`;
+    } else { const m = (r.note || "").match(/bid ([0-9.]+) \/ ask ([0-9.]+)/); if (m) mkt = `<div class="s">At placement: ${esc(r.side.toUpperCase())} ${c(+m[1])} bid / ${c(+m[2])} ask</div>`; }
+  }
   const right = r.status === "settled" ? `<span class="${cls(r.pnl)}">${money(r.pnl)}</span><small>${r.pnl > 0 ? "won" : "lost"} · ${r.count}@${Math.round(r.price * 100)}¢</small>`
     : r.status === "unfilled" || r.status === "cancelled" ? `<span class="mute">${r.status}</span><small>${r.count}@${Math.round(r.price * 100)}¢</small>`
-    : `${r.status === "open" ? r.count : r.filled} @ ${Math.round(r.price * 100)}¢<small>${now != null ? `now ${Math.round(now * 100)}¢ ${u != null ? `<span class="${cls(u)}">${money(u)}</span>` : ""}` : "$" + exposureOf(r).toFixed(2) + " at risk"}</small>`;
-  return `<div class="item"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" title="${esc(r.ticker)}"><span style="color:${colorOf(r.strategy, i)}">▍</span>${esc(r.title)}</div><div class="s">${esc(sub)}</div></div><div class="r">${right}</div></div>`;
+    : `${r.status === "open" ? r.count : r.filled} @ ${Math.round(r.price * 100)}¢<small>${r.status === "filled" && now != null ? `bid now ${c(now)} ${u != null ? `<span class="${cls(u)}">${money(u)}</span>` : ""}` : "$" + exposureOf(r).toFixed(2) + " at risk"}</small>`;
+  return `<div class="item"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" title="${esc(r.ticker)}"><span style="color:${colorOf(r.strategy, i)}">▍</span>${esc(r.title)}</div><div class="s">${esc(sub)}</div>${mkt}</div><div class="r">${right}</div></div>`;
 }
 function renderOrders(){
   const rows = modeRows(S.mode), strats = strategiesFor(S.mode), f = S.filter;
@@ -592,7 +607,7 @@ function renderOrders(){
   let h = `<div class="filters" id="flt"><button data-f="all" class="${f === "all" ? "on" : ""}">All</button>${strats.map(n => `<button data-f="${esc(n)}" class="${f === n ? "on" : ""}">${esc(strategyName(n))}</button>`).join("")}</div>`;
   h += `<h2>Resting orders <span class="sub">${open.length}</span></h2><div class="card list">${open.length ? open.slice(0, 80).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">No resting orders</div>`}</div>`;
   h += `<h2>Positions held <span class="sub">${held.length} awaiting settlement</span></h2><div class="card list">${held.length ? held.slice(0, 80).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">No open positions</div>`}</div>`;
-  if (S.noQuotes && (open.length || held.length)) h += `<p class="mute" style="font-size:11.5px;margin:6px 2px">Live Kalshi prices are not available in this browser, so open orders show their order price.</p>`;
+  h += `<p class="mute" style="font-size:11.5px;margin:6px 2px;line-height:1.5">${S.mode === "paper" ? "Paper orders are not really in Kalshi's order book. The bot counts one as filled when Kalshi's public trade tape shows a trade at our price or better (checked every 30 minutes). " : ""}Market prices are ${S.noQuotes ? "from the bot's snapshot after each trade run (this browser can't reach Kalshi directly)" : "live from Kalshi"}.</p>`;
   h += `<h2>History <span class="sub">${done.length}</span></h2><div class="card list">${done.length ? done.slice(0, 150).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">Nothing settled yet</div>`}</div>`;
   $("#v-orders").innerHTML = h;
   $("#flt").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.filter = b.dataset.f; renderOrders(); };
