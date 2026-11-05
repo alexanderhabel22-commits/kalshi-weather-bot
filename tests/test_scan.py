@@ -164,10 +164,19 @@ def test_nothing_logged_until_alerts_can_be_delivered(monkeypatch):
     assert len([p for p in http.posts if p["title"].startswith("LOCK")]) == 2
 
 
-def test_edge_alerts_are_silent_by_default(monkeypatch):
+def test_edge_alerts_off_logs_no_edge_calls(monkeypatch):
     monkeypatch.setenv("NTFY_TOPIC", "t")
-    cfg = cfg_for_test()                       # default edge_alerts = "shadow"
-    assert cfg.get("alerts", "edge_alerts") == "shadow"
+    cfg = cfg_for_test()
+    assert cfg.get("alerts", "edge_alerts") == "off"          # off since Nov 5
+    now = datetime(2026, 11, 3, 21, 30, tzinfo=UTC)
+    run_scan(cfg, now=now, http=FakeHttp(now))
+    assert not any(r["kind"] == "model" for r in ledger.load())
+
+
+def test_edge_alerts_shadow_mode_is_silent(monkeypatch):
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+    cfg = cfg_for_test()
+    cfg.raw["alerts"]["edge_alerts"] = "shadow"
     for minute in (30, 40):
         now = datetime(2026, 11, 3, 21, minute, tzinfo=UTC)
         http = FakeHttp(now)

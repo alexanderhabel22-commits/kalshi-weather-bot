@@ -67,6 +67,7 @@ def test_report_grades_everything(monkeypatch):
     monkeypatch.setenv("NTFY_TOPIC", "t")
     monkeypatch.setenv("GITHUB_REPOSITORY", "someone/kalshi-weather-bot")
     cfg = cfg_for_test()
+    cfg.raw["alerts"]["edge_alerts"] = "shadow"
     scan(cfg, 21, 30)
     scan(cfg, 21, 50)
     # you took the high-temp lock: 3 NO at 95¢
