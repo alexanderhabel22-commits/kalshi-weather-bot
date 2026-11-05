@@ -127,6 +127,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .chart .tip .sw{width:8px;height:3px;border-radius:2px}
 .rh .big{font-family:var(--mono);font-size:34px;font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-top:4px}
 .rh .chg{font-family:var(--mono);font-size:13px;margin:4px 0 10px}
+.seeall{all:unset;display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:8px;padding:9px 0;border-radius:9px;border:1px solid var(--line2);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan);cursor:pointer}
 .rng{display:flex;gap:4px;margin-top:6px}
 .rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
 .rng button.on{background:var(--rc,#34d399);color:#070a12}
@@ -478,7 +479,7 @@ function lineChart(el, series, o={}){
   const X = x => P.l + (x - x0) / (x1 - x0) * (W - P.l - P.r), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
   const ticks = niceTicks(y0, y1, 4), fy = o.fy || (v => "$" + v.toFixed(Math.abs(y1 - y0) < 5 ? 2 : 0));
   let g = ticks.map(t => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="${t === 0 ? "#3a4870" : "#18213b"}" ${t === 0 ? "" : 'stroke-dasharray="2 4"'}/><text x="${P.l - 6}" y="${Y(t) + 3.5}" fill="#6b7699" font-size="10" text-anchor="end" font-family="JetBrains Mono">${fy(t)}</text>`).join("");
-  const fx = x1 - x0 < 2 * 864e5 ? (t => fmt(new Date(t), {weekday:"short", hour:"numeric"})) : (t => fday(new Date(t)));
+  const fx = x1 - x0 < 6 * 3600e3 ? (t => fmt(new Date(t), {hour:"numeric", minute:"2-digit"})) : x1 - x0 < 2 * 864e5 ? (t => fmt(new Date(t), {weekday:"short", hour:"numeric"})) : (t => fday(new Date(t)));
   const xt = [x0, (x0 + x1) / 2, x1].map((t, i) => `<text x="${X(t)}" y="${H - 6}" fill="#6b7699" font-size="10" text-anchor="${["start","middle","end"][i]}" font-family="JetBrains Mono">${fx(t)}</text>`).join("");
   (o.refs || []).forEach(rf => { if (rf.y > y0 && rf.y < y1) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(rf.y)}" y2="${Y(rf.y)}" stroke="${rf.c}" stroke-dasharray="5 4" opacity=".7"/><text x="${W - P.r}" y="${Y(rf.y) - 4}" fill="${rf.c}" font-size="10" text-anchor="end" font-family="JetBrains Mono">${rf.label}</text>`; });
   let paths = "";
@@ -610,9 +611,9 @@ function renderOverview(){
       <div class="grid g3" style="margin-top:14px"><div><div class="lbl">Cost held</div><div class="val">${mk.cost ? "$" + mk.cost.toFixed(2) : "—"}</div></div>
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
-      <div class="list" style="margin-top:8px">${list.slice(0, 6).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
+      <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 6).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
-      ${list.length > 6 ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}. All ${list.length} in Orders.</div>` : ""}</div>`;
+      ${list.length > 6 ? `<button class="seeall" id="upAll">${S.upAll ? "Show less ▲" : `See all ${list.length} ▼`}</button><div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}.</div>` : ""}</div>`;
   }
   if (mk.priced.length > 1) h += `<h2>Up/down by bet <span class="sub">${mk.priced.length} held · tap a bar</span></h2><div class="card"><div class="chart" id="upBets"></div></div>`;
   h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
@@ -663,6 +664,7 @@ function renderOverview(){
   }
   $("#v-overview").innerHTML = h;
 
+  if ($("#upAll")) $("#upAll").onclick = () => { S.upAll = !S.upAll; renderOverview(); };
   if ($("#upc")){
     lineChart($("#upc"), [{name:"Up/down", c:upC, w:2.5, pts:upPts}], {h:180, refs:upPts.length > 1 ? [{y:upPts[0].y, c:"#6b7699", label:"start"}] : [],
       empty:mk.priced.length ? "Building history: a point every 30 s while open, every 5 min from the bot." : "No open bets right now."});
