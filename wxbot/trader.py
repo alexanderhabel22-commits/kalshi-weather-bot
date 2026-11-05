@@ -249,6 +249,19 @@ def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> Non
             r["status"] = "filled" if got else "cancelled"
 
 
+def crossed(r: dict, m: dict | None) -> bool:
+    """The book moved through a resting paper bid: someone now offers our side
+    at or below our price, which would have matched our order on Kalshi."""
+    if not m:
+        return False
+    price = _f(r.get("price"))
+    if r.get("side") == "yes":
+        ask = kalshi.price(m, "yes_ask")
+        return ask is not None and 0 < ask <= price + 1e-9
+    yb = kalshi.price(m, "yes_bid")
+    return yb is not None and 0 < yb and 1 - yb <= price + 1e-9
+
+
 def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
     n = 0
     for r in rows:
@@ -267,10 +280,12 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
             except HttpError as exc:
                 log.warning("paper trades %s: %s", r["ticker"], exc)
                 continue
-            if fill_flags(r["side"], _f(r["price"]), prints)[0]:
+            m = kalshi.get_market(http, r["ticker"])
+            if fill_flags(r["side"], _f(r["price"]), prints)[0] or crossed(r, m):
                 r["filled"], r["status"] = int(_f(r["count"])), "filled"
                 r["filled_at"] = now.isoformat(timespec="seconds")
-        m = kalshi.get_market(http, r["ticker"])
+        else:
+            m = kalshi.get_market(http, r["ticker"])
         res = ((m or {}).get("result") or "").lower()
         if res not in ("yes", "no"):
             continue

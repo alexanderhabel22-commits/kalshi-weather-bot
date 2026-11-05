@@ -315,3 +315,10 @@ def test_paper_fill_marked_before_settlement():
     trader.run(cfg(enabled=False), now=NOW + timedelta(minutes=60), http=Http([], trades=[0.20]))
     r = trader.load()[0]
     assert r["status"] == "filled" and int(r["filled"]) == 2 and r["filled_at"] and not r["pnl"]
+
+
+def test_paper_fill_when_quotes_move_through_our_bid():
+    r = {"side": "no", "price": "0.78"}
+    assert trader.crossed(r, {"yes_bid_dollars": "0.31", "yes_ask_dollars": "0.44"})   # NO offered at 69c
+    assert not trader.crossed(r, {"yes_bid_dollars": "0.20", "yes_ask_dollars": "0.24"})
+    assert trader.crossed({"side": "yes", "price": "0.30"}, {"yes_bid_dollars": "0.25", "yes_ask_dollars": "0.29"})
