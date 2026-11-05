@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#070a12">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bot Monitor">
+<meta name="robots" content="noindex">
+<title>Kalshi Bot Monitor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23070a12'/%3E%3Cpath d='M6 22l6-7 5 4 9-11' stroke='%2322d3ee' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070a12; --bg2:#0b1020; --panel:#0e1426; --panel2:#121a31; --line:#1d2742; --line2:#26335a;
+  --ink:#e6ecff; --ink2:#a9b4d6; --mute:#6b7699;
+  --cyan:#22d3ee; --mag:#e050f0; --amber:#f5b335; --violet:#8b8cf8;
+  --good:#34d399; --bad:#fb6b7b; --warn:#f5b335;
+  --glow:0 0 0 1px rgba(34,211,238,.18),0 0 24px -8px rgba(34,211,238,.35);
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r:14px; --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.45;-webkit-text-size-adjust:100%}
+body{min-height:100vh;overflow-x:hidden;
+  background:
+    radial-gradient(1200px 500px at 85% -10%,rgba(224,80,240,.10),transparent 60%),
+    radial-gradient(900px 500px at -10% 10%,rgba(34,211,238,.10),transparent 60%),
+    linear-gradient(var(--bg),var(--bg));
+  background-attachment:fixed}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(120,140,200,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(120,140,200,.05) 1px,transparent 1px);
+  background-size:32px 32px;mask-image:linear-gradient(to bottom,#000 0,transparent 70%)}
+a{color:var(--cyan);text-decoration:none}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 92px)}
+header.top{position:sticky;top:0;z-index:20;margin:0 -16px;padding:calc(var(--safe-t) + 10px) 16px 10px;
+  background:rgba(7,10,18,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.logo{font-family:var(--mono);font-weight:700;letter-spacing:.08em;font-size:14px;display:flex;align-items:center;gap:8px}
+.logo b{color:var(--cyan);text-shadow:0 0 12px rgba(34,211,238,.6)}
+.logo i{font-style:normal;color:var(--mag)}
+.pulse{width:9px;height:9px;border-radius:50%;background:var(--mute);box-shadow:0 0 0 0 currentColor;flex:none}
+.pulse.ok{background:var(--good);color:rgba(52,211,153,.6);animation:pl 2.2s infinite}
+.pulse.stale{background:var(--warn)} .pulse.down{background:var(--bad)}
+@keyframes pl{0%{box-shadow:0 0 0 0 currentColor}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.stamp{font-family:var(--mono);font-size:11px;color:var(--ink2);text-align:right;line-height:1.3}
+.stamp button{all:unset;cursor:pointer;color:var(--cyan);margin-left:6px;font-size:13px}
+.seg{display:flex;margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{all:unset;flex:1;text-align:center;padding:8px 0;border-radius:9px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--ink2);cursor:pointer}
+.seg button.on[data-m=live]{background:linear-gradient(90deg,rgba(52,211,153,.18),rgba(34,211,238,.14));color:var(--good);box-shadow:inset 0 0 0 1px rgba(52,211,153,.4)}
+.seg button.on[data-m=paper]{background:linear-gradient(90deg,rgba(224,80,240,.18),rgba(139,140,248,.14));color:#f0a8ff;box-shadow:inset 0 0 0 1px rgba(224,80,240,.4)}
+.seg small{font-weight:500;letter-spacing:0;opacity:.8;margin-left:4px}
+.banner{margin:12px 0 0;padding:10px 12px;border-radius:12px;font-size:13px;border:1px solid var(--line2);background:var(--panel)}
+.banner.paper{border-color:rgba(224,80,240,.35);background:linear-gradient(90deg,rgba(224,80,240,.08),transparent)}
+.banner.live{border-color:rgba(52,211,153,.35);background:linear-gradient(90deg,rgba(52,211,153,.08),transparent)}
+.banner.halt{border-color:rgba(251,107,123,.6);background:rgba(251,107,123,.12);color:#ffd0d6}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;
+  background:rgba(9,13,24,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 6px calc(var(--safe-b) + 6px)}
+nav.tabs .in{display:flex;width:100%;max-width:640px}
+nav.tabs button{all:unset;flex:1;text-align:center;cursor:pointer;padding:6px 0 4px;color:var(--mute);font-size:10.5px;font-weight:600;letter-spacing:.04em;border-radius:10px}
+nav.tabs button svg{display:block;margin:0 auto 3px;width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button.on{color:var(--cyan)}
+nav.tabs button.on svg{filter:drop-shadow(0 0 6px rgba(34,211,238,.7))}
+section.view{display:none;padding-top:14px} section.view.on{display:block;animation:fi .25s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+h2{font-size:12px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin:22px 2px 10px;display:flex;align-items:center;gap:8px}
+h2::before{content:"";width:6px;height:6px;background:var(--cyan);box-shadow:0 0 8px var(--cyan);transform:rotate(45deg)}
+h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:none;color:var(--mute)}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--r);padding:14px;position:relative;overflow:hidden}
+.card.glow{box-shadow:var(--glow)}
+.card + .card{margin-top:10px}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(min-width:760px){.g4m{grid-template-columns:repeat(4,minmax(0,1fr))}.cols2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.hero .big{font-family:var(--mono);font-size:40px;font-weight:700;line-height:1;letter-spacing:-.02em}
+.lbl{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em;font-family:var(--mono)}
+.val{font-family:var(--mono);font-size:20px;font-weight:600;margin-top:3px}
+.val small{font-size:12px;color:var(--ink2);font-weight:400}
+.pos{color:var(--good)} .neg{color:var(--bad)} .dim{color:var(--ink2)} .mute{color:var(--mute)}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.chip.live{color:var(--good);border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08)}
+.chip.paper{color:#f0a8ff;border-color:rgba(224,80,240,.5);background:rgba(224,80,240,.08)}
+.chip.off{color:var(--mute)}
+.chip.go{color:var(--good);border-color:rgba(52,211,153,.5)} .chip.nogo{color:var(--bad);border-color:rgba(251,107,123,.5)}
+.chip.pend{color:var(--amber);border-color:rgba(245,179,53,.5)} .chip.weak{color:var(--violet);border-color:rgba(139,140,248,.5)}
+.meter{margin-top:12px}
+.meter .row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px}
+.meter .row b{font-family:var(--mono);font-weight:600}
+.bar{height:10px;border-radius:6px;background:#0a0f1d;border:1px solid var(--line);position:relative;overflow:hidden}
+.bar > i{position:absolute;top:0;bottom:0;left:0;border-radius:6px;background:linear-gradient(90deg,var(--cyan),var(--violet));box-shadow:0 0 10px rgba(34,211,238,.5)}
+.bar > i.warn{background:linear-gradient(90deg,var(--amber),#ff8a3d)} .bar > i.bad{background:linear-gradient(90deg,#ff8a3d,var(--bad))}
+.bar > u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink);opacity:.7}
+.list{display:flex;flex-direction:column}
+.item{display:flex;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0;padding-top:2px}
+.item .main{flex:1;min-width:0}
+.item .t{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .s{font-size:11.5px;color:var(--mute);font-family:var(--mono);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .r{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap}
+.item .r small{display:block;font-size:11px;color:var(--mute)}
+.side{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;flex:none;width:34px;text-align:center}
+.side.yes{color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.35)}
+.side.no{color:var(--mag);background:rgba(224,80,240,.1);border:1px solid rgba(224,80,240,.35)}
+.empty{color:var(--mute);font-size:13px;text-align:center;padding:18px 8px;border:1px dashed var(--line2);border-radius:12px}
+.strat h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.strat h3 .dot{width:10px;height:10px;border-radius:3px;flex:none}
+.strat .kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 8px;margin-top:12px}
+.strat .kv .val{font-size:15px}
+.strat .note{font-size:12px;color:var(--mute);margin-top:10px}
+.chart{position:relative;width:100%;touch-action:pan-y}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart .tip{position:absolute;pointer-events:none;background:rgba(10,14,28,.96);border:1px solid var(--line2);border-radius:9px;padding:7px 9px;font-size:11.5px;font-family:var(--mono);white-space:nowrap;transform:translate(-50%,-100%);display:none;z-index:5;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.chart .tip .k{display:flex;align-items:center;gap:6px}
+.chart .tip .sw{width:8px;height:3px;border-radius:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2);margin-bottom:8px}
+.legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.legend span.off{opacity:.35}
+.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters button{all:unset;cursor:pointer;font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
+.filters button.on{color:var(--bg);background:var(--cyan);border-color:var(--cyan);font-weight:600}
+.fc{display:grid;grid-template-columns:96px 1fr 52px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.fc:first-child{border-top:0}
+.fc .c{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fc .c small{display:block;color:var(--mute);font-size:10.5px;font-family:var(--mono)}
+.fc .n{font-family:var(--mono);font-size:13px;text-align:right}
+.fc .n small{display:block;font-size:10px;color:var(--mute)}
+.fc .detail{grid-column:1/-1;display:none;padding-top:6px}
+.fc.open .detail{display:block}
+.tl{position:relative;padding-left:22px}
+.tl::before{content:"";position:absolute;left:6px;top:4px;bottom:4px;width:2px;background:linear-gradient(var(--cyan),var(--mag));opacity:.5;border-radius:2px}
+.tl .ev{position:relative;padding:0 0 16px}
+.tl .ev::before{content:"";position:absolute;left:-20px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--cyan)}
+.tl .ev.go::before{border-color:var(--good);background:var(--good)} .tl .ev.nogo::before{border-color:var(--bad)}
+.tl .ev.pend::before{border-color:var(--amber)} .tl .ev.weak::before{border-color:var(--violet)}
+.tl .d{font-family:var(--mono);font-size:11px;color:var(--mute)}
+.tl .h{font-weight:600;font-size:14px;margin:2px 0 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tl .p{font-size:13px;color:var(--ink2)}
+.tl .nx{font-size:11.5px;color:var(--amber);font-family:var(--mono);margin-top:4px}
+.cd{display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line)}
+.cd:first-child{border-top:0}
+.cd .days{font-family:var(--mono);font-weight:700;font-size:18px;width:54px;text-align:center;color:var(--cyan)}
+.cd .days small{display:block;font-size:9.5px;color:var(--mute);font-weight:500;letter-spacing:.08em}
+.runs{display:flex;gap:2px;flex-wrap:wrap}
+.runs i{width:9px;height:18px;border-radius:2px;background:var(--good);opacity:.85}
+.runs i.f{background:var(--bad)} .runs i.p{background:var(--amber)} .runs i.s{background:var(--mute)}
+.md{font-size:13.5px;color:var(--ink2);overflow-x:auto}
+.md h1{font-size:17px;color:var(--ink);margin:4px 0 8px} .md h2{margin:18px 0 8px}
+.md h2{display:block}.md h2::before{display:none}
+.md p,.md ul{margin:6px 0} .md ul{padding-left:18px}
+.md table{border-collapse:collapse;font-size:12px;font-family:var(--mono);margin:8px 0;min-width:100%}
+.md th,.md td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;white-space:nowrap}
+.md th{color:var(--ink);font-weight:600}
+.md strong{color:var(--ink)}
+.md code{font-family:var(--mono);font-size:12px;color:var(--cyan)}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
+.tbl th,.tbl td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{color:var(--mute);font-weight:500;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em}
+.scroll{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.foot{font-size:11.5px;color:var(--mute);text-align:center;margin:26px 0 0;line-height:1.6}
+.err{color:var(--bad);font-size:12px;font-family:var(--mono)}
+.skel{height:14px;border-radius:6px;background:linear-gradient(90deg,var(--panel),var(--panel2),var(--panel));background-size:200% 100%;animation:sk 1.2s infinite}
+@keyframes sk{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo"><span class="pulse" id="pulse"></span><span><b>KALSHI</b><i>//</i>BOT</span></div>
+      <div class="stamp" id="stamp">loading…</div>
+    </div>
+    <div class="seg" id="modeSeg">
+      <button data-m="live">● LIVE $<small id="cntLive"></small></button>
+      <button data-m="paper">◌ PAPER<small id="cntPaper"></small></button>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+
+  <section class="view on" id="v-overview"></section>
+  <section class="view" id="v-orders"></section>
+  <section class="view" id="v-weather"></section>
+  <section class="view" id="v-research"></section>
+  <section class="view" id="v-health"></section>
+
+  <p class="foot">Read-only monitor. It only reads the bot's public data files and never places, changes or cancels anything.<br>
+  Data refreshes every 2 minutes; the bot scans every 5.</p>
+</div>
+
+<nav class="tabs"><div class="in">
+  <button data-v="overview" class="on"><svg viewBox="0 0 24 24"><path d="M3 17l5-6 4 3 8-9"/><path d="M3 21h18"/></svg>Overview</button>
+  <button data-v="orders"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Orders</button>
+  <button data-v="weather"><svg viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 10-4 0v9.8a4 4 0 104 0z"/></svg>Weather</button>
+  <button data-v="research"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></svg>Research</button>
+  <button data-v="health"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>Health</button>
+</div></nav>
+
+<script>
+"use strict";
+const REPO = "alexanderhabel22-commits/kalshi-weather-bot";
+const API = "https://api.github.com/repos/" + REPO;
+const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
+const TZ = "America/New_York";
+const DATA_MS = 120e3, API_MS = 360e3;
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
+const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
+
+/* ---------------------------------------------------------------- helpers */
+const $ = (s, el=document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const num = (x, d=0) => { const v = parseFloat(x); return isFinite(v) ? v : d; };
+const money = (v, sign=true) => (sign ? (v > 0.0049 ? "+" : v < -0.0049 ? "−" : "") : (v < 0 ? "−" : "")) + "$" + Math.abs(v).toFixed(2);
+const cents = v => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
+const pct = (v, d=0) => (v * 100).toFixed(d) + "%";
+const cls = v => v > 0.0049 ? "pos" : v < -0.0049 ? "neg" : "dim";
+const ls = {get(k){try{return localStorage.getItem(k)}catch(e){return null}}, set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+function pdate(s){ if(!s) return null; let t = String(s).trim(); if(/^\d{8}T\d{4}/.test(t)) t = t.replace(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/,"$1-$2-$3T$4:$5"); const d = new Date(t); return isNaN(d) ? null : d; }
+const fmt = (d, o) => d ? new Intl.DateTimeFormat("en-US", Object.assign({timeZone:TZ}, o)).format(d) : "";
+const fdt = d => fmt(d, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+const fday = d => fmt(d, {month:"short", day:"numeric"});
+const etDay = d => d ? fmt(d, {year:"numeric", month:"2-digit", day:"2-digit"}).replace(/(\d+)\/(\d+)\/(\d+)/, "$3-$1-$2") : "";
+function ago(d){ if(!d) return "—"; const s = (Date.now() - d) / 1000; if (s < 0) return "in " + until(d); if (s < 60) return "just now"; if (s < 3600) return Math.round(s/60) + "m ago"; if (s < 86400) return (s/3600).toFixed(s < 36000 ? 1 : 0) + "h ago"; return Math.round(s/86400) + "d ago"; }
+function until(d){ const s = (d - Date.now()) / 1000; if (s <= 0) return "closed"; if (s < 3600) return Math.round(s/60) + "m"; if (s < 86400) return (s/3600).toFixed(1) + "h"; return (s/86400).toFixed(1) + "d"; }
+
+function parseCSV(text){
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (q){ if (c === '"'){ if (text[i+1] === '"'){ f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ","){ row.push(f); f = ""; }
+    else if (c === "\n" || c === "\r"){ if (c === "\r" && text[i+1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += c;
+  }
+  if (f !== "" || row.length){ row.push(f); rows.push(row); }
+  const h = rows.shift() || [];
+  return rows.filter(r => r.length > 1 || r[0]).map(r => Object.fromEntries(h.map((k, i) => [k, r[i] ?? ""])));
+}
+function parseTOML(text){
+  const out = {}; let cur = out;
+  for (let line of text.split(/\r?\n/)){
+    line = line.replace(/^\s+/, "");
+    if (!line || line[0] === "#") continue;
+    const sec = line.match(/^\[([^\]]+)\]/);
+    if (sec){ cur = out; for (const k of sec[1].trim().split(".")) cur = cur[k] = cur[k] || {}; continue; }
+    const m = line.match(/^([A-Za-z0-9_\-]+)\s*=\s*(.*)$/); if (!m) continue;
+    let v = m[2], s = "", inq = false;
+    for (const ch of v){ if (ch === '"') inq = !inq; if (ch === "#" && !inq) break; s += ch; }
+    s = s.trim();
+    let val;
+    if (/^".*"$/.test(s)) val = s.slice(1, -1);
+    else if (s === "true" || s === "false") val = s === "true";
+    else if (s[0] === "[") { try { val = JSON.parse(s); } catch(e){ val = s; } }
+    else if (s !== "" && isFinite(+s)) val = +s; else val = s;
+    cur[m[1]] = val;
+  }
+  return out;
+}
+
+/* ---------------------------------------------------------------- loading */
+async function getJSON(url, opts){ const r = await fetch(url, opts); if (!r.ok) throw new Error(r.status + " " + url.split("/").slice(-2).join("/")); return r.json(); }
+async function raw(path, kind="text"){
+  const ref = S.sha || "main";
+  const r = await fetch(`https://raw.githubusercontent.com/${REPO}/${ref}/${path}` + (S.sha ? "" : "?t=" + Date.now()), {cache:"no-store"});
+  if (r.status === 404) return kind === "json" ? null : "";
+  if (!r.ok) throw new Error(r.status + " " + path);
+  return kind === "json" ? r.json() : r.text();
+}
+async function loadHead(){
+  try {
+    const c = await getJSON(API + "/commits/main", {cache:"no-store"});
+    S.sha = c.sha; S.commit = {at: pdate(c.commit.committer.date), msg: c.commit.message.split("\n")[0]};
+  } catch(e){ S.sha = null; } // rate-limited: fall back to the branch (5-min CDN cache)
+}
+async function loadData(){
+  await loadHead();
+  const files = {
+    config:["config.toml"], orders:["data/trade_orders.csv"], tstate:["data/trader_state.json","json"],
+    paper:["data/paper_orders.csv"], alerts:["data/alerts.csv"], forecasts:["data/forecasts.csv"],
+    census:["data/census.json","json"], rain:["data/rain_census.json","json"], mytrades:["data/my_trades.csv"],
+    report:["data/REPORT.md"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"]
+  };
+  const keys = Object.keys(files), errs = [];
+  const res = await Promise.allSettled(keys.map(k => raw(files[k][0], files[k][1])));
+  const d = {};
+  res.forEach((r, i) => { const k = keys[i]; if (r.status === "fulfilled") d[k] = r.value; else { errs.push(String(r.reason.message || r.reason)); d[k] = S.data["_" + k]; } });
+  for (const k of ["orders","paper","alerts","forecasts","mytrades"]) d[k] = typeof d[k] === "string" ? parseCSV(d[k]) : (d[k] || []);
+  d.config = typeof d.config === "string" ? parseTOML(d.config) : (d.config || {});
+  if (!d.verdicts) { try { d.verdicts = await getJSON("verdicts.json"); } catch(e){ d.verdicts = {events:[], checkpoints:[], strategies:{}}; } }
+  for (const k of keys) d["_" + k] = d[k];
+  S.data = d; S.errors = errs; S.lastData = Date.now();
+}
+async function loadApi(){
+  try {
+    const [runs, tree] = await Promise.all([
+      getJSON(API + "/actions/runs?per_page=100", {cache:"no-store"}),
+      getJSON(API + "/git/trees/" + (S.sha || "main") + "?recursive=1", {cache:"no-store"}).catch(() => null)
+    ]);
+    S.runs = runs.workflow_runs || []; if (tree) S.tree = tree.tree || [];
+    S.lastApi = Date.now();
+  } catch(e){ S.errors.push("GitHub API: " + e.message); }
+}
+async function loadQuotes(){
+  const open = model().rows.filter(r => r.status === "open" || r.status === "filled").map(r => r.ticker);
+  const tk = [...new Set(open)].slice(0, 100);
+  if (!tk.length || S.noQuotes) return;
+  try {
+    const js = await getJSON(KALSHI + "/markets?limit=200&tickers=" + encodeURIComponent(tk.join(",")));
+    for (const m of js.markets || []){
+      const p = k => m[k + "_dollars"] != null ? num(m[k + "_dollars"], null) : (m[k] != null ? num(m[k]) / 100 : null);
+      S.quotes[m.ticker] = {yb:p("yes_bid"), ya:p("yes_ask"), last:p("last_price"), status:m.status, result:m.result, at:Date.now()};
+    }
+  } catch(e){ S.noQuotes = true; } // Kalshi may block browser requests (CORS); then we show the order price only
+}
+
+/* ---------------------------------------------------------------- model */
+const STATUS = {resting:"open", filled:"filled", settled:"settled", "done-unfilled":"unfilled", cancelled:"cancelled"};
+function strategyName(k){ const v = (S.data.verdicts || {}).strategies || {}; return (v[k] && v[k].label) || k.replace(/(^|[-_])(\w)/g, (m, a, b) => (a ? " " : "") + b.toUpperCase()); }
+function bankroll(){
+  const m = (S.data.report || "").match(/bankroll \$([0-9.]+)/);
+  return m ? +m[1] : num(((S.data.config || {}).account || {}).bankroll, 35);
+}
+function tradingCfg(){ return (S.data.config || {}).trading || {}; }
+function stratMode(name){
+  const t = tradingCfg(), sp = t[name];
+  if (name === "edge-shadow" || name === "near-shadow") return (S.data.config.alerts || {})[name === "edge-shadow" ? "edge_alerts" : "near_lock_alerts"] === "off" ? "off" : "paper";
+  if (name === "weather" && (!sp || !sp.enabled) && (S.data.config.markets || {}).paper_daybefore) return "paper";
+  if (!sp || !sp.enabled || t.mode === "off") return "off";
+  return t.mode === "live" && sp.live === true ? "live" : "paper";
+}
+let _model = null, _modelKey = null;
+function model(){
+  if (_model && _modelKey === S.lastData) return _model;
+  const d = S.data, rows = [];
+  for (const r of d.orders || []){
+    rows.push({src:"trader", strategy:r.strategy, mode:r.mode || "paper", ticker:r.ticker, event:r.event, title:r.title || r.ticker,
+      side:(r.side || "").toLowerCase(), price:num(r.price), count:num(r.count), filled:num(r.filled),
+      status:STATUS[r.status] || r.status, placed:pdate(r.placed_at), close:pdate(r.close), settled:pdate(r.settled_at),
+      result:r.result, pnl:r.pnl === "" ? null : num(r.pnl), note:r.note});
+  }
+  const traderWx = new Set(rows.filter(r => r.strategy === "weather").map(r => r.ticker + "|" + r.side));
+  for (const r of d.paper || []){
+    if (traderWx.has(r.ticker + "|" + (r.side || "").toLowerCase())) continue;
+    const st = r.status === "open" ? "open" : r.status === "filled" ? "settled" : r.status === "unfilled" ? "unfilled" : r.status;
+    rows.push({src:"daybefore", strategy:"weather", mode:"paper", ticker:r.ticker, event:r.event,
+      title:`${r.city} ${r.metric} ${r.date} · ${r.bracket}`, side:(r.side || "").toLowerCase(), price:num(r.price), count:1,
+      filled:st === "settled" ? 1 : 0, status:st, placed:pdate(r.placed_at), close:pdate(r.close), settled:pdate(r.settled_at),
+      result:r.result, pnl:r.pnl === "" ? null : num(r.pnl), model:num(r.blend_p, null), edge:num(r.edge, null)});
+  }
+  for (const r of d.alerts || []){
+    if (r.mode !== "shadow" || (r.kind !== "model" && r.kind !== "near")) continue;
+    const st = r.status === "open" ? "filled" : (r.status === "won" || r.status === "lost") ? "settled" : r.status;
+    const n = Math.max(1, num(r.contracts, 1));
+    rows.push({src:"alerts", strategy:r.kind === "near" ? "near-shadow" : "edge-shadow", mode:"paper", ticker:r.ticker, event:r.event,
+      title:`${r.city} ${r.metric} ${r.date} · ${r.bracket}`, side:(r.side || "").toLowerCase(), price:num(r.price), count:n, filled:n,
+      status:st, placed:pdate(r.alerted_at), close:null, settled:pdate(r.settled_at), result:r.status,
+      pnl:r.pnl === "" ? null : num(r.pnl), model:num(r.fair_p, null), market:num(r.market_p, null), edge:num(r.edge, null)});
+  }
+  const manual = (d.mytrades || []).map(r => ({src:"manual", strategy:"manual", mode:"live", ticker:r.ticker, title:r.note || r.ticker,
+    side:(r.side || "").toLowerCase(), price:num(r.price), count:num(r.contracts), filled:num(r.contracts), status:"filled", pnl:null}));
+  _model = {rows, manual}; _modelKey = S.lastData; return _model;
+}
+function exposureOf(r){ return r.status === "open" ? r.count * r.price : r.status === "filled" ? r.filled * r.price : 0; }
+function stats(rows){
+  const settled = rows.filter(r => r.status === "settled" && r.pnl != null);
+  const pnl = settled.reduce((a, r) => a + r.pnl, 0);
+  const contracts = settled.reduce((a, r) => a + Math.max(1, r.filled || r.count), 0);
+  const wins = settled.filter(r => r.pnl > 0).length;
+  const cost = settled.reduce((a, r) => a + r.price * Math.max(1, r.filled || r.count), 0);
+  const unfilled = rows.filter(r => r.status === "unfilled").length;
+  const filledN = settled.length + rows.filter(r => r.status === "filled").length;
+  const open = rows.filter(r => r.status === "open" || r.status === "filled");
+  const today = etDay(new Date());
+  const todayPnl = settled.filter(r => etDay(r.settled) === today).reduce((a, r) => a + r.pnl, 0);
+  return {settled, pnl, contracts, wins, cost, roi: cost ? pnl / cost : 0, edgeC: contracts ? pnl / contracts * 100 : 0,
+    winRate: settled.length ? wins / settled.length : null, fillRate: (filledN + unfilled) ? filledN / (filledN + unfilled) : null,
+    open, exposure: open.reduce((a, r) => a + exposureOf(r), 0), todayPnl, n: rows.length};
+}
+function unrealized(r){
+  const q = S.quotes[r.ticker]; if (!q || r.status !== "filled") return null;
+  const bid = r.side === "yes" ? q.yb : (q.ya != null ? 1 - q.ya : null);
+  return bid == null ? null : (bid - r.price) * (r.filled || r.count);
+}
+
+/* ---------------------------------------------------------------- charts */
+function lineChart(el, series, o={}){
+  const W = el.clientWidth || 340, H = o.h || 190, P = {l:44, r:12, t:12, b:24};
+  const pts = series.flatMap(s => s.pts); if (!pts.length){ el.innerHTML = `<div class="empty">${o.empty || "No data yet"}</div>`; return; }
+  let x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x)); if (x1 === x0){ x0 -= 3600e3; x1 += 3600e3; }
+  const z = o.zero === false ? [] : [0]; let y0 = Math.min(...z, ...pts.map(p => p.y)), y1 = Math.max(...z, ...pts.map(p => p.y)); if (y1 - y0 < 0.5){ y1 += .25; y0 -= .25; }
+  if (o.y0 != null) y0 = Math.min(y0, o.y0); if (o.y1 != null) y1 = Math.max(y1, o.y1);
+  const pad = (y1 - y0) * .08; y0 -= pad; y1 += pad;
+  const X = x => P.l + (x - x0) / (x1 - x0) * (W - P.l - P.r), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
+  const ticks = niceTicks(y0, y1, 4), fy = o.fy || (v => "$" + v.toFixed(Math.abs(y1 - y0) < 5 ? 2 : 0));
+  let g = ticks.map(t => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="${t === 0 ? "#3a4870" : "#18213b"}" ${t === 0 ? "" : 'stroke-dasharray="2 4"'}/><text x="${P.l - 6}" y="${Y(t) + 3.5}" fill="#6b7699" font-size="10" text-anchor="end" font-family="JetBrains Mono">${fy(t)}</text>`).join("");
+  const fx = x1 - x0 < 2 * 864e5 ? (t => fmt(new Date(t), {weekday:"short", hour:"numeric"})) : (t => fday(new Date(t)));
+  const xt = [x0, (x0 + x1) / 2, x1].map((t, i) => `<text x="${X(t)}" y="${H - 6}" fill="#6b7699" font-size="10" text-anchor="${["start","middle","end"][i]}" font-family="JetBrains Mono">${fx(t)}</text>`).join("");
+  (o.refs || []).forEach(rf => { if (rf.y > y0 && rf.y < y1) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(rf.y)}" y2="${Y(rf.y)}" stroke="${rf.c}" stroke-dasharray="5 4" opacity=".7"/><text x="${W - P.r}" y="${Y(rf.y) - 4}" fill="${rf.c}" font-size="10" text-anchor="end" font-family="JetBrains Mono">${rf.label}</text>`; });
+  let paths = "";
+  series.forEach((s, i) => {
+    if (!s.pts.length) return;
+    const d = s.pts.map((p, j) => (j ? "L" : "M") + X(p.x).toFixed(1) + "," + Y(p.y).toFixed(1)).join("");
+    if (i === 0 && o.area !== false){
+      const gid = "g" + Math.random().toString(36).slice(2, 7);
+      paths += `<defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${s.c}" stop-opacity=".28"/><stop offset="1" stop-color="${s.c}" stop-opacity="0"/></linearGradient></defs>`;
+      paths += `<path d="${d}L${X(s.pts.at(-1).x)},${Y(Math.max(y0, 0))}L${X(s.pts[0].x)},${Y(Math.max(y0, 0))}Z" fill="url(#${gid})"/>`;
+    }
+    paths += `<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w || 2}" stroke-linejoin="round" stroke-linecap="round" ${i === 0 ? `style="filter:drop-shadow(0 0 4px ${s.c}88)"` : ""} ${s.dash ? 'stroke-dasharray="4 3"' : ""}/>`;
+    const L = s.pts.at(-1); paths += `<circle cx="${X(L.x)}" cy="${Y(L.y)}" r="3.5" fill="${s.c}" stroke="#070a12" stroke-width="2"/>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}${xt}${paths}<line class="xh" y1="${P.t}" y2="${H - P.b}" stroke="#a9b4d6" stroke-opacity=".5" style="display:none"/><g class="dots"></g><rect x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}" fill="transparent"/></svg><div class="tip"></div>`;
+  const svg = el.querySelector("svg"), tip = el.querySelector(".tip"), xh = svg.querySelector(".xh"), dots = svg.querySelector(".dots");
+  const move = ev => {
+    const b = svg.getBoundingClientRect(), mx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - b.left, xv = x0 + (mx * W / b.width - P.l) / (W - P.l - P.r) * (x1 - x0);
+    let rows = [], best = null;
+    series.forEach(s => { if (!s.pts.length) return; let p = null; for (const q of s.pts){ if (q.x <= xv) p = q; else break; } if (!p) p = s.pts[0]; rows.push({s, p}); if (!best || Math.abs(p.x - xv) < Math.abs(best.x - xv)) best = p; });
+    if (!best) return;
+    const sx = X(Math.min(Math.max(xv, x0), x1)); xh.setAttribute("x1", sx); xh.setAttribute("x2", sx); xh.style.display = "";
+    dots.innerHTML = rows.map(r => `<circle cx="${X(r.p.x)}" cy="${Y(r.p.y)}" r="4" fill="${r.s.c}" stroke="#070a12" stroke-width="2"/>`).join("");
+    tip.innerHTML = `<div class="mute">${fdt(new Date(xv))}</div>` + rows.map(r => `<div class="k"><span class="sw" style="background:${r.s.c}"></span>${esc(r.s.name)} <b>${(o.fv || (v => money(v)))(r.p.y)}</b></div>`).join("") + (best.label ? `<div class="mute">${esc(best.label)}</div>` : "");
+    tip.style.display = "block"; const tx = Math.min(Math.max(sx * b.width / W, 80), b.width - 80); tip.style.left = tx + "px"; tip.style.top = "8px"; tip.style.transform = "translate(-50%,-105%)";
+  };
+  const leave = () => { tip.style.display = "none"; xh.style.display = "none"; dots.innerHTML = ""; };
+  svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move); svg.addEventListener("pointerleave", leave);
+  svg.addEventListener("touchmove", move, {passive:true}); svg.addEventListener("touchend", () => setTimeout(leave, 1800));
+}
+function barChart(el, bars, o={}){
+  const W = el.clientWidth || 340, H = o.h || 150, P = {l:40, r:8, t:10, b:22};
+  if (!bars.length){ el.innerHTML = `<div class="empty">${o.empty || "No data yet"}</div>`; return; }
+  let y0 = Math.min(0, ...bars.map(b => b.v)), y1 = Math.max(0, ...bars.map(b => b.v)); if (y1 - y0 < 1e-9) y1 = 1;
+  const pad = (y1 - y0) * .1; y1 += pad; if (y0 < 0) y0 -= pad;
+  const bw = Math.min(44, (W - P.l - P.r) / bars.length), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
+  const fy = o.fy || (v => money(v, false));
+  let g = niceTicks(y0, y1, 3).map(t => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="${t === 0 ? "#3a4870" : "#18213b"}" ${t ? 'stroke-dasharray="2 4"' : ""}/><text x="${P.l - 6}" y="${Y(t) + 3.5}" fill="#6b7699" font-size="10" text-anchor="end" font-family="JetBrains Mono">${fy(t)}</text>`).join("");
+  const every = Math.ceil(bars.length / 7);
+  bars.forEach((b, i) => {
+    const x = P.l + i * bw + 1, w = Math.max(2, bw - 2), top = Y(Math.max(b.v, 0)), bot = Y(Math.min(b.v, 0)), h = Math.max(1, bot - top);
+    const c = b.c || (b.v >= 0 ? "#34d399" : "#fb6b7b"), r = Math.min(4, w / 2);
+    g += `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="${r}" fill="${c}" opacity=".9"><title>${esc(b.label)}: ${esc((o.fv || fy)(b.v))}</title></rect>`;
+    g += `<rect class="hit" data-i="${i}" x="${P.l + i * bw}" y="0" width="${bw}" height="${H}" fill="transparent"/>`;
+    if (i % every === 0 || bars.length <= 8) g += `<text x="${x + w / 2}" y="${H - 6}" fill="#6b7699" font-size="10" text-anchor="middle" font-family="JetBrains Mono">${esc(b.short ?? b.label)}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}</svg><div class="tip"></div>`;
+  const tip = el.querySelector(".tip"), svg = el.querySelector("svg");
+  svg.addEventListener("pointerover", ev => { const i = ev.target.dataset && ev.target.dataset.i; if (i == null) return; const b = bars[i], bb = svg.getBoundingClientRect();
+    tip.innerHTML = `<div class="mute">${esc(b.label)}</div><b>${esc((o.fv || fy)(b.v))}</b>${b.extra ? `<div class="mute">${esc(b.extra)}</div>` : ""}`;
+    tip.style.display = "block"; tip.style.left = Math.min(Math.max((P.l + (+i + .5) * bw) * bb.width / W, 70), bb.width - 70) + "px"; tip.style.top = "6px"; });
+  svg.addEventListener("pointerleave", () => tip.style.display = "none");
+}
+function niceTicks(a, b, n){ const span = b - a, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0))), f = step0 / mag;
+  const step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = []; for (let t = Math.ceil(a / step) * step; t <= b + 1e-9; t += step) out.push(+t.toFixed(10)); return out; }
+function cumSeries(rows, name, c){
+  const s = rows.filter(r => r.status === "settled" && r.pnl != null && r.settled).sort((a, b) => a.settled - b.settled);
+  let acc = 0; const pts = s.map(r => ({x:+r.settled, y:(acc += r.pnl), label:(r.title || r.ticker).slice(0, 44)}));
+  if (pts.length) pts.unshift({x:pts[0].x - 1, y:0});
+  return {name, c, pts};
+}
+function meter(label, used, cap, opts={}){
+  const frac = cap > 0 ? Math.max(0, used) / cap : 0, w = Math.min(100, frac * 100);
+  const k = frac >= .8 ? "bad" : frac >= .5 ? "warn" : "";
+  return `<div class="meter"><div class="row"><span class="dim">${label}</span><b>${opts.txt || ""}</b></div><div class="bar"><i class="${k}" style="width:${w}%"></i></div>${opts.sub ? `<div class="s mute" style="font-size:11px;margin-top:4px">${opts.sub}</div>` : ""}</div>`;
+}
+
+/* ---------------------------------------------------------------- views */
+const SIGNAL = new Set(["edge-shadow","near-shadow"]);
+function modeRows(mode){ const m = model(); return mode === "live" ? m.rows.filter(r => r.mode === "live") : m.rows.filter(r => r.mode !== "live" && !SIGNAL.has(r.strategy)); }
+function signalRows(){ return model().rows.filter(r => SIGNAL.has(r.strategy)); }
+function strategiesFor(mode){
+  const rows = modeRows(mode), names = new Set(rows.map(r => r.strategy));
+  const t = tradingCfg();
+  for (const k of Object.keys(t)) if (t[k] && typeof t[k] === "object" && (mode === "paper" ? t[k].enabled : t[k].live)) names.add(k);
+  if (mode === "paper" && (S.data.config.markets || {}).paper_daybefore) names.add("weather");
+  names.delete("manual");
+  return [...names];
+}
+function colorOf(name, i){ return COLORS[name] || EXTRA[i % EXTRA.length]; }
+
+function renderBanner(){
+  const t = tradingCfg(), st = S.data.tstate || {}, halted = st.halted && Object.keys(st.halted).length ? st.halted : null;
+  let h = "";
+  if (halted) h += `<div class="banner halt">⛔ <b>Trading halted</b> (${esc(Object.keys(halted).join(", "))}): total loss stop hit ${esc(fdt(pdate(Object.values(halted)[0].at)))}. No new orders until it is cleared.</div>`;
+  if (S.mode === "live") {
+    const live = modeRows("live").length + model().manual.length;
+    h += live ? `<div class="banner live">Real money. Global mode <b>${esc(String(t.mode || "off").toUpperCase())}</b>.</div>`
+              : `<div class="banner live">No real-money orders yet. Global mode is <b>${esc(String(t.mode || "off").toUpperCase())}</b>, so every strategy is on paper. This view fills in automatically once a strategy goes live; flip to <b>PAPER</b> to see the same layout with today's paper trades.</div>`;
+  } else h += `<div class="banner paper">Paper trading: recorded as if placed, no money moves. Same layout as the live view.</div>`;
+  $("#banner").innerHTML = h;
+}
+
+function renderOverview(){
+  const mode = S.mode, rows = modeRows(mode), st = stats(rows), B = bankroll(), t = tradingCfg();
+  const openCap = num(t.max_open_pct, .6) * B, dayStop = num(t.daily_loss_pct, .1) * B, totStop = num(t.total_loss_pct, .25) * B;
+  const manual = mode === "live" ? model().manual : [];
+  const unr = st.open.map(unrealized).filter(v => v != null), unrTot = unr.reduce((a, b) => a + b, 0);
+  const strats = strategiesFor(mode);
+  let h = `<div class="card glow" style="margin-top:2px"><div class="hero"><div><div class="lbl">${mode === "live" ? "Real-money P&L" : "Paper P&L"} · all time</div>
+    <div class="big ${cls(st.pnl)}">${money(st.pnl)}</div>
+    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${st.settled.length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
+    <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
+    ${unr.length ? `<div class="lbl" style="margin-top:6px">Open, marked</div><div class="val ${cls(unrTot)}" style="font-size:15px">${money(unrTot)}</div>` : ""}</div></div>
+    <div class="grid g3" style="margin-top:14px">
+      <div><div class="lbl">Win rate</div><div class="val">${st.winRate == null ? "—" : pct(st.winRate)}</div></div>
+      <div><div class="lbl">Edge / ct</div><div class="val ${cls(st.edgeC)}">${st.contracts ? cents(st.edgeC) : "—"}</div></div>
+      <div><div class="lbl">Open</div><div class="val">${st.open.length}<small> · $${st.exposure.toFixed(2)}</small></div></div>
+    </div></div>`;
+
+  h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
+    ${meter("Money at risk", st.exposure, openCap, {txt:`${pct(st.exposure / B, 1)} of ${pct(num(t.max_open_pct, .6))} cap`, sub:`$${st.exposure.toFixed(2)} open of $${openCap.toFixed(2)} allowed`})}
+    ${meter("Today's loss vs daily stop", -st.todayPnl, dayStop, {txt:`${money(st.todayPnl)} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} of bankroll in a day pauses new orders until tomorrow`})}
+    ${meter("Total loss vs halt stop", -st.pnl, totStop, {txt:`${money(st.pnl)} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} overall halts everything and cancels resting orders`})}
+  </div>`;
+
+  h += `<h2>P&L over time</h2><div class="card"><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div></div>`;
+  h += `<h2>Daily P&L</h2><div class="card"><div class="chart" id="daily"></div></div>`;
+  h += `<h2>Strategies <span class="sub">${strats.length} ${mode}</span></h2><div class="grid cols2">`;
+  const bench = (S.data.verdicts || {}).strategies || {};
+  strats.forEach((name, i) => {
+    const r = rows.filter(x => x.strategy === name), s = stats(r), sp = t[name] || {}, m = stratMode(name), b = bench[name] || {};
+    const cap = sp.max_open_pct ? sp.max_open_pct * B : null;
+    h += `<div class="card strat"><h3><span class="dot" style="background:${colorOf(name, i)};box-shadow:0 0 8px ${colorOf(name, i)}"></span>${esc(strategyName(name))}
+      <span class="chips" style="margin-left:auto"><span class="chip ${m}">${m.toUpperCase()}</span>${sp.enabled === false && name !== "weather" ? '<span class="chip off">DISABLED</span>' : ""}</span></h3>
+      <div class="kv">
+        <div><div class="lbl">P&L</div><div class="val ${cls(s.pnl)}">${money(s.pnl)}</div></div>
+        <div><div class="lbl">Settled</div><div class="val">${s.settled.length}<small> · ${s.winRate == null ? "—" : pct(s.winRate)} won</small></div></div>
+        <div><div class="lbl">Open</div><div class="val">${s.open.length}<small> · $${s.exposure.toFixed(2)}</small></div></div>
+        <div><div class="lbl">Edge / ct</div><div class="val ${cls(s.edgeC)}">${s.contracts ? cents(s.edgeC) : "—"}</div></div>
+        <div><div class="lbl">Backtest</div><div class="val dim">${b.backtest_c != null ? cents(b.backtest_c) : "—"}</div></div>
+        <div><div class="lbl">Fill rate</div><div class="val">${s.fillRate == null ? "—" : pct(s.fillRate)}</div></div>
+      </div>
+      ${cap ? meter("Strategy cap", s.exposure, cap, {txt:`$${s.exposure.toFixed(2)} / $${cap.toFixed(2)}`}) : ""}
+      ${b.backtest_note ? `<div class="note">${esc(b.backtest_note)}</div>` : ""}
+      ${s.contracts && b.backtest_c != null ? `<div class="note">${s.contracts < 100 ? `Only ${s.contracts} contracts so far: too few to compare with the backtest.` : s.edgeC >= b.backtest_c * .5 ? "Tracking the backtest." : "Running below the backtest."}</div>` : ""}
+    </div>`;
+  });
+  h += `</div>`;
+  if (mode === "paper"){
+    const sig = signalRows();
+    h += `<h2>Silent signals <span class="sub">not trades · not in the P&L above</span></h2><div class="grid cols2">` + ["edge-shadow","near-shadow"].map(n => { const s = stats(sig.filter(r => r.strategy === n)), b = bench[n] || {};
+      return `<div class="card strat"><h3><span class="dot" style="background:${COLORS[n]}"></span>${esc(strategyName(n))}<span class="chips" style="margin-left:auto"><span class="chip off">SHADOW</span></span></h3>
+      <div class="kv"><div><div class="lbl">If taken</div><div class="val ${cls(s.pnl)}">${money(s.pnl)}</div></div>
+      <div><div class="lbl">Record</div><div class="val">${s.wins}-${s.settled.length - s.wins}</div></div>
+      <div><div class="lbl">Pending</div><div class="val">${s.open.length}</div></div></div>
+      <div class="note">${esc(b.backtest_note || "")}</div></div>`; }).join("") + `</div>`;
+  }
+  if (manual.length){
+    h += `<h2>Your manual trades</h2><div class="card list">` + manual.map(r => `<div class="item"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t">${esc(r.ticker)}</div><div class="s">${esc(r.title)}</div></div><div class="r">${r.count} @ ${Math.round(r.price * 100)}¢</div></div>`).join("") + `</div>`;
+  }
+  $("#v-overview").innerHTML = h;
+
+  const ser = [cumSeries(rows, "Total", "#e6ecff")];
+  strats.forEach((n, i) => { const s = cumSeries(rows.filter(r => r.strategy === n), strategyName(n), colorOf(n, i)); if (s.pts.length) ser.push(s); });
+  ser[0].w = 2.5;
+  const hidden = new Set(JSON.parse(ls.get("eqHidden") || "[]"));
+  const drawEq = () => lineChart($("#eq"), ser.filter(s => !hidden.has(s.name)), {empty:"Nothing settled yet. The curve starts with the first settled order.", refs:[{y:-dayStop, c:"#f5b335", label:"daily stop"}, {y:-totStop, c:"#fb6b7b", label:"halt"}].filter(r => st.pnl < -dayStop * .3 || r.label === "daily stop" && st.pnl < 0)});
+  $("#eqLeg").innerHTML = ser.length > 1 ? ser.map(s => `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}"><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("") : "";
+  $("#eqLeg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("eqHidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); drawEq(); };
+  drawEq();
+  const byDay = {}; st.settled.forEach(r => { const d = etDay(r.settled); byDay[d] = (byDay[d] || 0) + r.pnl; });
+  const days = Object.keys(byDay).sort().slice(-30);
+  barChart($("#daily"), days.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:byDay[d]})), {empty:"No settled days yet"});
+}
+
+function orderItem(r, i){
+  const q = S.quotes[r.ticker], u = unrealized(r);
+  const now = q ? (r.side === "yes" ? q.yb : (q.ya != null ? 1 - q.ya : null)) : null;
+  const sub = [r.status === "open" ? "resting" : r.status === "filled" ? "filled · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
+  const right = r.status === "settled" ? `<span class="${cls(r.pnl)}">${money(r.pnl)}</span><small>${r.pnl > 0 ? "won" : "lost"} · ${r.count}@${Math.round(r.price * 100)}¢</small>`
+    : r.status === "unfilled" || r.status === "cancelled" ? `<span class="mute">${r.status}</span><small>${r.count}@${Math.round(r.price * 100)}¢</small>`
+    : `${r.status === "open" ? r.count : r.filled} @ ${Math.round(r.price * 100)}¢<small>${now != null ? `now ${Math.round(now * 100)}¢ ${u != null ? `<span class="${cls(u)}">${money(u)}</span>` : ""}` : "$" + exposureOf(r).toFixed(2) + " at risk"}</small>`;
+  return `<div class="item"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" title="${esc(r.ticker)}"><span style="color:${colorOf(r.strategy, i)}">▍</span>${esc(r.title)}</div><div class="s">${esc(sub)}</div></div><div class="r">${right}</div></div>`;
+}
+function renderOrders(){
+  const rows = modeRows(S.mode), strats = strategiesFor(S.mode), f = S.filter;
+  const pick = rows.filter(r => f === "all" || r.strategy === f);
+  const open = pick.filter(r => r.status === "open").sort((a, b) => (a.close || 0) - (b.close || 0));
+  const held = pick.filter(r => r.status === "filled").sort((a, b) => (b.placed || 0) - (a.placed || 0));
+  const done = pick.filter(r => ["settled","unfilled","cancelled"].includes(r.status)).sort((a, b) => (b.settled || b.placed || 0) - (a.settled || a.placed || 0));
+  const idx = n => strats.indexOf(n);
+  let h = `<div class="filters" id="flt"><button data-f="all" class="${f === "all" ? "on" : ""}">All</button>${strats.map(n => `<button data-f="${esc(n)}" class="${f === n ? "on" : ""}">${esc(strategyName(n))}</button>`).join("")}</div>`;
+  h += `<h2>Resting orders <span class="sub">${open.length}</span></h2><div class="card list">${open.length ? open.slice(0, 80).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">No resting orders</div>`}</div>`;
+  h += `<h2>Positions held <span class="sub">${held.length} awaiting settlement</span></h2><div class="card list">${held.length ? held.slice(0, 80).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">No open positions</div>`}</div>`;
+  if (S.noQuotes && (open.length || held.length)) h += `<p class="mute" style="font-size:11.5px;margin:6px 2px">Live Kalshi prices are not available in this browser, so open orders show their order price.</p>`;
+  h += `<h2>History <span class="sub">${done.length}</span></h2><div class="card list">${done.length ? done.slice(0, 150).map(r => orderItem(r, idx(r.strategy))).join("") : `<div class="empty">Nothing settled yet</div>`}</div>`;
+  $("#v-orders").innerHTML = h;
+  $("#flt").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.filter = b.dataset.f; renderOrders(); };
+}
+
+function renderWeather(){
+  const fc = S.data.forecasts || [], latest = {};
+  fc.forEach(r => { const k = r.event; if (!latest[k] || r.scan_at > latest[k].scan_at) latest[k] = r; });
+  const all = Object.values(latest), dates = [...new Set(all.map(r => r.date))].sort();
+  const today = etDay(new Date()), upcoming = dates.filter(d => d >= today);
+  if (!S.wxDay || !dates.includes(S.wxDay)) S.wxDay = upcoming[0] || dates.at(-1);
+  const day = all.filter(r => r.date === S.wxDay).sort((a, b) => a.city.localeCompare(b.city) || a.metric.localeCompare(b.metric));
+  let h = `<div class="filters" id="wxd">${dates.slice(-5).map(d => `<button data-d="${d}" class="${d === S.wxDay ? "on" : ""}">${d === today ? "Today" : fday(pdate(d + "T12:00"))}</button>`).join("")}</div>`;
+  h += `<h2>Forecast ranges <span class="sub">80% range · ● model · ▲ NWS · ◆ actual</span></h2><div class="card" id="fcl">`;
+  if (!day.length) h += `<div class="empty">No forecasts logged for this day</div>`;
+  else {
+    const lo = Math.min(...day.map(r => Math.min(num(r.p10), num(r.actual, 999), num(r.obs_extreme, 999), num(r.nws, 999)))), hi = Math.max(...day.map(r => Math.max(num(r.p90), num(r.actual, -999), num(r.obs_extreme, -999), num(r.nws, -999))));
+    day.forEach(r => {
+      const pos = v => ((v - lo) / Math.max(1, hi - lo) * 100).toFixed(1) + "%";
+      const hasA = r.actual !== "", hasO = r.obs_extreme !== "", isHigh = r.metric === "high";
+      const c = isHigh ? "#f5b335" : "#22d3ee";
+      h += `<div class="fc" data-e="${esc(r.event)}"><div class="c">${esc(r.city)}<small>${isHigh ? "HIGH" : "LOW"} · ${num(r.hours_to_end).toFixed(0)}h left</small></div>
+        <div style="position:relative;height:22px"><div style="position:absolute;top:10px;left:0;right:0;height:2px;background:#18213b;border-radius:2px"></div>
+          <div style="position:absolute;top:7px;height:8px;border-radius:5px;left:${pos(num(r.p10))};width:calc(${pos(num(r.p90))} - ${pos(num(r.p10))});background:${c}33;border:1px solid ${c}aa"></div>
+          <div title="model ${r.median}" style="position:absolute;top:5px;width:12px;height:12px;margin-left:-6px;border-radius:50%;left:${pos(num(r.median))};background:${c};box-shadow:0 0 8px ${c}"></div>
+          ${r.nws !== "" ? `<div title="NWS ${r.nws}" style="position:absolute;top:-1px;left:${pos(num(r.nws))};margin-left:-5px;color:#e6ecff;font-size:9px">▲</div>` : ""}
+          ${hasO && !hasA ? `<div title="observed so far ${r.obs_extreme}" style="position:absolute;top:4px;width:2px;height:14px;left:${pos(num(r.obs_extreme))};background:#a9b4d6"></div>` : ""}
+          ${hasA ? `<div title="actual ${r.actual}" style="position:absolute;top:3px;left:${pos(num(r.actual))};margin-left:-7px;width:14px;height:14px;color:#34d399;font-size:14px;line-height:14px;text-shadow:0 0 6px #34d399">◆</div>` : ""}
+        </div>
+        <div class="n">${hasA ? `<span class="pos">${esc(r.actual)}°</span><small>pred ${esc(r.median)}°</small>` : `${esc(r.median)}°<small>${esc(r.p10)}–${esc(r.p90)}</small>`}</div>
+        <div class="detail"><div class="chart" data-ch="${esc(r.event)}"></div><div class="mute" style="font-size:11px;font-family:var(--mono)">Model median by scan time${hasO ? ` · observed so far ${esc(r.obs_extreme)}°` : ""}${r.nws ? ` · NWS ${esc(r.nws)}°` : ""}</div></div></div>`;
+    });
+  }
+  h += `</div>`;
+
+  // accuracy: last forecast within 8h of the end vs the actual
+  const graded = {}; fc.forEach(r => { if (r.actual === "") return; const k = r.event, hte = num(r.hours_to_end); if (hte > 8) return; if (!graded[k] || r.scan_at < graded[k].scan_at) graded[k] = r; });
+  const g = Object.values(graded), miss = g.map(r => num(r.actual) - num(r.median));
+  const mae = miss.length ? miss.reduce((a, b) => a + Math.abs(b), 0) / miss.length : null, bias = miss.length ? miss.reduce((a, b) => a + b, 0) / miss.length : null;
+  const held = g.filter(r => num(r.actual) >= num(r.p10) && num(r.actual) <= num(r.p90)).length;
+  const nwsMiss = g.filter(r => r.nws !== "").map(r => Math.abs(num(r.actual) - num(r.nws)));
+  h += `<h2>Forecast accuracy <span class="sub">${g.length} city-days, last ~8h</span></h2><div class="card"><div class="grid g3">
+    <div><div class="lbl">Avg miss</div><div class="val">${mae == null ? "—" : mae.toFixed(1) + "°F"}</div></div>
+    <div><div class="lbl">NWS miss</div><div class="val dim">${nwsMiss.length ? (nwsMiss.reduce((a, b) => a + b, 0) / nwsMiss.length).toFixed(1) + "°F" : "—"}</div></div>
+    <div><div class="lbl">80% held</div><div class="val">${g.length ? pct(held / g.length) : "—"}</div></div></div>
+    <div class="s mute" style="font-size:11.5px;margin:8px 0 4px">Bias ${bias == null ? "—" : (bias > 0 ? "+" : "") + bias.toFixed(1) + "°F"} (actual minus model; positive = model too cold). Misses by size:</div><div class="chart" id="missH"></div></div>`;
+
+  // silent EDGE calls: model vs market
+  const calls = model().rows.filter(r => r.src === "alerts");
+  const openCalls = calls.filter(r => r.status === "filled").sort((a, b) => (b.edge || 0) - (a.edge || 0)).slice(0, 14);
+  const settled = calls.filter(r => r.status === "settled");
+  const brier = (k) => { const s = settled.filter(r => r[k] != null); return s.length ? s.reduce((a, r) => { const y = r.pnl > 0 ? 1 : 0, p = r[k]; return a + (p - y) ** 2; }, 0) / s.length : null; };
+  const bm = brier("model"), bk = brier("market");
+  h += `<h2>Model vs market <span class="sub">silent EDGE calls</span></h2><div class="card">
+    <div class="grid g3"><div><div class="lbl">Record</div><div class="val">${settled.filter(r => r.pnl > 0).length}-${settled.filter(r => r.pnl <= 0).length}</div></div>
+    <div><div class="lbl">Brier model</div><div class="val ${bm != null && bk != null ? (bm < bk ? "pos" : "neg") : ""}">${bm == null ? "—" : bm.toFixed(3)}</div></div>
+    <div><div class="lbl">Brier market</div><div class="val dim">${bk == null ? "—" : bk.toFixed(3)}</div></div></div>
+    <div class="s mute" style="font-size:11.5px;margin:10px 0 6px">Lower Brier is better. Below: the biggest open disagreements, chance our side wins (<span style="color:#a9b4d6">○ market</span> → <span style="color:#f5b335">● model</span>).</div>
+    <div class="list">${openCalls.length ? openCalls.map(r => { const mk = r.market != null ? (r.side === "no" ? 1 - r.market : r.market) : r.price; return `<div class="item" style="padding:7px 0"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div>
+      <div style="position:relative;height:14px;margin-top:5px"><div style="position:absolute;top:6px;left:0;right:0;height:2px;background:#18213b"></div>
+      <div style="position:absolute;top:6px;height:2px;left:${Math.min(mk, r.model) * 100}%;width:${Math.abs(r.model - mk) * 100}%;background:linear-gradient(90deg,#a9b4d6,#f5b335)"></div>
+      <div style="position:absolute;top:2px;left:${mk * 100}%;margin-left:-5px;width:10px;height:10px;border-radius:50%;border:2px solid #a9b4d6;background:#070a12"></div>
+      <div style="position:absolute;top:2px;left:${r.model * 100}%;margin-left:-5px;width:10px;height:10px;border-radius:50%;background:#f5b335;box-shadow:0 0 6px #f5b335"></div></div></div>
+      <div class="r">${Math.round(mk * 100)}→${Math.round(r.model * 100)}%<small>edge ${cents((r.edge || 0) * 100)}</small></div></div>`; }).join("") : `<div class="empty">No open calls</div>`}</div></div>`;
+
+  // lock census + rain census
+  const cen = S.data.census || {}, cd = Object.keys(cen).sort().slice(-14);
+  h += `<h2>Lock census <span class="sub">brackets already decided by readings</span></h2><div class="card"><div class="chart" id="lockC"></div>
+    <div class="s mute" style="font-size:11.5px;margin-top:6px">${(() => { const all = cd.flatMap(d => Object.values(cen[d] || {})); const cheap = all.filter(x => num(x.min_ask, 1) <= num((S.data.config.strategy || {}).max_price_lock, .97)).length; return `${all.length} locks seen, ${cheap} ever cheap enough to buy (≤${Math.round(num((S.data.config.strategy || {}).max_price_lock, .97) * 100)}¢). The rest were already priced in.`; })()}</div></div>`;
+  const rain = Object.entries(S.data.rain || {});
+  h += `<h2>Rain census <span class="sub">monthly thresholds passed</span></h2><div class="card">${rain.length ? `<div class="scroll"><table class="tbl"><tr><th>Market</th><th>Total</th><th>Seen</th><th>Ask</th><th>Min</th></tr>${rain.map(([k, v]) => `<tr><td>${esc(k.replace(/^KXRAIN/, ""))}</td><td>${num(v.official_total || v.provisional_total).toFixed(2)}"</td><td>${esc(fdt(pdate(v.provisional_at || v.official_at)))}</td><td>${Math.round(num(v.provisional_ask, 1) * 100)}¢</td><td class="${num(v.min_ask, 1) <= .95 ? "pos" : ""}">${Math.round(num(v.min_ask, 1) * 100)}¢</td></tr>`).join("")}</table></div>` : `<div class="empty">No thresholds passed yet this month</div>`}</div>`;
+
+  $("#v-weather").innerHTML = h;
+  $("#wxd").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.wxDay = b.dataset.d; renderWeather(); };
+  $("#fcl").onclick = e => { const row = e.target.closest(".fc"); if (!row) return; row.classList.toggle("open"); if (row.classList.contains("open")){ const ev = row.dataset.e, el = row.querySelector("[data-ch]");
+    const pts = fc.filter(r => r.event === ev).map(r => ({x:+pdate(r.scan_at), y:num(r.median), lo:num(r.p10), hi:num(r.p90)})).sort((a, b) => a.x - b.x);
+    const yv = pts.flatMap(p => [p.lo, p.hi]); lineChart(el, [{name:"model", c:"#f5b335", pts}, {name:"p90", c:"#f5b33555", w:1, dash:1, pts:pts.map(p => ({x:p.x, y:p.hi}))}, {name:"p10", c:"#f5b33555", w:1, dash:1, pts:pts.map(p => ({x:p.x, y:p.lo}))}], {h:140, area:false, zero:false, y0:Math.min(...yv), y1:Math.max(...yv), fy:v => v.toFixed(0) + "°", fv:v => v.toFixed(0) + "°F"}); } };
+  const bins = {}; miss.forEach(m => { const b = Math.max(-5, Math.min(5, Math.round(m))); bins[b] = (bins[b] || 0) + 1; });
+  barChart($("#missH"), [-5,-4,-3,-2,-1,0,1,2,3,4,5].map(b => ({label:(b > 0 ? "+" : "") + b + "°F" + (Math.abs(b) === 5 ? " or more" : ""), short:(b > 0 ? "+" : "") + b, v:bins[b] || 0, c:b === 0 ? "#34d399" : Math.abs(b) <= 1 ? "#22d3ee" : Math.abs(b) <= 2 ? "#8b8cf8" : "#e050f0"})), {h:120, fy:v => v.toFixed(0), fv:v => v + " city-days", empty:"No graded city-days yet"});
+  barChart($("#lockC"), cd.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:Object.keys(cen[d] || {}).length, c:"#22d3ee", extra:Object.values(cen[d] || {}).filter(x => num(x.min_ask, 1) < .98).length + " below 98¢"})), {h:120, fy:v => v.toFixed(0), fv:v => v + " locks", empty:"No locks logged yet"});
+}
+
+function vClass(v){ return {GO:"go", "NO-GO":"nogo", PENDING:"pend", WEAK:"weak", LIVE:"live"}[v] || ""; }
+function renderResearch(){
+  const v = S.data.verdicts || {events:[], checkpoints:[]}, now = new Date(), today = etDay(now);
+  const cps = (v.checkpoints || []).filter(c => c.date >= today).sort((a, b) => a.date.localeCompare(b.date));
+  const evs = (v.events || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+  const counts = {}; evs.forEach(e => counts[e.verdict] = (counts[e.verdict] || 0) + 1);
+  let h = `<div class="grid g3" style="margin-top:2px">${[["GO","go"],["PENDING","pend"],["NO-GO","nogo"]].map(([k, c]) => `<div class="card"><div class="lbl">${k}</div><div class="val chip-${c}" style="color:var(--${c === "go" ? "good" : c === "pend" ? "amber" : "bad"})">${counts[k] || 0}</div></div>`).join("")}</div>`;
+  h += `<h2>Coming up</h2><div class="card">${cps.length ? cps.slice(0, 8).map(c => { const days = Math.round((pdate(c.date + "T12:00") - pdate(today + "T12:00")) / 864e5); return `<div class="cd"><div class="days">${days === 0 ? "NOW" : days}<small>${days === 0 ? "TODAY" : days === 1 ? "DAY" : "DAYS"}</small></div><div><div style="font-size:14px;font-weight:500">${esc(c.title)}</div><div class="mute" style="font-size:11.5px;font-family:var(--mono)">${esc(fday(pdate(c.date + "T12:00")))}</div></div></div>`; }).join("") : `<div class="empty">No checkpoints scheduled</div>`}</div>`;
+  h += `<h2>Research verdicts <span class="sub">newest first</span></h2><div class="card"><div class="tl">${evs.map(e => `<div class="ev ${vClass(e.verdict)}"><div class="d">${esc(fday(pdate(e.date + "T12:00")))} · ${esc(e.area || "")}</div>
+    <div class="h">${esc(e.title)} <span class="chip ${vClass(e.verdict)}">${esc(e.verdict)}</span></div><div class="p">${esc(e.summary)}</div>${e.next ? `<div class="nx">↻ next look ${esc(fday(pdate(e.next + "T12:00")))}</div>` : ""}</div>`).join("")}</div></div>`;
+  $("#v-research").innerHTML = h;
+}
+
+function renderHealth(){
+  const runs = S.runs || [], scans = runs.filter(r => r.name === "weather-scan"), trades = runs.filter(r => r.name === "trade");
+  const lastScan = scans.find(r => r.status === "completed"), lastScanAt = lastScan ? pdate(lastScan.updated_at) : null;
+  const ok = list => list.filter(r => r.conclusion === "success").length, fin = list => list.filter(r => r.status === "completed").length;
+  let h = `<div class="grid g2" style="margin-top:2px">
+    <div class="card"><div class="lbl">Last scan</div><div class="val">${lastScanAt ? ago(lastScanAt) : "—"}</div><div class="s mute" style="font-size:11px;font-family:var(--mono)">${lastScan ? esc(lastScan.conclusion || "") : "GitHub API unavailable"}</div></div>
+    <div class="card"><div class="lbl">Last data commit</div><div class="val">${S.commit ? ago(S.commit.at) : "—"}</div><div class="s mute" style="font-size:11px;font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${S.commit ? esc(S.commit.msg) : ""}</div></div>
+    <div class="card"><div class="lbl">Scans OK</div><div class="val">${fin(scans) ? pct(ok(scans) / fin(scans)) : "—"}<small> of ${fin(scans)}</small></div></div>
+    <div class="card"><div class="lbl">Trade runs OK</div><div class="val">${fin(trades) ? pct(ok(trades) / fin(trades)) : "—"}<small> of ${fin(trades)}</small></div></div></div>`;
+  const strip = list => `<div class="runs">${list.slice(0, 48).reverse().map(r => `<i class="${r.status !== "completed" ? "p" : r.conclusion === "success" ? "" : r.conclusion === "skipped" || r.conclusion === "cancelled" ? "s" : "f"}" title="${esc(fdt(pdate(r.created_at)))} ${esc(r.conclusion || r.status)}"></i>`).join("")}</div>`;
+  h += `<h2>Recent runs <span class="sub">oldest → newest</span></h2><div class="card"><div class="lbl" style="margin-bottom:6px">Weather scan</div>${strip(scans)}<div class="lbl" style="margin:12px 0 6px">Trader</div>${strip(trades)}
+    <div class="lbl" style="margin:12px 0 6px">Research jobs</div><div class="list">${runs.filter(r => !["weather-scan","trade"].includes(r.name)).slice(0, 6).map(r => `<div class="item" style="padding:7px 0"><div class="main"><div class="t" style="font-size:12.5px">${esc(r.name)}</div><div class="s">${esc(fdt(pdate(r.created_at)))}</div></div><div class="r ${r.conclusion === "success" ? "pos" : r.conclusion ? "neg" : ""}">${esc(r.conclusion || r.status)}</div></div>`).join("") || `<div class="empty">None</div>`}</div></div>`;
+  const hours = {}; scans.forEach(r => { const d = pdate(r.created_at); if (Date.now() - d > 24 * 3600e3) return; const k = fmt(d, {hour:"numeric", hour12:false}); hours[k] = (hours[k] || 0) + 1; });
+  h += `<h2>Scans per hour <span class="sub">last 24h, ET</span></h2><div class="card"><div class="chart" id="sph"></div></div>`;
+  const rep = (S.tree || []).filter(f => /^reports\/(daily|weekly|monthly)\/.+\.md$/.test(f.path)).map(f => f.path).sort().reverse();
+  h += `<h2>Reports</h2><div class="card list">${rep.length ? rep.slice(0, 12).map(p => `<div class="item"><div class="main"><div class="t">${esc(p.replace("reports/", "").replace(".md", ""))}</div></div><div class="r"><a href="https://github.com/${REPO}/blob/main/${esc(p)}" target="_blank" rel="noopener">open ↗</a></div></div>`).join("") : `<div class="empty">The first daily report arrives at 9 AM ET.</div>`}</div>`;
+  h += `<h2>Bot report <span class="sub">data/REPORT.md</span></h2><div class="card md" id="rep"></div>`;
+  if (S.errors.length) h += `<h2>Load errors</h2><div class="card">${S.errors.map(e => `<div class="err">${esc(e)}</div>`).join("")}</div>`;
+  $("#v-health").innerHTML = h;
+  const hs = []; for (let i = 23; i >= 0; i--){ const d = new Date(Date.now() - i * 3600e3); const k = fmt(d, {hour:"numeric", hour12:false}); hs.push({label:fmt(d, {hour:"numeric"}), short:fmt(d, {hour:"numeric"}).replace(" ", "").toLowerCase(), v:hours[k] || 0, c:(hours[k] || 0) >= 10 ? "#34d399" : (hours[k] || 0) >= 6 ? "#f5b335" : "#fb6b7b"}); }
+  barChart($("#sph"), runs.length ? hs : [], {h:110, fy:v => v.toFixed(0), fv:v => v + " scans", empty:"GitHub API unavailable right now"});
+  const md = S.data.report || "";
+  $("#rep").innerHTML = md ? mdToHtml(md) : `<div class="empty">No report yet</div>`;
+}
+
+function mdInline(t){ return esc(t).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>").replace(/\*([^*]+)\*/g, "<em>$1</em>"); }
+function mdToHtml(md){ // small renderer for the bot's own report: headings, tables, lists, paragraphs (all text escaped)
+  const out = [], lines = md.split(/\r?\n/); let i = 0;
+  while (i < lines.length){
+    const l = lines[i];
+    if (/^#{1,6} /.test(l)){ const n = l.match(/^#+/)[0].length; out.push(`<h${Math.min(n + 0, 3)}>${mdInline(l.replace(/^#+ /, ""))}</h${Math.min(n + 0, 3)}>`); i++; continue; }
+    if (/^\s*\|/.test(l)){ const rows = []; while (i < lines.length && /^\s*\|/.test(lines[i])) rows.push(lines[i++]);
+      const cells = r => r.trim().replace(/^\||\|$/g, "").split("|").map(c => c.trim());
+      const body = rows.filter((r, j) => !(j === 1 && /^[\s|:-]+$/.test(r)));
+      out.push(`<div class="scroll"><table>${body.map((r, j) => `<tr>${cells(r).map(c => j ? `<td>${mdInline(c)}</td>` : `<th>${mdInline(c)}</th>`).join("")}</tr>`).join("")}</table></div>`); continue; }
+    if (/^\s*[-*] /.test(l)){ const it = []; while (i < lines.length && /^\s*[-*] /.test(lines[i])) it.push(`<li>${mdInline(lines[i++].replace(/^\s*[-*] /, ""))}</li>`); out.push(`<ul>${it.join("")}</ul>`); continue; }
+    if (!l.trim()){ i++; continue; }
+    const para = []; while (i < lines.length && lines[i].trim() && !/^(#|\s*\||\s*[-*] )/.test(lines[i])) para.push(lines[i++]);
+    out.push(`<p>${mdInline(para.join(" "))}</p>`);
+  }
+  return out.join("");
+}
+
+/* ---------------------------------------------------------------- shell */
+function renderStamp(){
+  const lastScan = (S.runs || []).find(r => r.name === "weather-scan" && r.status === "completed");
+  const t = lastScan ? pdate(lastScan.updated_at) : S.commit ? S.commit.at : null, age = t ? (Date.now() - t) / 60e3 : null;
+  $("#pulse").className = "pulse " + (age == null ? "" : age < 12 ? "ok" : age < 30 ? "stale" : "down");
+  const nx = Math.max(0, Math.round((S.lastData + DATA_MS - Date.now()) / 1000));
+  $("#stamp").innerHTML = `scan ${t ? ago(t) : "—"}<button id="rf" aria-label="Refresh">⟳</button><br><span class="mute">synced ${S.lastData ? ago(S.lastData) : "—"} · next ${Math.floor(nx / 60)}:${String(nx % 60).padStart(2, "0")}</span>`;
+  $("#rf").onclick = () => refresh(true);
+}
+function renderAll(){
+  const m = model(), live = m.rows.filter(r => r.mode === "live").length + m.manual.length, paper = modeRows("paper").length;
+  if (!S.mode) S.mode = ls.get("mode") || (live ? "live" : "paper");
+  $("#cntLive").textContent = live ? " " + live : ""; $("#cntPaper").textContent = paper ? " " + paper : "";
+  document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.m === S.mode));
+  $("#modeSeg").style.display = ["overview","orders"].includes(S.view) ? "" : "none";
+  renderBanner(); if (!["overview","orders"].includes(S.view)) $("#banner").innerHTML = "";
+  ({overview:renderOverview, orders:renderOrders, weather:renderWeather, research:renderResearch, health:renderHealth})[S.view]();
+  renderStamp();
+}
+let busy = false;
+async function refresh(force){
+  if (busy) return; busy = true;
+  try {
+    if (force || Date.now() - S.lastData >= DATA_MS - 2e3) await loadData();
+    if (force || Date.now() - S.lastApi >= API_MS - 2e3) await loadApi();
+    await loadQuotes();
+    renderAll();
+  } catch(e){ S.errors.push(String(e.message || e)); renderAll(); }
+  finally { busy = false; }
+}
+$("#modeSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.mode = b.dataset.m; ls.set("mode", S.mode); S.filter = "all"; renderAll(); window.scrollTo({top:0}); };
+document.querySelector("nav.tabs").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; ls.set("view", S.view);
+  document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("section.view").forEach(s => s.classList.toggle("on", s.id === "v-" + S.view)); renderAll(); window.scrollTo({top:0}); };
+(() => { const v = ls.get("view"); if (v && $("#v-" + v)) { S.view = v; document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("on", x.dataset.v === v)); document.querySelectorAll("section.view").forEach(s => s.classList.toggle("on", s.id === "v-" + v)); } })();
+$("#v-overview").innerHTML = `<div class="card"><div class="skel" style="width:40%"></div><div class="skel" style="width:70%;height:36px;margin-top:10px"></div><div class="skel" style="margin-top:14px"></div></div>`;
+let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => S.lastData && renderAll(), 200); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
+setInterval(() => { if (document.hidden) return; if (Date.now() - S.lastData >= DATA_MS) refresh(); else if (S.lastData) renderStamp(); }, 1000);
+refresh(true);
+</script>
+</body>
+</html>
