@@ -4,7 +4,7 @@ import pytest
 
 from wxbot import trader
 from wxbot.kalshi_api import KalshiClient, OrderRejected, check_order, order_fill_count
-from wxbot.strats import mentions
+from wxbot.strats import favorites, mentions
 from wxbot.util import load_config
 
 UTC = timezone.utc
@@ -32,6 +32,8 @@ class Http:
         self.markets, self.results, self.trades, self.posts = markets, results or {}, list(trades), []
 
     def get_json(self, url, params=None, headers=None):
+        if url.endswith("/events"):
+            return {"events": [], "cursor": ""}
         if url.endswith("/series"):
             return {"series": [{"ticker": "KXTRUMPMENTION", "category": "Mentions"}]}
         if url.endswith("/markets"):
@@ -211,3 +213,29 @@ def test_live_places_post_only_limits_and_alerts_fills(monkeypatch):
     trader.run(cfg(mode="live", live=True), now=NOW + timedelta(minutes=5), http=http, client=cl)
     assert any("FILLED" in p["title"] for p in http.posts)
     assert trader.load()[0]["status"] == "filled"
+
+
+def fav_event(markets, cat="Politics", ev="KXSHUTDOWN-26NOV"):
+    return {"event_ticker": ev, "category": cat, "title": "Shutdown ends?", "markets": markets}
+
+
+def fav_mkt(name, yb, ya, vol=600_000, hours=20, ev="KXSHUTDOWN-26NOV"):
+    close = (NOW + timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
+    return {"ticker": f"{ev}-{name}", "event_ticker": ev, "close_time": close, "status": "active",
+            "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": vol}
+
+
+def test_favorites_picks_big_event_favorites_only():
+    p = {"contracts": 2}
+    evs = [fav_event([fav_mkt("a", 0.88, 0.91), fav_mkt("b", 0.05, 0.08),   # NO fav at 93c
+                      fav_mkt("c", 0.50, 0.55), fav_mkt("d", 0.97, 0.98),   # not a favorite / too dear
+                      fav_mkt("e", 0.90, 0.92, hours=400)]),                 # closes too late
+           fav_event([fav_mkt("f", 0.90, 0.93, vol=1000, ev="KXSMALL")], ev="KXSMALL"),  # small event
+           fav_event([fav_mkt("g", 0.90, 0.93, vol=2_000_000, ev="KXNBA")], cat="Sports", ev="KXNBA")]
+    out = favorites.candidates(evs, NOW, p)
+    assert [(i.ticker[-1], i.side, i.price) for i in out] == [("b", "no", 0.93), ("a", "yes", 0.89)]
+    assert all(i.count == 2 and i.strategy == "favorites" for i in out)
+    # 1c spread: join the bid
+    one = favorites.candidates([fav_event([fav_mkt("a", 0.90, 0.91, vol=2_000_000)])], NOW, p)
+    assert one[0].price == 0.90
+    assert "favorites" in trader.strategies()

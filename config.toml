@@ -97,6 +97,23 @@ min_volume = 100                 # contracts traded so far
 max_open_pct = 0.50              # at most 50% of the bankroll in Mentions
 max_event_pct = 0.25             # at most 25% of the bankroll on one event (one speech)
 
+[trading.favorites]
+# Resting bids on the 85-96c favorite in BIG Elections / Politics / Entertainment
+# events (research: about +3.7c per filled contract in events with 1M+ contracts
+# traded, Feb 2025 - Oct 2026; small events lost). Paper test first.
+enabled = true
+live = false                     # true = real orders (when [trading] mode is "live")
+categories = ["Elections", "Politics", "Entertainment"]
+min_event_volume = 1000000       # contracts traded so far across the event's markets
+contracts = 2
+max_markets_per_event = 2
+min_price = 0.85                 # favorite-side price band
+max_price = 0.96
+min_hours = 1                    # market closes 1 hour - 7 days from now
+max_hours = 168
+max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
+max_event_pct = 0.10             # at most 10% on one event
+
 [trading.weather]
 # Day-before weather limit orders (mirrors the paper orders). Off until the
 # weekend verdict on the paper results.
