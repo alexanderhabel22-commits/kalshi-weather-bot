@@ -42,7 +42,7 @@ ORDERS = DATA_DIR / "trade_orders.csv"
 STATE = DATA_DIR / "trader_state.json"
 FIELDS = ["id", "client_id", "order_id", "mode", "strategy", "placed_at", "ticker", "event",
           "title", "side", "price", "count", "filled", "status", "close", "result", "pnl",
-          "settled_at", "note"]
+          "settled_at", "note", "filled_at"]
 # status: resting -> filled (all filled, waiting for result) -> settled
 #         resting -> done-unfilled / cancelled ; settled/partial handled by `filled`
 OPEN = ("resting", "filled")
@@ -260,17 +260,20 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
             continue
         # markets can settle before their close time (Mentions settle right after
         # the speech), so ask for the result whenever we grade
-        m = kalshi.get_market(http, r["ticker"])
-        res = ((m or {}).get("result") or "").lower()
-        if res not in ("yes", "no"):
-            continue
-        if r["mode"] == "paper":
+        if r["mode"] == "paper" and r["status"] == "resting":
+            # paper fill: a real trade printed at our price or better since we "placed" it
             try:
                 prints = trade_prices(http, r["ticker"], placed, min(close or now, now))
             except HttpError as exc:
                 log.warning("paper trades %s: %s", r["ticker"], exc)
                 continue
-            r["filled"] = int(_f(r["count"])) if fill_flags(r["side"], _f(r["price"]), prints)[0] else 0
+            if fill_flags(r["side"], _f(r["price"]), prints)[0]:
+                r["filled"], r["status"] = int(_f(r["count"])), "filled"
+                r["filled_at"] = now.isoformat(timespec="seconds")
+        m = kalshi.get_market(http, r["ticker"])
+        res = ((m or {}).get("result") or "").lower()
+        if res not in ("yes", "no"):
+            continue
         filled = int(_f(r.get("filled")))
         r["result"] = res
         r["settled_at"] = now.isoformat(timespec="seconds")

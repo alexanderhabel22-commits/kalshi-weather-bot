@@ -306,3 +306,12 @@ def test_favorites_propose_scans_big_series_only():
     http.calls.clear()
     favorites.propose(ctx)
     assert [c[0] for c in http.calls] == ["markets"]
+
+
+def test_paper_fill_marked_before_settlement():
+    trader.run(cfg(), now=NOW, http=Http([mkt("a", 0.12, 0.16)]))
+    assert trader.load()[0]["status"] == "resting"
+    # an hour later YES traded at 20c (>= our 15c offer): filled, market not settled yet
+    trader.run(cfg(enabled=False), now=NOW + timedelta(minutes=60), http=Http([], trades=[0.20]))
+    r = trader.load()[0]
+    assert r["status"] == "filled" and int(r["filled"]) == 2 and r["filled_at"] and not r["pnl"]
