@@ -256,3 +256,38 @@ def test_report_keeps_near_locks_apart_from_edge():
     near = "\n".join(report._shadow_section(rows, "near"))
     assert "Record: 0-1" in edge and "Record: 1-0" in near
     assert "near-lock alerts silent" in near
+
+
+KPHL_NOV5 = """\
+METAR KPHL 052154Z 20005KT 10SM BKN027 OVC045 22/18 A2987 RMK AO2 SLP115 T02170183 $
+METAR KPHL 052054Z 20007KT 10SM BKN023 BKN035 OVC070 22/18 A2987 RMK AO2 RAB35E46 SLP116 P0000 60000 T02170183 55003 $
+METAR KPHL 051954Z 20009KT 10SM FEW027 BKN040 OVC070 23/18 A2987 RMK AO2 SLP114 T02280183 $
+METAR KPHL 051854Z 20009KT 10SM BKN027 BKN050 OVC070 23/18 A2987 RMK AO2 SLP115 VCSH T02330183 $
+METAR KPHL 051754Z 18012G28KT 10SM BKN024 BKN045 BKN120 BKN300 23/18 A2988 RMK AO2 PK WND 20028/1745 SLP119 CIG 020V029 60001 T02330183 10250 20183 58023 $
+METAR KPHL 051654Z 19010G21KT 10SM BKN018 BKN040 BKN100 22/19 A2991 RMK AO2 SLP127 T02220189 $
+METAR KPHL 051554Z 19009G18KT 10SM BKN015 BKN045 BKN110 BKN260 21/18 A2994 RMK AO2 RAE21 SLP138 CIG 013V017 P0000 T02060183 $
+METAR KPHL 051154Z 20006KT 10SM BKN010 BKN060 BKN110 18/17 A2995 RMK AO2 SLP142 VCSH 60001 70001 T01830172 10183 20178 55004 $
+"""
+
+
+def test_bad_six_hour_max_does_not_make_a_lock():
+    """Nov 5 2026, KPHL: the 18Z METAR's 6-hour max said 25.0C (77F), every
+    hourly reading peaked at 23.3C (73.9F) and the climate report said 74.
+    We called "74-75" a NO LOCK off the 77; it must not happen again."""
+    from datetime import datetime, timezone
+    from wxbot.model import build_day_model
+    from wxbot.weather import parse_observations
+    utc = timezone.utc
+    feats = []
+    for line in KPHL_NOV5.splitlines():
+        hhmm = line.split()[2][2:6]
+        t = datetime(2026, 11, 5, int(hhmm[:2]), int(hhmm[2:]), tzinfo=utc)
+        feats.append({"properties": {"timestamp": t.isoformat(), "rawMessage": line,
+                                     "temperature": {"value": None, "qualityControl": "V"}}})
+    obs = parse_observations({"features": feats})
+    ws, we = datetime(2026, 11, 5, 5, tzinfo=utc), datetime(2026, 11, 6, 5, tzinfo=utc)
+    dm = build_day_model("high", ws, we, datetime(2026, 11, 5, 21, 55, tzinfo=utc), obs, None,
+                         None, {"samples": 2000}, seed=1)
+    assert dm.guaranteed == 74 and round(dm.obs_extreme) == 74
+    assert dm.lock_side(74, 75) is None          # the real answer (CLI 74) stays possible
+    assert dm.lock_side(72, 73) == "no"           # what the readings do rule out

@@ -16,6 +16,7 @@ serves both.
 """
 from __future__ import annotations
 
+import logging
 import math
 import random
 import statistics
@@ -23,6 +24,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from .weather import Ensemble, Observations
+
+log = logging.getLogger("wxbot")
 
 DEFAULTS = {
     "samples": 20000,
@@ -41,7 +44,8 @@ DEFAULTS = {
     "imprecise_haircut": 1.0,
     "lock_margin_precise": 0.4,
     "lock_margin_imprecise": 1.5,
-    "lock_margin_6h": 0.3,
+    "lock_margin_6h": 0.3,          # (unused: 6-hour groups no longer make LOCKs)
+    "six_max_gap": 1.5,             # °F a 6-hour group may sit past the hourly readings
     "no_obs_sigma_add": 1.0,
 }
 
@@ -122,6 +126,18 @@ def build_day_model(metric: str, window_start: datetime, window_end: datetime,
     # extreme. Noisy 5-minute readings only count if they clearly exceed it,
     # and then only after a haircut, because the max of many noisy readings
     # is biased upward.
+    # A 6-hour extreme group may sit a little past the hourly readings (the
+    # peak between them), but not far: on Nov 5 KPHL's 18Z METAR said
+    # "10250" (25.0C = 77F) while every hourly reading peaked at 23.3C (74F),
+    # and the climate report (what Kalshi settles on) said 74. A group more
+    # than six_max_gap past the precise readings is treated as bad data.
+    pmax = max((s * o.temp_f for o in pts if o.precise), default=None)
+    if pmax is not None:
+        bad = [o for o in six if s * o.temp_f > pmax + P["six_max_gap"]]
+        if bad:
+            log.info("ignoring 6-hour %s group(s) %s: hourly readings peak at %.1fF", metric,
+                     ", ".join(f"{o.temp_f:.1f}F" for o in bad), s * pmax)
+            six = [o for o in six if o not in bad]
     prec = [(s * o.temp_f, o) for o in pts + six if o.precise]
     impr = [(s * o.temp_f, o) for o in pts if not o.precise]
     obs_x, obs_o = max(prec, key=lambda c: c[0]) if prec else (None, None)
@@ -216,14 +232,18 @@ def build_day_model(metric: str, window_start: datetime, window_end: datetime,
         k = math.floor(s * x + 0.5)
         counts[k] = counts.get(k, 0) + 1
 
-    # ---- what observations alone guarantee
+    # ---- what observations alone guarantee (LOCKs)
+    # Only point readings count: a 6-hour group never makes a LOCK on its own
+    # (see the KPHL note above). Precise METAR readings (0.1C) use a small
+    # margin, whole-degree 5-minute readings a wider one.
     guaranteed = None
-    if obs_x is not None and obs_o is not None:
-        if obs_o.source != "obs":
-            margin = P["lock_margin_6h"]
-        else:
-            margin = P["lock_margin_precise"] if obs_o.precise else P["lock_margin_imprecise"]
-        obs_t = s * obs_x
+    lock_x, lock_o = obs_x, obs_o
+    if lock_o is not None and lock_o.source != "obs":
+        lock_x, lock_o = max([c for c in prec if c[1].source == "obs"],
+                             key=lambda c: c[0], default=(None, None))
+    if lock_x is not None and lock_o is not None:
+        margin = P["lock_margin_precise"] if lock_o.precise else P["lock_margin_imprecise"]
+        obs_t = s * lock_x
         guaranteed = (math.floor(obs_t - margin + 0.5) if metric == "high"
                       else math.floor(obs_t + margin + 0.5))
 

@@ -5,7 +5,8 @@ The key comes from the environment (GitHub secrets):
   KALSHI_PRIVATE_KEY    the private key file's full text (PEM)
 
 Every request is signed with RSA-PSS over timestamp + method + path. This
-client can only place LIMIT orders; there is no market-order method, and every
+client can only place LIMIT orders (resting post-only, or immediate-or-cancel
+at a stated price); there is no market-order method, and every
 order is checked again here (price 1-99c, whole contracts, hard size ceiling).
 """
 from __future__ import annotations
@@ -104,6 +105,18 @@ class KalshiClient:
         js = self._post("/portfolio/orders", payload)
         return js.get("order") or {}
 
+    def buy_now(self, ticker: str, side: str, price: float, count: int,
+                client_order_id: str) -> dict:
+        """Buy at `price` or better right now (takes the ask); whatever doesn't
+        fill immediately is cancelled, never left resting."""
+        check_order(side, price, count)
+        cents = int(round(price * 100))
+        payload = {"ticker": ticker, "client_order_id": client_order_id, "action": "buy",
+                   "side": side, "count": int(count), "type": "limit",
+                   "time_in_force": "immediate_or_cancel",
+                   ("yes_price" if side == "yes" else "no_price"): cents}
+        js = self._post("/portfolio/orders", payload)
+        return js.get("order") or {}
 
     def sell_now(self, ticker: str, side: str, price: float, count: int,
                  client_order_id: str) -> dict:
