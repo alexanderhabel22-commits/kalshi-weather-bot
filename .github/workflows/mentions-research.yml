@@ -1,0 +1,42 @@
+name: mentions-research
+
+# Research only (Mentions markets history with trade timing). Read-only public
+# data; never trades, never alerts. Runs on push to this research branch.
+# Output goes to the mentions-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-s3q8ac"]
+    paths: ["research_mn/pull.py", ".github/workflows/mentions-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mentions-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        run: python research_mn/pull.py out
+      - name: Save to mentions-research-data branch
+        if: always()
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp=$(date -u +%Y%m%dT%H%MZ)
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          git checkout -q --orphan data && git rm -rq --cached . || true
+          git clean -fdxq
+          mkdir -p runs && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+          git add runs
+          git commit -qm "mentions research output $stamp" || exit 0
+          git push -f origin HEAD:mentions-research-data
