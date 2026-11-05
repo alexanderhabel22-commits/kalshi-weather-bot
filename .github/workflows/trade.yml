@@ -1,0 +1,64 @@
+name: trade
+
+# Runs right after every weather scan. Places, follows and grades automatic
+# orders (wxbot/trader.py). What it does depends on [trading] mode in
+# config.toml, or the TRADING_MODE repository variable (off | paper | live),
+# which wins. Live orders need the KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY
+# secrets. Setting TRADING_MODE=off is the kill switch.
+
+on:
+  workflow_run:
+    workflows: [weather-scan]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      force_scan:
+        description: "Run every strategy's market scan now (ignore its 30-minute timer)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trade
+  cancel-in-progress: false
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Trade
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          BANKROLL: ${{ vars.BANKROLL }}
+          TRADING_MODE: ${{ vars.TRADING_MODE }}
+          TRADE_FORCE_SCAN: ${{ inputs.force_scan && '1' || '' }}
+          KALSHI_API_KEY_ID: ${{ secrets.KALSHI_API_KEY_ID }}
+          KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
+        run: python bot.py trade -v
+
+      - name: Save orders
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          for f in data/trade_orders.csv data/trader_state.json data/digest_state.json reports; do
+            if [ -e "$f" ]; then git add "$f"; fi
+          done
+          if ! git diff --cached --quiet; then
+            git commit -m "bot: update trade orders [skip ci]"
+            for i in 1 2 3; do git pull --rebase --autostash && git push && break; sleep 5; done
+          fi

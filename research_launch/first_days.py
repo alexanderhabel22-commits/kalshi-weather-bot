@@ -1,4 +1,5 @@
-import csv,gzip,collections,sys
+"""Ad-hoc: maker profit in the first 0-3 / 3-7 / 7-28 days vs 56-112 days, sports vs non-sports. Run inside a run dir."""
+import csv,gzip,collections
 L={r['series']:r for r in csv.DictReader(open('launches.csv'))}
 mk={}
 with gzip.open('markets.csv.gz','rt') as fh:

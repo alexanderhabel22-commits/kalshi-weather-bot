@@ -70,3 +70,42 @@ samples = 20000
 sigma_base = 1.0
 sigma_per_hour = 0.045
 spread_inflation = 1.15
+
+[trading]
+# Automatic orders (wxbot/trader.py, run after each scan by the trade workflow).
+# mode: "off" = kill switch, "paper" = record only (no money), "live" = real
+# orders with the Kalshi API key. The GitHub variable TRADING_MODE overrides this.
+# Even in "live", a strategy only trades real money once its own table says
+# live = true (it passed its paper test and Alex said go); otherwise paper.
+# New edge = a module in wxbot/strats/ (NAME + propose) + a [trading.<NAME>] table.
+mode = "paper"
+max_contracts_per_order = 3      # hard per-order size limit
+max_orders_per_run = 15
+# Limits scale with the bankroll ([account] bankroll or the BANKROLL variable):
+max_open_pct = 0.60              # at most 60% of the bankroll at risk at once
+daily_loss_pct = 0.10            # down 10% today: no new orders until tomorrow
+total_loss_pct = 0.25            # down 25% overall: HALT, cancel all resting orders
+reset_halt = false               # set true (once) to clear a halt after checking why
+
+[trading.mentions]
+# Mentions NO limit orders (research: about +4c per filled contract over 21 months).
+enabled = true
+live = false                     # true = real orders (when [trading] mode is "live")
+contracts = 2                    # per word
+max_words_per_event = 3
+min_price = 0.75                 # NO price band
+max_price = 0.90
+min_hours = 1                    # event (speech, broadcast) happens 1-168 hours from now
+max_hours = 168                  # research scored fills at any time before the event
+min_volume = 100                 # contracts traded so far
+max_open_pct = 0.50              # at most 50% of the bankroll in Mentions
+max_event_pct = 0.25             # at most 25% of the bankroll on one event (one speech)
+
+[trading.weather]
+# Day-before weather limit orders (mirrors the paper orders). Off until the
+# weekend verdict on the paper results.
+enabled = false
+live = false
+contracts = 1
+max_open_pct = 0.40
+max_event_pct = 0.15
