@@ -199,7 +199,8 @@ def _maybe_push(http: Http, cfg: Config, db: dict, ready: list[dict], now: datet
         lines.append(f"+{len(items) - 5} more in the report.")
     title = f"New on Kalshi: {items[0].get('title') or items[0]['series']}" if len(items) == 1 \
         else f"New on Kalshi: {len(items)} series"
-    click = f"https://kalshi.com/markets/{items[0]['series'].lower()}"
+    example = items[0].get("example")
+    click = kalshi.market_url(example) if example else "https://kalshi.com/"
     if notify.send(http, cfg, title, "\n".join(lines) + "\nInfo only, nothing to trade yet.",
                    priority=2, tags=["sparkles"], click=click, dry_run=dry_run):
         pushes[day] = pushes.get(day, 0) + 1

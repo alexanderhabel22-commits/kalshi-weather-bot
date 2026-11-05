@@ -269,7 +269,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
                                           ledger.record_line(rows), now)
         delivered = notify.send(http, cfg, title, body, priority=4 if opp.kind == "lock" else 3,
                                 tags=["lock" if opp.kind == "lock" else "chart_with_upwards_trend"],
-                                click=kalshi.market_url(opp.series), dry_run=dry_run)
+                                click=kalshi.market_url(opp.ticker), dry_run=dry_run)
         if not delivered and not dry_run:
             problems.append("alert not delivered (is NTFY_TOPIC set?)")
             continue   # don't log or dedupe an alert you never saw; retry next scan
