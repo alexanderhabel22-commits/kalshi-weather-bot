@@ -21,7 +21,8 @@ OUT.mkdir(parents=True, exist_ok=True)
 
 
 def d(x, k):
-    return ((x or {}).get(k) or {}).get("close_dollars")
+    v = (x or {}).get(k) or {}
+    return v.get("close_dollars", v.get("close"))
 
 
 def candles(r):
@@ -45,7 +46,7 @@ def candles(r):
 
 def main():
     src = Path(__file__).parent / "matched.csv.gz"
-    rows = list(csv.DictReader(gzip.open(src, "rt")))
+    rows = [r for r in csv.DictReader(gzip.open(src, "rt")) if r["hist"] == "1"]  # live ones done
     log("markets", len(rows))
     with ThreadPoolExecutor(8) as ex:
         res = list(ex.map(candles, rows))
