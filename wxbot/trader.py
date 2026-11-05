@@ -444,6 +444,32 @@ def cancel_all(client: KalshiClient | None, rows: list[dict], mode: str) -> int:
 
 # ---------------------------------------------------------------- main
 
+def key_check(state: dict, http, now: datetime) -> None:
+    """While everything is paper: if the API key secrets exist, read the account
+    balance once every 6 hours (read-only, no orders) to prove the key works
+    before go-live. Result in data/trader_state.json "key_check"."""
+    last = parse_iso((state.get("key_check") or {}).get("at"))
+    if last and now - last < timedelta(hours=6):
+        return
+    try:
+        client = KalshiClient.from_env(http)
+    except Exception as exc:          # bad PEM text, wrong key type...
+        state["key_check"] = {"at": now.isoformat(timespec="seconds"), "ok": False,
+                              "error": f"key could not be loaded: {type(exc).__name__}"}
+        log.warning("Kalshi key check: %s", state["key_check"]["error"])
+        return
+    if client is None:
+        return
+    try:
+        bal = client.balance()
+        state["key_check"] = {"at": now.isoformat(timespec="seconds"), "ok": True, "balance": round(bal, 2)}
+        log.info("Kalshi key check: OK, balance $%.2f", bal)
+    except Exception as exc:
+        state["key_check"] = {"at": now.isoformat(timespec="seconds"), "ok": False,
+                              "error": str(exc)[:200]}
+        log.warning("Kalshi key check failed: %s", exc)
+
+
 def strategy_mode(global_mode: str, sp: dict) -> str | None:
     """Each strategy runs on paper until it is explicitly cleared for live
     ([trading.<name>] live = true) AND the global mode is live."""
@@ -503,6 +529,8 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
     state = read_json(STATE, {}) or {}
     if not isinstance(state.get("halted", {}), dict):
         state["halted"] = {}
+    if not need_live and client is None and not dry_run:
+        key_check(state, http, now)
     tz = ZoneInfo(cfg.tz)
     today = now.astimezone(tz).date().isoformat()
     midnight = now.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
