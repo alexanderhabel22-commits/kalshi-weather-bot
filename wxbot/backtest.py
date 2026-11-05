@@ -118,7 +118,11 @@ def load(root: Path, hours=(36, 24, 12), since: date | None = None) -> list[Day]
                 ask = _px(c.get("yes_ask"))
                 if bid is None or ask is None:
                     continue
-                quotes[h] = (bid, ask)
+                # later trade prices: did a resting order at this level get hit?
+                later = [c.get("price") or {} for c in cs if c["end_period_ts"] > t]
+                lows = [v for v in (_f(x.get("low_dollars", x.get("low"))) for x in later) if v]
+                highs = [v for v in (_f(x.get("high_dollars", x.get("high"))) for x in later) if v]
+                quotes[h] = (bid, ask, min(lows) if lows else None, max(highs) if highs else None)
             days[key].brackets.append((m["ticker"], br[0], br[1], res == "yes", quotes))
     return sorted((d for d in days.values() if d.actual is not None),
                   key=lambda x: (x.day, x.series))
@@ -226,7 +230,7 @@ def evaluate(days: list[Day], lead: str = "d1", hour: int = 24, min_edge: float 
         for tk, lo, hi, won, q in d.brackets:
             if hour not in q:
                 continue
-            bid, ask = q[hour]
+            bid, ask = q[hour][:2]
             if not (0 < bid < ask < 1):
                 continue
             p = bracket_prob(mu, sd, lo, hi)
