@@ -106,6 +106,11 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .item .s{font-size:11.5px;color:var(--mute);font-family:var(--mono);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .item .r{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap}
 .item .r small{display:block;font-size:11px;color:var(--mute)}
+.item.tap{cursor:pointer;flex-wrap:wrap;-webkit-tap-highlight-color:transparent}
+.item.tap.open .t,.item.tap.open .s{white-space:normal;overflow:visible}
+.item .more{display:none;flex-basis:100%;margin:6px 0 0 44px;padding:8px 10px;border-radius:9px;background:#0a0f1d;border:1px solid var(--line);font-size:11.5px;font-family:var(--mono);color:var(--ink2);line-height:1.6;word-break:break-word}
+.item.tap.open .more{display:block}
+.item .more b{color:var(--mute);font-weight:500}
 .side{font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;flex:none;width:34px;text-align:center}
 .side.yes{color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.35)}
 .side.no{color:var(--mag);background:rgba(224,80,240,.1);border:1px solid rgba(224,80,240,.35)}
@@ -546,7 +551,7 @@ function renderOverview(){
       <div class="grid g3"><div><div class="lbl">Now</div><div class="val ${cls(mk.tot)}">${mk.priced.length ? money(mk.tot) : "—"}</div></div>
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
-      <div class="list" style="margin-top:8px">${list.slice(0, 6).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div></div>`; }).join("")}</div>
+      <div class="list" style="margin-top:8px">${list.slice(0, 6).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
       ${list.length > 6 ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}. All ${list.length} in Orders.</div>` : ""}</div>`;
   }
@@ -609,6 +614,17 @@ function renderOverview(){
   barChart($("#daily"), days.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:byDay[d]})), {empty:"No settled days yet"});
 }
 
+function details(r){
+  const c = v => v == null || isNaN(v) ? "—" : Math.round(v * 100) + "¢", sq = sideQuote(r), u = unrealized(r);
+  const rows = [["Strategy", strategyName(r.strategy) + " · " + r.mode], ["Market", r.ticker], ["Order", `buy ${r.side.toUpperCase()} ${r.count} @ ${c(r.price)}` + (r.filled ? ` · ${r.filled} filled` : "")],
+    ["Status", r.status], ["Placed", r.placed ? fdt(r.placed) + " ET" : ""], ["Filled", r.filledAt ? fdt(r.filledAt) + " ET" : ""],
+    ["Closes", r.close ? fdt(r.close) + " ET (" + until(r.close) + ")" : ""], ["Settled", r.settled ? fdt(r.settled) + " ET" : ""],
+    ["Market now", sq ? `${r.side.toUpperCase()} ${c(sq.bid)} bid / ${c(sq.ask)} ask` + (sq.src === "live" ? " (live)" : sq.at ? ` (${ago(sq.at)})` : "") : ""],
+    ["Up/down", u != null ? money(u) : ""], ["Result", r.result || ""], ["P&L", r.pnl != null ? money(r.pnl) : ""],
+    ["Model", r.model != null ? Math.round(r.model * 100) + "%" : ""], ["Edge", r.edge != null ? cents(r.edge * 100) : ""], ["Note", r.note || ""]];
+  return `<div class="more">${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="https://kalshi.com/markets/${esc((r.event || r.ticker).split("-")[0].toLowerCase())}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
+}
+document.addEventListener("click", e => { if (e.target.closest("a")) return; const it = e.target.closest(".item.tap"); if (it) it.classList.toggle("open"); });
 function orderItem(r, i){
   const sq = sideQuote(r), u = unrealized(r), now = sq ? sq.bid : null, c = v => v == null ? "—" : Math.round(v * 100) + "¢";
   const sub = [r.status === "open" ? (r.filled > 0 ? `resting · ${r.filled} of ${r.count} filled` : "resting") : r.status === "filled" ? (r.filledAt ? "filled " + ago(r.filledAt) : "filled") + " · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
@@ -623,7 +639,7 @@ function orderItem(r, i){
   const right = r.status === "settled" ? `<span class="${cls(r.pnl)}">${money(r.pnl)}</span><small>${r.pnl > 0 ? "won" : "lost"} · ${r.count}@${Math.round(r.price * 100)}¢</small>`
     : r.status === "unfilled" || r.status === "cancelled" ? `<span class="mute">${r.status}</span><small>${r.count}@${Math.round(r.price * 100)}¢</small>`
     : `${r.status === "open" ? r.count : r.filled} @ ${Math.round(r.price * 100)}¢<small>${r.status === "filled" && now != null ? `bid now ${c(now)} ${u != null ? `<span class="${cls(u)}">${money(u)}</span>` : ""}` : "$" + exposureOf(r).toFixed(2) + " at risk"}</small>`;
-  return `<div class="item"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" title="${esc(r.ticker)}"><span style="color:${colorOf(r.strategy, i)}">▍</span>${esc(r.title)}</div><div class="s">${esc(sub)}</div>${mkt}</div><div class="r">${right}</div></div>`;
+  return `<div class="item tap"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" title="${esc(r.ticker)}"><span style="color:${colorOf(r.strategy, i)}">▍</span>${esc(r.title)}</div><div class="s">${esc(sub)}</div>${mkt}</div><div class="r">${right}</div>${details(r)}</div>`;
 }
 function renderOrders(){
   const rows = modeRows(S.mode), strats = strategiesFor(S.mode), f = S.filter;
