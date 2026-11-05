@@ -548,3 +548,28 @@ def test_scan_writes_lock_signals_only_when_there_are_any(monkeypatch):
     assert read_json(scanner.LOCK_SIGNALS)["signals"] == [{"ticker": "A"}]
     scanner.save_lock_signals([], NOW + timedelta(minutes=5))   # clears the old lock
     assert read_json(scanner.LOCK_SIGNALS)["signals"] == []
+
+
+def test_key_check_reads_balance_while_paper(monkeypatch):
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from wxbot.util import read_json
+    pem = rsa.generate_private_key(public_exponent=65537, key_size=2048).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()).decode()
+    monkeypatch.setenv("KALSHI_API_KEY_ID", "kid")
+    monkeypatch.setenv("KALSHI_PRIVATE_KEY", pem)
+
+    class H(Http):
+        def get_json(self, url, params=None, headers=None):
+            if url.endswith("/portfolio/balance"):
+                assert headers and headers["KALSHI-ACCESS-KEY"] == "kid"
+                return {"balance": 4971}
+            return super().get_json(url, params, headers)
+    trader.run(cfg(), now=NOW, http=H([]))
+    kc = read_json(trader.STATE)["key_check"]
+    assert kc["ok"] and kc["balance"] == 49.71
+    monkeypatch.setenv("KALSHI_PRIVATE_KEY", "not a key")
+    trader.save([])
+    trader.run(cfg(), now=NOW + timedelta(hours=7), http=H([]))
+    assert read_json(trader.STATE)["key_check"]["ok"] is False
