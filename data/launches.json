@@ -851,6 +851,7 @@
   "KXACAHSAFSA",
   "KXACAREPEAL",
   "KXACASUBSIDYBILL",
+  "KXACASUBSIDYHOUSE",
   "KXACBGAME",
   "KXACBSPREAD",
   "KXACBTOTAL",
@@ -3548,6 +3549,7 @@
   "KXDEMFAVGOV",
   "KXDEMFAVSEN",
   "KXDEMFIRSTCONTEST",
+  "KXDEMFIRSTWINNOM",
   "KXDEMINIMIS",
   "KXDEMLEGSUPERMAJ",
   "KXDEMLIKELYR",
@@ -5425,8 +5427,10 @@
   "KXGOOGVREQ",
   "KXGOOGVSPEND",
   "KXGOPBLACKVOTE",
+  "KXGOPDELMAJ",
   "KXGOPFAVGOV",
   "KXGOPFAVSEN",
+  "KXGOPFIRSTWINNOM",
   "KXGOPIMPEACHVOTES",
   "KXGOPLATINOVOTE",
   "KXGOPLEGSUPERMAJ",
@@ -6511,6 +6515,7 @@
   "KXJDGREENLAND",
   "KXJEFFERSON",
   "KXJEFFNADU",
+  "KXJEFFRIESFIRST",
   "KXJEFFRIESMENTION",
   "KXJENNINGSLEAVE",
   "KXJENSENMENTION",
@@ -13376,6 +13381,7 @@
   "KXTRUMPFIRE",
   "KXTRUMPFIRECOM",
   "KXTRUMPFIRECOOK",
+  "KXTRUMPFIRSTENDORSE",
   "KXTRUMPFLAVIO",
   "KXTRUMPFLAVIOMEET",
   "KXTRUMPFLOCK",
@@ -14731,6 +14737,7 @@
   "KXWIKIMEDIA",
   "KXWILCOJUDGE",
   "KXWILDSHT",
+  "KXWIMARIJUANA",
   "KXWIMEDICAIDEXP",
   "KXWIMFGEMP",
   "KXWIMILK",
@@ -14746,6 +14753,7 @@
   "KXWINSTREAKOKC",
   "KXWINTERPARKOPEN",
   "KXWIPRIMARY",
+  "KXWIRTWREPEAL",
   "KXWISCOTUS",
   "KXWISCOTUSMOV",
   "KXWISOSNOMR",
@@ -15781,11 +15789,21 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-05T17:30:23+00:00",
+ "last_check": "2026-11-05T18:00:30+00:00",
  "pending": {
+  "KXACASUBSIDYHOUSE": {
+   "category": "Politics",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXACASUBSIDYHOUSE",
+   "title": "House passage of a bill restoring the enhanced ACA subsidies"
+  },
   "KXDEMDELMAJ": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15793,9 +15811,19 @@
    "series": "KXDEMDELMAJ",
    "title": "Democratic pledged delegate majority"
   },
+  "KXDEMFIRSTWINNOM": {
+   "category": "Elections",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXDEMFIRSTWINNOM",
+   "title": "First Democratic contest winner becomes the 2028 nominee"
+  },
   "KXDPRESPRIMWIN": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15805,7 +15833,7 @@
   },
   "KXDPRESSWEEP": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15815,7 +15843,7 @@
   },
   "KXDPRESWINCOUNT": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15823,9 +15851,39 @@
    "series": "KXDPRESWINCOUNT",
    "title": "How many candidates will win a 2028 Democratic primary?"
   },
+  "KXGOPDELMAJ": {
+   "category": "Elections",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXGOPDELMAJ",
+   "title": "When will a Republican candidate win a delegate majority?"
+  },
+  "KXGOPFIRSTWINNOM": {
+   "category": "Elections",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXGOPFIRSTWINNOM",
+   "title": "First Republican contest winner becomes the 2028 nominee"
+  },
+  "KXJEFFRIESFIRST": {
+   "category": "Elections",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXJEFFRIESFIRST",
+   "title": "Will Hakeem Jeffries be elected Speaker on the first ballot?"
+  },
   "KXMEDICAIDWORKHOUSE": {
    "category": "Politics",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:00:30+00:00",
    "frequency": "one_off",
@@ -15835,7 +15893,7 @@
   },
   "KXMINWAGEHOUSE": {
    "category": "Politics",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15845,7 +15903,7 @@
   },
   "KXNBAPRAPROT": {
    "category": "Sports",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "custom",
@@ -15855,7 +15913,7 @@
   },
   "KXPAMARIJUANA": {
    "category": "Politics",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15865,7 +15923,7 @@
   },
   "KXPAMINWAGE": {
    "category": "Politics",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:00:30+00:00",
    "frequency": "one_off",
@@ -15875,7 +15933,7 @@
   },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "one_off",
@@ -15885,7 +15943,7 @@
   },
   "KXPUBLICOPTIONHOUSE": {
    "category": "Politics",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15895,7 +15953,7 @@
   },
   "KXRPRESPRIMWIN": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15905,7 +15963,7 @@
   },
   "KXRPRESSWEEP": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15915,7 +15973,7 @@
   },
   "KXRPRESWINCOUNT": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15925,7 +15983,7 @@
   },
   "KXTHIRDPARTYSTATE": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15935,7 +15993,7 @@
   },
   "KXTPPRESPCT": {
    "category": "Elections",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -15943,15 +16001,45 @@
    "series": "KXTPPRESPCT",
    "title": "Third-party share of the presidential vote"
   },
+  "KXTRUMPFIRSTENDORSE": {
+   "category": "Elections",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTRUMPFIRSTENDORSE",
+   "title": "Will Trump's first endorsed candidate lose the 2028 Republican nomination?"
+  },
+  "KXWIMARIJUANA": {
+   "category": "Politics",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXWIMARIJUANA",
+   "title": "Wisconsin recreational marijuana legalization"
+  },
   "KXWIMEDICAIDEXP": {
    "category": "Politics",
-   "checked": "2026-11-05T17:30:23+00:00",
+   "checked": "2026-11-05T18:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
    "new_category": false,
    "series": "KXWIMEDICAIDEXP",
    "title": "Will Wisconsin expand Medicaid?"
+  },
+  "KXWIRTWREPEAL": {
+   "category": "Politics",
+   "checked": "2026-11-05T18:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T18:00:30+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXWIRTWREPEAL",
+   "title": "Will Wisconsin repeal its right-to-work law?"
   }
  },
  "queue": []
