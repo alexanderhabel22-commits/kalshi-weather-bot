@@ -1,7 +1,8 @@
 # Kalshi weather alert bot settings. Edit and commit; the next scan picks it up.
 
 [account]
-bankroll = 49.71                 # update as your balance changes (sizes scale with it)
+bankroll = 49.71                 # fallback only: the bot reads the live Kalshi balance
+auto_bankroll = true             # bankroll = Kalshi cash + open positions, read every trade run
 timezone = "America/New_York"    # for quiet hours and the daily summary
 risk_level = "normal"            # "normal" or "aggressive" (see [strategy_aggressive])
 nws_contact = ""                 # optional: weather.gov asks bots to include a contact

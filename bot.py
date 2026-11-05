@@ -49,6 +49,9 @@ def main(argv=None) -> int:
         from wxbot import digest
         now = parse_iso(args.now) if args.now else utcnow()
         http = Http(cfg.user_agent)
+        if cfg.get("account", "auto_bankroll", True):
+            from wxbot import balance
+            balance.refresh(http, now)       # bankroll follows the Kalshi balance
         out = trader.run(cfg, now=now, http=http, dry_run=args.dry_run)
         try:
             for path in digest.run_due(cfg, now, http, dry_run=args.dry_run):

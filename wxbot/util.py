@@ -139,6 +139,26 @@ def write_json(path: Path, obj) -> None:
 
 # ---------------------------------------------------------------- config
 
+BANKROLL_FILE = DATA_DIR / "bankroll.json"
+BANKROLL_MAX_AGE_H = 6           # older than this (trade runs stopped?) -> fall back
+
+
+def auto_bankroll(now: datetime | None = None) -> float | None:
+    """Balance read from Kalshi by wxbot/balance.py, if fresh and sane."""
+    js = read_json(BANKROLL_FILE) or {}
+    try:
+        total = float(js.get("total") or 0)
+        at = datetime.fromisoformat(str(js["at"]))
+    except (KeyError, TypeError, ValueError):
+        return None
+    if at.tzinfo is None:
+        at = at.replace(tzinfo=timezone.utc)
+    now = now or datetime.now(timezone.utc)
+    if total <= 0 or now - at > timedelta(hours=BANKROLL_MAX_AGE_H):
+        return None
+    return round(total, 2)
+
+
 @dataclass
 class Config:
     raw: dict = field(default_factory=dict)
@@ -149,6 +169,14 @@ class Config:
     # Convenience accessors used everywhere
     @property
     def bankroll(self) -> float:
+        """The live Kalshi balance (cash + open positions) that the trade run
+        saves to data/bankroll.json every ~5 minutes; if that is missing, stale
+        or switched off ([account] auto_bankroll = false), the BANKROLL
+        variable, then [account] bankroll."""
+        if self.get("account", "auto_bankroll", True):
+            auto = auto_bankroll()
+            if auto:
+                return auto
         env = os.environ.get("BANKROLL")
         return float(env) if env else float(self.get("account", "bankroll", 35.0))
 
