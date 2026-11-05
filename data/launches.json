@@ -977,6 +977,8 @@
   "KXAFCCL2ADVANCE",
   "KXAFCCL2BTTS",
   "KXAFCCL2GAME",
+  "KXAFCCL2SPREAD",
+  "KXAFCCL2TOTAL",
   "KXAFCCLADVANCE",
   "KXAFCCLBTTS",
   "KXAFCCLFTTS",
@@ -1891,6 +1893,8 @@
   "KXBELCHALLADVANCE",
   "KXBELCHALLBTTS",
   "KXBELCHALLGAME",
+  "KXBELCHALLSPREAD",
+  "KXBELCHALLTOTAL",
   "KXBELGIANPL",
   "KXBELGIANPLADVANCE",
   "KXBELGIANPLBTTS",
@@ -2158,6 +2162,8 @@
   "KXBOTOLAADVANCE",
   "KXBOTOLABTTS",
   "KXBOTOLAGAME",
+  "KXBOTOLASPREAD",
+  "KXBOTOLATOTAL",
   "KXBOUGAINVILLEIND",
   "KXBOUNTY2025S2",
   "KXBOWMANMENTION",
@@ -2371,6 +2377,8 @@
   "KXBULFLADVANCE",
   "KXBULFLBTTS",
   "KXBULFLGAME",
+  "KXBULFLSPREAD",
+  "KXBULFLTOTAL",
   "KXBULGARIAPARLI",
   "KXBULGARIAPRES",
   "KXBULGARIAPRES1MOVD",
@@ -4205,6 +4213,8 @@
   "KXEFLL2ADVANCE",
   "KXEFLL2BTTS",
   "KXEFLL2GAME",
+  "KXEFLL2SPREAD",
+  "KXEFLL2TOTAL",
   "KXEFLPROMO",
   "KXEFLTROPHYBTTS",
   "KXEFLTROPHYGAME",
@@ -4422,6 +4432,7 @@
   "KXEOWEEK",
   "KXEPA",
   "KXEPARODENT",
+  "KXEPCR",
   "KXEPCRMATCH",
   "KXEPL1H",
   "KXEPL1HBTTS",
@@ -5077,6 +5088,7 @@
   "KXFOXONE",
   "KXFOXSATMENTION",
   "KXFRA14CHAMP",
+  "KXFRA14MATCH",
   "KXFRAGRANCE",
   "KXFRANCE493",
   "KXFRANCEAMB",
@@ -6503,6 +6515,8 @@
   "KXJ3LEAGUEADVANCE",
   "KXJ3LEAGUEBTTS",
   "KXJ3LEAGUEGAME",
+  "KXJ3LEAGUESPREAD",
+  "KXJ3LEAGUETOTAL",
   "KXJACKBOY2",
   "KXJACKBOYS2",
   "KXJACKSMITHCHARGE",
@@ -7138,6 +7152,8 @@
   "KXLIGAPORTUGAL2ADVANCE",
   "KXLIGAPORTUGAL2BTTS",
   "KXLIGAPORTUGAL2GAME",
+  "KXLIGAPORTUGAL2SPREAD",
+  "KXLIGAPORTUGAL2TOTAL",
   "KXLIGAPORTUGALADVANCE",
   "KXLIGAPORTUGALBTTS",
   "KXLIGAPORTUGALGAME",
@@ -9900,6 +9916,8 @@
   "KXNOR1DIVADVANCE",
   "KXNOR1DIVBTTS",
   "KXNOR1DIVGAME",
+  "KXNOR1DIVSPREAD",
+  "KXNOR1DIVTOTAL",
   "KXNORDRHEINWESTFALEN",
   "KXNORDSTREAM2",
   "KXNORDSTROMFT",
@@ -11481,6 +11499,8 @@
   "KXSAFFADVANCE",
   "KXSAFFBTTS",
   "KXSAFFGAME",
+  "KXSAFFSPREAD",
+  "KXSAFFTOTAL",
   "KXSAG",
   "KXSAGAWARDACTO",
   "KXSAGAWARDACTOCOM",
@@ -12656,6 +12676,8 @@
   "KXSUPERETTANADVANCE",
   "KXSUPERETTANBTTS",
   "KXSUPERETTANGAME",
+  "KXSUPERETTANSPREAD",
+  "KXSUPERETTANTOTAL",
   "KXSUPERINTWI",
   "KXSUPERLIG",
   "KXSUPERLIGADVANCE",
@@ -12682,6 +12704,8 @@
   "KXSVK1LADVANCE",
   "KXSVK1LBTTS",
   "KXSVK1LGAME",
+  "KXSVK1LSPREAD",
+  "KXSVK1LTOTAL",
   "KXSVK2LBTTS",
   "KXSVK2LGAME",
   "KXSVK2LSPREAD",
@@ -13943,6 +13967,8 @@
   "KXUKRPLADVANCE",
   "KXUKRPLBTTS",
   "KXUKRPLGAME",
+  "KXUKRPLSPREAD",
+  "KXUKRPLTOTAL",
   "KXUKSOCIALBAN",
   "KXUKUNRATE",
   "KXUKUSVISAS",
@@ -15831,7 +15857,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-05T19:00:30+00:00",
+ "last_check": "2026-11-05T19:30:24+00:00",
  "pending": {
   "KXACASUBSIDYHOUSE": {
    "category": "Politics",
@@ -15873,6 +15899,26 @@
    "series": "KXAFCCL2GAME",
    "title": "AFC Champions League Two Game"
   },
+  "KXAFCCL2SPREAD": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXAFCCL2SPREAD",
+   "title": "Spread"
+  },
+  "KXAFCCL2TOTAL": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXAFCCL2TOTAL",
+   "title": "Total"
+  },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
    "checked": "2026-11-05T19:00:30+00:00",
@@ -15895,12 +15941,32 @@
   },
   "KXBELCHALLGAME": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXBELCHALLGAME",
    "title": "Belgium Challenger Pro League Game"
+  },
+  "KXBELCHALLSPREAD": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXBELCHALLSPREAD",
+   "title": "Spread"
+  },
+  "KXBELCHALLTOTAL": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXBELCHALLTOTAL",
+   "title": "Total"
   },
   "KXBOTOLAADVANCE": {
    "category": "Sports",
@@ -15924,6 +15990,7 @@
   },
   "KXBOTOLAGAME": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -15931,8 +15998,27 @@
    "series": "KXBOTOLAGAME",
    "title": "Morocco Botola Pro Game"
   },
+  "KXBOTOLASPREAD": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXBOTOLASPREAD",
+   "title": "Spread"
+  },
+  "KXBOTOLATOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXBOTOLATOTAL",
+   "title": "Total"
+  },
   "KXBULFLADVANCE": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -15942,6 +16028,7 @@
   },
   "KXBULFLBTTS": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -15951,12 +16038,32 @@
   },
   "KXBULFLGAME": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXBULFLGAME",
    "title": "Bulgaria First League Game"
+  },
+  "KXBULFLSPREAD": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXBULFLSPREAD",
+   "title": "Spread"
+  },
+  "KXBULFLTOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXBULFLTOTAL",
+   "title": "Total"
   },
   "KXDEMDELMAJ": {
    "category": "Elections",
@@ -16030,6 +16137,7 @@
   },
   "KXEFLL2BTTS": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16047,6 +16155,33 @@
    "series": "KXEFLL2GAME",
    "title": "EFL League Two Game"
   },
+  "KXEFLL2SPREAD": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXEFLL2SPREAD",
+   "title": "Spread"
+  },
+  "KXEFLL2TOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXEFLL2TOTAL",
+   "title": "Total"
+  },
+  "KXEPCR": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "annual",
+   "new_category": false,
+   "series": "KXEPCR",
+   "title": "European Professional Club Rugby Champion"
+  },
   "KXEPCRMATCH": {
    "category": "Sports",
    "checked": "2026-11-05T19:00:30+00:00",
@@ -16056,6 +16191,16 @@
    "new_category": false,
    "series": "KXEPCRMATCH",
    "title": "European Professional Club Rugby Match"
+  },
+  "KXFRA14MATCH": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXFRA14MATCH",
+   "title": "France Top 14 Rugby Match"
   },
   "KXGOPDELMAJ": {
    "category": "Elections",
@@ -16107,6 +16252,25 @@
    "series": "KXJ3LEAGUEGAME",
    "title": "Japan J3 League Game"
   },
+  "KXJ3LEAGUESPREAD": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXJ3LEAGUESPREAD",
+   "title": "Spread"
+  },
+  "KXJ3LEAGUETOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXJ3LEAGUETOTAL",
+   "title": "Total"
+  },
   "KXJEFFRIESFIRST": {
    "category": "Elections",
    "checked": "2026-11-05T18:30:30+00:00",
@@ -16146,6 +16310,24 @@
    "new_category": false,
    "series": "KXLIGAPORTUGAL2GAME",
    "title": "Liga Portugal 2 Game"
+  },
+  "KXLIGAPORTUGAL2SPREAD": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXLIGAPORTUGAL2SPREAD",
+   "title": "Spread"
+  },
+  "KXLIGAPORTUGAL2TOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXLIGAPORTUGAL2TOTAL",
+   "title": "Total"
   },
   "KXMEDICAIDWORKHOUSE": {
    "category": "Politics",
@@ -16189,6 +16371,7 @@
   },
   "KXNOR1DIVBTTS": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16198,12 +16381,32 @@
   },
   "KXNOR1DIVGAME": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXNOR1DIVGAME",
    "title": "Norway OBOS-ligaen Game"
+  },
+  "KXNOR1DIVSPREAD": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXNOR1DIVSPREAD",
+   "title": "Spread"
+  },
+  "KXNOR1DIVTOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXNOR1DIVTOTAL",
+   "title": "Total"
   },
   "KXPAMARIJUANA": {
    "category": "Politics",
@@ -16237,6 +16440,7 @@
   },
   "KXPREM": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "annual",
@@ -16296,6 +16500,7 @@
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16315,12 +16520,31 @@
   },
   "KXSAFFGAME": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXSAFFGAME",
    "title": "SAFF Championship Game"
+  },
+  "KXSAFFSPREAD": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSAFFSPREAD",
+   "title": "Spread"
+  },
+  "KXSAFFTOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSAFFTOTAL",
+   "title": "Total"
   },
   "KXSUPERETTANADVANCE": {
    "category": "Sports",
@@ -16344,12 +16568,33 @@
   },
   "KXSUPERETTANGAME": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXSUPERETTANGAME",
    "title": "Sweden Superettan Game"
+  },
+  "KXSUPERETTANSPREAD": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSUPERETTANSPREAD",
+   "title": "Spread"
+  },
+  "KXSUPERETTANTOTAL": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSUPERETTANTOTAL",
+   "title": "Total"
   },
   "KXSVK1LADVANCE": {
    "category": "Sports",
@@ -16363,6 +16608,7 @@
   },
   "KXSVK1LBTTS": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16379,6 +16625,25 @@
    "new_category": false,
    "series": "KXSVK1LGAME",
    "title": "Slovakia Nik\u00e9 liga Game"
+  },
+  "KXSVK1LSPREAD": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSVK1LSPREAD",
+   "title": "Spread"
+  },
+  "KXSVK1LTOTAL": {
+   "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSVK1LTOTAL",
+   "title": "Total"
   },
   "KXTHIRDPARTYSTATE": {
    "category": "Elections",
@@ -16422,6 +16687,7 @@
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16441,12 +16707,31 @@
   },
   "KXUKRPLGAME": {
    "category": "Sports",
+   "checked": "2026-11-05T19:30:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXUKRPLGAME",
    "title": "Ukrainian Premier League Game"
+  },
+  "KXUKRPLSPREAD": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXUKRPLSPREAD",
+   "title": "Spread"
+  },
+  "KXUKRPLTOTAL": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:30:24+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXUKRPLTOTAL",
+   "title": "Total"
   },
   "KXURC": {
    "category": "Sports",
