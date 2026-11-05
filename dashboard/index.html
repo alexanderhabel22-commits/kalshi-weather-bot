@@ -127,6 +127,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .chart .tip .sw{width:8px;height:3px;border-radius:2px}
 .rh .big{font-family:var(--mono);font-size:34px;font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-top:4px}
 .rh .chg{font-family:var(--mono);font-size:13px;margin:4px 0 10px}
+.bcap{font-size:12px;font-family:var(--mono);color:var(--ink2);margin-top:6px;min-height:34px;line-height:1.45;word-break:break-word}
 .seeall{all:unset;display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:8px;padding:9px 0;border-radius:9px;border:1px solid var(--line2);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan);cursor:pointer}
 .rng{display:flex;gap:4px;margin-top:6px}
 .rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
@@ -515,23 +516,24 @@ function barChart(el, bars, o={}){
   if (!bars.length){ el.innerHTML = `<div class="empty">${o.empty || "No data yet"}</div>`; return; }
   let y0 = Math.min(0, ...bars.map(b => b.v)), y1 = Math.max(0, ...bars.map(b => b.v)); if (y1 - y0 < 1e-9) y1 = 1;
   const pad = (y1 - y0) * .1; y1 += pad; if (y0 < 0) y0 -= pad;
-  const bw = Math.min(44, (W - P.l - P.r) / bars.length), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
+  const bw = Math.min(64, (W - P.l - P.r) / bars.length), ox = P.l + Math.max(0, (W - P.l - P.r - bw * bars.length) / 2), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
   const fy = o.fy || (v => money(v, false));
   let g = niceTicks(y0, y1, 3).map(t => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="${t === 0 ? "#3a4870" : "#18213b"}" ${t ? 'stroke-dasharray="2 4"' : ""}/><text x="${P.l - 6}" y="${Y(t) + 3.5}" fill="#6b7699" font-size="10" text-anchor="end" font-family="JetBrains Mono">${fy(t)}</text>`).join("");
   const every = Math.ceil(bars.length / 7);
   bars.forEach((b, i) => {
-    const x = P.l + i * bw + 1, w = Math.max(2, bw - 2), top = Y(Math.max(b.v, 0)), bot = Y(Math.min(b.v, 0)), h = Math.max(1, bot - top);
+    const x = ox + i * bw + 1, w = Math.max(2, bw - 2), top = Y(Math.max(b.v, 0)), bot = Y(Math.min(b.v, 0)), h = Math.max(1, bot - top);
     const c = b.c || (b.v >= 0 ? "#34d399" : "#fb6b7b"), r = Math.min(4, w / 2);
     g += `<rect x="${x}" y="${top}" width="${w}" height="${h}" rx="${r}" fill="${c}" opacity=".9"><title>${esc(b.label)}: ${esc((o.fv || fy)(b.v))}</title></rect>`;
-    g += `<rect class="hit" data-i="${i}" x="${P.l + i * bw}" y="0" width="${bw}" height="${H}" fill="transparent"/>`;
+    g += `<rect class="hit" data-i="${i}" x="${ox + i * bw}" y="0" width="${bw}" height="${H}" fill="transparent"/>`;
     if (i % every === 0 || bars.length <= 8) g += `<text x="${x + w / 2}" y="${H - 6}" fill="#6b7699" font-size="10" text-anchor="middle" font-family="JetBrains Mono">${esc(b.short ?? b.label)}</text>`;
   });
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}</svg><div class="tip"></div>`;
-  const tip = el.querySelector(".tip"), svg = el.querySelector("svg");
-  svg.addEventListener("pointerover", ev => { const i = ev.target.dataset && ev.target.dataset.i; if (i == null) return; const b = bars[i], bb = svg.getBoundingClientRect();
-    tip.innerHTML = `<div class="mute">${esc(b.label)}</div><b>${esc((o.fv || fy)(b.v))}</b>${b.extra ? `<div class="mute">${esc(b.extra)}</div>` : ""}`;
-    tip.style.display = "block"; tip.style.left = Math.min(Math.max((P.l + (+i + .5) * bw) * bb.width / W, 70), bb.width - 70) + "px"; tip.style.top = "6px"; });
-  svg.addEventListener("pointerleave", () => tip.style.display = "none");
+  // details go in a line under the chart (a floating tooltip got cut off at the card edge)
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" height="${H}">${g}</svg><div class="bcap">${esc(o.hint || "Tap a bar for details")}</div>`;
+  const cap = el.querySelector(".bcap"), svg = el.querySelector("svg"), bodies = [...svg.querySelectorAll("rect:not(.hit)")];
+  const show = ev => { const i = ev.target.dataset && ev.target.dataset.i; if (i == null) return; const b = bars[i];
+    bodies.forEach((r, k) => r.setAttribute("opacity", k == i ? "1" : ".45"));
+    cap.innerHTML = `<b class="${b.v >= 0 ? "pos" : "neg"}">${esc((o.fv || fy)(b.v))}</b> ${esc(b.label)}${b.extra ? `<div class="mute">${esc(b.extra)}</div>` : ""}`; };
+  svg.addEventListener("pointerover", show); svg.addEventListener("pointerdown", show);
 }
 function niceTicks(a, b, n){ const span = b - a, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0))), f = step0 / mag;
   const step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = []; for (let t = Math.ceil(a / step) * step; t <= b + 1e-9; t += step) out.push(+t.toFixed(10)); return out; }
