@@ -425,6 +425,18 @@ def test_weekly_capacity_ceiling():
 
 # ---------------------------------------------------------------- live LOCKs
 
+def lcfg(**kw):
+    """Config with LOCKs cleared for real money (as if Alex said go)."""
+    c = cfg(**kw)
+    c.raw["trading"]["locks"]["live"] = True
+    return c
+
+
+def test_real_money_is_off_by_default():
+    c = load_config()
+    assert c.raw["trading"]["mode"] != "live" and c.raw["trading"]["locks"]["live"] is False
+
+
 LOCK_TK = "KXHIGHPHIL-26NOV06-B74.5"
 
 
@@ -457,7 +469,7 @@ def test_lock_buys_at_the_ask_with_real_money_and_alerts(monkeypatch):
     monkeypatch.setenv("NTFY_TOPIC", "t")
     lock_signal()
     cl, http = FakeClient(), LockHttp(yb=0.33, ya=0.35)       # NO ask 67c (not the 64c alert)
-    out = trader.run(cfg(mode="live"), now=NOW, http=http, client=cl)
+    out = trader.run(lcfg(mode="live"), now=NOW, http=http, client=cl)
     assert [b[:4] for b in cl.bought] == [(LOCK_TK, "no", 0.67, 5)]   # Kelly, 10% of $40
     assert not cl.placed                                     # mentions etc. never live
     row = [r for r in trader.load() if r["strategy"] == "locks"][0]
@@ -465,11 +477,11 @@ def test_lock_buys_at_the_ask_with_real_money_and_alerts(monkeypatch):
     assert any("BOUGHT" in p["title"] for p in http.posts)
     assert len(out["placed"]) == 1
     # next scan: same lock is not bought again
-    trader.run(cfg(mode="live"), now=NOW + timedelta(minutes=5), http=http, client=cl)
+    trader.run(lcfg(mode="live"), now=NOW + timedelta(minutes=5), http=http, client=cl)
     assert len(cl.bought) == 1
     # settles NO: +5 x 33c minus the fee
     http.results[LOCK_TK] = "no"
-    trader.run(cfg(mode="live"), now=NOW + timedelta(hours=20), http=http, client=cl)
+    trader.run(lcfg(mode="live"), now=NOW + timedelta(hours=20), http=http, client=cl)
     row = [r for r in trader.load() if r["strategy"] == "locks"][0]
     assert row["status"] == "settled" and row["pnl"] == "1.57"
 
@@ -477,17 +489,17 @@ def test_lock_buys_at_the_ask_with_real_money_and_alerts(monkeypatch):
 def test_lock_skips_when_edge_gone_stale_or_no_cash():
     cl = FakeClient()
     lock_signal()
-    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(yb=0.01, ya=0.02), client=cl)  # NO ask 99c
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(yb=0.01, ya=0.02), client=cl)  # NO ask 99c
     assert not cl.bought
     lock_signal(at=NOW - timedelta(minutes=40))               # old scan
-    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
     assert not cl.bought
     lock_signal()
     cl.cash = 0.50                                           # account can't pay for one
-    out = trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    out = trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
     assert not cl.bought and any("cash" in why for *_, why in out["skipped"])
     cl.cash = 2.0                                            # shrinks to what the cash covers
-    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
     assert [b[3] for b in cl.bought] == [2]
 
 
@@ -495,12 +507,12 @@ def test_lock_unfilled_ioc_is_not_recorded_and_retries():
     cl = FakeClient()
     cl.fill = 0
     lock_signal()
-    out = trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    out = trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
     assert len(cl.bought) == 1 and not [r for r in trader.load() if r["strategy"] == "locks"]
     assert any("nothing left" in why for *_, why in out["skipped"])
     cl.fill = 99
     lock_signal(at=NOW + timedelta(minutes=5))
-    trader.run(cfg(mode="live"), now=NOW + timedelta(minutes=5), http=LockHttp(), client=cl)
+    trader.run(lcfg(mode="live"), now=NOW + timedelta(minutes=5), http=LockHttp(), client=cl)
     assert len(cl.bought) == 2 and cl.bought[0][4] != cl.bought[1][4]   # fresh client id
 
 
@@ -508,7 +520,7 @@ def test_lock_respects_event_cap_and_halt():
     from wxbot.util import write_json
     cl = FakeClient()
     lock_signal()
-    c = cfg(mode="live", bankroll=40)
+    c = lcfg(mode="live", bankroll=40)
     c.raw["trading"]["locks"]["max_event_pct"] = 0.10         # $4 on this city-day
     c.raw["strategy"]["max_bet_frac_lock"] = 0.5               # Kelly wants 10 contracts...
     trader.run(c, now=NOW, http=LockHttp(), client=cl)
@@ -517,7 +529,7 @@ def test_lock_respects_event_cap_and_halt():
     cl2 = FakeClient()
     lock_signal(ticker=LOCK_TK)
     trader.save([])
-    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl2)
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl2)
     assert not cl2.bought
 
 
