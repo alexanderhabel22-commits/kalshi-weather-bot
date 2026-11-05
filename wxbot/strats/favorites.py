@@ -16,16 +16,21 @@ Rules here:
   - our price within [min_price, max_price] (default 85-96c)
   - at most max_markets_per_event per event, highest price first
   - size `contracts` each; the trader adds the event / strategy / overall caps
-Scans every 30 minutes (lists all open events).
+Scanning: once a day, the series in those categories with min_series_volume+
+contracts traded; every 6 hours, which of them have open events (a light
+listing of all open events); every 30 minutes, the open markets of those
+series, grouped into events.
 """
 from __future__ import annotations
 
 import logging
+import os
 from datetime import timedelta
 
 from .. import kalshi
 from ..trader import Intent
 from ..util import HttpError, parse_iso
+from .mentions import _series_markets
 
 NAME = "favorites"
 log = logging.getLogger("wxbot")
@@ -42,18 +47,62 @@ def _vol(m: dict) -> float:
     return 0.0
 
 
-def open_events(ctx, max_pages: int = 40) -> list[dict]:
-    out, cursor = [], None
+def big_series(ctx, cats, min_vol: float) -> dict[str, str]:
+    """{series ticker: category} for series with min_vol+ contracts traded (daily)."""
+    st = ctx.state
+    day = ctx.now.date().isoformat()
+    if st.get("series_day") == day and st.get("series"):
+        return st["series"]
+    found = {}
+    for cat in cats:
+        js = ctx.http.get_json(f"{kalshi.BASE}/series",
+                               params={"category": cat, "include_volume": "true"})
+        for x in js.get("series") or []:
+            if x.get("ticker") and (x.get("category") or cat) == cat and _vol(x) >= min_vol:
+                found[x["ticker"]] = cat
+    if found:
+        st["series"], st["series_day"] = found, day
+    return found
+
+
+def active_series(ctx, series: dict, max_pages: int = 150) -> list[str]:
+    """Big series that have open events, refreshed every 6 hours from a light
+    listing of all open events (no nested markets)."""
+    st = ctx.state
+    last = parse_iso(st.get("active_at"))
+    if last is not None and ctx.now - last < timedelta(hours=6) and "active" in st:
+        return st["active"]
+    seen, cursor = set(), None
     for _ in range(max_pages):
-        params = {"status": "open", "with_nested_markets": "true", "limit": 200}
+        params = {"status": "open", "limit": 200}
         if cursor:
             params["cursor"] = cursor
         js = ctx.http.get_json(f"{kalshi.BASE}/events", params=params)
-        out.extend(js.get("events") or [])
+        for ev in js.get("events") or []:
+            s_ = ev.get("series_ticker") or (ev.get("event_ticker") or "").split("-")[0]
+            if s_ in series:
+                seen.add(s_)
         cursor = js.get("cursor")
         if not cursor:
             break
-    return out
+    st["active"], st["active_at"] = sorted(seen), ctx.now.isoformat(timespec="seconds")
+    return st["active"]
+
+
+def open_events(ctx, series: dict, active: list[str]) -> list[dict]:
+    by_ev: dict[str, dict] = {}
+    for s_ in active:
+        try:
+            ms = _series_markets(ctx, s_)
+        except HttpError as exc:
+            log.info("favorites %s: %s", s_, exc)
+            continue
+        for m in ms:
+            ev = m.get("event_ticker") or m.get("ticker", "").rsplit("-", 1)[0]
+            e = by_ev.setdefault(ev, {"event_ticker": ev, "category": series.get(s_, ""),
+                                      "markets": []})
+            e["markets"].append(m)
+    return list(by_ev.values())
 
 
 def candidates(events: list[dict], now, p: dict) -> list[Intent]:
@@ -102,13 +151,20 @@ def candidates(events: list[dict], now, p: dict) -> list[Intent]:
 
 
 def propose(ctx) -> list[Intent]:
-    if ctx.now.minute % 30 >= 5:
+    if ctx.now.minute % 30 >= 5 and not os.environ.get("TRADE_FORCE_SCAN"):
         return []
+    p = ctx.params
+    cats = list(p.get("categories") or DEFAULT_CATS)
     try:
-        events = open_events(ctx, int(ctx.params.get("max_pages", 40)))
+        series = big_series(ctx, cats, float(p.get("min_series_volume", 1_000_000)))
+        active = active_series(ctx, series, int(p.get("max_pages", 150)))
+        events = open_events(ctx, series, active[:int(p.get("max_series", 250))])
     except HttpError as exc:
         log.warning("favorites scan: %s", exc)
         return []
-    out = candidates(events, ctx.now, ctx.params)
-    log.info("favorites: %d open events, %d candidates", len(events), len(out))
+    out = candidates(events, ctx.now, p)
+    big = sum(1 for e in events if sum(_vol(m) for m in e["markets"]) >=
+              float(p.get("min_event_volume", 1_000_000)))
+    log.info("favorites: %d big series, %d with open events, %d open events, %d over the "
+             "volume floor, %d candidates", len(series), len(active), len(events), big, len(out))
     return out
