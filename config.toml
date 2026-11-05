@@ -59,8 +59,8 @@ edge_alerts = "shadow"           # forecast-based EDGE alerts: "shadow" = log + 
 near_lock_alerts = "shadow"      # late-day calls the model rates 95%+ but readings haven't
                                  # decided yet ("near-locks"): same shadow / on / off choice.
 launch_alerts = "shadow"         # new-market watcher: "shadow" = log + report only, "on" = also push
-                                 # a short note when a new category, weather series or fast-repeating
-                                 # series opens its first markets (max 4 a day, not in quiet hours)
+                                 # a short note when a new category or a new weather series opens
+                                 # its first markets (max 4 a day, not in quiet hours)
 # The ntfy topic is read from the NTFY_TOPIC environment variable / GitHub secret.
 
 [model]

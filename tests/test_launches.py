@@ -72,13 +72,13 @@ def test_shadow_mode_never_pushes_and_quiet_queues(monkeypatch):
     now = datetime(2026, 11, 5, 15, 0, tzinfo=UTC)
     db = {}
     launches.watch(Http(base_series()), cfg, db, now)
-    new = [{"ticker": "KXFAST", "category": "Crypto", "frequency": "fifteen_min", "title": "Fast"}]
+    new = [{"ticker": "KXFAST", "category": "Climate and Weather", "frequency": "fifteen_min", "title": "Fast"}]
     http = Http(base_series() + new, {"KXFAST": [mk("F", 0.4, 0.6)]})
     launches.watch(http, cfg, db, now + timedelta(minutes=30))
     assert not http.posts and db["queue"] == []                 # default is shadow
 
     cfg.raw["alerts"]["launch_alerts"] = "on"
-    new2 = [{"ticker": "KXFAST2", "category": "Crypto", "frequency": "daily", "title": "Fast2"}]
+    new2 = [{"ticker": "KXFAST2", "category": "Climate and Weather", "frequency": "daily", "title": "Fast2"}]
     http = Http(base_series() + new + new2, {"KXFAST2": [mk("G", 0.4, 0.6)]})
     launches.watch(http, cfg, db, now + timedelta(hours=1), quiet=True)
     assert not http.posts and db["queue"] == ["KXFAST2"]

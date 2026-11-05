@@ -1,15 +1,17 @@
 """New-market watcher (added Nov 5, 2026).
 
-Idea being tested: brand-new Kalshi series may be mispriced in their first
-weeks, before market makers arrive. Every 30 minutes this pulls Kalshi's full
+Idea tested: brand-new Kalshi series may be mispriced in their first weeks,
+before market makers arrive. The Nov 5 backtest (research_launch/) said no
+overall, so this is now an early-warning feed for launches we may have an
+information edge on (new weather/index cities) and for new categories. Every 30 minutes this pulls Kalshi's full
 series list (one public call), remembers every series ticker and category it
 has seen, and notices new ones. A new recurring series is watched until its
 first markets open; then it is logged with its prices, spreads and a
 recommended test.
 
 The first run only records a baseline (no alerts). After that, a launch is
-"alert-worthy" when it is a brand-new category, a weather/climate series, or a
-fast-repeating series (15-min, hourly, daily, weekly). `launch_alerts` in
+"alert-worthy" when it opens a brand-new category or is a weather/climate
+series. `launch_alerts` in
 config.toml decides what happens to those: "shadow" = log only (default),
 "on" = also push one combined phone note (max a few a day, not in quiet
 hours). Everything lives in data/launches.json and REPORT.md.
@@ -25,7 +27,6 @@ from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write
 log = logging.getLogger("wxbot")
 
 LAUNCHES = DATA_DIR / "launches.json"
-FAST = {"fifteen_min", "hourly", "daily", "weekly"}
 WEATHER_CATS = {"Climate and Weather", "Climate", "Weather"}
 MAX_CHECKS_PER_RUN = 25     # market lookups for pending series per run
 PENDING_DAYS = 21           # stop waiting for a series' first market after this
@@ -42,8 +43,10 @@ def save(db: dict) -> None:
 
 
 def is_alert_worthy(item: dict) -> bool:
-    return bool(item.get("new_category") or item.get("category") in WEATHER_CATS
-                or item.get("frequency") in FAST)
+    # The Nov 5 launch backtest (1,839 series launched in 2026) found no extra maker
+    # profit in a series' first weeks, so only launches we have an information edge
+    # on (weather) or that open a whole new category are worth a look.
+    return bool(item.get("new_category") or item.get("category") in WEATHER_CATS)
 
 
 def recommend(item: dict) -> str:
@@ -58,8 +61,8 @@ def recommend(item: dict) -> str:
         base = ("Fast series: paper-quote resting limit orders a few cents inside the spread for "
                 "a week before any money.")
     else:
-        base = ("Paper-test resting NO orders on 10-30c longshots (the longshot fade) for 2-4 "
-                "weeks, 1 contract each.")
+        base = ("New category: check who sets the price and what it settles on before any "
+                "test; launches are usually already efficient (Nov 5 backtest).")
     if wide:
         base += f" Spreads are wide ({spread * 100:.0f}c), so makers haven't arrived yet."
     elif spread is not None:
