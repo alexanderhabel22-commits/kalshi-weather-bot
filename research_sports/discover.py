@@ -4,7 +4,6 @@ Read-only public data; never trades. Writes into argv[1].
 """
 from __future__ import annotations
 
-import datetime as dt
 import json
 import sys
 from pathlib import Path
@@ -34,25 +33,21 @@ def dump(name, url, params=None):
 
 
 def main():
-    dump("k_cutoff", K + "/historical/cutoff")
-    for s in ("KXNBAGAME", "KXNFLGAME", "KXNHLGAME", "KXMLBGAME", "KXNCAAFGAME"):
-        js = dump(f"k_{s}", K + "/markets", {"series_ticker": s, "status": "settled", "limit": 4})
-        dump(f"k_{s}_hist", K + "/historical/markets", {"series_ticker": s, "limit": 4})
-        if js and js.get("markets"):
-            m = js["markets"][0]
-            ct = int(dt.datetime.fromisoformat(m["close_time"].replace("Z", "+00:00")).timestamp())
-            dump(f"k_{s}_candles", f"{K}/series/{s}/markets/{m['ticker']}/candlesticks",
-                 {"start_ts": ct - 86400 * 3, "end_ts": ct, "period_interval": 60})
-    sb = dump("espn_nba_sb", f"{E}/basketball/nba/scoreboard", {"dates": "20261103"})
-    dump("espn_nba_sb_old", f"{E}/basketball/nba/scoreboard", {"dates": "20260115"})
-    dump("espn_nfl_sb", f"{E}/football/nfl/scoreboard", {"dates": "20261101"})
-    dump("espn_nhl_sb", f"{E}/hockey/nhl/scoreboard", {"dates": "20261103"})
-    dump("espn_mlb_sb", f"{E}/baseball/mlb/scoreboard", {"dates": "20260715"})
-    dump("espn_cfb_sb", f"{E}/football/college-football/scoreboard", {"dates": "20261101", "groups": 80})
-    if sb and sb.get("events"):
-        ev = sb["events"][0]["id"]
-        dump("espn_nba_summary", f"{E}/basketball/nba/summary", {"event": ev})
-        dump("espn_nba_core_odds", f"{C}/basketball/leagues/nba/events/{ev}/competitions/{ev}/odds")
+    for lg, ev in (("football/nfl", "401873026"), ("hockey/nhl", "401892633"),
+                   ("basketball/nba", "401810433")):
+        tag = lg.split("/")[1]
+        sport, league = lg.split("/")
+        dump(f"espn_{tag}_summary", f"{E}/{lg}/summary", {"event": ev})
+        o = dump(f"espn_{tag}_core_odds", f"{C}/{sport}/leagues/{league}/events/{ev}/competitions/{ev}/odds")
+        for i, it in enumerate((o or {}).get("items") or []):
+            ref = (it.get("$ref") or "")
+            if ref:
+                dump(f"espn_{tag}_odds_item{i}", ref.replace("http://", "https://"))
+            pid = ((it.get("provider") or {}).get("id"))
+            if pid and i < 3:
+                dump(f"espn_{tag}_odds_hist{i}", f"{C}/{sport}/leagues/{league}/events/{ev}/competitions/{ev}/odds/{pid}/history/0/movement", {"limit": 200})
+    dump("espn_nba_sb_nov", f"{E}/basketball/nba/scoreboard", {"dates": "20261102"})
+    dump("espn_cfb_sb_sat", f"{E}/football/college-football/scoreboard", {"dates": "20261031", "groups": 80, "limit": 300})
 
 
 if __name__ == "__main__":
