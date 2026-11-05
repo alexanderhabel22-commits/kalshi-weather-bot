@@ -26,7 +26,7 @@ jobs:
           python-version: "3.12"
       - run: pip install requests
       - name: Run
-        run: python research_econ/pull.py out
+        run: python research_econ/trades.py out
       - name: Save to econ-research-data branch
         if: always()
         run: |
