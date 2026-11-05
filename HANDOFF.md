@@ -152,7 +152,7 @@ record earns it. Be candid about odds and risk; no hype.
 - Live needs secrets KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY. Ledger:
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
-- **LOCKs trade REAL money (Alex's OK, Nov 5 PM):** `[trading] mode = "live"`
+- **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
   and `[trading.locks] live = true`; every other strategy stays paper. The scan
   writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert
   limits don't apply); `wxbot/strats/weather_lock.py` re-reads the market and

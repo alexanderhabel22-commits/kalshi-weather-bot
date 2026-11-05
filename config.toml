@@ -78,9 +78,8 @@ spread_inflation = 1.15
 # Even in "live", a strategy only trades real money once its own table says
 # live = true (it passed its paper test and Alex said go); otherwise paper.
 # New edge = a module in wxbot/strats/ (NAME + propose) + a [trading.<NAME>] table.
-mode = "live"                    # live since Nov 5: ONLY strategies with live = true (LOCKs)
-                                 # use real money; the rest stay paper. Kill switch: set the
-                                 # TRADING_MODE GitHub variable to off (or this to "off").
+mode = "paper"                   # no real money (Alex, Nov 5 PM: hold until the LOCK
+                                 # reading bug is understood). Kill switch: TRADING_MODE=off.
 max_contracts_per_order = 10     # hard per-order size limit (each strategy's own size is smaller)
 max_orders_per_run = 15
 # Limits scale with the bankroll ([account] bankroll or the BANKROLL variable):
@@ -158,14 +157,16 @@ max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
 max_event_pct = 0.10             # at most 10% on one event
 
 [trading.locks]
-# Weather LOCKs with REAL money (Alex's OK, Nov 5): the day's readings already
+# Weather LOCKs, PAPER for now. Alex OK'd real money on Nov 5, then paused it the
+# same evening after a bad 6-hour METAR group made a false Philadelphia LOCK.
+# Flip live = true (and [trading] mode = "live") only with Alex's go. The day's readings already
 # decide the bracket. Buys at the live ask (immediate-or-cancel, never rests)
 # while fair 99.5% - ask - taker fee >= [strategy] min_edge_lock and the ask is
 # <= max_price_lock. Size = the alert's Kelly sizing (max_bet_frac_lock of the
 # bankroll), then the 20% per-event and 75% live caps, the loss stops and the
 # cash in the account. Record: 215 locked brackets Nov 3-5, only 1 below 97c.
 enabled = true
-live = true
+live = false                     # PAPER until Alex says go again
 taker = true                     # allowed to take the ask (other strategies only rest bids)
 exit = "hold"                    # hold to settlement (settles next morning)
 contracts = 10                   # never more than 10 contracts on one lock
