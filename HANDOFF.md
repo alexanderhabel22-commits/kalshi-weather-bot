@@ -241,7 +241,10 @@ chats can't search it), so this section is the bridge.
   `data/my_trades.csv`).
 - Ignore EDGE. Don't size above the bot. If a LOCK ever loses, stop and
   diagnose before the next one.
-- Update `BANKROLL` only on a deposit/withdrawal or a ~20% balance change.
+- Bankroll is automatic (Nov 5): each trade run reads Kalshi cash + open
+  positions (wxbot/balance.py -> data/bankroll.json) and every size, cap and
+  stop scales to it. Deposits change limits, never P&L. `BANKROLL` /
+  `[account] bankroll` are only the fallback if the read fails for 6h.
 - When to expect locks: daily-low locks ~7–10 AM ET (quiet hours end at 7);
   daily-high locks ~1–5 PM ET for East Coast cities, up to ~7–8 PM ET for
   the West.
