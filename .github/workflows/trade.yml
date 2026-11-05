@@ -11,6 +11,11 @@ on:
     workflows: [weather-scan]
     types: [completed]
   workflow_dispatch:
+    inputs:
+      force_scan:
+        description: "Run every strategy's market scan now (ignore its 30-minute timer)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -41,6 +46,7 @@ jobs:
           NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
           BANKROLL: ${{ vars.BANKROLL }}
           TRADING_MODE: ${{ vars.TRADING_MODE }}
+          TRADE_FORCE_SCAN: ${{ inputs.force_scan && '1' || '' }}
           KALSHI_API_KEY_ID: ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
         run: python bot.py trade -v

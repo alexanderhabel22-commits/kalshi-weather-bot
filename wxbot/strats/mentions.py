@@ -16,6 +16,7 @@ Scans every 30 minutes (each pass lists all open markets closing soon).
 from __future__ import annotations
 
 import logging
+import os
 from datetime import timedelta
 
 from .. import kalshi
@@ -67,7 +68,7 @@ def open_markets(ctx, series: set[str], min_h: float, max_h: float) -> list[dict
     refresh = last is None or ctx.now - last > timedelta(hours=6) or not st.get("active")
     check = sorted(series) if refresh else st.get("active", [])
     lo, hi = ctx.now + timedelta(hours=min_h), ctx.now + timedelta(hours=max_h)
-    out, active = [], []
+    out, active, seen = [], [], []
     for s_ in check:
         try:
             ms = _series_markets(ctx, s_)
@@ -77,8 +78,14 @@ def open_markets(ctx, series: set[str], min_h: float, max_h: float) -> list[dict
         if ms:
             active.append(s_)
         out += [m for m in ms if (c := event_time(m)) and lo <= c <= hi]
+        seen += [(c, m) for m in ms[:3] if (c := event_time(m)) and c >= ctx.now]
     if refresh:
         st["active"], st["active_at"] = active, ctx.now.isoformat(timespec="seconds")
+    if not out and seen:
+        soon = sorted(seen, key=lambda x: x[0])[:5]
+        log.info("mentions: none in window; next events: %s",
+                 "; ".join(f"{m.get('ticker')} occ={m.get('occurrence_datetime')} "
+                           f"close={m.get('close_time')}" for _, m in soon))
     return out
 
 
@@ -124,7 +131,7 @@ def candidates(markets: list[dict], series: set[str], p: dict) -> list[Intent]:
 
 
 def propose(ctx) -> list[Intent]:
-    if ctx.now.minute % 30 >= 5:
+    if ctx.now.minute % 30 >= 5 and not os.environ.get("TRADE_FORCE_SCAN"):
         return []
     p = ctx.params
     try:
