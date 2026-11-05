@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import kalshi, ledger, notify, rain, report as reportmod, strategy, tracking
+from . import daybefore, kalshi, ledger, notify, rain, report as reportmod, strategy, tracking
 from .model import build_day_model
 from .stations import (SeriesInfo, Station, cli_window, climate_day_of,
                        default_catalog, series_from_kalshi)
@@ -148,6 +148,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
              "near": str(aparams.get("near_lock_alerts", "shadow")).lower()}
     candidates = []
     shadow_logged = 0
+    tomorrow: dict[str, tuple] = {}
 
     for si in catalog:
         st = si.station
@@ -179,6 +180,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             ws, we = cli_window(d, st.tz)
             if now >= we:
                 continue
+            if ahead == 1:
+                tomorrow[ev] = (si, ms)
 
             # station data, fetched once per station per scan
             if st.icao not in station_obs:
@@ -280,6 +283,19 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
 
     ledger.track_prices(rows, quotes, now)
 
+    # paper trading: day-before limit orders (no money, never alerts)
+    paper = None
+    if cfg.get("markets", "paper_daybefore", True):
+        paper = daybefore.load_orders()
+        try:
+            n_paper = daybefore.place(http, paper, tomorrow, now, state)
+            if n_paper:
+                log.info("paper orders placed: %d", n_paper)
+            if now.minute % 30 < 5:                   # results come hours after close
+                daybefore.settle(http, paper, now)
+        except Exception as exc:  # never let the test break the scan
+            log.warning("paper trading failed: %s", exc)
+
     # silent rain census (no alerts), every 15 minutes
     rain_census = None
     if cfg.get("markets", "rain_census", True) and now.minute % 15 < 5:
@@ -339,6 +355,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         reportmod.ensure_my_trades_file()
         if rain_census is not None:
             rain.save(rain_census)
+        if paper is not None:
+            daybefore.save_orders(paper)
     write_json(RUNTIME, runtime)
     write_json(LAST_SCAN, {"at": now.isoformat(), "events": report, "problems": problems})
     log.info("scan done: %d series, %d events, %d alerts, %d silent EDGE logged, problems=%s",

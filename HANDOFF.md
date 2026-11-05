@@ -7,7 +7,9 @@ when the project changes, update this file and the project instructions together
 Alex (Concord, NC; works full-time in sales, builds side projects with Claude)
 runs a bot that watches Kalshi daily high/low temperature markets and sends
 phone alerts with an exact trade. Alex places every trade himself in the
-Kalshi app. The bot never trades. It is a small real-money test (~$37 bankroll,
+Kalshi app. The bot doesn't trade yet, but Alex said (Nov 4) he's fine with a
+bot trading: going live (Kalshi API key as a GitHub secret, small caps) is
+his call once paper results earn it. It is a small real-money test (~$37 bankroll,
 started Nov 3, 2026) in place of paper trading; Alex adds money only if the
 record earns it. Be candid about odds and risk; no hype.
 
@@ -128,6 +130,15 @@ record earns it. Be candid about odds and risk; no hype.
   YES, +$1.13) is unrelated to the bot.
 
 ## Game plan
+- **Paper trading, Nov 5 → weekend Nov 7-8:** `wxbot/daybefore.py` rests paper
+  limit orders 1c inside the spread ~36h before close when a market+model
+  blend (logistic, fit on the 1-year backtest) says the side is worth 6c+ more.
+  Fills are checked on Kalshi's trade tape after close; graded in
+  `data/paper_orders.csv` and REPORT.md. Parameters:
+  `data/daybefore_params.json` (rebuild with `tools/daybefore_params.py` from
+  the `backtest-data` branch). Backtest: +10-25%/month Jan-Aug 2026, only
+  +2-4% Sep-Oct (not significant). Alex: if positive by the weekend, deploy
+  the $37 live (proposed caps: 1 contract/order, <=$15 open, stop at -$5).
 - **Now → ~Nov 17:** LOCKs only, normal risk. Alex uses limit orders at or
   below the alert price, never chases, logs trades. Any LOCK loss = stop and
   diagnose before sizing up.

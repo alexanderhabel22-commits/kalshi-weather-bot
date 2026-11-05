@@ -150,18 +150,11 @@ def day_forecasts(fc: dict, d: date, tz: str, metric: str) -> dict:
 
 # ---------------------------------------------------------------- model
 
-def predict(history: list[Day], today: Day, lead: str, window: int = 45,
-            min_hist: int = 15, sd_infl: float = 1.0, sd_floor: float = 1.2,
-            spread_sd: bool = False):
-    """Walk-forward per-city forecast from earlier days only. Returns (mu, sd)."""
-    past = [h for h in history if h.series == today.series and h.day < today.day
-            and (today.day - h.day).days <= window]
-    models = [m for m in today.fc if lead in today.fc[m]]
-    if not models:
-        return None
-    if len(past) < min_hist:
-        return None
-    # inverse-MSE model weights, bias-corrected per model
+def fit_city(past: list[Day], lead: str, models, min_hist: int = 15,
+             spread_sd: bool = False):
+    """Fit per-model bias, inverse-MSE weights and the combined error variance
+    on `past` days. Returns (weights, biases, var_a, var_b) or None, where the
+    forecast variance is var_a + var_b * spread^2 (var_b = 0 unless spread_sd)."""
     w, bias = {}, {}
     for m in models:
         errs = [h.actual - h.fc[m][lead] for h in past if m in h.fc and lead in h.fc[m]]
@@ -172,38 +165,54 @@ def predict(history: list[Day], today: Day, lead: str, window: int = 45,
         bias[m], w[m] = b, 1.0 / max(mse, 0.25)
     if not w:
         return None
-    tot = sum(w.values())
-
-    def combo(day: Day):
-        if not all(m in day.fc and lead in day.fc[m] for m in w):
-            return None
-        return sum(w[m] * (day.fc[m][lead] + bias[m]) for m in w) / tot
-
-    def spread(day: Day) -> float:
-        v = [day.fc[m][lead] + bias[m] for m in w]
-        if len(v) < 2:
-            return 0.0
-        mean = sum(v) / len(v)
-        return math.sqrt(sum((x - mean) ** 2 for x in v) / (len(v) - 1))
-
-    pairs = [(h.actual - c, spread(h)) for h in past if (c := combo(h)) is not None]
-    mu = combo(today)
-    if mu is None or len(pairs) < min_hist:
+    pairs = [(h.actual - c, spread_of(h.fc, w, bias, lead)) for h in past
+             if (c := combine(h.fc, w, bias, lead)) is not None]
+    if len(pairs) < min_hist:
         return None
-    mse = sum(r * r for r, _ in pairs) / len(pairs)
-    if spread_sd:
-        # error variance = a + b * spread^2, fit by least squares on past days
-        xs = [s_ * s_ for _, s_ in pairs]
-        ys = [r * r for r, _ in pairs]
-        mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
-        vx = sum((x - mx) ** 2 for x in xs)
-        b = max(0.0, sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / vx) if vx > 0 else 0.0
-        a = max(my - b * mx, 0.5)
-        var = a + b * spread(today) ** 2
-    else:
-        var = mse
-    sd = math.sqrt(var) * sd_infl
-    return mu, max(sd, sd_floor)
+    if not spread_sd:
+        return w, bias, sum(r * r for r, _ in pairs) / len(pairs), 0.0
+    # error variance = a + b * spread^2, fit by least squares on past days
+    xs = [s_ * s_ for _, s_ in pairs]
+    ys = [r * r for r, _ in pairs]
+    mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+    vx = sum((x - mx) ** 2 for x in xs)
+    b = max(0.0, sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / vx) if vx > 0 else 0.0
+    return w, bias, max(my - b * mx, 0.5), b
+
+
+def combine(fc: dict, w: dict, bias: dict, lead: str) -> float | None:
+    """Bias-corrected, weighted forecast; None unless every weighted model has one."""
+    if not all(m in fc and lead in fc[m] for m in w):
+        return None
+    return sum(w[m] * (fc[m][lead] + bias[m]) for m in w) / sum(w.values())
+
+
+def spread_of(fc: dict, w: dict, bias: dict, lead: str) -> float:
+    v = [fc[m][lead] + bias[m] for m in w if m in fc and lead in fc[m]]
+    if len(v) < 2:
+        return 0.0
+    mean = sum(v) / len(v)
+    return math.sqrt(sum((x - mean) ** 2 for x in v) / (len(v) - 1))
+
+
+def predict(history: list[Day], today: Day, lead: str, window: int = 45,
+            min_hist: int = 15, sd_infl: float = 1.0, sd_floor: float = 1.2,
+            spread_sd: bool = False):
+    """Walk-forward per-city forecast from earlier days only. Returns (mu, sd)."""
+    past = [h for h in history if h.series == today.series and h.day < today.day
+            and (today.day - h.day).days <= window]
+    models = [m for m in today.fc if lead in today.fc[m]]
+    if not models or len(past) < min_hist:
+        return None
+    fit = fit_city(past, lead, models, min_hist, spread_sd)
+    if fit is None:
+        return None
+    w, bias, a, b = fit
+    mu = combine(today.fc, w, bias, lead)
+    if mu is None:
+        return None
+    var = a + b * spread_of(today.fc, w, bias, lead) ** 2
+    return mu, max(math.sqrt(var) * sd_infl, sd_floor)
 
 
 # ---------------------------------------------------------------- evaluation

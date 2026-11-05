@@ -13,6 +13,7 @@ series = []                      # e.g. ["KXHIGHNY", "KXHIGHCHI"] to limit; empt
 skip_cities = []                 # e.g. ["Denver"]
 auto_discover = true             # pick up new/renamed weather series from Kalshi daily
 rain_census = true               # silent test: log monthly rain thresholds already passed (no alerts)
+paper_daybefore = true           # paper-trade day-before limit orders (no money, no alerts)
 
 [strategy]
 # Edges are in dollars per contract after fees (0.03 = 3¢).
