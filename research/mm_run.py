@@ -4,7 +4,7 @@ sys.path.insert(0,'research')
 import mm_sim
 R=sys.argv[2] if len(sys.argv)>2 else 'index'
 D=sys.argv[3] if len(sys.argv)>3 else 'data'
-CS={'miami':'KXTEMPMIAH','nyc':'KXTEMPNYCHS','chicago':'KXTEMPCHIHS'}
+CS={'miami':'KXTEMPMIAH','nyc':'KXTEMPNYCHS','chicago':'KXTEMPCHIHS','la':'KXTEMPLAXHS'}
 IDX={}
 for c in CS:
   d={}
@@ -21,7 +21,6 @@ for c in CS:
       if v is not None: n+=1; ok+= abs(v-float(r['value']))<0.005
   print(c,'index minutes',len(d),'settlement match',ok,'/',n)
 split=datetime(2026,10,18)
-import itertools
 grid=[dict(h=h,Q=10,TIE=0.3,L=3) for h in (0.01,0.02,0.03,0.05)]
 if len(sys.argv)>1: grid=[eval(sys.argv[1])]
 for g in grid:

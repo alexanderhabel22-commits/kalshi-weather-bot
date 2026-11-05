@@ -16,7 +16,7 @@ BASES = ["https://external-api.kalshi.com/trade-api/v2",
          "https://api.elections.kalshi.com/trade-api/v2"]
 CITY_NAMES = {"miami": ["miami"], "nyc": ["nyc", "new_york", "new-york", "newyork"],
               "chicago": ["chicago", "chicago_metro", "chicago-metro"],
-              "la": ["la", "los_angeles", "coastal_la", "los-angeles", "coastal-la"]}
+              "la": ["la-coastal"]}
 START = datetime(2026, 10, 1, tzinfo=timezone.utc)
 OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "out")
 S = requests.Session()
