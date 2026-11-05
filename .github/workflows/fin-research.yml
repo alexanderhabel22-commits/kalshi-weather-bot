@@ -1,0 +1,54 @@
+name: fin-research
+
+# Research only (Financials / Economics / Crypto history for the fade-longshots
+# test). Read-only public data; never trades, never alerts. Runs only on push
+# to this research branch. Output goes to the fin-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-rego7t"]
+    paths: ["research_fin/fetch.py", ".github/workflows/fin-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fin-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        category: [Financials, Economics, Crypto]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        run: python research_fin/fetch.py "${{ matrix.category }}" out
+      - name: Save to fin-research-data branch
+        if: always()
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d)-${{ matrix.category }}"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin fin-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/fin-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp" || exit 0
+            git push origin HEAD:fin-research-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
