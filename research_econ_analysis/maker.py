@@ -1,4 +1,4 @@
-import csv, gzip, math, collections
+import csv, gzip, collections
 from datetime import datetime
 mk = {r["ticker"]: r for r in csv.DictReader(open("/tmp/claude-0/econ/markets.csv"))}
 def mfee(p): return 0.0175*p*(1-p)  # per contract, ignoring per-order rounding

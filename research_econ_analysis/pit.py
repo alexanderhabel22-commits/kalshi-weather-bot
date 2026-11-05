@@ -1,4 +1,4 @@
-import csv, gzip, collections, re
+import csv, gzip, collections
 from datetime import datetime
 mk = [r for r in csv.DictReader(open("/tmp/claude-0/econ/markets.csv")) if r["strike_type"]=="greater" and r["floor"]]
 by = {r["ticker"]: r for r in mk}
