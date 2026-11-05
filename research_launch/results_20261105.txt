@@ -1,0 +1,63 @@
+Series with trade data: 1839; markets sampled: 65471
+By category: Sports 1369, Economics 183, Financials 63, Climate and Weather 59, Commodities 42, Science and Technology 35, Politics 32, Entertainment 19, Crypto 19, Mentions 17, Elections 1
+
+== maker profit, all trades (cents/contract, series-clustered 95% CI) ==
+  00-14d: maker +0.73c [+0.22, +1.19]  taker-after-fee -2.16c  series 1833  contracts 767,616,413
+  14-28d: maker +0.68c [-0.46, +1.82]  taker-after-fee -2.15c  series 1091  contracts 441,331,638
+  28-56d: maker +1.04c [+0.06, +2.04]  taker-after-fee -2.51c  series 1099  contracts 405,886,293
+  56-112d: maker +1.06c [+0.33, +1.86]  taker-after-fee -2.48c  series 911  contracts 226,246,863
+  paired early(0-28d) minus late(56-112d): +0.22c/contract per series (SE 0.43c), 464/903 series better early
+
+== maker profit, fade trades (cents/contract, series-clustered 95% CI) ==
+  00-14d: maker +3.30c [+2.24, +4.46]  taker-after-fee -4.48c  series 1781  contracts 337,273,362
+  14-28d: maker +2.61c [+0.67, +4.33]  taker-after-fee -3.82c  series 1069  contracts 182,701,179
+  28-56d: maker +3.05c [+1.82, +4.19]  taker-after-fee -4.31c  series 1071  contracts 175,865,251
+  56-112d: maker +1.70c [-0.70, +3.25]  taker-after-fee -2.89c  series 898  contracts 94,836,453
+  paired early(0-28d) minus late(56-112d): -0.89c/contract per series (SE 0.66c), 408/867 series better early
+
+== maker profit, fav trades (cents/contract, series-clustered 95% CI) ==
+  00-14d: maker -2.53c [-4.26, -0.65]  taker-after-fee +1.29c  series 1832  contracts 215,554,370
+  14-28d: maker -1.06c [-2.71, +0.94]  taker-after-fee -0.18c  series 1087  contracts 122,424,523
+  28-56d: maker -2.09c [-3.83, -0.19]  taker-after-fee +0.84c  series 1090  contracts 111,819,965
+  56-112d: maker -0.73c [-2.40, +1.94]  taker-after-fee -0.48c  series 910  contracts 68,719,316
+  paired early(0-28d) minus late(56-112d): +0.80c/contract per series (SE 0.48c), 480/901 series better early
+
+== by category: maker c/contract early (0-28d) vs late (56-112d), all trades ==
+  Sports                   series 1369  early +0.73c (1,160,182,395) late +1.09c (201,861,531)
+  Economics                series  183  early -1.91c (6,619,237)     late -0.16c (1,951,572)
+  Financials               series   63  early +0.10c (4,334,298)     late -0.34c (766,718)
+  Climate and Weather      series   59  early -0.06c (4,829,344)     late +0.71c (2,222,199)
+  Commodities              series   42  early +1.22c (7,250,003)     late +1.69c (9,742,076)
+  Science and Technology   series   35  early -2.39c (1,895,895)     late -11.26c (68,826)
+  Politics                 series   32  early +1.02c (10,740,735)    late -0.84c (4,314,994)
+  Crypto                   series   19  early +1.16c (5,205,682)     late +1.54c (4,186,273)
+  Entertainment            series   19  early +0.63c (4,634,479)     late +0.63c (1,081,063)
+  Mentions                 series   17  early +2.29c (3,192,304)     late +0.44c (51,612)
+  Elections                series    1  early -0.24c (63,681)        late -
+
+== 2026 recurring-series launches by month (first market opened) ==
+  2026-01:  124  (Sports 96, Crypto 9, Politics 7, Climate and Weather 5)
+  2026-02:  150  (Sports 128, Climate and Weather 8, Politics 6, Economics 5)
+  2026-03:  225  (Sports 145, Economics 26, Mentions 17, Commodities 13)
+  2026-04:  282  (Sports 150, Economics 42, Entertainment 36, Commodities 23)
+  2026-05:  241  (Sports 182, Economics 30, Financials 13, Crypto 6)
+  2026-06:  257  (Sports 210, Economics 19, Financials 19, Climate and Weather 3)
+  2026-07:  366  (Sports 311, Financials 20, Economics 18, Politics 7)
+  2026-08:  501  (Sports 407, Climate and Weather 27, Economics 25, Financials 22)
+  2026-09:  403  (Sports 259, Economics 51, Elections 37, Science and Technology 17)
+  2026-10:  408  (Sports 225, Climate and Weather 61, Financials 41, Economics 35)
+  2026-11:   54  (Sports 25, Crypto 11, Politics 9, Commodities 7)
+
+== series with the most early maker profit ($ per 1 contract on every trade) ==
+  KXWC1H                 Sports             custom     launched 2026-06-05 early +6.3c on 19,587,380  late -
+  KXWCMOV                Sports             custom     launched 2026-06-25 early +4.0c on 29,172,819  late -
+  KXWCTOTAL              Sports             custom     launched 2026-06-05 early +4.6c on 20,291,807  late -
+  KXWCGAME               Sports             custom     launched 2026-02-04 early +1.3c on 46,883,238  late +1.1c
+  KXIPL                  Sports             custom     launched 2026-02-26 early +2.3c on 25,962,858  late -
+  KXWCFINISHINGORDER     Sports             custom     launched 2026-07-13 early +10.6c on 5,249,931  late -
+  KXWCADVANCE            Sports             custom     launched 2026-06-25 early +0.6c on 86,684,905  late -
+  KXODIMATCH             Sports             custom     launched 2026-05-28 early +1.8c on 29,407,708  late -0.1c
+  KXLPLMATCH             Sports             custom     launched 2026-07-18 early +3.0c on 13,184,728  late -
+  KXWCMATCHUP            Sports             custom     launched 2026-06-29 early +13.6c on 2,764,639  late -
+  KXNBASUMMERGAME        Sports             custom     launched 2026-07-01 early +1.5c on 24,300,506  late -
+  KXLAVERCUPMATCH        Sports             custom     launched 2026-09-24 early +2.5c on 14,351,159  late -

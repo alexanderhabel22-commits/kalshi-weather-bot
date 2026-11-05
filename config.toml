@@ -14,6 +14,7 @@ skip_cities = []                 # e.g. ["Denver"]
 auto_discover = true             # pick up new/renamed weather series from Kalshi daily
 rain_census = true               # silent test: log monthly rain thresholds already passed (no alerts)
 paper_daybefore = true           # paper-trade day-before limit orders (no money, no alerts)
+launch_watch = true              # watch for brand-new Kalshi series/categories (data/launches.json)
 
 [strategy]
 # Edges are in dollars per contract after fees (0.03 = 3¢).
@@ -57,6 +58,9 @@ edge_alerts = "shadow"           # forecast-based EDGE alerts: "shadow" = log + 
                                  # "on" = send them, "off" = ignore. LOCK alerts always send.
 near_lock_alerts = "shadow"      # late-day calls the model rates 95%+ but readings haven't
                                  # decided yet ("near-locks"): same shadow / on / off choice.
+launch_alerts = "shadow"         # new-market watcher: "shadow" = log + report only, "on" = also push
+                                 # a short note when a new category or a new weather series opens
+                                 # its first markets (max 4 a day, not in quiet hours)
 # The ntfy topic is read from the NTFY_TOPIC environment variable / GitHub secret.
 
 [model]
