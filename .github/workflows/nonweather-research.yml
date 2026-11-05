@@ -26,7 +26,7 @@ jobs:
           python-version: "3.12"
       - run: pip install requests
       - name: Run
-        run: python research_nw/probe.py out
+        run: python research_nw/mentions_hist.py out
       - name: Save to nonweather-research-data branch
         if: always()
         run: |
