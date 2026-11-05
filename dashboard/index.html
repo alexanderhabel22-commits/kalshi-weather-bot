@@ -478,10 +478,11 @@ function lineChart(el, series, o={}){
   if (o.y0 != null) y0 = Math.min(y0, o.y0); if (o.y1 != null) y1 = Math.max(y1, o.y1);
   const pad = (y1 - y0) * .08; y0 -= pad; y1 += pad;
   const X = x => P.l + (x - x0) / (x1 - x0) * (W - P.l - P.r), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
-  const ticks = niceTicks(y0, y1, 4), fy = o.fy || (v => "$" + v.toFixed(Math.abs(y1 - y0) < 5 ? 2 : 0));
+  const ticks = niceTicks(y0, y1, 4), fy = o.fy || (v => (v < -1e-9 ? "−$" : "$") + Math.abs(v).toFixed(Math.abs(y1 - y0) < 5 ? 2 : 0));
   let g = ticks.map(t => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="${t === 0 ? "#3a4870" : "#18213b"}" ${t === 0 ? "" : 'stroke-dasharray="2 4"'}/><text x="${P.l - 6}" y="${Y(t) + 3.5}" fill="#6b7699" font-size="10" text-anchor="end" font-family="JetBrains Mono">${fy(t)}</text>`).join("");
-  const fx = x1 - x0 < 6 * 3600e3 ? (t => fmt(new Date(t), {hour:"numeric", minute:"2-digit"})) : x1 - x0 < 2 * 864e5 ? (t => fmt(new Date(t), {weekday:"short", hour:"numeric"})) : (t => fday(new Date(t)));
-  const xt = [x0, (x0 + x1) / 2, x1].map((t, i) => `<text x="${X(t)}" y="${H - 6}" fill="#6b7699" font-size="10" text-anchor="${["start","middle","end"][i]}" font-family="JetBrains Mono">${fx(t)}</text>`).join("");
+  const tt = timeTicks(x0, x1, W < 500 ? 3 : 5);
+  const xt = tt.ticks.map(t => { const px = X(t), a = px < P.l + 22 ? "start" : px > W - P.r - 22 ? "end" : "middle";
+    return `<line x1="${px}" x2="${px}" y1="${H - P.b}" y2="${H - P.b + 3}" stroke="#3a4870"/><text x="${px}" y="${H - 6}" fill="#6b7699" font-size="10" text-anchor="${a}" font-family="JetBrains Mono">${tt.f(t)}</text>`; }).join("");
   (o.refs || []).forEach(rf => { if (rf.y > y0 && rf.y < y1) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(rf.y)}" y2="${Y(rf.y)}" stroke="${rf.c}" stroke-dasharray="5 4" opacity=".7"/><text x="${W - P.r}" y="${Y(rf.y) - 4}" fill="${rf.c}" font-size="10" text-anchor="end" font-family="JetBrains Mono">${rf.label}</text>`; });
   let paths = "";
   series.forEach((s, i) => {
@@ -534,6 +535,20 @@ function barChart(el, bars, o={}){
     bodies.forEach((r, k) => r.setAttribute("opacity", k == i ? "1" : ".45"));
     cap.innerHTML = `<b class="${b.v >= 0 ? "pos" : "neg"}">${esc((o.fv || fy)(b.v))}</b> ${esc(b.label)}${b.extra ? `<div class="mute">${esc(b.extra)}</div>` : ""}`; };
   svg.addEventListener("pointerover", show); svg.addEventListener("pointerdown", show);
+}
+function etOffset(t){ // ms to add to UTC to get Eastern wall-clock time
+  const p = {}; new Intl.DateTimeFormat("en-US", {timeZone:TZ, hourCycle:"h23", year:"numeric", month:"numeric", day:"numeric", hour:"numeric", minute:"numeric"}).formatToParts(new Date(t)).forEach(x => p[x.type] = +x.value);
+  return Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - Math.floor(t / 60e3) * 60e3;
+}
+function timeTicks(x0, x1, n){
+  const M = 60e3, steps = [1,2,5,10,15,30,60,120,180,360,720,1440,2880,10080].map(m => m * M);
+  const step = steps.find(s => (x1 - x0) / s <= n) || 10080 * M, off = etOffset(x1), ticks = [];
+  for (let t = Math.ceil((x0 + off) / step) * step - off; t <= x1 + 1; t += step) ticks.push(t);
+  const span = x1 - x0;
+  const f = step >= 1440 * M ? (t => fday(new Date(t)))
+    : step >= 60 * M ? (t => fmt(new Date(t), span > 864e5 ? {weekday:"short", hour:"numeric"} : {hour:"numeric"}))
+    : (t => fmt(new Date(t), {hour:"numeric", minute:"2-digit"}));
+  return {ticks, f};
 }
 function niceTicks(a, b, n){ const span = b - a, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0))), f = step0 / mag;
   const step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = []; for (let t = Math.ceil(a / step) * step; t <= b + 1e-9; t += step) out.push(+t.toFixed(10)); return out; }
@@ -704,9 +719,34 @@ function details(r){
     ["Market now", sq ? `${r.side.toUpperCase()} ${c(sq.bid)} bid / ${c(sq.ask)} ask` + (sq.src === "live" ? " (live)" : sq.at ? ` (${ago(sq.at)})` : "") : ""],
     ["Up/down", u != null ? money(u) : ""], ["Result", r.result || ""], ["P&L", r.pnl != null ? money(r.pnl) : ""],
     ["Model", r.model != null ? Math.round(r.model * 100) + "%" : ""], ["Edge", r.edge != null ? cents(r.edge * 100) : ""], ["Note", r.note || ""]];
-  return `<div class="more">${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="https://kalshi.com/events/${encodeURIComponent(String(r.ticker || r.event).toLowerCase())}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
+  const n = r.status === "filled" ? (r.filled || r.count) : r.filled;
+  const tch = n > 0 && r.ticker && r.status !== "settled" ? `<div class="lbl" style="margin:10px 0 2px">Up/down on this bet</div><div class="chart tchart" data-tk="${esc(r.ticker)}" data-side="${esc(r.side)}" data-price="${r.price}" data-n="${n}" data-from="${+(r.filledAt || r.placed) || 0}"><div class="empty">Loading trades…</div></div>` : "";
+  return `<div class="more">${tch}${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="https://kalshi.com/events/${encodeURIComponent(String(r.ticker || r.event).toLowerCase())}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
 }
-document.addEventListener("click", e => { if (e.target.closest("a")) return; const it = e.target.closest(".item.tap"); if (it) it.classList.toggle("open"); });
+document.addEventListener("click", e => { if (e.target.closest("a") || e.target.closest(".chart")) return; const it = e.target.closest(".item.tap"); if (!it) return;
+  it.classList.toggle("open"); if (it.classList.contains("open")) it.querySelectorAll(".tchart").forEach(drawTradeChart); });
+// Kalshi's public trade tape for one market (through the read-only relay), cached for a minute
+async function tradeTape(tk, from){
+  const c = (S.tapes = S.tapes || {})[tk]; if (c && Date.now() - c.at < 60e3) return c.pts;
+  const q = "/markets/trades?limit=1000&ticker=" + encodeURIComponent(tk) + (from ? "&min_ts=" + Math.floor(from / 1000 - 3600) : "");
+  let js = null; try { js = await getJSON(RELAY + q); } catch(e){ try { js = await getJSON(KALSHI + q); } catch(e2){} }
+  if (!js) return c ? c.pts : null;
+  const yp = t => t.yes_price_dollars != null && t.yes_price_dollars !== "" ? num(t.yes_price_dollars) : num(t.yes_price) / 100;
+  const pts = (js.trades || []).map(t => ({x:+pdate(t.created_time), yes:yp(t)})).filter(p => p.x).sort((a, b) => a.x - b.x);
+  S.tapes[tk] = {at:Date.now(), pts}; return pts;
+}
+async function drawTradeChart(el){
+  const tk = el.dataset.tk, side = el.dataset.side, price = +el.dataset.price, n = +el.dataset.n, from = +el.dataset.from || 0;
+  const tape = await tradeTape(tk, from);
+  const val = yes => ((side === "yes" ? yes : 1 - yes) - price) * n;
+  let pts = (tape || []).filter(p => p.x >= from).map(p => ({x:p.x, y:+val(p.yes).toFixed(2), label:`trade at ${Math.round((side === "yes" ? p.yes : 1 - p.yes) * 100)}¢`}));
+  if (from) pts.unshift({x:from, y:0, label:"your fill"});
+  const r = model().rows.find(x => x.ticker === tk && x.side === side), m = r ? markPrice(r) : null;
+  if (m != null) pts.push({x:Date.now(), y:+((m - price) * n).toFixed(2), label:`now at mid ${Math.round(m * 100)}¢`});
+  const last = pts.length ? pts.at(-1).y : 0;
+  lineChart(el, [{name:"Up/down", c:last < -0.004 ? "#fb6b7b" : "#34d399", w:2.2, pts}], {h:150,
+    empty:tape ? "No trades since your fill yet." : "Couldn't load Kalshi's trade history right now."});
+}
 function orderItem(r, i){
   const sq = sideQuote(r), u = unrealized(r), now = sq ? sq.bid : null, c = v => v == null ? "—" : Math.round(v * 100) + "¢";
   const sub = [r.status === "open" ? (r.filled > 0 ? `resting · ${r.filled} of ${r.count} filled` : "resting") : r.status === "filled" ? (r.filledAt ? "filled " + ago(r.filledAt) : "filled") + " · awaiting result" : r.status, r.close ? "closes " + until(r.close) : "", r.placed ? "placed " + ago(r.placed) : ""].filter(Boolean).join(" · ");
