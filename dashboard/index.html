@@ -201,7 +201,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
   <section class="view" id="v-health"></section>
 
   <p class="foot">Read-only monitor. It only reads the bot's public data files and never places, changes or cancels anything.<br>
-  Data refreshes every 2 minutes; the bot scans every 5.</p>
+  Prices refresh every 30 seconds, the bot's files every minute; the bot itself runs every 5 minutes.</p>
 </div>
 
 <nav class="tabs"><div class="in">
@@ -218,7 +218,7 @@ const REPO = "alexanderhabel22-commits/kalshi-weather-bot";
 const API = "https://api.github.com/repos/" + REPO;
 const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const TZ = "America/New_York";
-const DATA_MS = 120e3, API_MS = 360e3;
+const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
 const COLORS = {mentions:"#22d3ee", weather:"#e050f0", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
@@ -286,7 +286,7 @@ async function raw(path, kind="text"){
 }
 async function loadHead(){
   try {
-    const c = await getJSON(API + "/commits/main", {cache:"no-store"});
+    const c = await getJSON(API + "/commits/main", {cache:"no-cache"});
     S.sha = c.sha; S.commit = {at: pdate(c.commit.committer.date), msg: c.commit.message.split("\n")[0]};
   } catch(e){ S.sha = null; } // rate-limited: fall back to the branch (5-min CDN cache)
 }
@@ -306,12 +306,13 @@ async function loadData(){
   d.config = typeof d.config === "string" ? parseTOML(d.config) : (d.config || {});
   if (!d.verdicts) { try { d.verdicts = await getJSON("verdicts.json"); } catch(e){ d.verdicts = {events:[], checkpoints:[], strategies:{}}; } }
   for (const k of keys) d["_" + k] = d[k];
+  S.noQuotes = false;
   S.data = d; S.errors = errs; S.lastData = Date.now();
 }
 async function loadApi(){
   try {
     const [runs, tree] = await Promise.all([
-      getJSON(API + "/actions/runs?per_page=100", {cache:"no-store"}),
+      getJSON(API + "/actions/runs?per_page=100", {cache:"no-cache"}),
       getJSON(API + "/git/trees/" + (S.sha || "main") + "?recursive=1", {cache:"no-store"}).catch(() => null)
     ]);
     S.runs = runs.workflow_runs || []; if (tree) S.tree = tree.tree || [];
@@ -328,12 +329,15 @@ async function loadQuotes(){
   const open = model().rows.filter(r => r.status === "open" || r.status === "filled").map(r => r.ticker);
   const tk = [...new Set(open)].slice(0, 40);
   if (!tk.length || S.noQuotes) return;
+  if (S.qBlocked){ // last try was blocked: probe with one request before sending them all
+    try { await getJSON(KALSHI + "/markets/" + encodeURIComponent(tk[0])); S.qBlocked = false; } catch(e){ S.noQuotes = true; return; }
+  }
   const res = await Promise.allSettled(tk.map(t => getJSON(KALSHI + "/markets/" + encodeURIComponent(t))));
   let ok = 0;
   res.forEach(r => { if (r.status !== "fulfilled" || !r.value.market) return; ok++; const m = r.value.market;
     const p = k => m[k + "_dollars"] != null && m[k + "_dollars"] !== "" ? num(m[k + "_dollars"], null) : (m[k] != null ? num(m[k]) / 100 : null);
     S.quotes[m.ticker] = {yb:p("yes_bid"), ya:p("yes_ask"), last:p("last_price"), status:m.status, at:Date.now(), src:"live"}; });
-  if (!ok) S.noQuotes = true; // Kalshi blocks browser calls: keep using the bot's snapshot
+  if (!ok){ S.noQuotes = true; S.qBlocked = true; } // Kalshi blocks browser calls: keep using the bot's snapshot
 }
 function sideQuote(r){ const q = S.quotes[r.ticker]; if (!q) return null;
   const bid = r.side === "yes" ? q.yb : (q.ya != null ? +(1 - q.ya).toFixed(2) : null), ask = r.side === "yes" ? q.ya : (q.yb != null ? +(1 - q.yb).toFixed(2) : null);
@@ -797,7 +801,9 @@ function renderStamp(){
   const t = lastScan ? pdate(lastScan.updated_at) : S.commit ? S.commit.at : null, age = t ? (Date.now() - t) / 60e3 : null;
   $("#pulse").className = "pulse " + (age == null ? "" : age < 12 ? "ok" : age < 30 ? "stale" : "down");
   const nx = Math.max(0, Math.round((S.lastData + DATA_MS - Date.now()) / 1000));
-  $("#stamp").innerHTML = `scan ${t ? ago(t) : "—"}<button id="rf" aria-label="Refresh">⟳</button><br><span class="mute">synced ${S.lastData ? ago(S.lastData) : "—"} · next ${Math.floor(nx / 60)}:${String(nx % 60).padStart(2, "0")}</span>`;
+  const qa = Object.values(S.quotes).reduce((a, q) => Math.max(a, q.at || 0), 0);
+  const px = !qa ? "" : S.noQuotes ? `prices ${ago(qa).replace(" ago", "")} old · ` : `<span class="pos">prices live</span> · `;
+  $("#stamp").innerHTML = `scan ${t ? ago(t) : "—"}<button id="rf" aria-label="Refresh">⟳</button><br><span class="mute">${px}synced ${S.lastData ? ago(S.lastData) : "—"} · next ${Math.floor(nx / 60)}:${String(nx % 60).padStart(2, "0")}</span>`;
   $("#rf").onclick = () => refresh(true);
 }
 function renderAll(){
@@ -829,7 +835,14 @@ document.querySelector("nav.tabs").onclick = e => { const b = e.target.closest("
 $("#v-overview").innerHTML = `<div class="card"><div class="skel" style="width:40%"></div><div class="skel" style="width:70%;height:36px;margin-top:10px"></div><div class="skel" style="margin-top:14px"></div></div>`;
 let rz; window.addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(() => S.lastData && renderAll(), 200); });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) refresh(); });
-setInterval(() => { if (document.hidden) return; if (Date.now() - S.lastData >= DATA_MS) refresh(); else if (S.lastData) renderStamp(); }, 1000);
+let qBusy = false;
+async function refreshQuotes(){
+  if (qBusy || busy || S.noQuotes) return; qBusy = true;
+  try { await loadQuotes(); S.lastQuotes = Date.now(); if (["overview","orders"].includes(S.view) && !document.querySelector(".item.tap.open")) renderAll(); }
+  finally { qBusy = false; }
+}
+setInterval(() => { if (document.hidden) return; if (Date.now() - S.lastData >= DATA_MS) refresh();
+  else if (S.lastData){ if (Date.now() - (S.lastQuotes || S.lastData) >= QUOTE_MS) refreshQuotes(); renderStamp(); } }, 1000);
 refresh(true);
 </script>
 </body>
