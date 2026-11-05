@@ -622,7 +622,7 @@ function details(r){
     ["Market now", sq ? `${r.side.toUpperCase()} ${c(sq.bid)} bid / ${c(sq.ask)} ask` + (sq.src === "live" ? " (live)" : sq.at ? ` (${ago(sq.at)})` : "") : ""],
     ["Up/down", u != null ? money(u) : ""], ["Result", r.result || ""], ["P&L", r.pnl != null ? money(r.pnl) : ""],
     ["Model", r.model != null ? Math.round(r.model * 100) + "%" : ""], ["Edge", r.edge != null ? cents(r.edge * 100) : ""], ["Note", r.note || ""]];
-  return `<div class="more">${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="https://kalshi.com/markets/${esc((r.event || r.ticker).split("-")[0].toLowerCase())}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
+  return `<div class="more">${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="https://kalshi.com/events/${encodeURIComponent(String(r.ticker || r.event).toLowerCase())}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
 }
 document.addEventListener("click", e => { if (e.target.closest("a")) return; const it = e.target.closest(".item.tap"); if (it) it.classList.toggle("open"); });
 function orderItem(r, i){
