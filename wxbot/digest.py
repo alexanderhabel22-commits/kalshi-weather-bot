@@ -57,6 +57,9 @@ THESIS = {
                     "Judge after 4 weeks or 100 filled contracts; stop early at the loss stop."),
 }
 NAMES = {"mentions": "Mentions NO", "weather": "Weather day-before"}
+# How each mode reads to a person: only live and alert results are money.
+MODE_LABEL = {"live": "REAL money", "alert": "real (alerts you trade)",
+              "paper": "practice, no money", "shadow": "silent test, no money"}
 
 
 def _f(x, d=None):
@@ -161,7 +164,7 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tupl
     keys = sorted(set(groups) | set(alltime))
     for k in keys:
         s, a = summarize(groups.get(k, [])), summarize(alltime.get(k, []))
-        lines.append(f"| {k[0]} | {k[1]} | {s['trades']} | {s['wins']} | {_money(s['pnl'])} "
+        lines.append(f"| {k[0]} | {MODE_LABEL.get(k[1], k[1])} | {s['trades']} | {s['wins']} | {_money(s['pnl'])} "
                      f"| {s['roi'] * 100:+.1f}% | {s['per'] * 100:+.1f}c | {_money(a['pnl'])} ({a['trades']}) |")
     if not keys:
         lines.append("| (nothing settled yet) | | | | | | | |")
@@ -170,7 +173,7 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tupl
         name = k[0]
         th = THESIS.get(name, ("", "", ""))
         a = summarize(alltime.get(k, []))
-        lines += [f"### {name} ({k[1]})", "",
+        lines += [f"### {name} ({MODE_LABEL.get(k[1], k[1])})", "",
                   f"- **Idea:** {th[0]}", f"- **Expected:** {th[1]}",
                   f"- **So far (all time):** {a['trades']} results, {a['wins']} won, {_money(a['pnl'])}, "
                   f"{a['per'] * 100:+.1f}c per contract: {verdict(a)}.",
@@ -187,11 +190,13 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tupl
         lines += _detail(period, start, end, kind)
     lines += ["", "_Generated automatically by the bot._", ""]
     best = max(groups.items(), key=lambda kv: summarize(kv[1])["pnl"], default=None)
-    phone = [f"Real money {_money(tot['pnl'])} ({tot['trades']} results)."]
-    for k in keys[:4]:
-        s = summarize(groups.get(k, []))
-        if s["trades"]:
-            phone.append(f"{k[0]} ({k[1]}): {s['trades']} results, {_money(s['pnl'])}")
+    phone = [f"REAL money: {_money(tot['pnl'])} ({tot['trades']} results)."]
+    practice = [k for k in keys if k[1] in ("paper", "shadow") and groups.get(k)]
+    if practice:
+        phone.append("Practice only (no money):")
+    for k in practice[:4]:
+        s = summarize(groups[k])
+        phone.append(f"  {k[0]}: {s['trades']} results, {_money(s['pnl'])}")
     if best is None:
         phone.append("Nothing settled in this period.")
     return "\n".join(lines), "\n".join(phone)
