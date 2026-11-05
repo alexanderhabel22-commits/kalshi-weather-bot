@@ -270,3 +270,39 @@ def test_favorites_picks_big_event_favorites_only():
     one = favorites.candidates([fav_event([fav_mkt("a", 0.90, 0.91, vol=2_000_000)])], NOW, p)
     assert one[0].price == 0.90
     assert "favorites" in trader.strategies()
+
+
+def test_favorites_propose_scans_big_series_only():
+    big = [fav_mkr for fav_mkr in (fav_mkt("a", 0.88, 0.91, ev="KXBIG-26NOV"),
+                                   fav_mkt("b", 0.40, 0.45, ev="KXBIG-26NOV"))]
+
+    class FavHttp:
+        def __init__(self):
+            self.calls = []
+
+        def get_json(self, url, params=None, headers=None):
+            self.calls.append((url.rsplit("/", 1)[1], dict(params or {})))
+            if url.endswith("/series"):
+                cat = params["category"]
+                return {"series": [{"ticker": "KXBIG", "category": "Politics", "volume": 5_000_000},
+                                   {"ticker": "KXTINY", "category": "Politics", "volume": 10}]
+                        if cat == "Politics" else []}
+            if url.endswith("/events"):
+                return {"events": [{"event_ticker": "KXBIG-26NOV", "series_ticker": "KXBIG"},
+                                   {"event_ticker": "KXTINY-26NOV", "series_ticker": "KXTINY"},
+                                   {"event_ticker": "KXNBA-26NOV", "series_ticker": "KXNBA"}],
+                        "cursor": ""}
+            if url.endswith("/markets"):
+                assert params["series_ticker"] == "KXBIG"
+                return {"markets": big, "cursor": ""}
+            raise AssertionError(url)
+
+    http = FavHttp()
+    ctx = trader.Context(cfg(), http, NOW, {}, [], {"contracts": 2})
+    out = favorites.propose(ctx)
+    assert [(i.ticker, i.side, i.price) for i in out] == [("KXBIG-26NOV-a", "yes", 0.89)]
+    assert ctx.state["active"] == ["KXBIG"]
+    # second pass inside 6 h reuses the cached series lists: only the market call
+    http.calls.clear()
+    favorites.propose(ctx)
+    assert [c[0] for c in http.calls] == ["markets"]
