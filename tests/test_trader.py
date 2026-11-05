@@ -211,3 +211,24 @@ def test_live_places_post_only_limits_and_alerts_fills(monkeypatch):
     trader.run(cfg(mode="live", live=True), now=NOW + timedelta(minutes=5), http=http, client=cl)
     assert any("FILLED" in p["title"] for p in http.posts)
     assert trader.load()[0]["status"] == "filled"
+
+
+def test_macro_fade_band_window_and_per_event_cap():
+    from wxbot.strats import macro_fade
+
+    def m(tk, yb, ya, hours=48, vol=1000, ev="KXFED-26DEC"):
+        close = (NOW + timedelta(hours=hours)).isoformat().replace("+00:00", "Z")
+        return {"ticker": f"{ev}-{tk}", "event_ticker": ev, "close_time": close,
+                "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": vol}
+    ms = [m("a", 0.10, 0.12), m("b", 0.20, 0.25), m("c", 0.05, 0.08), m("d", 0.15, 0.18),
+          m("e", 0.01, 0.03),                 # NO 97c: outside band (1-4c longshots skipped)
+          m("f", 0.40, 0.45),                 # not a longshot
+          m("g", 0.10, 0.12, hours=0.5),      # closes too soon
+          m("h", 0.10, 0.12, hours=900),      # too far out
+          m("i", 0.10, 0.12, vol=10)]         # too thin
+    out = macro_fade.candidates(ms, {}, NOW)
+    assert [(i.ticker[-1], i.price) for i in out] == [("b", 0.76), ("d", 0.83), ("a", 0.89)]
+    assert all(i.side == "no" and i.strategy == "macro_fade" for i in out)
+    assert "macro_fade" in trader.strategies()
+    sp = trader.strategy_settings(cfg(), "macro_fade", trader.settings(cfg()))
+    assert sp.get("live") is False

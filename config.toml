@@ -97,6 +97,24 @@ min_volume = 100                 # contracts traded so far
 max_open_pct = 0.50              # at most 50% of the bankroll in Mentions
 max_event_pct = 0.25             # at most 25% of the bankroll on one event (one speech)
 
+[trading.macro_fade]
+# Fade longshots in Fed and CPI/PCE markets: resting NO at 71-95c (YES 5-29c).
+# Research: +5-12c per filled contract after maker fees, Feb 2025-Oct 2026, but
+# few independent releases, so one surprise can hit a whole event. Paper only.
+enabled = true
+live = false                     # stays false until the paper test passes and Alex says go
+series = ["KXFED", "KXFEDDECISION", "KXCPI", "KXCPIYOY", "KXCPICORE", "KXPCECORE"]
+contracts = 1
+max_contracts = 2
+max_markets_per_event = 3
+min_price = 0.71                 # NO price band
+max_price = 0.95
+min_hours = 1                    # market closes 1 hour to 21 days from now
+max_hours = 504
+min_volume = 500
+max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
+max_event_pct = 0.10             # at most 10% on one release / one Fed meeting
+
 [trading.weather]
 # Day-before weather limit orders (mirrors the paper orders). Off until the
 # weekend verdict on the paper results.
