@@ -1,4 +1,4 @@
-import csv,gzip,re,collections,datetime as dt,sys
+import csv,gzip,re,collections,datetime as dt
 D='/tmp/claude-0/d3/'
 games=[r for r in csv.DictReader(gzip.open(D+'games.csv.gz','rt')) if r['provider_id'] in ('100','')]
 ks=list(csv.DictReader(gzip.open(D+'kalshi.csv.gz','rt')))
