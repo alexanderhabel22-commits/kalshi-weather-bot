@@ -41,7 +41,8 @@ jobs:
           BUDGET_H: "3.6"
         run: python research_cat/fetch.py "${{ matrix.cats }}" out
       - name: Save to cat-research-data branch
-        if: always()
+        # only a finished pull is saved (a cancelled rerun must not wipe good data)
+        if: always() && hashFiles('out/trades_agg.csv.gz') != ''
         run: |
           git config user.name "weather-bot"
           git config user.email "weather-bot@users.noreply.github.com"
