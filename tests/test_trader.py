@@ -201,6 +201,7 @@ def test_signed_headers_verify():
 class FakeClient:
     def __init__(self):
         self.placed, self.cancelled, self.orders = [], [], {}
+        self.bought, self.cash, self.fill = [], 100.0, 99
 
     def place_limit(self, ticker, side, price, count, cid):
         self.placed.append((ticker, side, price, count))
@@ -210,6 +211,14 @@ class FakeClient:
 
     def get_order(self, oid):
         return self.orders[oid]
+
+    def balance(self):
+        return self.cash
+
+    def buy_now(self, ticker, side, price, count, cid):
+        self.bought.append((ticker, side, price, count, cid))
+        return {"order_id": f"b{len(self.bought)}", "status": "executed",
+                "fill_count": min(count, self.fill)}
 
     def cancel(self, oid):
         self.cancelled.append(oid)
@@ -412,3 +421,118 @@ def test_weekly_capacity_ceiling():
            [{"ticker": "Y", "status": "settled", "count": 500, "strategy": "mentions", "placed_at": old}]
     room, why = trader.capacity(it, rows, t, {"max_week_contracts": 102}, NOW, [])
     assert room == 2 and "weekly" in why
+
+
+# ---------------------------------------------------------------- live LOCKs
+
+LOCK_TK = "KXHIGHPHIL-26NOV06-B74.5"
+
+
+def lock_signal(at=NOW, **kw):
+    from wxbot import scanner
+    from wxbot.util import write_json
+    sig = {"ticker": LOCK_TK, "event": "KXHIGHPHIL-26NOV06", "side": "no", "city": "Philadelphia",
+           "metric": "high", "date": "2026-11-06", "bracket": "74° to 75°", "price": 0.64,
+           "fair_p": 0.995, "close": CLOSE, "obs_extreme": 77.0, "guaranteed": 77,
+           "seen_at": at.isoformat()} | kw
+    write_json(scanner.LOCK_SIGNALS, {"at": at.isoformat(), "signals": [sig]})
+
+
+class LockHttp(Http):
+    def __init__(self, yb=0.33, ya=0.35, result=""):
+        super().__init__([], {LOCK_TK: result} if result else {})
+        self.yb, self.ya = yb, ya
+
+    def get_json(self, url, params=None, headers=None):
+        if url.endswith("/markets/" + LOCK_TK):
+            return {"market": {"ticker": LOCK_TK, "event_ticker": "KXHIGHPHIL-26NOV06",
+                               "status": "active", "close_time": CLOSE, "volume": 4000,
+                               "result": self.results.get(LOCK_TK, ""),
+                               "yes_bid_dollars": f"{self.yb:.2f}", "yes_ask_dollars": f"{self.ya:.2f}",
+                               "no_bid_dollars": f"{1 - self.ya:.2f}", "no_ask_dollars": f"{1 - self.yb:.2f}"}}
+        return super().get_json(url, params, headers)
+
+
+def test_lock_buys_at_the_ask_with_real_money_and_alerts(monkeypatch):
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+    lock_signal()
+    cl, http = FakeClient(), LockHttp(yb=0.33, ya=0.35)       # NO ask 67c (not the 64c alert)
+    out = trader.run(cfg(mode="live"), now=NOW, http=http, client=cl)
+    assert [b[:4] for b in cl.bought] == [(LOCK_TK, "no", 0.67, 5)]   # Kelly, 10% of $40
+    assert not cl.placed                                     # mentions etc. never live
+    row = [r for r in trader.load() if r["strategy"] == "locks"][0]
+    assert (row["mode"], row["status"], row["filled"], row["fee"]) == ("live", "filled", "5", "0.08")
+    assert any("BOUGHT" in p["title"] for p in http.posts)
+    assert len(out["placed"]) == 1
+    # next scan: same lock is not bought again
+    trader.run(cfg(mode="live"), now=NOW + timedelta(minutes=5), http=http, client=cl)
+    assert len(cl.bought) == 1
+    # settles NO: +5 x 33c minus the fee
+    http.results[LOCK_TK] = "no"
+    trader.run(cfg(mode="live"), now=NOW + timedelta(hours=20), http=http, client=cl)
+    row = [r for r in trader.load() if r["strategy"] == "locks"][0]
+    assert row["status"] == "settled" and row["pnl"] == "1.57"
+
+
+def test_lock_skips_when_edge_gone_stale_or_no_cash():
+    cl = FakeClient()
+    lock_signal()
+    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(yb=0.01, ya=0.02), client=cl)  # NO ask 99c
+    assert not cl.bought
+    lock_signal(at=NOW - timedelta(minutes=40))               # old scan
+    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert not cl.bought
+    lock_signal()
+    cl.cash = 0.50                                           # account can't pay for one
+    out = trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert not cl.bought and any("cash" in why for *_, why in out["skipped"])
+    cl.cash = 2.0                                            # shrinks to what the cash covers
+    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert [b[3] for b in cl.bought] == [2]
+
+
+def test_lock_unfilled_ioc_is_not_recorded_and_retries():
+    cl = FakeClient()
+    cl.fill = 0
+    lock_signal()
+    out = trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert len(cl.bought) == 1 and not [r for r in trader.load() if r["strategy"] == "locks"]
+    assert any("nothing left" in why for *_, why in out["skipped"])
+    cl.fill = 99
+    lock_signal(at=NOW + timedelta(minutes=5))
+    trader.run(cfg(mode="live"), now=NOW + timedelta(minutes=5), http=LockHttp(), client=cl)
+    assert len(cl.bought) == 2 and cl.bought[0][4] != cl.bought[1][4]   # fresh client id
+
+
+def test_lock_respects_event_cap_and_halt():
+    from wxbot.util import write_json
+    cl = FakeClient()
+    lock_signal()
+    c = cfg(mode="live", bankroll=40)
+    c.raw["trading"]["locks"]["max_event_pct"] = 0.10         # $4 on this city-day
+    c.raw["strategy"]["max_bet_frac_lock"] = 0.5               # Kelly wants 10 contracts...
+    trader.run(c, now=NOW, http=LockHttp(), client=cl)
+    assert [b[3] for b in cl.bought] == [5]                    # ...shrunk to fit $4 at 67c
+    write_json(trader.STATE, {"halted": {"live": {"at": NOW.isoformat(), "pnl": -10}}})
+    cl2 = FakeClient()
+    lock_signal(ticker=LOCK_TK)
+    trader.save([])
+    trader.run(cfg(mode="live"), now=NOW, http=LockHttp(), client=cl2)
+    assert not cl2.bought
+
+
+def test_taker_only_for_strategies_that_allow_it():
+    it = trader.Intent("mentions", "X", "E", "no", 0.8, 1, CLOSE, taker=True)
+    t = trader.settings(cfg())
+    assert "taker" in trader.vet(it, [], t, {"max_price": 0.9}, NOW, [])
+
+
+def test_scan_writes_lock_signals_only_when_there_are_any(monkeypatch):
+    from wxbot import scanner
+    from wxbot.util import read_json
+    scanner.save_lock_signals([], NOW)
+    assert not scanner.LOCK_SIGNALS.exists()
+    scanner.save_lock_signals([{"ticker": "A"}], NOW)
+    assert read_json(scanner.LOCK_SIGNALS)["signals"] == [{"ticker": "A"}]
+    scanner.save_lock_signals([], NOW + timedelta(minutes=5))   # clears the old lock
+    assert read_json(scanner.LOCK_SIGNALS)["signals"] == []

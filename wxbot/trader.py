@@ -13,6 +13,8 @@ Modes ([trading] mode, or the TRADING_MODE GitHub variable, which wins):
 
 Hard rules, whatever a strategy asks for:
   - limit orders only, post-only (never cross the spread), price 1-99c,
+    except strategies whose table says taker = true (LOCKs): those buy at the
+    current ask with immediate-or-cancel orders that never rest
     whole contracts, at most max_contracts_per_order (and the client's ceiling)
   - one order per market and side (no duplicates, ever)
   - max open dollars overall and per strategy, max per event
@@ -43,7 +45,7 @@ ORDERS = DATA_DIR / "trade_orders.csv"
 STATE = DATA_DIR / "trader_state.json"
 FIELDS = ["id", "client_id", "order_id", "mode", "strategy", "placed_at", "ticker", "event",
           "title", "side", "price", "count", "filled", "status", "close", "result", "pnl",
-          "settled_at", "note", "filled_at"]
+          "settled_at", "note", "filled_at", "fee"]
 # status: resting -> filled (all filled, waiting for result) -> settled
 #         resting -> done-unfilled / cancelled ; settled/partial handled by `filled`
 OPEN = ("resting", "filled")
@@ -76,6 +78,7 @@ class Intent:
     title: str = ""
     note: str = ""
     volume: float = 0.0     # contracts the market has traded so far (0 = unknown)
+    taker: bool = False     # buy now at this price (immediate-or-cancel), only if the strategy allows
 
 
 @dataclass
@@ -197,6 +200,8 @@ def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
         return str(exc)
     if intent.count > int(t["max_contracts_per_order"]) or intent.count > int(sp.get("max_contracts", 99)):
         return "too many contracts"
+    if intent.taker and not sp.get("taker"):
+        return "taker orders not allowed for this strategy"
     lo, hi = float(sp.get("min_price", 0.01)), float(sp.get("max_price", 0.99))
     if not (lo - 1e-9 <= intent.price <= hi + 1e-9):
         return "price outside strategy band"
@@ -247,8 +252,10 @@ def capacity(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
     return max(0, room), why
 
 
-def client_id(intent: Intent, mode: str) -> str:
-    h = hashlib.sha1(f"{mode}|{intent.strategy}|{intent.ticker}|{intent.side}".encode()).hexdigest()
+def client_id(intent: Intent, mode: str, now: datetime | None = None) -> str:
+    # taker orders may be retried next scan (nothing filled), so they get a fresh id
+    salt = f"|{now:%Y%m%dT%H%M%S}" if intent.taker and now else ""
+    h = hashlib.sha1(f"{mode}|{intent.strategy}|{intent.ticker}|{intent.side}{salt}".encode()).hexdigest()
     return f"wx-{intent.strategy[:8]}-{h[:20]}"
 
 
@@ -330,7 +337,7 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
         r["result"] = res
         r["settled_at"] = now.isoformat(timespec="seconds")
         if filled:
-            pnl = filled * ((1.0 if res == r["side"] else 0.0) - _f(r["price"]))
+            pnl = filled * ((1.0 if res == r["side"] else 0.0) - _f(r["price"])) - _f(r.get("fee"))
             r["pnl"] = f"{pnl:.2f}"
             r["status"] = "settled"
             if r["mode"] == "live":
@@ -535,15 +542,34 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
                 continue
             if it.count > room:
                 it.count = room             # shrink to what the market can take
-            why = vet(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode], mode)
+            others = [p for p in planned if plan_mode[id(p)] == mode]
+            why = vet(it, same, t, sp, now, others, mode)
+            while it.taker and why and "cap" in why and it.count > 1:
+                it.count -= 1               # LOCKs shrink to fit the caps instead of skipping
+                why = vet(it, same, t, sp, now, others, mode)
             if why:
                 out["skipped"].append((it.ticker, it.side, why))
                 continue
             planned.append(it)
             plan_mode[id(it)] = mode
+    cash = None
+    if client is not None and not dry_run and any(plan_mode[id(p)] == "live" for p in planned):
+        try:
+            cash = client.balance()     # never spend more than the account holds
+        except Exception as exc:
+            log.warning("balance check failed: %s", exc)
+            cash = 0.0                   # can't see the balance: no live orders this run
+            out["stops"].append(f"balance check failed: {exc}")
     for it in planned:
         mode = plan_mode[id(it)]
-        row = {"id": f"{it.ticker}|{it.side}", "client_id": client_id(it, mode), "mode": mode,
+        if mode == "live" and cash is not None:
+            unit = it.price + (kalshi.fee_per_contract(it.price) if it.taker else 0.0)
+            fit = int((cash + 1e-9) // unit)
+            if fit < 1:
+                out["skipped"].append((it.ticker, it.side, f"not enough cash (${cash:.2f})"))
+                continue
+            it.count = min(it.count, fit)
+        row = {"id": f"{it.ticker}|{it.side}", "client_id": client_id(it, mode, now), "mode": mode,
                "strategy": it.strategy, "placed_at": now.isoformat(timespec="seconds"),
                "ticker": it.ticker, "event": it.event, "title": it.title, "side": it.side,
                "price": f"{it.price:.2f}", "count": it.count, "filled": 0,
@@ -555,12 +581,31 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             continue
         if mode == "live":
             try:
-                o = client.place_limit(it.ticker, it.side, it.price, it.count, row["client_id"])
+                if it.taker:
+                    o = client.buy_now(it.ticker, it.side, it.price, it.count, row["client_id"])
+                else:
+                    o = client.place_limit(it.ticker, it.side, it.price, it.count, row["client_id"])
             except (HttpError, OrderRejected) as exc:
                 log.warning("order %s %s rejected: %s", it.ticker, it.side, exc)
                 out["skipped"].append((it.ticker, it.side, f"rejected: {exc}"))
                 continue
             row["order_id"] = o.get("order_id", "")
+        if it.taker:
+            # immediate-or-cancel: what filled is ours, the rest is already cancelled
+            got = order_fill_count(o, it.count) if mode == "live" else it.count
+            if got < 1:
+                out["skipped"].append((it.ticker, it.side, "nothing left at the ask"))
+                continue
+            fee = kalshi.taker_fee(got, it.price)
+            row.update(count=got, filled=got, status="filled", fee=f"{fee:.2f}",
+                       filled_at=now.isoformat(timespec="seconds"))
+            if mode == "live":
+                cash = (cash or 0.0) - got * it.price - fee
+                _alert(http, cfg, f"BOUGHT: {it.side.upper()} {got} @ {round(it.price * 100)}¢",
+                       f"{it.title or it.ticker}\n{it.strategy} · real money · ${got * it.price + fee:.2f}"
+                       f" incl. ${fee:.2f} fee", dry_run, 4, ["moneybag"])
+        elif mode == "live" and cash is not None:
+            cash -= it.count * it.price
         rows.append(row)
         out["placed"].append(row)
 

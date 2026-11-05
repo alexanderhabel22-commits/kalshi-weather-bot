@@ -147,11 +147,20 @@ record earns it. Be candid about odds and risk; no hype.
   paper / live. A strategy trades real money only if mode is live AND its
   table says `live = true`; otherwise paper. New edges start on paper.
 - Limits are % of bankroll: open 60%, daily stop 10%, total stop 25% (halt +
-  cancel all; clear with reset_halt). Limit, post-only orders only; one order
+  cancel all; clear with reset_halt). Limit orders only (post-only, except taker = true strategies: LOCKs); one order
   per market+side; per-strategy and per-event caps; ntfy on fills and stops.
 - Live needs secrets KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY. Ledger:
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
+- **LOCKs trade REAL money (Alex's OK, Nov 5 PM):** `[trading] mode = "live"`
+  and `[trading.locks] live = true`; every other strategy stays paper. The scan
+  writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert
+  limits don't apply); `wxbot/strats/weather_lock.py` re-reads the market and
+  buys at the live ASK (immediate-or-cancel, never rests) while 99.5% - ask -
+  taker fee >= min_edge_lock and ask is 20-97c. Size = the alert's Kelly sizing,
+  shrunk to fit the 20% event / 75% live caps and the account's cash; loss stops
+  apply. ntfy "BOUGHT" on each fill. Until the key secrets exist, live
+  strategies are skipped (logged). Kill switch: TRADING_MODE variable = off.
 - Strategies: mentions (paper, Nov 5), weather day-before (off until verdict). Mentions settings re-tuned Nov 5 by walk-forward (research_mn/RESULTS.md): min_volume 1000, size 5% of bankroll per word.
 
 - **Paper trading, Nov 5 → weekend Nov 7-8:** `wxbot/daybefore.py` rests paper
