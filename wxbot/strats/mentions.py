@@ -37,12 +37,10 @@ def mentions_series(ctx) -> set[str]:
     return set(st.get("series") or [])
 
 
-def open_markets(ctx, min_h: float, max_h: float) -> list[dict]:
+def _series_markets(ctx, series: str) -> list[dict]:
     out, cursor = [], None
-    for _ in range(30):
-        params = {"status": "open", "limit": 1000,
-                  "min_close_ts": int((ctx.now + timedelta(hours=min_h)).timestamp()),
-                  "max_close_ts": int((ctx.now + timedelta(hours=max_h)).timestamp())}
+    for _ in range(5):
+        params = {"series_ticker": series, "status": "open", "limit": 1000}
         if cursor:
             params["cursor"] = cursor
         js = ctx.http.get_json(f"{kalshi.BASE}/markets", params=params)
@@ -50,6 +48,30 @@ def open_markets(ctx, min_h: float, max_h: float) -> list[dict]:
         cursor = js.get("cursor")
         if not cursor:
             break
+    return out
+
+
+def open_markets(ctx, series: set[str], min_h: float, max_h: float) -> list[dict]:
+    """Open markets closing in [min_h, max_h] hours, from the Mentions series
+    that have open markets. Which series are active is refreshed every 6 hours
+    (one call per series); in between only active series are read."""
+    st = ctx.state
+    last = parse_iso(st.get("active_at"))
+    refresh = last is None or ctx.now - last > timedelta(hours=6) or not st.get("active")
+    check = sorted(series) if refresh else st.get("active", [])
+    lo, hi = ctx.now + timedelta(hours=min_h), ctx.now + timedelta(hours=max_h)
+    out, active = [], []
+    for s_ in check:
+        try:
+            ms = _series_markets(ctx, s_)
+        except HttpError as exc:
+            log.info("mentions %s: %s", s_, exc)
+            continue
+        if ms:
+            active.append(s_)
+        out += [m for m in ms if (c := parse_iso(m.get("close_time"))) and lo <= c <= hi]
+    if refresh:
+        st["active"], st["active_at"] = active, ctx.now.isoformat(timespec="seconds")
     return out
 
 
@@ -100,13 +122,15 @@ def propose(ctx) -> list[Intent]:
     p = ctx.params
     try:
         series = mentions_series(ctx)
-        markets = open_markets(ctx, float(p.get("min_hours", 1)), float(p.get("max_hours", 72)))
+        markets = open_markets(ctx, series, float(p.get("min_hours", 1)), float(p.get("max_hours", 72)))
     except HttpError as exc:
         log.warning("mentions scan: %s", exc)
         return []
     # skip markets whose close we can't read
     markets = [m for m in markets if parse_iso(m.get("close_time"))]
     out = candidates(markets, series, p)
-    log.info("mentions: %d series, %d markets closing soon, %d candidates",
-             len(series), len(markets), len(out))
+    band = sum(1 for m in markets if (ya := kalshi.price(m, "yes_ask")) and
+               float(p.get("min_price", 0.75)) <= 1 - ya + 0.01 <= float(p.get("max_price", 0.90)))
+    log.info("mentions: %d series (%d active), %d markets closing soon, %d near the price band, "
+             "%d candidates", len(series), len(ctx.state.get("active", [])), len(markets), band, len(out))
     return out

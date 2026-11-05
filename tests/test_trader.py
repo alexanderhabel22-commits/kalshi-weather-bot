@@ -34,7 +34,9 @@ class Http:
         if url.endswith("/series"):
             return {"series": [{"ticker": "KXTRUMPMENTION", "category": "Mentions"}]}
         if url.endswith("/markets"):
-            return {"markets": self.markets, "cursor": ""}
+            s = (params or {}).get("series_ticker")
+            return {"markets": [m for m in self.markets if not s or m["event_ticker"].startswith(s + "-")],
+                    "cursor": ""}
         if url.endswith("/markets/trades"):
             return {"trades": [{"yes_price_dollars": f"{p:.2f}"} for p in self.trades], "cursor": ""}
         if "/markets/" in url:
