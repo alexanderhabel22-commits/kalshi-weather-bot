@@ -1,7 +1,7 @@
 # Kalshi weather alert bot settings. Edit and commit; the next scan picks it up.
 
 [account]
-bankroll = 35.0                  # update as your balance changes (sizes scale with it)
+bankroll = 49.71                 # update as your balance changes (sizes scale with it)
 timezone = "America/New_York"    # for quiet hours and the daily summary
 risk_level = "normal"            # "normal" or "aggressive" (see [strategy_aggressive])
 nws_contact = ""                 # optional: weather.gov asks bots to include a contact
@@ -104,7 +104,7 @@ max_market_contracts = 200       # per-market ceiling (scale study)
 enabled = true
 live = false                     # true = real orders (when [trading] mode is "live")
 contracts = 3                    # max contracts per word (also capped by max_contracts_per_order)
-word_pct = 0.05                  # size each word at 5% of the bankroll (~2 contracts at $37);
+word_pct = 0.05                  # size each word at 5% of the bankroll (~3 contracts at $50);
                                  # raise `contracts` as the bankroll grows
 max_words_per_event = 3
 min_price = 0.75                 # NO price band

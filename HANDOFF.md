@@ -9,8 +9,8 @@ runs a bot that watches Kalshi daily high/low temperature markets and sends
 phone alerts with an exact trade. Alex places every trade himself in the
 Kalshi app. The bot doesn't trade yet, but Alex said (Nov 4) he's fine with a
 bot trading: going live (Kalshi API key as a GitHub secret, small caps) is
-his call once paper results earn it. It is a small real-money test (~$37 bankroll,
-started Nov 3, 2026) in place of paper trading; Alex adds money only if the
+his call once paper results earn it. It is a small real-money test (~$37 bankroll
+started Nov 3, 2026; topped up to $49.71 on Nov 5) in place of paper trading; Alex adds money only if the
 record earns it. Be candid about odds and risk; no hype.
 
 ## Where everything lives

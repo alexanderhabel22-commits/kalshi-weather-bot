@@ -139,11 +139,13 @@ def test_aggressive_mode_sizes_locks_bigger_only(monkeypatch):
         STATE.unlink(missing_ok=True)
         return {r["ticker"]: int(r["contracts"]) for r in rows}, cfg.strategy_params
 
+    bankroll = cfg_for_test().bankroll
+
     normal, p_normal = lock_contracts("normal")
     aggressive, p_aggr = lock_contracts("aggressive")
     t = "KXHIGHNY-26NOV03-B59.5"
     assert aggressive[t] > normal[t]
-    assert aggressive[t] * 0.95 <= 0.20 * 35 + 1e-9               # 20% per-lock cap
+    assert aggressive[t] * 0.95 <= 0.20 * bankroll + 1e-9               # 20% per-lock cap
     assert p_aggr["max_bet_frac_model"] == p_normal["max_bet_frac_model"] == 0.05
     assert p_aggr["min_edge_model"] == p_normal["min_edge_model"]
 
