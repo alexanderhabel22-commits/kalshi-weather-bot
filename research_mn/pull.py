@@ -2,7 +2,10 @@
 
 Every settled Mentions-category market (live + /historical endpoints) with
 its metadata, plus all trades aggregated by
-(ticker, taker side, yes price in cents, time-before-close bucket).
+(ticker, taker side, yes price in cents, time bucket). The time bucket is
+minutes before the EVENT's last close (max close over its markets), which is
+known ahead of time (the scheduled end), unlike a market that closes early
+when its word is said.
 The time buckets let us test timing and live-event adverse selection.
 Writes into argv[1]: markets.csv.gz, trades_YYYYQn.csv.gz, log.txt.
 """
@@ -135,13 +138,17 @@ def main():
                     "can_close_early": int(bool(m.get("can_close_early"))),
                 })
     log("markets", len(rows), "historical", sum(r["hist"] for r in rows))
+    ref: dict = {}
+    for r in rows:
+        c = ts(r["close"]) or 0
+        ref[r["event"]] = max(ref.get(r["event"], 0), c)
 
     agg: dict = {}
     alock = threading.Lock()
 
     def trades(r):
         path = "/historical/trades" if r["hist"] else "/markets/trades"
-        close = ts(r["close"]) or 0
+        close = ref.get(r["event"]) or ts(r["close"]) or 0
         local, first, last, n, cur = {}, None, None, 0, None
         for _ in range(40):
             p = {"ticker": r["ticker"], "limit": 1000}
