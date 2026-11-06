@@ -1102,6 +1102,24 @@
    "status": "live",
    "title": "House Republican Conference Chair (120th Congress)",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Entertainment",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "example": "KXVOICERANK-26DEC31RTOP3B-OUFF",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T22:30:23+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-06T17:30:28+00:00",
+   "median_spread": 0.97,
+   "n_open": 84,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (97c), so makers haven't arrived yet.",
+   "series": "KXVOICERANK",
+   "status": "live",
+   "title": "where will contestant rank on the voice",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -2931,6 +2949,8 @@
   "KXBC3RD",
   "KXBCCONLEAD",
   "KXBCCONSEATS",
+  "KXBCE",
+  "KXBCEA",
   "KXBCELECTION",
   "KXBCGOVT",
   "KXBCH",
@@ -7626,6 +7646,8 @@
   "KXJBEARDOR",
   "KXJBEARDORT",
   "KXJBLEAGUEGAME",
+  "KXJBLU",
+  "KXJBLUA",
   "KXJCOLECBA",
   "KXJDGREENLAND",
   "KXJEFFERSON",
@@ -13869,6 +13891,7 @@
   "KXSZA",
   "KXSZAPOSTNICKI",
   "KXSZATAGMINAJ",
+  "KXT",
   "KXT20CANADA",
   "KXT20CANADAMATCH",
   "KXT20FIRST10",
@@ -13881,6 +13904,7 @@
   "KXT20TEAMTOTAL",
   "KXT20TOTAL",
   "KXT20WORLDCUP",
+  "KXTA",
   "KXTABLETENNIS",
   "KXTABLETENNISMATCH",
   "KXTACAPORT",
@@ -15065,6 +15089,8 @@
   "KXUKUNRATE",
   "KXUKUSVISAS",
   "KXUKWEALTHTAX",
+  "KXULCC",
+  "KXULCCA",
   "KXULIXACALTAMIDE",
   "KXULTA",
   "KXULTAA",
@@ -16952,7 +16978,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-06T17:00:30+00:00",
+ "last_check": "2026-11-06T17:30:28+00:00",
  "pending": {
   "KX5YRRATEEVENT": {
    "category": "Financials",
@@ -17036,7 +17062,7 @@
   },
   "KXAFCCL2SPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17046,7 +17072,7 @@
   },
   "KXAFCCL2TOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17056,13 +17082,33 @@
   },
   "KXAISCORE": {
    "category": "Science and Technology",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:00:30+00:00",
    "frequency": "annual",
    "new_category": false,
    "series": "KXAISCORE",
    "title": "AI capability growth"
+  },
+  "KXBCE": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXBCE",
+   "title": "BCE KPI"
+  },
+  "KXBCEA": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXBCEA",
+   "title": "BCE Annual KPI"
   },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
@@ -17286,7 +17332,7 @@
   },
   "KXISRGOVTYPE": {
    "category": "Elections",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:00:30+00:00",
    "frequency": "one_off",
@@ -17296,7 +17342,7 @@
   },
   "KXISRSPEAKERDATE": {
    "category": "Politics",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:00:30+00:00",
    "frequency": "one_off",
@@ -17354,6 +17400,26 @@
    "series": "KXJ3LEAGUETOTAL",
    "title": "Total"
   },
+  "KXJBLU": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXJBLU",
+   "title": "JetBlue Airways KPI"
+  },
+  "KXJBLUA": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXJBLUA",
+   "title": "JetBlue Airways Annual KPI"
+  },
   "KXLIGAPORTUGAL2ADVANCE": {
    "category": "Sports",
    "checked": "2026-11-06T17:00:30+00:00",
@@ -17386,7 +17452,7 @@
   },
   "KXNOR1DIVGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17416,7 +17482,7 @@
   },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "one_off",
@@ -17426,7 +17492,7 @@
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17436,7 +17502,7 @@
   },
   "KXSAFFBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17486,7 +17552,7 @@
   },
   "KXSUPERETTANADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17496,7 +17562,7 @@
   },
   "KXSUPERETTANBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17506,7 +17572,7 @@
   },
   "KXSUPERETTANGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17536,7 +17602,7 @@
   },
   "KXSVK1LADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17544,9 +17610,29 @@
    "series": "KXSVK1LADVANCE",
    "title": "Advance"
   },
+  "KXT": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXT",
+   "title": "TELUS KPI"
+  },
+  "KXTA": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTA",
+   "title": "TELUS Annual KPI"
+  },
   "KXTARIFFRICEINDIA": {
    "category": "Politics",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T22:00:28+00:00",
    "frequency": "one_off",
@@ -17576,7 +17662,7 @@
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17586,7 +17672,7 @@
   },
   "KXUKRPLBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T16:00:30+00:00",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17614,15 +17700,25 @@
    "series": "KXUKRPLTOTAL",
    "title": "Total"
   },
-  "KXVOICERANK": {
-   "category": "Entertainment",
-   "checked": "2026-11-06T16:00:30+00:00",
+  "KXULCC": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
    "fee_multiplier": 1,
-   "first_seen": "2026-11-05T22:30:23+00:00",
+   "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
    "new_category": false,
-   "series": "KXVOICERANK",
-   "title": "where will contestant rank on the voice"
+   "series": "KXULCC",
+   "title": "Frontier Group Holdings KPI"
+  },
+  "KXULCCA": {
+   "category": "Financials",
+   "checked": "2026-11-06T17:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXULCCA",
+   "title": "Frontier Group Holdings Annual KPI"
   }
  },
  "queue": []
