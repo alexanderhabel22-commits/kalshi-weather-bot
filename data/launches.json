@@ -1192,6 +1192,42 @@
    "status": "live",
    "title": "US 5Y Treasury yield after events",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "example": "KXISRCOALSEATS-26NOV06-AL70",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T16:30:26+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-06T18:30:28+00:00",
+   "median_spread": 0.1,
+   "n_open": 6,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXISRCOALSEATS",
+   "status": "live",
+   "title": "How many Knesset seats will Israel's next government hold?",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Sports",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "example": "KXBULFLBTTS-26NOV07LUDCSK-BTTS",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T19:00:30+00:00",
+   "frequency": "custom",
+   "markets_seen": "2026-11-06T18:30:28+00:00",
+   "median_spread": 0.05,
+   "n_open": 1,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (5c), so makers haven't arrived yet.",
+   "series": "KXBULFLBTTS",
+   "status": "live",
+   "title": "Both teams to score",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -3816,6 +3852,7 @@
   "KXCASEWINSHOHEI",
   "KXCASEWIT",
   "KXCASINOADS",
+  "KXCASOCIALBLOCK",
   "KXCASTRONG",
   "KXCASUPT",
   "KXCATALOGUE",
@@ -4761,6 +4798,7 @@
   "KXDEMTRIFECTA2026",
   "KXDEMTRUMPVOTERS",
   "KXDEMVASWEEP",
+  "KXDEMVICECHAIR120",
   "KXDEMWNCVOTE",
   "KXDENHIGH",
   "KXDENHOMEVAL",
@@ -4892,6 +4930,7 @@
   "KXDJTASIAN",
   "KXDJTATTACKACB",
   "KXDJTATTACKNETANYAHU",
+  "KXDJTATTACKVANCE",
   "KXDJTATTACKWARSH",
   "KXDJTBBC",
   "KXDJTBLUEWALL",
@@ -5388,6 +5427,8 @@
   "KXEFLTROPHYSPREAD",
   "KXEFLTROPHYTOTAL",
   "KXEFOOTBALLGAME",
+  "KXEFTA2HOUSE",
+  "KXEFTA2HOUSEVOTES",
   "KXEFTA2SIGS",
   "KXEGGPRICEM",
   "KXEGGPRICEW",
@@ -8938,6 +8979,7 @@
   "KXMEDIARELEASEUPONLY",
   "KXMEDICAIDCUTS",
   "KXMEDICAIDWORKHOUSE",
+  "KXMEDICAREALLHOUSE",
   "KXMEDICARENEG",
   "KXMEDNOMJUL",
   "KXMEEKMILLAI",
@@ -9464,6 +9506,7 @@
   "KXMTGISRAEL",
   "KXMTGMENTION",
   "KXMTGSWITCH",
+  "KXMTI194BLOCK",
   "KXMTLHOME",
   "KXMTMCK",
   "KXMTN",
@@ -14209,6 +14252,7 @@
   "KXTHREADGUYMENTION",
   "KXTHREESTATESEN",
   "KXTHUNBERGVISITCA",
+  "KXTHUNEELECT",
   "KXTHUNELEADER",
   "KXTHUNEOUT",
   "KXTHUNERUN",
@@ -14901,6 +14945,7 @@
   "KXTXSENGOVCOMBO",
   "KXTXSENOUTCOME",
   "KXTXSENRPRIMARYMOV",
+  "KXTXSESSION",
   "KXTXSTATEWIDEDEMS",
   "KXTXSUPREME2",
   "KXTXSUPREME7",
@@ -16247,6 +16292,7 @@
   "KXWTATOURNWIN",
   "KXWTAX",
   "KXWTESTMATCH",
+  "KXWTGLMATCH",
   "KXWTI",
   "KXWTI15M",
   "KXWTIDIRY",
@@ -17053,7 +17099,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-06T18:00:32+00:00",
+ "last_check": "2026-11-06T18:30:28+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -17067,7 +17113,7 @@
   },
   "KXAAAGASCDFL": {
    "category": "Economics",
-   "checked": "2026-11-06T16:30:26+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -17077,7 +17123,7 @@
   },
   "KXAAAGASCDIL": {
    "category": "Economics",
-   "checked": "2026-11-06T16:30:26+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -17087,7 +17133,7 @@
   },
   "KXAAAGASCDOH": {
    "category": "Economics",
-   "checked": "2026-11-06T16:30:26+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -17177,7 +17223,7 @@
   },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17187,7 +17233,7 @@
   },
   "KXBELCHALLBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17197,7 +17243,7 @@
   },
   "KXBELCHALLGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17227,7 +17273,7 @@
   },
   "KXBOTOLAADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17237,7 +17283,7 @@
   },
   "KXBOTOLABTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17247,7 +17293,7 @@
   },
   "KXBOTOLAGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17277,7 +17323,7 @@
   },
   "KXBULFLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17285,19 +17331,39 @@
    "series": "KXBULFLADVANCE",
    "title": "Advance"
   },
-  "KXBULFLBTTS": {
-   "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+  "KXCASOCIALBLOCK": {
+   "category": "Politics",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
-   "first_seen": "2026-11-05T19:00:30+00:00",
-   "frequency": "custom",
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
    "new_category": false,
-   "series": "KXBULFLBTTS",
-   "title": "Both teams to score"
+   "series": "KXCASOCIALBLOCK",
+   "title": "Will a court block California's under-16 social media law?"
+  },
+  "KXDEMVICECHAIR120": {
+   "category": "Elections",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXDEMVICECHAIR120",
+   "title": "House Democratic Caucus Vice Chair (120th Congress)"
+  },
+  "KXDJTATTACKVANCE": {
+   "category": "Politics",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXDJTATTACKVANCE",
+   "title": "Will Trump publicly criticize JD Vance?"
   },
   "KXEFLL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17307,7 +17373,7 @@
   },
   "KXEFLL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17317,7 +17383,7 @@
   },
   "KXEFLL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17345,6 +17411,26 @@
    "series": "KXEFLL2TOTAL",
    "title": "Total"
   },
+  "KXEFTA2HOUSE": {
+   "category": "Politics",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXEFTA2HOUSE",
+   "title": "House passage of the Epstein Files Transparency Act II"
+  },
+  "KXEFTA2HOUSEVOTES": {
+   "category": "Politics",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXEFTA2HOUSEVOTES",
+   "title": "House votes on the Epstein Files Transparency Act II"
+  },
   "KXEPCR": {
    "category": "Sports",
    "checked": "2026-11-06T18:00:32+00:00",
@@ -17364,16 +17450,6 @@
    "new_category": false,
    "series": "KXEPCRMATCH",
    "title": "European Professional Club Rugby Match"
-  },
-  "KXISRCOALSEATS": {
-   "category": "Elections",
-   "checked": "2026-11-06T16:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-06T16:30:26+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXISRCOALSEATS",
-   "title": "How many Knesset seats will Israel's next government hold?"
   },
   "KXISRGOVTYPE": {
    "category": "Elections",
@@ -17485,6 +17561,16 @@
    "series": "KXMCDONNELLANNOUNCEOUT",
    "title": "Jim McDonnell announces departure as Chief of Police of the Los Angeles Police Department?"
   },
+  "KXMEDICAREALLHOUSE": {
+   "category": "Politics",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEDICAREALLHOUSE",
+   "title": "House passage of Medicare for All"
+  },
   "KXMJOHNSONANNOUNCEOUT": {
    "category": "Politics",
    "checked": "2026-11-06T18:00:32+00:00",
@@ -17494,6 +17580,16 @@
    "new_category": false,
    "series": "KXMJOHNSONANNOUNCEOUT",
    "title": "Mike Johnson announces he's leaving as U.S. Representative?"
+  },
+  "KXMTI194BLOCK": {
+   "category": "Politics",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMTI194BLOCK",
+   "title": "Will a court block Montana's I-194 corporate political spending ban?"
   },
   "KXNOR1DIVADVANCE": {
    "category": "Sports",
@@ -17705,6 +17801,16 @@
    "series": "KXTHIRDPARTYSTATE",
    "title": "Will any independent or third party candidate win a state in the presidential election?"
   },
+  "KXTHUNEELECT": {
+   "category": "Elections",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTHUNEELECT",
+   "title": "Will John Thune be elected Senate Republican leader on Nov 10?"
+  },
   "KXTHUNELEADER": {
    "category": "Elections",
    "checked": "2026-11-06T18:00:32+00:00",
@@ -17724,6 +17830,16 @@
    "new_category": false,
    "series": "KXTXMEDICAIDEXP",
    "title": "Will Texas expand Medicaid?"
+  },
+  "KXTXSESSION": {
+   "category": "Politics",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTXSESSION",
+   "title": "Texas special legislative session calls"
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
@@ -17784,6 +17900,16 @@
    "new_category": false,
    "series": "KXULCCA",
    "title": "Frontier Group Holdings Annual KPI"
+  },
+  "KXWTGLMATCH": {
+   "category": "Sports",
+   "checked": "2026-11-06T18:30:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T18:30:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXWTGLMATCH",
+   "title": "Womens TGL Match"
   }
  },
  "queue": []
