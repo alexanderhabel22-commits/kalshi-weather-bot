@@ -591,3 +591,41 @@ def test_key_check_reads_balance_while_paper(monkeypatch):
     trader.save([])
     trader.run(cfg(), now=NOW + timedelta(hours=7), http=H([]))
     assert read_json(trader.STATE)["key_check"]["ok"] is False
+
+
+def test_orders_use_kalshi_v2_single_book():
+    """Kalshi retired POST /portfolio/orders (HTTP 410, Nov 5 2026). V2 has one
+    YES book: bid = buy YES, ask = sell YES (= buy NO), YES price as a string."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    pem = rsa.generate_private_key(public_exponent=65537, key_size=2048).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()).decode()
+
+    class H:
+        def __init__(self):
+            self.calls = []
+
+        def post_json(self, url, payload, headers=None):
+            self.calls.append((url, payload))
+            return {"order_id": "o1", "fill_count": "2.00", "remaining_count": "0.00"}
+    h = H()
+    c = KalshiClient(h, "kid", pem)
+    o = c.place_limit("T", "no", 0.85, 2, "cid1")
+    url, p = h.calls[-1]
+    assert url.endswith("/trade-api/v2/portfolio/events/orders")
+    assert p == {"ticker": "T", "client_order_id": "cid1", "side": "ask", "count": "2",
+                 "price": "0.15", "time_in_force": "good_till_canceled",
+                 "self_trade_prevention_type": "taker_at_cross", "post_only": True}
+    assert o["order_id"] == "o1"
+    c.place_limit("T", "yes", 0.96, 1, "cid2")
+    assert (h.calls[-1][1]["side"], h.calls[-1][1]["price"]) == ("bid", "0.96")
+    o = c.buy_now("T", "no", 0.67, 2, "cid3")
+    assert h.calls[-1][1]["side"] == "ask" and h.calls[-1][1]["price"] == "0.33"
+    assert h.calls[-1][1]["time_in_force"] == "immediate_or_cancel"
+    assert order_fill_count(o, 2) == 2
+    c.sell_now("T", "no", 0.90, 2, "cid4")                 # sell NO = buy YES at 10c
+    p = h.calls[-1][1]
+    assert (p["side"], p["price"], p["reduce_only"]) == ("bid", "0.10", True)
+    c.sell_now("T", "yes", 0.98, 1, "cid5")
+    assert (h.calls[-1][1]["side"], h.calls[-1][1]["price"]) == ("ask", "0.98")
