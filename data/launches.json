@@ -1084,6 +1084,24 @@
    "status": "live",
    "title": "Ro Khanna announces presidential run by...?",
    "volume": 1200.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-06T17:00:30+00:00",
+   "example": "KXGOPCONFCHAIR120-26NOV30-LMCC",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-05T23:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-06T17:00:30+00:00",
+   "median_spread": 0.1,
+   "n_open": 3,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXGOPCONFCHAIR120",
+   "status": "live",
+   "title": "House Republican Conference Chair (120th Congress)",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -12899,6 +12917,7 @@
   "KXSENATEORD",
   "KXSENATEORR",
   "KXSENATEPAD",
+  "KXSENATERACE",
   "KXSENATEREC",
   "KXSENATERID",
   "KXSENATERIR",
@@ -16933,7 +16952,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-06T16:30:26+00:00",
+ "last_check": "2026-11-06T17:00:30+00:00",
  "pending": {
   "KX5YRRATEEVENT": {
    "category": "Financials",
@@ -17047,7 +17066,7 @@
   },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17057,7 +17076,7 @@
   },
   "KXBELCHALLBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17067,7 +17086,7 @@
   },
   "KXBELCHALLGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17097,7 +17116,7 @@
   },
   "KXBOTOLAADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17107,7 +17126,7 @@
   },
   "KXBOTOLABTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17117,7 +17136,7 @@
   },
   "KXBOTOLAGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17147,7 +17166,7 @@
   },
   "KXBULFLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17157,7 +17176,7 @@
   },
   "KXBULFLBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17187,7 +17206,7 @@
   },
   "KXEFLL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17197,7 +17216,7 @@
   },
   "KXEFLL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17207,7 +17226,7 @@
   },
   "KXEFLL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17247,23 +17266,13 @@
   },
   "KXEPCRMATCH": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXEPCRMATCH",
    "title": "European Professional Club Rugby Match"
-  },
-  "KXGOPCONFCHAIR120": {
-   "category": "Elections",
-   "checked": "2026-11-06T15:30:33+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-05T23:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXGOPCONFCHAIR120",
-   "title": "House Republican Conference Chair (120th Congress)"
   },
   "KXISRCOALSEATS": {
    "category": "Elections",
@@ -17297,7 +17306,7 @@
   },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17307,7 +17316,7 @@
   },
   "KXJ3LEAGUEBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17317,7 +17326,7 @@
   },
   "KXJ3LEAGUEGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17347,7 +17356,7 @@
   },
   "KXLIGAPORTUGAL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17357,7 +17366,7 @@
   },
   "KXNOR1DIVADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17367,7 +17376,7 @@
   },
   "KXNOR1DIVBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17437,7 +17446,7 @@
   },
   "KXSAFFSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17447,7 +17456,7 @@
   },
   "KXSAFFTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17464,6 +17473,16 @@
    "new_category": false,
    "series": "KXSCHUMERVOICE",
    "title": "Will Chuck Schumer be reelected Democratic leader by voice vote?"
+  },
+  "KXSENATERACE": {
+   "category": "Elections",
+   "checked": "2026-11-06T17:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:00:30+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSENATERACE",
+   "title": "Senate Race Winner?"
   },
   "KXSUPERETTANADVANCE": {
    "category": "Sports",
@@ -17547,7 +17566,7 @@
   },
   "KXTXMEDICAIDEXP": {
    "category": "Politics",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T23:00:28+00:00",
    "frequency": "one_off",
@@ -17577,7 +17596,7 @@
   },
   "KXUKRPLSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17587,7 +17606,7 @@
   },
   "KXUKRPLTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:30:33+00:00",
+   "checked": "2026-11-06T17:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
