@@ -1228,6 +1228,24 @@
    "status": "live",
    "title": "Both teams to score",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-06T19:00:30+00:00",
+   "example": "KXSENATERACE-TX-32-R",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T17:00:30+00:00",
+   "frequency": "custom",
+   "markets_seen": "2026-11-06T19:00:30+00:00",
+   "median_spread": 0.09,
+   "n_open": 12,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (9c), so makers haven't arrived yet.",
+   "series": "KXSENATERACE",
+   "status": "live",
+   "title": "Senate Race Winner?",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -6488,6 +6506,7 @@
   "KXGBPUSDAW",
   "KXGBPUSDD",
   "KXGBPUSDE",
+  "KXGBPUSDEVENT",
   "KXGBPUSDH",
   "KXGBT55OY",
   "KXGDP",
@@ -15333,6 +15352,7 @@
   "KXUSDJPYD",
   "KXUSDJPYE",
   "KXUSDJPYEU",
+  "KXUSDJPYEVENT",
   "KXUSDJPYH",
   "KXUSDJPYMAX",
   "KXUSDJPYMIN",
@@ -15343,6 +15363,7 @@
   "KXUSDMXN15M",
   "KXUSDMXNAD",
   "KXUSDMXNAW",
+  "KXUSDMXNEVENT",
   "KXUSDMXNMAX",
   "KXUSDNOKAD",
   "KXUSDNOKAH",
@@ -17099,7 +17120,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-06T18:30:28+00:00",
+ "last_check": "2026-11-06T19:00:30+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -17443,13 +17464,23 @@
   },
   "KXEPCRMATCH": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXEPCRMATCH",
    "title": "European Professional Club Rugby Match"
+  },
+  "KXGBPUSDEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-06T19:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T19:00:30+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXGBPUSDEVENT",
+   "title": "GBP/USD after economic events"
   },
   "KXISRGOVTYPE": {
    "category": "Elections",
@@ -17473,7 +17504,7 @@
   },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17483,7 +17514,7 @@
   },
   "KXJ3LEAGUEBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17493,7 +17524,7 @@
   },
   "KXJ3LEAGUEGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17543,7 +17574,7 @@
   },
   "KXLIGAPORTUGAL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17593,7 +17624,7 @@
   },
   "KXNOR1DIVADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17603,7 +17634,7 @@
   },
   "KXNOR1DIVBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17613,7 +17644,7 @@
   },
   "KXNOR1DIVGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17643,7 +17674,7 @@
   },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "one_off",
@@ -17653,7 +17684,7 @@
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17663,7 +17694,7 @@
   },
   "KXSAFFBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17673,7 +17704,7 @@
   },
   "KXSAFFSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17683,7 +17714,7 @@
   },
   "KXSAFFTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17691,19 +17722,9 @@
    "series": "KXSAFFTOTAL",
    "title": "Total"
   },
-  "KXSENATERACE": {
-   "category": "Elections",
-   "checked": "2026-11-06T17:00:30+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-06T17:00:30+00:00",
-   "frequency": "custom",
-   "new_category": false,
-   "series": "KXSENATERACE",
-   "title": "Senate Race Winner?"
-  },
   "KXSUPERETTANADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17713,7 +17734,7 @@
   },
   "KXSUPERETTANBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17723,7 +17744,7 @@
   },
   "KXSUPERETTANGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17753,7 +17774,7 @@
   },
   "KXSVK1LADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17823,7 +17844,7 @@
   },
   "KXTXMEDICAIDEXP": {
    "category": "Politics",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T23:00:28+00:00",
    "frequency": "one_off",
@@ -17843,7 +17864,7 @@
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T17:30:28+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17863,7 +17884,7 @@
   },
   "KXUKRPLSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17873,7 +17894,7 @@
   },
   "KXUKRPLTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T17:00:30+00:00",
+   "checked": "2026-11-06T19:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17900,6 +17921,26 @@
    "new_category": false,
    "series": "KXULCCA",
    "title": "Frontier Group Holdings Annual KPI"
+  },
+  "KXUSDJPYEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-06T19:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T19:00:30+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXUSDJPYEVENT",
+   "title": "USD/JPY after economic events"
+  },
+  "KXUSDMXNEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-06T19:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T19:00:30+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXUSDMXNEVENT",
+   "title": "USD/MXN after economic events"
   },
   "KXWTGLMATCH": {
    "category": "Sports",
