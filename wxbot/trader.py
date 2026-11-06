@@ -189,6 +189,36 @@ def strategies() -> dict:
     return found
 
 
+def valuers() -> dict:
+    """Strategies that can re-score a held position: NAME -> value(http, row, market, now),
+    returning our side's chance now, or None to fall back to the usual exit rule."""
+    import importlib
+    import pkgutil
+    from . import strats
+    found = {}
+    for mod in pkgutil.iter_modules(strats.__path__):
+        m = importlib.import_module(f"{strats.__name__}.{mod.name}")
+        if hasattr(m, "NAME") and hasattr(m, "value"):
+            found[m.NAME] = m.value
+    return found
+
+
+def model_exit(r: dict, m: dict | None, value: float, margin: float) -> tuple[float, str] | None:
+    """Sell at the bid when the bid after the taker fee beats the model's chance for our
+    side by `margin` (so a 50% bracket is held at 51c, sold at 50c + margin + fee)."""
+    if not m:
+        return None
+    yb, ya = kalshi.price(m, "yes_bid"), kalshi.price(m, "yes_ask")
+    if yb is None or ya is None or not (0 < yb < ya <= 1):
+        return None
+    bid = yb if r.get("side") == "yes" else round(1 - ya, 2)
+    if not (0.01 <= bid <= 0.99):
+        return None
+    if bid - _fee(bid) >= value + margin:
+        return bid, f"bid {bid:.2f} beats model {value:.2f} + {margin:.2f}"
+    return None
+
+
 # ---------------------------------------------------------------- checks
 
 def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
@@ -386,6 +416,7 @@ def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple
 
 def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int:
     n = 0
+    vals = valuers()
     for r in rows:
         if r.get("status") != "filled" or r.get("mode") not in ("paper", "live"):
             continue
@@ -393,7 +424,18 @@ def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int
         m = kalshi.get_market(http, r["ticker"])
         if (m or {}).get("result"):
             continue                      # settling anyway
-        d = exit_decision(r, m, sp, r["mode"] in cap_blocked)
+        d = None
+        vf = vals.get(r.get("strategy")) if str(sp.get("exit", "ev")).lower() == "model" else None
+        v = None
+        if vf and m:
+            try:
+                v = vf(http, r, m, now)
+            except Exception as exc:      # a model hiccup must never block the other exits
+                log.warning("exit value %s: %s", r["ticker"], exc)
+        if v is not None:
+            d = model_exit(r, m, v, float(sp.get("exit_margin", 0.08)))
+        elif str(sp.get("exit", "ev")).lower() != "model":
+            d = exit_decision(r, m, sp, r["mode"] in cap_blocked)
         if not d:
             continue
         price, why = d
@@ -616,6 +658,11 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
                     o = client.place_limit(it.ticker, it.side, it.price, it.count, row["client_id"])
             except (HttpError, OrderRejected) as exc:
                 log.warning("order %s %s rejected: %s", it.ticker, it.side, exc)
+                if "post only cross" in str(exc):
+                    # the price moved onto our bid since the strategy priced it; Kalshi
+                    # refused it so we never pay the ask. Normal, not worth a push.
+                    out["skipped"].append((it.ticker, it.side, "price moved (post-only cross)"))
+                    continue
                 out["skipped"].append((it.ticker, it.side, f"rejected: {exc}"))
                 rejected_live.append(f"{it.strategy} {it.ticker}: {str(exc)[:120]}")
                 continue
@@ -645,8 +692,8 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
         if not last or now - last >= timedelta(hours=3):
             state["reject_alert_at"] = now.isoformat(timespec="seconds")
             _alert(http, cfg, f"Kalshi rejected {len(rejected_live)} live order(s)",
-                   "\n".join(rejected_live[:4]) + "\nNothing was bought. The bot keeps trying; "
-                   "set TRADING_MODE=off to stop.", dry_run, 4, ["warning"])
+                   "\n".join(rejected_live[:4]) + "\nNothing was bought for these. Other orders still go out; "
+                   "set TRADING_MODE=off to stop everything.", dry_run, 4, ["warning"])
 
     # ---- early exits (judgement: sell only when it beats holding)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") == "filled" for r in rows):

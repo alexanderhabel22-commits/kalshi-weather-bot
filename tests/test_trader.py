@@ -455,6 +455,19 @@ def test_rejected_live_order_alerts_once(monkeypatch):
     assert not trader.load()
 
 
+def test_post_only_cross_is_quiet(monkeypatch):
+    from wxbot.util import HttpError
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+
+    class Cross(FakeClient):
+        def place_limit(self, *a):
+            raise HttpError(400, "orders", '{"error":{"code":"invalid_order","details":"post only cross"}}')
+    http = Http([mkt("a", 0.12, 0.16)])
+    trader.run(cfg(mode="live", live=True), now=NOW, http=http, client=Cross())
+    assert not any("rejected" in p["title"] for p in http.posts)
+    assert not trader.load()
+
+
 LOCK_TK = "KXHIGHPHIL-26NOV06-B74.5"
 
 

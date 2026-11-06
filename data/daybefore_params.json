@@ -441,5 +441,451 @@
    "sd": 1.782,
    "days": 45
   }
+ },
+ "exit": {
+  "built_from": "2026-11-03",
+  "hours_before_close": 12,
+  "window_hours": 0.75,
+  "margin": 0.08,
+  "blend": [
+   0.3704,
+   0.78,
+   0.6524
+  ],
+  "blend_rows": 15580,
+  "series": {
+   "KXHIGHAUS": {
+    "weights": {
+     "ecmwf_ifs025": 0.4085,
+     "gem_seamless": 0.2575,
+     "gfs_seamless": 0.8581,
+     "icon_seamless": 0.4435
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.371,
+     "gem_seamless": 1.171,
+     "gfs_seamless": 1.933,
+     "icon_seamless": 1.649
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHCHI": {
+    "weights": {
+     "ecmwf_ifs025": 0.8956,
+     "gem_seamless": 0.4345,
+     "gfs_seamless": 0.8475,
+     "icon_seamless": 0.5129
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.189,
+     "gem_seamless": -1.116,
+     "gfs_seamless": 0.278,
+     "icon_seamless": 0.2
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHDEN": {
+    "weights": {
+     "ecmwf_ifs025": 0.4666,
+     "gem_seamless": 0.4803,
+     "gfs_seamless": 1.011,
+     "icon_seamless": 0.6194
+    },
+    "bias": {
+     "ecmwf_ifs025": 0.213,
+     "gem_seamless": 0.502,
+     "gfs_seamless": 0.649,
+     "icon_seamless": 1.662
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHLAX": {
+    "weights": {
+     "ecmwf_ifs025": 0.0504,
+     "gem_seamless": 0.1913,
+     "gfs_seamless": 1.3894,
+     "icon_seamless": 0.1375
+    },
+    "bias": {
+     "ecmwf_ifs025": -4.107,
+     "gem_seamless": -1.075,
+     "gfs_seamless": 0.455,
+     "icon_seamless": -1.534
+    },
+    "sd": 1.2,
+    "days": 44
+   },
+   "KXHIGHMIA": {
+    "weights": {
+     "ecmwf_ifs025": 0.3255,
+     "gem_seamless": 0.4534,
+     "gfs_seamless": 1.0317,
+     "icon_seamless": 0.5797
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.502,
+     "gem_seamless": 1.356,
+     "gfs_seamless": 1.178,
+     "icon_seamless": 1.153
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHNY": {
+    "weights": {
+     "ecmwf_ifs025": 0.569,
+     "gem_seamless": 0.4974,
+     "gfs_seamless": 0.5403,
+     "icon_seamless": 0.9387
+    },
+    "bias": {
+     "ecmwf_ifs025": -0.349,
+     "gem_seamless": -1.731,
+     "gfs_seamless": -1.744,
+     "icon_seamless": -0.931
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHPHIL": {
+    "weights": {
+     "ecmwf_ifs025": 0.5307,
+     "gem_seamless": 0.2905,
+     "gfs_seamless": 0.6795,
+     "icon_seamless": 0.6639
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.904,
+     "gem_seamless": 2.184,
+     "gfs_seamless": 1.211,
+     "icon_seamless": 1.318
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXLOWTAUS": {
+    "weights": {
+     "ecmwf_ifs025": 0.1652,
+     "gem_seamless": 0.2701,
+     "gfs_seamless": 0.283,
+     "icon_seamless": 0.3064
+    },
+    "bias": {
+     "ecmwf_ifs025": -2.984,
+     "gem_seamless": -1.424,
+     "gfs_seamless": -3.011,
+     "icon_seamless": -2.627
+    },
+    "sd": 1.708,
+    "days": 45
+   },
+   "KXLOWTCHI": {
+    "weights": {
+     "ecmwf_ifs025": 0.1722,
+     "gem_seamless": 0.2478,
+     "gfs_seamless": 0.4725,
+     "icon_seamless": 0.2127
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.324,
+     "gem_seamless": 1.582,
+     "gfs_seamless": 1.376,
+     "icon_seamless": 0.751
+    },
+    "sd": 1.641,
+    "days": 45
+   },
+   "KXLOWTDEN": {
+    "weights": {
+     "ecmwf_ifs025": 0.1498,
+     "gem_seamless": 0.1068,
+     "gfs_seamless": 0.2198,
+     "icon_seamless": 0.1535
+    },
+    "bias": {
+     "ecmwf_ifs025": -1.582,
+     "gem_seamless": 2.329,
+     "gfs_seamless": 0.178,
+     "icon_seamless": -0.438
+    },
+    "sd": 2.297,
+    "days": 45
+   },
+   "KXLOWTLAX": {
+    "weights": {
+     "ecmwf_ifs025": 0.289,
+     "gem_seamless": 0.1438,
+     "gfs_seamless": 0.5933,
+     "icon_seamless": 0.2347
+    },
+    "bias": {
+     "ecmwf_ifs025": 0.951,
+     "gem_seamless": 9.74,
+     "gfs_seamless": 2.342,
+     "icon_seamless": 2.242
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXLOWTMIA": {
+    "weights": {
+     "ecmwf_ifs025": 0.2519,
+     "gem_seamless": 0.2329,
+     "gfs_seamless": 0.3704,
+     "icon_seamless": 0.1634
+    },
+    "bias": {
+     "ecmwf_ifs025": 0.507,
+     "gem_seamless": 2.484,
+     "gfs_seamless": 0.322,
+     "icon_seamless": 0.682
+    },
+    "sd": 1.812,
+    "days": 45
+   },
+   "KXLOWTNYC": {
+    "weights": {
+     "ecmwf_ifs025": 0.1799,
+     "gem_seamless": 0.1393,
+     "gfs_seamless": 0.2199,
+     "icon_seamless": 0.3421
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.742,
+     "gem_seamless": 2.74,
+     "gfs_seamless": 1.438,
+     "icon_seamless": -1.058
+    },
+    "sd": 1.844,
+    "days": 45
+   },
+   "KXLOWTPHIL": {
+    "weights": {
+     "ecmwf_ifs025": 0.3263,
+     "gem_seamless": 0.5415,
+     "gfs_seamless": 0.5242,
+     "icon_seamless": 0.4965
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.313,
+     "gem_seamless": 0.024,
+     "gfs_seamless": 1.971,
+     "icon_seamless": 0.642
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTDC": {
+    "weights": {
+     "ecmwf_ifs025": 0.3735,
+     "gem_seamless": 0.3171,
+     "gfs_seamless": 1.0696,
+     "icon_seamless": 0.6464
+    },
+    "bias": {
+     "ecmwf_ifs025": 0.998,
+     "gem_seamless": 0.671,
+     "gfs_seamless": 0.044,
+     "icon_seamless": 0.451
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTLV": {
+    "weights": {
+     "ecmwf_ifs025": 0.554,
+     "gem_seamless": 0.4734,
+     "gfs_seamless": 2.1278,
+     "icon_seamless": 0.4505
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.777,
+     "gem_seamless": -0.28,
+     "gfs_seamless": 0.895,
+     "icon_seamless": 1.152
+    },
+    "sd": 1.2,
+    "days": 44
+   },
+   "KXHIGHTNOLA": {
+    "weights": {
+     "ecmwf_ifs025": 0.7449,
+     "gem_seamless": 0.7111,
+     "gfs_seamless": 0.9985,
+     "icon_seamless": 1.0658
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.302,
+     "gem_seamless": 1.767,
+     "gfs_seamless": 1.127,
+     "icon_seamless": 1.233
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTSEA": {
+    "weights": {
+     "ecmwf_ifs025": 0.6386,
+     "gem_seamless": 0.296,
+     "gfs_seamless": 0.6999,
+     "icon_seamless": 0.4724
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.287,
+     "gem_seamless": 0.5,
+     "gfs_seamless": 0.931,
+     "icon_seamless": 2.502
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTSFO": {
+    "weights": {
+     "ecmwf_ifs025": 0.0888,
+     "gem_seamless": 0.1751,
+     "gfs_seamless": 0.1384,
+     "icon_seamless": 0.1668
+    },
+    "bias": {
+     "ecmwf_ifs025": -1.376,
+     "gem_seamless": 2.02,
+     "gfs_seamless": -1.418,
+     "icon_seamless": -0.053
+    },
+    "sd": 2.269,
+    "days": 45
+   },
+   "KXHIGHTATL": {
+    "weights": {
+     "ecmwf_ifs025": 1.1049,
+     "gem_seamless": 0.4583,
+     "gfs_seamless": 1.2304,
+     "icon_seamless": 0.6108
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.607,
+     "gem_seamless": 1.68,
+     "gfs_seamless": 0.213,
+     "icon_seamless": 1.504
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTMIN": {
+    "weights": {
+     "ecmwf_ifs025": 0.3915,
+     "gem_seamless": 0.2765,
+     "gfs_seamless": 2.0375,
+     "icon_seamless": 0.4947
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.471,
+     "gem_seamless": -0.22,
+     "gfs_seamless": 0.362,
+     "icon_seamless": 1.516
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTPHX": {
+    "weights": {
+     "ecmwf_ifs025": 0.1625,
+     "gem_seamless": 0.2179,
+     "gfs_seamless": 0.8228,
+     "icon_seamless": 0.3543
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.951,
+     "gem_seamless": 2.196,
+     "gfs_seamless": 1.32,
+     "icon_seamless": 2.593
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTBOS": {
+    "weights": {
+     "ecmwf_ifs025": 0.3938,
+     "gem_seamless": 0.5563,
+     "gfs_seamless": 0.6438,
+     "icon_seamless": 0.3704
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.23,
+     "gem_seamless": -0.314,
+     "gfs_seamless": 0.711,
+     "icon_seamless": 0.405
+    },
+    "sd": 1.2,
+    "days": 44
+   },
+   "KXHIGHTDAL": {
+    "weights": {
+     "ecmwf_ifs025": 0.5568,
+     "gem_seamless": 0.9717,
+     "gfs_seamless": 0.9592,
+     "icon_seamless": 0.6746
+    },
+    "bias": {
+     "ecmwf_ifs025": 2.729,
+     "gem_seamless": 1.713,
+     "gfs_seamless": 0.847,
+     "icon_seamless": 1.082
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTHOU": {
+    "weights": {
+     "ecmwf_ifs025": 0.3258,
+     "gem_seamless": 0.3342,
+     "gfs_seamless": 1.2831,
+     "icon_seamless": 0.7991
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.558,
+     "gem_seamless": 0.696,
+     "gfs_seamless": 0.02,
+     "icon_seamless": 0.744
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTOKC": {
+    "weights": {
+     "ecmwf_ifs025": 0.3106,
+     "gem_seamless": 0.7036,
+     "gfs_seamless": 1.1644,
+     "icon_seamless": 0.468
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.742,
+     "gem_seamless": 0.909,
+     "gfs_seamless": 0.482,
+     "icon_seamless": 1.096
+    },
+    "sd": 1.2,
+    "days": 45
+   },
+   "KXHIGHTSATX": {
+    "weights": {
+     "ecmwf_ifs025": 0.5991,
+     "gem_seamless": 0.1864,
+     "gfs_seamless": 0.7559,
+     "icon_seamless": 0.4388
+    },
+    "bias": {
+     "ecmwf_ifs025": 1.509,
+     "gem_seamless": 0.884,
+     "gfs_seamless": -0.149,
+     "icon_seamless": 0.611
+    },
+    "sd": 1.2,
+    "days": 45
+   }
+  }
  }
 }
