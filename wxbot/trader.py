@@ -432,7 +432,7 @@ def cancel_all(client: KalshiClient | None, rows: list[dict], mode: str) -> int:
             continue
         if mode == "live" and r.get("mode") == "live" and client and r.get("order_id"):
             try:
-                client.cancel(r["order_id"])
+                client.cancel(r["order_id"], r.get("ticker", ""))
             except HttpError as exc:
                 log.warning("cancel %s: %s", r["order_id"], exc)
                 continue
