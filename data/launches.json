@@ -1767,6 +1767,7 @@
   "KX5YRDIRHM",
   "KX5YRDIRLM",
   "KX5YRRATE15M",
+  "KX5YRRATEEVENT",
   "KX5YRRATEH",
   "KX60MCECOT",
   "KX60MINMENTION",
@@ -1783,7 +1784,11 @@
   "KXA100WS",
   "KXA10REG",
   "KXAAAEVM",
+  "KXAAAGASCDCA",
+  "KXAAAGASCDFL",
+  "KXAAAGASCDIL",
   "KXAAAGASCDNJ",
+  "KXAAAGASCDOH",
   "KXAAAGASD",
   "KXAAAGASDAK",
   "KXAAAGASDAL",
@@ -7482,6 +7487,7 @@
   "KXISRAELRESIGN",
   "KXISRAELTHRESH",
   "KXISRAELTURNOUT",
+  "KXISRCOALSEATS",
   "KXISRDEFMIN",
   "KXISRDEMCOUNT",
   "KXISRFINMIN",
@@ -16927,11 +16933,61 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-06T16:00:30+00:00",
+ "last_check": "2026-11-06T16:30:26+00:00",
  "pending": {
+  "KX5YRRATEEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-06T16:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T16:30:26+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KX5YRRATEEVENT",
+   "title": "US 5Y Treasury yield after events"
+  },
+  "KXAAAGASCDCA": {
+   "category": "Economics",
+   "checked": "2026-11-06T16:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T16:30:26+00:00",
+   "frequency": "daily",
+   "new_category": false,
+   "series": "KXAAAGASCDCA",
+   "title": "California gas price"
+  },
+  "KXAAAGASCDFL": {
+   "category": "Economics",
+   "checked": "2026-11-06T16:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T16:30:26+00:00",
+   "frequency": "daily",
+   "new_category": false,
+   "series": "KXAAAGASCDFL",
+   "title": "Florida gas price"
+  },
+  "KXAAAGASCDIL": {
+   "category": "Economics",
+   "checked": "2026-11-06T16:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T16:30:26+00:00",
+   "frequency": "daily",
+   "new_category": false,
+   "series": "KXAAAGASCDIL",
+   "title": "Illinois gas price"
+  },
+  "KXAAAGASCDOH": {
+   "category": "Economics",
+   "checked": "2026-11-06T16:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T16:30:26+00:00",
+   "frequency": "daily",
+   "new_category": false,
+   "series": "KXAAAGASCDOH",
+   "title": "Ohio gas price"
+  },
   "KXAFCCL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16941,7 +16997,7 @@
   },
   "KXAFCCL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -16951,7 +17007,7 @@
   },
   "KXAFCCL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17021,7 +17077,7 @@
   },
   "KXBELCHALLSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17031,7 +17087,7 @@
   },
   "KXBELCHALLTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17071,7 +17127,7 @@
   },
   "KXBOTOLASPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17081,7 +17137,7 @@
   },
   "KXBOTOLATOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17111,7 +17167,7 @@
   },
   "KXBULFLSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17121,7 +17177,7 @@
   },
   "KXBULFLTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17161,7 +17217,7 @@
   },
   "KXEFLL2SPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17171,7 +17227,7 @@
   },
   "KXEFLL2TOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17181,7 +17237,7 @@
   },
   "KXEPCR": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "annual",
@@ -17208,6 +17264,16 @@
    "new_category": false,
    "series": "KXGOPCONFCHAIR120",
    "title": "House Republican Conference Chair (120th Congress)"
+  },
+  "KXISRCOALSEATS": {
+   "category": "Elections",
+   "checked": "2026-11-06T16:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-06T16:30:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXISRCOALSEATS",
+   "title": "How many Knesset seats will Israel's next government hold?"
   },
   "KXISRGOVTYPE": {
    "category": "Elections",
@@ -17261,7 +17327,7 @@
   },
   "KXJ3LEAGUESPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17271,7 +17337,7 @@
   },
   "KXJ3LEAGUETOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17321,7 +17387,7 @@
   },
   "KXNOR1DIVSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17331,7 +17397,7 @@
   },
   "KXNOR1DIVTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17431,7 +17497,7 @@
   },
   "KXSUPERETTANSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17441,7 +17507,7 @@
   },
   "KXSUPERETTANTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -17471,7 +17537,7 @@
   },
   "KXTHIRDPARTYSTATE": {
    "category": "Elections",
-   "checked": "2026-11-06T15:00:30+00:00",
+   "checked": "2026-11-06T16:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
