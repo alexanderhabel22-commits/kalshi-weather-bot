@@ -153,7 +153,8 @@ record earns it. Be candid about odds and risk; no hype.
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
 - **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
-  live = true for mentions, favorites, macro_fade. LOCKs and weather day-before stay
+  live = true for mentions, favorites, macro_fade, and weather day-before (small test,
+  15% cap). LOCKs stay
   paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
   orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
