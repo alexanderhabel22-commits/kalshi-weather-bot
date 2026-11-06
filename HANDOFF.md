@@ -152,6 +152,12 @@ record earns it. Be candid about odds and risk; no hype.
 - Live needs secrets KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY. Ledger:
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
+- **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
+  live = true for mentions, favorites, macro_fade. LOCKs and weather day-before stay
+  paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
+  -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
+  orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
+  GitHub variable TRADING_MODE=off.
 - **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
   and `[trading.locks] live = true`; every other strategy stays paper. The scan
   writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert
