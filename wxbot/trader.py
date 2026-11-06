@@ -616,6 +616,11 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
                     o = client.place_limit(it.ticker, it.side, it.price, it.count, row["client_id"])
             except (HttpError, OrderRejected) as exc:
                 log.warning("order %s %s rejected: %s", it.ticker, it.side, exc)
+                if "post only cross" in str(exc):
+                    # the price moved onto our bid since the strategy priced it; Kalshi
+                    # refused it so we never pay the ask. Normal, not worth a push.
+                    out["skipped"].append((it.ticker, it.side, "price moved (post-only cross)"))
+                    continue
                 out["skipped"].append((it.ticker, it.side, f"rejected: {exc}"))
                 rejected_live.append(f"{it.strategy} {it.ticker}: {str(exc)[:120]}")
                 continue
@@ -645,8 +650,8 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
         if not last or now - last >= timedelta(hours=3):
             state["reject_alert_at"] = now.isoformat(timespec="seconds")
             _alert(http, cfg, f"Kalshi rejected {len(rejected_live)} live order(s)",
-                   "\n".join(rejected_live[:4]) + "\nNothing was bought. The bot keeps trying; "
-                   "set TRADING_MODE=off to stop.", dry_run, 4, ["warning"])
+                   "\n".join(rejected_live[:4]) + "\nNothing was bought for these. Other orders still go out; "
+                   "set TRADING_MODE=off to stop everything.", dry_run, 4, ["warning"])
 
     # ---- early exits (judgement: sell only when it beats holding)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") == "filled" for r in rows):

@@ -23,6 +23,8 @@ def test_refresh_adds_cash_and_positions():
     info = balance.refresh(None, NOW, FakeClient({"balance": 4200, "portfolio_value": 771}))
     assert info["total"] == 49.71 and info["positions_source"] == "portfolio_value"
     assert auto_bankroll(NOW + timedelta(minutes=5)) == 49.71
+    # Config reads the real clock, so it needs a balance read just now
+    balance.refresh(None, datetime.now(timezone.utc), FakeClient({"balance": 4200, "portfolio_value": 771}))
     assert Config(raw={"account": {"bankroll": 10}}).bankroll == 49.71
 
 
