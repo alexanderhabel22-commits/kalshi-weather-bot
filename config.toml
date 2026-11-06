@@ -191,3 +191,5 @@ live = true                      # REAL money as a small test (Nov 5 7 PM ET): r
 contracts = 1
 max_open_pct = 0.15             # small test: at most 15% of the bankroll (~$7.50)
 max_event_pct = 0.15
+exit = "model"                   # sell ~12h before close only if the fresh forecast says the bid is worth 8c+ more than holding
+exit_margin = 0.08
