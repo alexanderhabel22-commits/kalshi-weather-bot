@@ -55,7 +55,7 @@ jobs:
         run: |
           git config user.name "weather-bot"
           git config user.email "weather-bot@users.noreply.github.com"
-          for f in data/trade_orders.csv data/trader_state.json data/digest_state.json data/quotes.json data/equity.csv data/marks.json data/bankroll.json data/exit_shadow.csv reports; do
+          for f in data/trade_orders.csv data/orders data/trader_state.json data/digest_state.json data/quotes.json data/equity.csv data/marks.json data/bankroll.json data/exit_shadow.csv reports; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           if ! git diff --cached --quiet; then

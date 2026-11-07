@@ -87,6 +87,24 @@ class KalshiClient:
     def get_order(self, order_id: str) -> dict:
         return self._get(f"/portfolio/orders/{order_id}").get("order") or {}
 
+    def resting_orders(self, max_pages: int = 50) -> dict:
+        """{order_id: order} for every resting order, from one paginated listing
+        (instead of one request per order). Raises if the listing doesn't finish,
+        so the caller falls back to checking orders one by one."""
+        out, cursor = {}, None
+        for _ in range(max_pages):
+            params = {"status": "resting", "limit": 1000}
+            if cursor:
+                params["cursor"] = cursor
+            js = self._get("/portfolio/orders", params)
+            for o in js.get("orders") or []:
+                if o.get("order_id"):
+                    out[o["order_id"]] = o
+            cursor = js.get("cursor")
+            if not cursor:
+                return out
+        raise HttpError(0, BASE + "/portfolio/orders", "resting order listing did not finish")
+
     def cancel(self, order_id: str, ticker: str = "") -> None:
         path = f"/portfolio/events/orders/{order_id}"
         if ticker:

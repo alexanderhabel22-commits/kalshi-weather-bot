@@ -192,6 +192,28 @@ record earns it. Be candid about odds and risk; no hype.
 - **Later, if proven:** rain markets (same lock logic), then market making
   (resting orders + Kalshi liquidity rewards) with more capital and an API key.
 
+## Scaling (Nov 7, 2026)
+
+How much the strategies can take before they move the market: `research_scale/RESULTS.md`
+(the capacity rail in the trader enforces it). Tracking plumbing for thousands of orders a day:
+
+- Markets are read in batches (`kalshi.get_markets`, 100 per request, one-by-one fallback).
+  Live orders sync from one `/portfolio/orders?status=resting` listing; only orders that
+  left the list are read individually. The paper tape is read once per market, starting
+  from each order's `checked_at`.
+- Finished orders (settled / unfilled / cancelled, market closed 2+ days ago) move once a day
+  to append-only `data/orders/<YYYY-MM>.csv`. `data/orders/summary.json` keeps all-time
+  realized P&L (used by the loss stops) and recent placed contracts (weekly capacity).
+  `trader.load_all()` = archive + hot, for reports, digests and the dashboard.
+- Fill/settle/sold/bought pushes are bundled into one when a run has more than 5.
+- Up to `max_orders_per_run` (40) per 5-minute run, and placing stops after `run_budget_s`
+  (240 s) so the 8-minute job never times out. That is ~11k orders a day at most, within
+  Kalshi's Basic rate limits (the Http client spaces requests 0.12 s apart).
+- Next step, only when needed (bankroll ~$50k+, or a strategy that needs seconds, like
+  hourly-temp market making or BTC 15-min): an always-on ~$5/month server (e.g. a small
+  VPS) running the trader in a loop with the websocket fill feed and SQLite instead of CSV
+  in git. Nothing is bought until Alex says so.
+
 ## Dashboard (built Nov 5, 2026)
 
 Read-only, mobile-first monitor in `dashboard/` (one static `index.html`, no build). It reads the
