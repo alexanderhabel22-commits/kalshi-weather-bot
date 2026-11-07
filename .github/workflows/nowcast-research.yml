@@ -26,6 +26,8 @@ jobs:
           python-version: "3.12"
       - run: pip install requests
       - name: Run
+        env:
+          SERIES: "KXTSAW"
         run: python research_nowcast/fetch.py out
       - name: Save to nowcast-research-data branch
         if: always() && hashFiles('out/log.txt') != ''

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import gzip
+import os
 import sys
 import time
 from datetime import date, datetime, timedelta
@@ -18,7 +19,7 @@ from pathlib import Path
 import requests
 
 K = "https://api.elections.kalshi.com/trade-api/v2"
-SERIES = ["KXTSAW", "KXTSA", "KXNETFLIXRANKSHOW", "KXNETFLIXRANKSHOWRUNNERUP", "KXNETFLIXRANKMOVIE",
+SERIES = os.environ.get("SERIES", "").split(",") if os.environ.get("SERIES") else ["KXTSAW", "KXTSA", "KXNETFLIXRANKSHOW", "KXNETFLIXRANKSHOWRUNNERUP", "KXNETFLIXRANKMOVIE",
           "KXNETFLIXTOPVIEWSTV", "KXNETFLIXTOPVIEWSMOVIE", "KXSPOTIFYW", "KXTOPALBUM", "KXTOPSONG",
           "KXBILLBOARDRUNNERUPALBUM"]
 OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "out")
@@ -58,6 +59,19 @@ def ts(s):
     return int(datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp()) if s else 0
 
 
+def px(o):
+    """close price in dollars; /historical candles use cents-style keys (sometimes holding dollars)."""
+    v = o.get("close_dollars")
+    if v is None:
+        v = o.get("close")
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return None
+        return v / 100 if v > 1.0 else v
+    return v
+
+
 def kalshi():
     mrows, crow = [], []
     for s in SERIES:
@@ -91,8 +105,8 @@ def kalshi():
             j = get(url, {"start_ts": start, "end_ts": end, "period_interval": 60})
             for c in (j or {}).get("candlesticks") or []:
                 yb, ya = c.get("yes_bid") or {}, c.get("yes_ask") or {}
-                crow.append([tk, c.get("end_period_ts"), yb.get("close_dollars"), ya.get("close_dollars"),
-                             (c.get("price") or {}).get("close_dollars"), c.get("volume_fp")])
+                crow.append([tk, c.get("end_period_ts"), px(yb), px(ya), px(c.get("price") or {}),
+                             c.get("volume_fp", c.get("volume"))])
     with gzip.open(OUT / "markets.csv.gz", "wt", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["ticker", "series", "event", "open", "close", "result", "volume", "strike_type", "floor",
@@ -137,7 +151,7 @@ def flix():
 
 
 if __name__ == "__main__":
-    for fn in (tsa, flix, kalshi):
+    for fn in ((tsa, kalshi) if os.environ.get("SERIES") else (tsa, flix, kalshi)):
         try:
             fn()
         except Exception as e:  # keep going; log it
