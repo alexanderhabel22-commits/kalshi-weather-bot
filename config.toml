@@ -195,8 +195,8 @@ exit = "model"                   # sell ~12h before close only if the fresh fore
 exit_margin = 0.08
 
 [allocator]
-# Grades every strategy on profit per $1 risked (settled results, paper at half
-# weight, bets on one event counted together, longshots trusted less because
+# Grades every strategy on profit per $1 risked (settled REAL-money results only,
+# bets on one event counted together, longshots trusted less because
 # they are noisier) and re-sizes them once a week (Alex, Nov 7). Never switches
 # a strategy off. See wxbot/allocator.py. Grades show in REPORT.md.
 enabled = true
@@ -207,4 +207,4 @@ floor = 0.25           # never below 1/4 of normal size (keeps building a record
 ceiling = 2.0          # never above 2x normal size
 max_step = 0.25        # largest change per re-grade
 regrade_days = 7
-paper_weight = 0.5
+paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for new ideas

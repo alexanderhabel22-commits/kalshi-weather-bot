@@ -17,7 +17,8 @@ How a strategy is graded
         grade = (hurdle/prior_sd^2 + roi/se^2) / (1/prior_sd^2 + 1/se^2)
     With prior_sd = 3.5%, about 100 settled favorite-style events move a grade
     halfway to its own record; a pure-longshot strategy needs many more.
-  * Paper results count, with less weight (`paper_weight`) than real money.
+  * Real money only (Alex, Nov 7: paper is a sandbox for new ideas, not graded).
+    `paper_weight` > 0 would let paper results count at that weight.
 
 How the grade becomes money
   * target multiplier = grade / hurdle, kept between `floor` (0.25: never
@@ -47,7 +48,7 @@ DEFAULTS = {"enabled": True, "apply": False,
             "floor": 0.25, "ceiling": 2.0,
             "max_step": 0.25,        # largest change per re-grade
             "regrade_days": 7,       # Alex: "every week or something"
-            "paper_weight": 0.5}     # a paper result is worth half a real one
+            "paper_weight": 0.0}     # real money only (Alex, Nov 7); >0 lets paper results count too
 
 
 def params(cfg: Config) -> dict:

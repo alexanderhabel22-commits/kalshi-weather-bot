@@ -40,10 +40,13 @@ def test_one_event_counts_once():
     assert abs(units[0]["var"] - 100 * 0.8 * 0.2) < 1e-9
 
 
-def test_paper_counts_less_than_real():
-    live = allocator.grade(allocator.results([row("m", f"E{i}", .8, 1, True) for i in range(30)])["m"], P)
-    paper = allocator.grade(allocator.results([row("m", f"E{i}", .8, 1, True, "paper")
-                                               for i in range(30)])["m"], P)
+def test_paper_ignored_by_default_and_counts_less_when_on():
+    paper_rows = [row("m", f"E{i}", .8, 1, True, "paper") for i in range(30)]
+    off = allocator.grade(allocator.results(paper_rows)["m"], P)
+    assert off["events_paper"] == 0 and off["grade"] == P["hurdle"]      # real money only
+    half = {**P, "paper_weight": 0.5}
+    live = allocator.grade(allocator.results([row("m", f"E{i}", .8, 1, True) for i in range(30)])["m"], half)
+    paper = allocator.grade(allocator.results(paper_rows)["m"], half)
     assert paper["trust"] < live["trust"]
 
 

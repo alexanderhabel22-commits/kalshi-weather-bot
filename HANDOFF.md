@@ -219,7 +219,7 @@ How much the strategies can take before they move the market: `research_scale/RE
 Alex asked for the bot to "grade itself" and move money to what works without
 killing any strategy. `wxbot/allocator.py`, settings in `[allocator]`:
 - Grade = profit per $1 risked on settled results (not hit rate), bets on one
-  event counted as one result, paper at half weight, shrunk toward a +3c hurdle
+  event counted as one result, REAL money only (paper ignored, Alex Nov 7), shrunk toward a +3c hurdle
   by how noisy the record is (longshots need many more trades to be trusted).
 - Size multiplier = grade / hurdle, kept in 0.25x-2x, re-graded weekly, moving at
   most 0.25 per week. When applied it scales each strategy's own cap and order
