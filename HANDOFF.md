@@ -214,6 +214,22 @@ How much the strategies can take before they move the market: `research_scale/RE
   VPS) running the trader in a loop with the websocket fill feed and SQLite instead of CSV
   in git. Nothing is bought until Alex says so.
 
+## Strategy allocator (Nov 7, 2026)
+
+Alex asked for the bot to "grade itself" and move money to what works without
+killing any strategy. `wxbot/allocator.py`, settings in `[allocator]`:
+- Grade = profit per $1 risked on settled results (not hit rate), bets on one
+  event counted as one result, paper at half weight, shrunk toward a +3c hurdle
+  by how noisy the record is (longshots need many more trades to be trusted).
+- Size multiplier = grade / hurdle, kept in 0.25x-2x, re-graded weekly, moving at
+  most 0.25 per week. When applied it scales each strategy's own cap and order
+  size and gives the best-graded first claim on the overall cap. The 75% overall
+  cap, 20% per-event cap and loss stops never change.
+- SHADOW (`apply = false`) since Nov 7: grades are in REPORT.md and
+  data/trader_state.json ("allocator"). Plan: go live at the Nov 17 checkpoint
+  (Alex, Nov 7) by setting `apply = true`.
+- Backtest: research_alloc/RESULTS.md (beat fixed sizing in 20/20 samples).
+
 ## Dashboard (built Nov 5, 2026)
 
 Read-only, mobile-first monitor in `dashboard/` (one static `index.html`, no build). It reads the
