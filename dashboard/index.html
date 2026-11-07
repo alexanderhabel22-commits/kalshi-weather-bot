@@ -318,7 +318,7 @@ async function loadData(){
     config:["config.toml"], orders:["data/trade_orders.csv"], tstate:["data/trader_state.json","json"],
     paper:["data/paper_orders.csv"], alerts:["data/alerts.csv"], forecasts:["data/forecasts.csv"],
     census:["data/census.json","json"], rain:["data/rain_census.json","json"], mytrades:["data/my_trades.csv"],
-    report:["data/REPORT.md"], qsnap:["data/quotes.json","json"], equity:["data/equity.csv"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"], broll:["data/bankroll.json","json"]
+    report:["data/REPORT.md"], qsnap:["data/quotes.json","json"], equity:["data/equity.csv"], marks:["data/marks.json","json"], verdicts:["dashboard/verdicts.json","json"], dstate:["data/digest_state.json","json"], broll:["data/bankroll.json","json"]
   };
   const keys = Object.keys(files), errs = [];
   const res = await Promise.allSettled(keys.map(k => raw(files[k][0], files[k][1])));
@@ -641,6 +641,34 @@ function settledItem(t, i){
 }
 function isOpen(k){ if (!S.open){ try { S.open = new Set(JSON.parse(ls.get("ovOpen") || "[]")); } catch(e){ S.open = new Set(); } } return S.open.has(k); }
 function moreBtn(k, label){ return `<button class="seeall" data-more="${k}">${isOpen(k) ? "Show less ▲" : label + " ▼"}</button>`; }
+// biggest movers over the last hour: each held bet's mid now vs. its mid an hour ago
+// (data/marks.json, saved by the bot every 5 min); a bet filled within the hour starts from its cost
+function moversHTML(rows){
+  const M = ((S.data.marks || {}).marks) || {}, now = Date.now(), cut = now - 3600e3, c = v => Math.round(v * 100) + "¢";
+  const mv = [];
+  for (const r of marked(rows).priced){
+    const n = r.status === "filled" ? (r.filled || r.count) : r.filled, m = markPrice(r), fill = +(r.filledAt || r.placed) || 0;
+    let base = null, from = "";
+    if (fill > cut){ base = r.price; from = "filled " + ago(new Date(fill)); }
+    else { const pts = M[r.ticker + "|" + r.side] || []; let p = null;
+      for (const q of pts){ if (q[0] * 1000 <= cut) p = q; else break; }
+      if (!p && pts.length && pts[0][0] * 1000 <= cut + 15 * 60e3) p = pts[0];
+      if (p) base = p[1]; }
+    if (base == null || m == null) continue;
+    mv.push({r, d:(m - base) * n, base, m, from});
+  }
+  const up = mv.filter(x => x.d > 0.004).sort((a, b) => b.d - a.d).slice(0, 3), dn = mv.filter(x => x.d < -0.004).sort((a, b) => a.d - b.d).slice(0, 3);
+  const item = x => `<div class="item tap" style="padding:7px 0"><span class="side ${esc(x.r.side)}">${esc(x.r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(x.r.title)}</div><div class="s">${c(x.base)} → ${c(x.m)}${x.from ? " · " + esc(x.from) : ""}</div></div><div class="r ${cls(x.d)}">${money(x.d)}</div>${details(x.r)}</div>`;
+  const col = (label, l, k) => `<div style="min-width:0"><div class="lbl ${k}" style="margin-bottom:2px">${label}</div>${l.length ? l.map(item).join("") : `<div class="mute" style="font-size:12px;padding:6px 0">${k === "pos" ? "Nothing up" : "Nothing down"} this hour</div>`}</div>`;
+  const body = mv.length ? `<div class="grid cols2" style="gap:4px 18px">${col("▲ Up the most", up, "pos")}${col("▼ Down the most", dn, "neg")}</div>`
+    : `<div class="mute" style="font-size:12px">Builds up over the next hour: the bot saves each bet's price every 5 min.</div>`;
+  return `<div class="lbl" style="margin:16px 0 4px">Biggest movers <span class="mute" style="text-transform:none;letter-spacing:0">· last hour · at mid</span></div>${body}`;
+}
+function winsHTML(tr, strats){
+  const w = tr.filter(t => t.win).sort((a, b) => b.pnl - a.pnl).slice(0, 3);
+  return `<div class="lbl" style="margin:16px 0 4px">Biggest wins <span class="mute" style="text-transform:none;letter-spacing:0">· all time</span></div>`
+    + (w.length ? `<div class="list">${w.map(t => settledItem(t, Math.max(0, strats.indexOf(t.strategy)))).join("")}</div>` : `<div class="mute" style="font-size:12px">No winning trades settled yet.</div>`);
+}
 function heldRows(rows){ return rows.filter(r => r.status === "filled" || (r.status === "open" && r.filled > 0)); }
 function settledHTML(mode, rows, strats, B, unrTot){
   const tr = settledTrades(rows), sm = settledSum(tr), start = startBankroll(mode, B, sm.pnl + unrTot);
@@ -762,7 +790,7 @@ function renderOverview(){
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${settledTrades(rows).length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
-    ${sx.summary}${moreBtn("all", "More all-time stats")}</div>`;
+    ${sx.summary}${winsHTML(sx.tr, strats)}${moreBtn("all", "More all-time stats")}</div>`;
   if (isOpen("all")) h += sx.h;
   h += `<h2>Right now <span class="sub">open bets</span></h2>`;
 
@@ -784,6 +812,7 @@ function renderOverview(){
       <div class="grid g3" style="margin-top:14px"><div><div class="lbl">Cost held</div><div class="val">${mk.cost ? "$" + mk.cost.toFixed(2) : "—"}</div></div>
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
+      ${moversHTML(rows)}
       ${sx.next}
       <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}

@@ -9,6 +9,7 @@ T0 = datetime(2026, 11, 5, 12, tzinfo=timezone.utc)
 def _setup(tmp_path, monkeypatch):
     monkeypatch.setattr(equity, "DATA_DIR", tmp_path)
     monkeypatch.setattr(equity, "EQUITY", tmp_path / "equity.csv")
+    monkeypatch.setattr(equity, "MARKS", tmp_path / "marks.json")
     (tmp_path / "trade_orders.csv").write_text(
         "mode,strategy,ticker,side,price,count,filled,status,pnl\n"
         "paper,mentions,A,no,0.80,10,10,filled,\n"      # held 10 NO @80c
@@ -48,3 +49,15 @@ def test_record_appends_and_thins(tmp_path, monkeypatch):
     assert len([r for r in rows if r["at"].startswith(old.strftime("%Y-%m-%dT%H"))]) == 1
     p = [r for r in rows if r["at"] == T0.isoformat(timespec="seconds") and r["mode"] == "paper"][0]
     assert "mentions:" in p["by_strategy"] and float(p["exposure"]) > 0
+
+
+def test_record_marks_rolls_three_hours(tmp_path, monkeypatch):
+    import json
+    _setup(tmp_path, monkeypatch)
+    old = int((T0 - timedelta(hours=4)).timestamp())
+    keep = int((T0 - timedelta(hours=1)).timestamp())
+    (tmp_path / "marks.json").write_text(json.dumps({"marks": {"A|no": [[old, 0.5], [keep, 0.85]], "GONE|yes": [[keep, 0.4]]}}))
+    out = equity.record_marks(T0, {"A": {"yes_bid": 0.10, "yes_ask": 0.12}})
+    assert out["A|no"] == [[keep, 0.85], [int(T0.timestamp()), 0.89]]
+    assert "GONE|yes" not in out and "B|no" not in out  # B is resting with nothing filled
+    assert json.loads((tmp_path / "marks.json").read_text())["marks"] == out
