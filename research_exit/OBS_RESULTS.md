@@ -23,12 +23,19 @@ look at the real readings so far today?
 | readings, margin 5c | 614 | +$459 | +$69 | 10/1 |
 | readings, only 18-12h before close | 224 | +$421 | +$31 | 10/0 |
 | readings, only 9-3h before close | 248 | +$420 | +$30 | 10/1 |
-| (current live rule: same-day forecast at 12h) | | +$455 | +$65 | 11/0 |
+| current live rule: same-day forecast at 12h | 335 | +$455 | +$65 | 11/0 |
+| **both: readings checks + the 12h forecast check, margin 8c** | 679 | **+$487** | **+$97** | 10/1 |
+| both, margin 5c | 934 | +$508 | +$118 | 10/1 |
 
 The readings rule is about as good as the live forecast rule, and it has no
 look-ahead (the same-day forecast archive might be a little fresher than what we
 get live). Most of the gain comes from bets the readings have already killed (e.g.
 the high already passed our bracket) that the market still bids for.
+
+Running both rules together adds up: they catch mostly different bets (readings
+catch brackets already blown past; the fresh forecast catches shifts in the rest
+of the day). Part of the combo's gain comes from the same-day forecast check, which
+might be a little flattered by the archive.
 
 ## Status
 
