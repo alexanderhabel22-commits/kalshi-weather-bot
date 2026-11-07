@@ -107,8 +107,8 @@ max_week_contracts = 5000        # fair share of the flow (scale study)
 max_market_contracts = 200       # per-market ceiling (scale study)
 enabled = true
 live = true                      # REAL money (Alex, Nov 5 7 PM ET)
-contracts = 3                    # max contracts per word (also capped by max_contracts_per_order)
-word_pct = 0.05                  # size each word at 5% of the bankroll (~3 contracts at $50);
+contracts = 6                    # max contracts per word (doubled Nov 7, Alex: "up to you") (also capped by max_contracts_per_order)
+word_pct = 0.10                  # size each word at 10% of the bankroll (~6 contracts at $50; was 5%, doubled Nov 7);
                                  # raise `contracts` as the bankroll grows
 max_words_per_event = 3
 min_price = 0.75                 # NO price band
@@ -151,14 +151,14 @@ live = true                      # REAL money (Alex, Nov 5 7 PM ET)
 categories = ["Elections", "Politics", "Entertainment"]
 min_event_volume = 1000000       # contracts traded so far across the event's markets
 min_series_volume = 1000000      # only look at series that have traded 1M+ contracts in total
-contracts = 2
+contracts = 4                    # doubled Nov 7 (Alex: "up to you"); was 2
 max_markets_per_event = 2
 min_price = 0.85                 # favorite-side price band
 max_price = 0.96
 min_hours = 1                    # market closes 1 hour - 7 days from now
 max_hours = 168
 max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
-max_event_pct = 0.10             # at most 10% on one event
+max_event_pct = 0.15             # at most 15% on one event (was 10%; room for 2 markets at 4 contracts)
 
 [trading.locks]
 # Weather LOCKs, PAPER for now. Alex OK'd real money on Nov 5, then paused it the
@@ -193,3 +193,18 @@ max_open_pct = 0.15             # small test: at most 15% of the bankroll (~$7.5
 max_event_pct = 0.15
 exit = "model"                   # sell ~12h before close only if the fresh forecast says the bid is worth 8c+ more than holding
 exit_margin = 0.08
+
+[allocator]
+# Grades every strategy on profit per $1 risked (settled REAL-money results only,
+# bets on one event counted together, longshots trusted less because
+# they are noisier) and re-sizes them once a week (Alex, Nov 7). Never switches
+# a strategy off. See wxbot/allocator.py. Grades show in REPORT.md.
+enabled = true
+apply = false          # SHADOW: report only. true = scale live sizes (needs Alex's OK)
+hurdle = 0.03          # assume +3c per $1 until a strategy's record says otherwise
+prior_sd = 0.035       # ~100 settled favorite-style events = halfway to its own record
+floor = 0.25           # never below 1/4 of normal size (keeps building a record)
+ceiling = 2.0          # never above 2x normal size
+max_step = 0.25        # largest change per re-grade
+regrade_days = 7
+paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for new ideas
