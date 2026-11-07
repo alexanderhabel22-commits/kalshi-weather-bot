@@ -203,6 +203,19 @@ def valuers() -> dict:
     return found
 
 
+def shadows() -> dict:
+    """Strategies with a log-only exit candidate: NAME -> shadow(http, row, market, now)."""
+    import importlib
+    import pkgutil
+    from . import strats
+    found = {}
+    for mod in pkgutil.iter_modules(strats.__path__):
+        m = importlib.import_module(f"{strats.__name__}.{mod.name}")
+        if hasattr(m, "NAME") and hasattr(m, "shadow"):
+            found[m.NAME] = m.shadow
+    return found
+
+
 def model_exit(r: dict, m: dict | None, value: float, margin: float) -> tuple[float, str] | None:
     """Sell at the bid when the bid after the taker fee beats the model's chance for our
     side by `margin` (so a 50% bracket is held at 51c, sold at 50c + margin + fee)."""
@@ -453,7 +466,7 @@ def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple
 
 def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int:
     n = 0
-    vals = valuers()
+    vals, shads = valuers(), shadows()
     for r in rows:
         if r.get("status") != "filled" or r.get("mode") not in ("paper", "live"):
             continue
@@ -461,6 +474,11 @@ def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int
         m = kalshi.get_market(http, r["ticker"])
         if (m or {}).get("result"):
             continue                      # settling anyway
+        if m and r.get("strategy") in shads:
+            try:
+                shads[r["strategy"]](http, r, m, now)   # log only, never trades
+            except Exception as exc:
+                log.warning("exit shadow %s: %s", r["ticker"], exc)
         d = None
         vf = vals.get(r.get("strategy")) if str(sp.get("exit", "ev")).lower() == "model" else None
         v = None
