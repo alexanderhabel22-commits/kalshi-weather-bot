@@ -128,6 +128,11 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .rh .big{font-family:var(--mono);font-size:34px;font-weight:700;line-height:1.05;letter-spacing:-.02em;margin-top:4px}
 .rh .chg{font-family:var(--mono);font-size:13px;margin:4px 0 10px}
 .bcap{font-size:12px;font-family:var(--mono);color:var(--ink2);margin-top:6px;min-height:34px;line-height:1.45;word-break:break-word}
+.xmodal{position:fixed;inset:0;z-index:50;background:rgba(3,5,10,.82);display:flex;align-items:center;justify-content:center;padding:16px}
+.xmodal .box{background:var(--panel);border:1px solid var(--line2);border-radius:14px;padding:14px;width:100%;max-width:720px;max-height:90vh;display:flex;flex-direction:column;gap:10px}
+.xmodal textarea{flex:1;min-height:45vh;width:100%;box-sizing:border-box;background:#070a12;color:var(--ink);border:1px solid var(--line);border-radius:9px;padding:10px;font:11.5px/1.45 var(--mono);resize:none}
+.xmodal .row{display:flex;gap:8px}
+.xmodal .row button{all:unset;flex:1;text-align:center;padding:10px 0;border-radius:9px;border:1px solid var(--line2);font:700 12px var(--mono);color:var(--cyan);cursor:pointer}
 .seeall{all:unset;display:block;width:100%;box-sizing:border-box;text-align:center;margin-top:8px;padding:9px 0;border-radius:9px;border:1px solid var(--line2);font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan);cursor:pointer}
 .rng{display:flex;gap:4px;margin-top:6px}
 .rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
@@ -1120,6 +1125,58 @@ function mdToHtml(md){ // small renderer for the bot's own report: headings, tab
 }
 
 /* ---------------------------------------------------------------- shell */
+/* ---------------------------------------------------------------- export (read-only) */
+// One plain-text snapshot of everything the page knows right now, with the age of each source,
+// so it can be pasted to Claude. Nothing is sent anywhere: it is copied or downloaded on this device.
+function exportText(){
+  const now = new Date(), c = v => v == null || isNaN(v) ? "—" : Math.round(v * 100) + "¢", $2 = v => v == null ? "—" : money(v);
+  const age = t => t ? `${fdt(new Date(t))} (${ago(new Date(t))})` : "—";
+  const lastScan = (S.runs || []).find(r => r.name === "weather-scan" && r.status === "completed");
+  const qa = Object.values(S.quotes).reduce((a, q) => Math.max(a, q.at || 0), 0), b = S.data.broll || {}, st = S.data.tstate || {};
+  const L = [];
+  L.push("KALSHI BOT SNAPSHOT (exported from the dashboard)");
+  L.push(`exported:      ${fdt(now)} ET · ${now.toISOString()}`);
+  L.push(`bot data:      commit ${S.sha ? S.sha.slice(0, 7) : "branch (API rate-limited)"} · ${S.commit ? age(S.commit.at) + " · " + S.commit.msg : "—"}`);
+  L.push(`page synced:   ${age(S.lastData)} · last scan run ${lastScan ? age(pdate(lastScan.updated_at)) : "—"}`);
+  L.push(`prices:        ${S.noQuotes ? "bot snapshot (live relay unavailable)" : "live via relay"}, newest ${age(qa)}`);
+  L.push(`bankroll file: total $${num(b.total, 0).toFixed(2)} (cash $${num(b.cash, 0).toFixed(2)} + positions $${num(b.positions, 0).toFixed(2)}) saved ${age(b.at ? new Date(b.at) : null)} · used $${bankroll().toFixed(2)}`);
+  if (st.halted && Object.keys(st.halted).length) L.push(`HALTED: ${JSON.stringify(st.halted)}`);
+  if ((S.errors || []).length) L.push(`load errors: ${S.errors.slice(-5).join(" | ")}`);
+  for (const mode of ["live", "paper"]){
+    const rows = modeRows(mode), sx = stats(rows), mk = marked(rows);
+    const exp = rows.filter(r => r.src === "trader").reduce((a, r) => a + exposureOf(r), 0);
+    L.push("", `===== ${mode.toUpperCase()} =====`);
+    L.push(`P&L all time ${$2(sx.pnl)} · today ${$2(sx.todayPnl)} · open up/down at mid ${mk.priced.length ? $2(mk.tot) : "—"} on $${mk.cost.toFixed(2)} cost · money at risk $${exp.toFixed(2)} · held ${mk.held.length}`);
+    const held = mk.held.slice().sort((a, b2) => (a.close || 0) - (b2.close || 0));
+    L.push("", `HELD (${held.length}): ticker | side | filled/count @ price | bid/ask now | up/down | strategy | closes`);
+    held.forEach(r => { const q = sideQuote(r), u = unrealized(r), n = r.status === "filled" ? (r.filled || r.count) : r.filled;
+      L.push(`${r.ticker} | ${r.side.toUpperCase()} | ${n}/${r.count} @ ${c(r.price)} | ${q ? `${c(q.bid)}/${c(q.ask)} ${q.src} ${ago(new Date(q.at))}` : "no price"} | ${u == null ? "—" : money(u)} | ${r.strategy} | ${r.close ? fdt(r.close) : "—"}`); });
+    const resting = rows.filter(r => r.status === "open" && !(r.filled > 0));
+    L.push("", `RESTING, nothing filled (${resting.length}): ticker | side | count @ price | bid/ask now | strategy | placed`);
+    resting.forEach(r => { const q = sideQuote(r); L.push(`${r.ticker} | ${r.side.toUpperCase()} | ${r.count} @ ${c(r.price)} | ${q ? `${c(q.bid)}/${c(q.ask)}` : "no price"} | ${r.strategy} | ${r.placed ? fdt(r.placed) : "—"}`); });
+    const recent = sx.settled.filter(r => r.settled && now - r.settled < 2 * 864e5).sort((a, b2) => b2.settled - a.settled);
+    L.push("", `SETTLED last 48h (${recent.length}): ticker | side | n @ price | result | pnl | strategy | settled`);
+    recent.forEach(r => L.push(`${r.ticker} | ${r.side.toUpperCase()} | ${Math.max(1, r.filled || r.count)} @ ${c(r.price)} | ${r.result || "—"} | ${money(r.pnl)} | ${r.strategy} | ${fdt(r.settled)}`));
+  }
+  L.push("", "Note: orders, fills, settlements and the bankroll come from the bot's last trade run (every ~5 min); prices come from Kalshi through the relay every 30 s.");
+  return L.join("\n");
+}
+function openExport(){
+  const txt = exportText(), m = document.createElement("div");
+  m.className = "xmodal";
+  m.innerHTML = `<div class="box"><div class="lbl">Snapshot for Claude · ${esc(fdt(new Date()))}</div><textarea readonly></textarea>
+    <div class="row"><button data-a="copy">Copy</button><button data-a="dl">Download .txt</button><button data-a="x">Close</button></div></div>`;
+  m.querySelector("textarea").value = txt;
+  m.onclick = async e => {
+    const a = e.target.dataset && e.target.dataset.a;
+    if (e.target === m || a === "x") return m.remove();
+    if (a === "copy"){ let ok = false; try { await navigator.clipboard.writeText(txt); ok = true; } catch(err){ const t = m.querySelector("textarea"); t.select(); try { ok = document.execCommand("copy"); } catch(e2){} }
+      e.target.textContent = ok ? "Copied ✓" : "Select all & copy"; }
+    if (a === "dl"){ const u = URL.createObjectURL(new Blob([txt], {type:"text/plain"})), l = document.createElement("a");
+      l.href = u; l.download = "kalshi-snapshot-" + new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-") + ".txt"; document.body.appendChild(l); l.click(); l.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000); }
+  };
+  document.body.appendChild(m);
+}
 function renderStamp(){
   const lastScan = (S.runs || []).find(r => r.name === "weather-scan" && r.status === "completed");
   const t = lastScan ? pdate(lastScan.updated_at) : S.commit ? S.commit.at : null, age = t ? (Date.now() - t) / 60e3 : null;
@@ -1127,8 +1184,9 @@ function renderStamp(){
   const nx = Math.max(0, Math.round((S.lastData + DATA_MS - Date.now()) / 1000));
   const qa = Object.values(S.quotes).reduce((a, q) => Math.max(a, q.at || 0), 0);
   const px = !qa ? "" : S.noQuotes ? `prices ${ago(qa).replace(" ago", "")} old · ` : `<span class="pos">prices live</span> · `;
-  $("#stamp").innerHTML = `scan ${t ? ago(t) : "—"}<button id="rf" aria-label="Refresh">⟳</button><br><span class="mute">${px}synced ${S.lastData ? ago(S.lastData) : "—"} · next ${Math.floor(nx / 60)}:${String(nx % 60).padStart(2, "0")}</span>`;
+  $("#stamp").innerHTML = `scan ${t ? ago(t) : "—"}<button id="rf" aria-label="Refresh">⟳</button><button id="xp" aria-label="Export for Claude" title="Export a snapshot to paste to Claude">⇪</button><br><span class="mute">${px}synced ${S.lastData ? ago(S.lastData) : "—"} · next ${Math.floor(nx / 60)}:${String(nx % 60).padStart(2, "0")}</span>`;
   $("#rf").onclick = () => refresh(true);
+  $("#xp").onclick = openExport;
 }
 function renderAll(){
   const m = model(), live = m.rows.filter(r => r.mode === "live").length + m.manual.length, paper = modeRows("paper").length;
