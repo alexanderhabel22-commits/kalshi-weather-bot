@@ -18,6 +18,7 @@ def cfg(mode="paper", bankroll=40.0, **mentions_kw):
     c.raw["trading"]["mode"] = mode
     for name in ("mentions", "favorites", "macro_fade", "locks", "weather"):
         c.raw["trading"][name]["live"] = False      # tests opt in to real money explicitly
+    c.raw["trading"]["mentions"].update({"contracts": 3, "word_pct": 0.05})   # sizes these tests were written for
     c.raw["trading"]["mentions"].update(mentions_kw)
     return c
 
