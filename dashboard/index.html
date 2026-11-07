@@ -659,15 +659,15 @@ function moreBtn(k, label){ return `<button class="seeall" data-more="${k}">${is
 // (data/marks.json, saved by the bot every 5 min); a bet filled within the hour starts from its cost
 function moversHTML(rows){
   const M = ((S.data.marks || {}).marks) || {}, now = Date.now(), cut = now - 3600e3, c = v => Math.round(v * 100) + "¢";
-  const mv = [];
+  const mv = []; let oldest = now;
   for (const r of marked(rows).priced){
     const n = r.status === "filled" ? (r.filled || r.count) : r.filled, m = markPrice(r), fill = +(r.filledAt || r.placed) || 0;
     let base = null, from = "";
     if (fill > cut){ base = r.price; from = "filled " + ago(new Date(fill)); }
     else { const pts = M[r.ticker + "|" + r.side] || []; let p = null;
       for (const q of pts){ if (q[0] * 1000 <= cut) p = q; else break; }
-      if (!p && pts.length && pts[0][0] * 1000 <= cut + 15 * 60e3) p = pts[0];
-      if (p) base = p[1]; }
+      if (!p && pts.length) p = pts[0];  // less than an hour saved yet: compare with the oldest point
+      if (p){ base = p[1]; oldest = Math.min(oldest, Math.max(p[0] * 1000, cut)); } }
     if (base == null || m == null) continue;
     mv.push({r, d:(m - base) * n, base, m, from});
   }
@@ -676,7 +676,8 @@ function moversHTML(rows){
   const col = (label, l, k) => `<div style="min-width:0"><div class="lbl ${k}" style="margin-bottom:2px">${label}</div>${l.length ? l.map(item).join("") : `<div class="mute" style="font-size:12px;padding:6px 0">${k === "pos" ? "Nothing up" : "Nothing down"} this hour</div>`}</div>`;
   const body = mv.length ? `<div class="grid cols2" style="gap:4px 18px">${col("▲ Up the most", up, "pos")}${col("▼ Down the most", dn, "neg")}</div>`
     : `<div class="mute" style="font-size:12px">Builds up over the next hour: the bot saves each bet's price every 5 min.</div>`;
-  return `<div class="lbl" style="margin:16px 0 4px">Biggest movers <span class="mute" style="text-transform:none;letter-spacing:0">· last hour · at mid</span></div>${body}`;
+  const mins = Math.round((now - oldest) / 60e3), win = mins >= 55 ? "last hour" : mins >= 1 ? `last ${mins} min (full hour once history builds)` : "last hour";
+  return `<div class="lbl" style="margin:16px 0 4px">Biggest movers <span class="mute" style="text-transform:none;letter-spacing:0">· ${win} · at mid</span></div>${body}`;
 }
 function winsHTML(tr, strats){
   const w = tr.filter(t => t.win).sort((a, b) => b.pnl - a.pnl).slice(0, 3);
