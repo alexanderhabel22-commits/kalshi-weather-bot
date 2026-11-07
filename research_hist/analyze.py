@@ -28,13 +28,15 @@ def stat(d, r):
     if len(d) == 0:
         return np.nan, np.nan, 0.0, 0
     w = d["count"].to_numpy(float)
-    g = pd.DataFrame({"e": d["event"].to_numpy(), "s": r * w, "n": w}).groupby("e").sum()
-    N = g.n.sum()
+    _, inv = np.unique(d["event"].to_numpy(), return_inverse=True)
+    S = np.bincount(inv, weights=r * w)
+    n = np.bincount(inv, weights=w)
+    N = n.sum()
     if N <= 0:
         return np.nan, np.nan, 0.0, 0
-    mu = g.s.sum() / N
-    se = np.sqrt(((g.s - mu * g.n) ** 2).sum()) / N
-    return mu * 100, se * 100, N, len(g)
+    mu = S.sum() / N
+    se = np.sqrt(((S - mu * n) ** 2).sum()) / N
+    return mu * 100, se * 100, N, len(n)
 
 
 def fmt(s):
@@ -71,8 +73,11 @@ def table(df, by, title, roles=("taker", "maker")):
 def main():
     df = pd.read_parquet(sys.argv[1])
     mt = pd.read_parquet(sys.argv[1].replace(".parquet", "_markets.parquet"))
-    for c in ("event", "cat", "grp", "series", "stype", "trunc", "mvol"):
-        df[c] = mt[c].to_numpy()[df.mkt.to_numpy()]
+    mi = df.mkt.to_numpy()
+    df["event"] = pd.factorize(mt.event)[0].astype(np.int32)[mi]
+    for c in ("cat", "grp", "series", "stype"):
+        cc = pd.Categorical(mt[c])
+        df[c] = pd.Categorical.from_codes(cc.codes[mi], cc.categories)
     df["qb"] = pd.cut(df.q, QB, right=False)
     df["qb5"] = pd.cut(df.q, QB5, right=False)
     df["tb"] = pd.cut(df.ttc, TB, labels=TBL)
@@ -80,16 +85,17 @@ def main():
           f"{mt.event.nunique():,}; truncated tapes {mt.trunc.mean():.1%}; "
           f"contracts {df['count'].sum() / 1e6:.0f}M; OOS share {df.oos.mean():.0%}")
 
-    big = df.groupby("cat")["count"].sum().sort_values(ascending=False)
+    big = df.groupby("cat", observed=True)["count"].sum().sort_values(ascending=False)
     cats = list(big[big > 2e5].index)
     dc = df[df.cat.isin(cats)]
+    dc = dc.assign(cat=dc.cat.cat.remove_unused_categories())
     table(dc, ["cat"], "1. All trades by category")
     table(dc, ["cat", "qb"], "2. By category x price paid by the taker")
     sp = df[df.cat == "Sports"]
     table(sp, ["stype"], "3a. Sports by market type")
     table(sp, ["stype", "tb"], "3b. Sports type x time to close")
     table(sp, ["stype", "qb5"], "3c. Sports type x price")
-    top_sports = sp.groupby("grp")["count"].sum().sort_values(ascending=False).head(25).index
+    top_sports = sp.groupby("grp", observed=True)["count"].sum().sort_values(ascending=False).head(25).index
     table(sp[sp.grp.isin(top_sports)], ["grp"], "3d. Top 25 sports groups by volume")
     table(dc, ["cat", "tb"], "4. Category x time to close")
 
@@ -112,7 +118,7 @@ def main():
     print("| cat | min size | follow IS | follow OOS | fade IS | fade OOS |\n|---|---|---|---|---|---|")
     for size in (1000, 5000):
         b = dc[(dc["count"] >= size) & (dc.q > .05) & (dc.q < .95)]
-        for c, d in list(b.groupby("cat")) + [("ALL", b)]:
+        for c, d in list(b.groupby("cat", observed=True)) + [("ALL", b)]:
             row = []
             for kind in ("follow", "fade"):
                 if kind == "follow":
@@ -131,7 +137,7 @@ def main():
     print("\n### 8. Series where 95c+ favourites (last 24h) lose more than priced (taker)\n")
     fav = df[(df.q >= .95) & (df.ttc < 86400)]
     rows = []
-    for s, d in fav.groupby("series"):
+    for s, d in fav.groupby("series", observed=True):
         mu, se, n, e = stat(d, ret_taker(d))
         if e >= 15:
             rows.append((mu, se, n, e, s, d.cat.iloc[0], d.oos.mean()))
