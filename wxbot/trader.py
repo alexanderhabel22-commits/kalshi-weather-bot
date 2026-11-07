@@ -41,8 +41,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import kalshi, notify
-from .daybefore import fill_flags, trade_prints
+from . import allocator, kalshi, notify
+from .daybefore import fill_flags, load_orders as weather_paper_orders, trade_prints
 from .kalshi_api import KalshiClient, OrderRejected, check_order, order_fill_count
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
 
@@ -884,11 +884,26 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
 
     blocked = {m: _stops(m, rows, state, t, now, midnight, today, client, cfg, http, dry_run, out)
                for m in ("paper", "live")}
+    order_names = list(strategies())
+    ap = allocator.params(cfg)
+    if ap["enabled"]:
+        # grade every strategy on its settled results; re-allocate once a week.
+        # Shadow (apply = false) only records the grades; sizing is unchanged.
+        try:
+            alloc = allocator.update(cfg, load_all(), weather_paper_orders(), list(specs), now,
+                                     state.setdefault("allocator", {}))
+            specs = allocator.apply_to(specs, alloc, ap)
+            order_names = allocator.order(order_names, alloc, ap)
+            out["allocation"] = alloc.get("multipliers", {})
+        except Exception as exc:      # the allocator must never stop trading
+            log.warning("allocator failed: %s", exc)
     totals = {m: realized(rows, mode=m) + archived_realized(m) for m in ("paper", "live")}
 
     planned: list[Intent] = []
     plan_mode: dict[int, str] = {}
-    for name, propose in strategies().items():
+    props = strategies()
+    for name in order_names:
+        propose = props[name]
         mode = modes.get(name)
         if mode is None or blocked[mode]:
             continue
@@ -1046,4 +1061,15 @@ def report_section(rows: list[dict], cfg: Config) -> list[str]:
                      f"| {sum(int(_f(r.get('filled'))) > 0 for r in rs)} "
                      f"| {sum(r['status'] == 'settled' for r in rs)} "
                      f"| ${realized(rs):+.2f} |")
-    return lines + [""]
+    lines.append("")
+    ap = allocator.params(cfg)
+    if ap["enabled"]:
+        try:
+            store = dict(state.get("allocator", {}) or {"graded_at": "9999-01-01T00:00:00+00:00"})
+            names = [n for n in strategies() if (cfg.raw.get("trading", {}).get(n) or {}).get("enabled", True)]
+            alloc = allocator.update(cfg, load_all(), weather_paper_orders(), names,
+                                     datetime.now(ZoneInfo("UTC")), store)
+            lines += allocator.report_section(alloc)
+        except Exception as exc:
+            log.warning("allocator report failed: %s", exc)
+    return lines

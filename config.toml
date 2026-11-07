@@ -193,3 +193,18 @@ max_open_pct = 0.15             # small test: at most 15% of the bankroll (~$7.5
 max_event_pct = 0.15
 exit = "model"                   # sell ~12h before close only if the fresh forecast says the bid is worth 8c+ more than holding
 exit_margin = 0.08
+
+[allocator]
+# Grades every strategy on profit per $1 risked (settled results, paper at half
+# weight, bets on one event counted together, longshots trusted less because
+# they are noisier) and re-sizes them once a week (Alex, Nov 7). Never switches
+# a strategy off. See wxbot/allocator.py. Grades show in REPORT.md.
+enabled = true
+apply = false          # SHADOW: report only. true = scale live sizes (needs Alex's OK)
+hurdle = 0.03          # assume +3c per $1 until a strategy's record says otherwise
+prior_sd = 0.035       # ~100 settled favorite-style events = halfway to its own record
+floor = 0.25           # never below 1/4 of normal size (keeps building a record)
+ceiling = 2.0          # never above 2x normal size
+max_step = 0.25        # largest change per re-grade
+regrade_days = 7
+paper_weight = 0.5
