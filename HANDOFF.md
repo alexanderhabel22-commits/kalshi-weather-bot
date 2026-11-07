@@ -9,8 +9,8 @@ runs a bot that watches Kalshi daily high/low temperature markets and sends
 phone alerts with an exact trade. Alex places every trade himself in the
 Kalshi app. The bot doesn't trade yet, but Alex said (Nov 4) he's fine with a
 bot trading: going live (Kalshi API key as a GitHub secret, small caps) is
-his call once paper results earn it. It is a small real-money test (~$37 bankroll,
-started Nov 3, 2026) in place of paper trading; Alex adds money only if the
+his call once paper results earn it. It is a small real-money test (~$37 bankroll
+started Nov 3, 2026; topped up to $49.71 on Nov 5) in place of paper trading; Alex adds money only if the
 record earns it. Be candid about odds and risk; no hype.
 
 ## Where everything lives
@@ -147,11 +147,27 @@ record earns it. Be candid about odds and risk; no hype.
   paper / live. A strategy trades real money only if mode is live AND its
   table says `live = true`; otherwise paper. New edges start on paper.
 - Limits are % of bankroll: open 60%, daily stop 10%, total stop 25% (halt +
-  cancel all; clear with reset_halt). Limit, post-only orders only; one order
+  cancel all; clear with reset_halt). Limit orders only (post-only, except taker = true strategies: LOCKs); one order
   per market+side; per-strategy and per-event caps; ntfy on fills and stops.
 - Live needs secrets KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY. Ledger:
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
+- **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
+  live = true for mentions, favorites, macro_fade, and weather day-before (small test,
+  15% cap). LOCKs stay
+  paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
+  -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
+  orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
+  GitHub variable TRADING_MODE=off.
+- **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
+  and `[trading.locks] live = true`; every other strategy stays paper. The scan
+  writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert
+  limits don't apply); `wxbot/strats/weather_lock.py` re-reads the market and
+  buys at the live ASK (immediate-or-cancel, never rests) while 99.5% - ask -
+  taker fee >= min_edge_lock and ask is 20-97c. Size = the alert's Kelly sizing,
+  shrunk to fit the 20% event / 75% live caps and the account's cash; loss stops
+  apply. ntfy "BOUGHT" on each fill. Until the key secrets exist, live
+  strategies are skipped (logged). Kill switch: TRADING_MODE variable = off.
 - Strategies: mentions (paper, Nov 5), weather day-before (off until verdict). Mentions settings re-tuned Nov 5 by walk-forward (research_mn/RESULTS.md): min_volume 1000, size 5% of bankroll per word.
 
 - **Paper trading, Nov 5 → weekend Nov 7-8:** `wxbot/daybefore.py` rests paper
@@ -232,7 +248,10 @@ chats can't search it), so this section is the bridge.
   `data/my_trades.csv`).
 - Ignore EDGE. Don't size above the bot. If a LOCK ever loses, stop and
   diagnose before the next one.
-- Update `BANKROLL` only on a deposit/withdrawal or a ~20% balance change.
+- Bankroll is automatic (Nov 5): each trade run reads Kalshi cash + open
+  positions (wxbot/balance.py -> data/bankroll.json) and every size, cap and
+  stop scales to it. Deposits change limits, never P&L. `BANKROLL` /
+  `[account] bankroll` are only the fallback if the read fails for 6h.
 - When to expect locks: daily-low locks ~7–10 AM ET (quiet hours end at 7);
   daily-high locks ~1–5 PM ET for East Coast cities, up to ~7–8 PM ET for
   the West.

@@ -5,6 +5,7 @@ import logging
 import math
 import re
 from datetime import date
+from urllib.parse import quote
 
 from .util import Http, HttpError
 
@@ -204,5 +205,10 @@ def taker_fee(contracts: int, p: float, rate: float = FEE_RATE) -> float:
     return math.ceil(round(raw * 100, 6)) / 100.0
 
 
-def market_url(series: str) -> str:
-    return f"https://kalshi.com/markets/{series.lower()}"
+def market_url(ticker: str) -> str:
+    """Kalshi web link for a market (or event) ticker.
+
+    kalshi.com/markets/<series> without its slug shows "something went wrong";
+    kalshi.com/events/<ticker> resolves to the right page (same format as the dashboard).
+    """
+    return f"https://kalshi.com/events/{quote(ticker.lower(), safe='')}"

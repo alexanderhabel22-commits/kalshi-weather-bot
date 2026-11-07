@@ -13,6 +13,8 @@ Modes ([trading] mode, or the TRADING_MODE GitHub variable, which wins):
 
 Hard rules, whatever a strategy asks for:
   - limit orders only, post-only (never cross the spread), price 1-99c,
+    except strategies whose table says taker = true (LOCKs): those buy at the
+    current ask with immediate-or-cancel orders that never rest
     whole contracts, at most max_contracts_per_order (and the client's ceiling)
   - one order per market and side (no duplicates, ever)
   - max open dollars overall and per strategy, max per event
@@ -43,7 +45,7 @@ ORDERS = DATA_DIR / "trade_orders.csv"
 STATE = DATA_DIR / "trader_state.json"
 FIELDS = ["id", "client_id", "order_id", "mode", "strategy", "placed_at", "ticker", "event",
           "title", "side", "price", "count", "filled", "status", "close", "result", "pnl",
-          "settled_at", "note", "filled_at"]
+          "settled_at", "note", "filled_at", "fee"]
 # status: resting -> filled (all filled, waiting for result) -> settled
 #         resting -> done-unfilled / cancelled ; settled/partial handled by `filled`
 OPEN = ("resting", "filled")
@@ -55,7 +57,12 @@ DEFAULTS = {"mode": "off", "max_contracts_per_order": 3, "max_orders_per_run": 1
             "max_event_pct": 0.20,        # at most 20% on any one event (all strategies)
             "paper_max_open_pct": 1.00,   # paper may use the whole bankroll (Alex, Nov 5)
             "daily_loss_pct": 0.10,       # down 10% today -> no new orders until tomorrow
-            "total_loss_pct": 0.25}       # down 25% overall -> HALT and cancel everything
+            "total_loss_pct": 0.25,       # down 25% overall -> HALT and cancel everything
+            # capacity (scale study, Nov 5): never be more than ~10% of a market's
+            # traded volume, so we don't become the price as the bankroll grows
+            "max_volume_share": 0.10,
+            "min_market_contracts": 50,   # always allowed up to this per market
+            "max_market_contracts": 1000}  # never more than this in one market
 PCT_KEYS = {"max_open_pct": "max_open_dollars", "max_event_pct": "max_event_dollars"}
 
 
@@ -70,6 +77,8 @@ class Intent:
     close: str = ""
     title: str = ""
     note: str = ""
+    volume: float = 0.0     # contracts the market has traded so far (0 = unknown)
+    taker: bool = False     # buy now at this price (immediate-or-cancel), only if the strategy allows
 
 
 @dataclass
@@ -180,6 +189,36 @@ def strategies() -> dict:
     return found
 
 
+def valuers() -> dict:
+    """Strategies that can re-score a held position: NAME -> value(http, row, market, now),
+    returning our side's chance now, or None to fall back to the usual exit rule."""
+    import importlib
+    import pkgutil
+    from . import strats
+    found = {}
+    for mod in pkgutil.iter_modules(strats.__path__):
+        m = importlib.import_module(f"{strats.__name__}.{mod.name}")
+        if hasattr(m, "NAME") and hasattr(m, "value"):
+            found[m.NAME] = m.value
+    return found
+
+
+def model_exit(r: dict, m: dict | None, value: float, margin: float) -> tuple[float, str] | None:
+    """Sell at the bid when the bid after the taker fee beats the model's chance for our
+    side by `margin` (so a 50% bracket is held at 51c, sold at 50c + margin + fee)."""
+    if not m:
+        return None
+    yb, ya = kalshi.price(m, "yes_bid"), kalshi.price(m, "yes_ask")
+    if yb is None or ya is None or not (0 < yb < ya <= 1):
+        return None
+    bid = yb if r.get("side") == "yes" else round(1 - ya, 2)
+    if not (0.01 <= bid <= 0.99):
+        return None
+    if bid - _fee(bid) >= value + margin:
+        return bid, f"bid {bid:.2f} beats model {value:.2f} + {margin:.2f}"
+    return None
+
+
 # ---------------------------------------------------------------- checks
 
 def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
@@ -191,6 +230,8 @@ def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
         return str(exc)
     if intent.count > int(t["max_contracts_per_order"]) or intent.count > int(sp.get("max_contracts", 99)):
         return "too many contracts"
+    if intent.taker and not sp.get("taker"):
+        return "taker orders not allowed for this strategy"
     lo, hi = float(sp.get("min_price", 0.01)), float(sp.get("max_price", 0.99))
     if not (lo - 1e-9 <= intent.price <= hi + 1e-9):
         return "price outside strategy band"
@@ -216,8 +257,35 @@ def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
     return None
 
 
-def client_id(intent: Intent, mode: str) -> str:
-    h = hashlib.sha1(f"{mode}|{intent.strategy}|{intent.ticker}|{intent.side}".encode()).hexdigest()
+def capacity(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
+             planned: list[Intent]) -> tuple[int, str]:
+    """How many contracts this intent may still add, from the capacity limits:
+    our share of the market's traded volume (max_volume_share, at least
+    min_market_contracts, at most max_market_contracts) and the strategy's
+    weekly contract ceiling (max_week_contracts, its fair share of the flow)."""
+    share = float(sp.get("max_volume_share", t["max_volume_share"]))
+    floor = int(sp.get("min_market_contracts", t["min_market_contracts"]))
+    ceil_ = int(sp.get("max_market_contracts", t["max_market_contracts"]))
+    lim = min(ceil_, max(floor, int(share * float(intent.volume or 0))))
+    held = sum(int(_f(r.get("count"))) for r in rows if r.get("ticker") == intent.ticker
+               and r.get("status") in ("resting", "filled")) + \
+        sum(p.count for p in planned if p.ticker == intent.ticker)
+    room, why = lim - held, f"market capacity ({lim} contracts)"
+    week = sp.get("max_week_contracts")
+    if week is not None:
+        since = now - timedelta(days=7)
+        used = sum(int(_f(r.get("count"))) for r in rows if r.get("strategy") == intent.strategy
+                   and (parse_iso(r.get("placed_at")) or since) > since) + \
+            sum(p.count for p in planned if p.strategy == intent.strategy)
+        if int(week) - used < room:
+            room, why = int(week) - used, f"weekly capacity ({int(week)} contracts)"
+    return max(0, room), why
+
+
+def client_id(intent: Intent, mode: str, now: datetime | None = None) -> str:
+    # taker orders may be retried next scan (nothing filled), so they get a fresh id
+    salt = f"|{now:%Y%m%dT%H%M%S}" if intent.taker and now else ""
+    h = hashlib.sha1(f"{mode}|{intent.strategy}|{intent.ticker}|{intent.side}{salt}".encode()).hexdigest()
     return f"wx-{intent.strategy[:8]}-{h[:20]}"
 
 
@@ -268,6 +336,43 @@ def crossed(r: dict, m: dict | None) -> bool:
     return yb is not None and 0 < yb and 1 - yb <= price + 1e-9
 
 
+def net_pairs(rows: list[dict], now: datetime) -> int:
+    """Kalshi nets YES against NO in the same market: holding both pays $1 per pair at
+    once and the position closes. Book that like the account does (the weather
+    strategy can buy both sides when the spread is wide: 27c YES + 55c NO = +18c)."""
+    n = 0
+    held = lambda r: (r.get("mode") == "live" and r.get("status") in ("filled", "resting")  # noqa: E731
+                      and int(_f(r.get("filled"))) > 0)
+    by: dict[str, dict[str, list]] = {}
+    for r in rows:
+        if held(r):
+            by.setdefault(r["ticker"], {}).setdefault(r["side"], []).append(r)
+    for tk, sides in by.items():
+        ys, ns = sides.get("yes", []), sides.get("no", [])
+        while ys and ns:
+            y, o = ys[0], ns[0]
+            k = min(int(_f(y["filled"])), int(_f(o["filled"])))
+            each = k * (1.0 - _f(y["price"]) - _f(o["price"])) / 2
+            for leg, other, lst in ((y, o, ys), (o, y, ns)):
+                part = leg
+                if int(_f(leg["filled"])) > k or leg["status"] == "resting":
+                    # keep the rest of this order open on its row; book the netted part apart
+                    leg["filled"] = int(_f(leg["filled"])) - k
+                    leg["count"] = int(_f(leg["count"])) - k
+                    part = dict(leg, id=leg["id"] + "|net", filled=k, count=k, order_id="")
+                    rows.append(part)
+                    if int(_f(leg["filled"])) == 0:
+                        lst.pop(0)
+                else:
+                    lst.pop(0)
+                part.update(status="settled", result="netted", pnl=f"{each:.2f}",
+                            settled_at=now.isoformat(timespec="seconds"),
+                            note=(part.get("note") or "") + f" | netted {k} vs {other['side'].upper()} "
+                                 f"@ {_f(other['price']):.2f}: Kalshi paid $1 per pair")
+            n += k
+    return n
+
+
 def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
     n = 0
     for r in rows:
@@ -299,7 +404,7 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
         r["result"] = res
         r["settled_at"] = now.isoformat(timespec="seconds")
         if filled:
-            pnl = filled * ((1.0 if res == r["side"] else 0.0) - _f(r["price"]))
+            pnl = filled * ((1.0 if res == r["side"] else 0.0) - _f(r["price"])) - _f(r.get("fee"))
             r["pnl"] = f"{pnl:.2f}"
             r["status"] = "settled"
             if r["mode"] == "live":
@@ -348,6 +453,7 @@ def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple
 
 def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int:
     n = 0
+    vals = valuers()
     for r in rows:
         if r.get("status") != "filled" or r.get("mode") not in ("paper", "live"):
             continue
@@ -355,7 +461,18 @@ def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int
         m = kalshi.get_market(http, r["ticker"])
         if (m or {}).get("result"):
             continue                      # settling anyway
-        d = exit_decision(r, m, sp, r["mode"] in cap_blocked)
+        d = None
+        vf = vals.get(r.get("strategy")) if str(sp.get("exit", "ev")).lower() == "model" else None
+        v = None
+        if vf and m:
+            try:
+                v = vf(http, r, m, now)
+            except Exception as exc:      # a model hiccup must never block the other exits
+                log.warning("exit value %s: %s", r["ticker"], exc)
+        if v is not None:
+            d = model_exit(r, m, v, float(sp.get("exit_margin", 0.08)))
+        elif str(sp.get("exit", "ev")).lower() != "model":
+            d = exit_decision(r, m, sp, r["mode"] in cap_blocked)
         if not d:
             continue
         price, why = d
@@ -394,7 +511,7 @@ def cancel_all(client: KalshiClient | None, rows: list[dict], mode: str) -> int:
             continue
         if mode == "live" and r.get("mode") == "live" and client and r.get("order_id"):
             try:
-                client.cancel(r["order_id"])
+                client.cancel(r["order_id"], r.get("ticker", ""))
             except HttpError as exc:
                 log.warning("cancel %s: %s", r["order_id"], exc)
                 continue
@@ -405,6 +522,32 @@ def cancel_all(client: KalshiClient | None, rows: list[dict], mode: str) -> int:
 
 
 # ---------------------------------------------------------------- main
+
+def key_check(state: dict, http, now: datetime) -> None:
+    """While everything is paper: if the API key secrets exist, read the account
+    balance once every 6 hours (read-only, no orders) to prove the key works
+    before go-live. Result in data/trader_state.json "key_check"."""
+    last = parse_iso((state.get("key_check") or {}).get("at"))
+    if last and now - last < timedelta(hours=6):
+        return
+    try:
+        client = KalshiClient.from_env(http)
+    except Exception as exc:          # bad PEM text, wrong key type...
+        state["key_check"] = {"at": now.isoformat(timespec="seconds"), "ok": False,
+                              "error": f"key could not be loaded: {type(exc).__name__}"}
+        log.warning("Kalshi key check: %s", state["key_check"]["error"])
+        return
+    if client is None:
+        return
+    try:
+        bal = client.balance()
+        state["key_check"] = {"at": now.isoformat(timespec="seconds"), "ok": True, "balance": round(bal, 2)}
+        log.info("Kalshi key check: OK, balance $%.2f", bal)
+    except Exception as exc:
+        state["key_check"] = {"at": now.isoformat(timespec="seconds"), "ok": False,
+                              "error": str(exc)[:200]}
+        log.warning("Kalshi key check failed: %s", exc)
+
 
 def strategy_mode(global_mode: str, sp: dict) -> str | None:
     """Each strategy runs on paper until it is explicitly cleared for live
@@ -465,12 +608,15 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
     state = read_json(STATE, {}) or {}
     if not isinstance(state.get("halted", {}), dict):
         state["halted"] = {}
+    if not need_live and client is None and not dry_run:
+        key_check(state, http, now)
     tz = ZoneInfo(cfg.tz)
     today = now.astimezone(tz).date().isoformat()
     midnight = now.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
 
     if client is not None:
         sync_live(client, rows, cfg, http, dry_run)
+    net_pairs(rows, now)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") in OPEN for r in rows):
         try:
             settle(http, rows, now, cfg, dry_run)
@@ -498,15 +644,41 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             if len(planned) >= int(t["max_orders_per_run"]):
                 break
             same = [r for r in rows if r.get("mode") == mode]
-            why = vet(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode], mode)
+            room, cwhy = capacity(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode])
+            if room < 1:
+                out["skipped"].append((it.ticker, it.side, cwhy))
+                continue
+            if it.count > room:
+                it.count = room             # shrink to what the market can take
+            others = [p for p in planned if plan_mode[id(p)] == mode]
+            why = vet(it, same, t, sp, now, others, mode)
+            while it.taker and why and "cap" in why and it.count > 1:
+                it.count -= 1               # LOCKs shrink to fit the caps instead of skipping
+                why = vet(it, same, t, sp, now, others, mode)
             if why:
                 out["skipped"].append((it.ticker, it.side, why))
                 continue
             planned.append(it)
             plan_mode[id(it)] = mode
+    cash = None
+    if client is not None and not dry_run and any(plan_mode[id(p)] == "live" for p in planned):
+        try:
+            cash = client.balance()     # never spend more than the account holds
+        except Exception as exc:
+            log.warning("balance check failed: %s", exc)
+            cash = 0.0                   # can't see the balance: no live orders this run
+            out["stops"].append(f"balance check failed: {exc}")
+    rejected_live: list[str] = []
     for it in planned:
         mode = plan_mode[id(it)]
-        row = {"id": f"{it.ticker}|{it.side}", "client_id": client_id(it, mode), "mode": mode,
+        if mode == "live" and cash is not None:
+            unit = it.price + (kalshi.fee_per_contract(it.price) if it.taker else 0.0)
+            fit = int((cash + 1e-9) // unit)
+            if fit < 1:
+                out["skipped"].append((it.ticker, it.side, f"not enough cash (${cash:.2f})"))
+                continue
+            it.count = min(it.count, fit)
+        row = {"id": f"{it.ticker}|{it.side}", "client_id": client_id(it, mode, now), "mode": mode,
                "strategy": it.strategy, "placed_at": now.isoformat(timespec="seconds"),
                "ticker": it.ticker, "event": it.event, "title": it.title, "side": it.side,
                "price": f"{it.price:.2f}", "count": it.count, "filled": 0,
@@ -518,14 +690,48 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             continue
         if mode == "live":
             try:
-                o = client.place_limit(it.ticker, it.side, it.price, it.count, row["client_id"])
+                if it.taker:
+                    o = client.buy_now(it.ticker, it.side, it.price, it.count, row["client_id"])
+                else:
+                    o = client.place_limit(it.ticker, it.side, it.price, it.count, row["client_id"])
             except (HttpError, OrderRejected) as exc:
                 log.warning("order %s %s rejected: %s", it.ticker, it.side, exc)
+                if "post only cross" in str(exc):
+                    # the price moved onto our bid since the strategy priced it; Kalshi
+                    # refused it so we never pay the ask. Normal, not worth a push.
+                    out["skipped"].append((it.ticker, it.side, "price moved (post-only cross)"))
+                    continue
                 out["skipped"].append((it.ticker, it.side, f"rejected: {exc}"))
+                rejected_live.append(f"{it.strategy} {it.ticker}: {str(exc)[:120]}")
                 continue
             row["order_id"] = o.get("order_id", "")
+        if it.taker:
+            # immediate-or-cancel: what filled is ours, the rest is already cancelled
+            got = order_fill_count(o, it.count) if mode == "live" else it.count
+            if got < 1:
+                out["skipped"].append((it.ticker, it.side, "nothing left at the ask"))
+                continue
+            fee = kalshi.taker_fee(got, it.price)
+            row.update(count=got, filled=got, status="filled", fee=f"{fee:.2f}",
+                       filled_at=now.isoformat(timespec="seconds"))
+            if mode == "live":
+                cash = (cash or 0.0) - got * it.price - fee
+                _alert(http, cfg, f"BOUGHT: {it.side.upper()} {got} @ {round(it.price * 100)}¢",
+                       f"{it.title or it.ticker}\n{it.strategy} · real money · ${got * it.price + fee:.2f}"
+                       f" incl. ${fee:.2f} fee", dry_run, 4, ["moneybag"])
+        elif mode == "live" and cash is not None:
+            cash -= it.count * it.price
         rows.append(row)
         out["placed"].append(row)
+
+    if rejected_live:
+        # Kalshi refused real orders: tell Alex (at most once every 3 hours)
+        last = parse_iso(state.get("reject_alert_at"))
+        if not last or now - last >= timedelta(hours=3):
+            state["reject_alert_at"] = now.isoformat(timespec="seconds")
+            _alert(http, cfg, f"Kalshi rejected {len(rejected_live)} live order(s)",
+                   "\n".join(rejected_live[:4]) + "\nNothing was bought for these. Other orders still go out; "
+                   "set TRADING_MODE=off to stop everything.", dry_run, 4, ["warning"])
 
     # ---- early exits (judgement: sell only when it beats holding)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") == "filled" for r in rows):

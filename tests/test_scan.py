@@ -33,7 +33,8 @@ def test_scan_alerts_dedupes_and_settles(monkeypatch):
     assert "Limit price: 95¢ or less" in high["message"] and "Record:" in high["message"]
     assert "can't come in below 61°F" in high["message"]
     assert high["topic"] == "test-topic-xyz"
-    assert high["click"] == "https://kalshi.com/markets/kxhighny"
+    assert high["click"].startswith("https://kalshi.com/events/kxhighny-")   # market page, not bare series
+    assert high["actions"][0]["url"] == high["click"]
 
     rows = [r for r in ledger.load() if not ledger.is_shadow(r)]   # near-locks log silently
     assert len(rows) == 2 and all(r["status"] == "open" for r in rows)
@@ -138,11 +139,13 @@ def test_aggressive_mode_sizes_locks_bigger_only(monkeypatch):
         STATE.unlink(missing_ok=True)
         return {r["ticker"]: int(r["contracts"]) for r in rows}, cfg.strategy_params
 
+    bankroll = cfg_for_test().bankroll
+
     normal, p_normal = lock_contracts("normal")
     aggressive, p_aggr = lock_contracts("aggressive")
     t = "KXHIGHNY-26NOV03-B59.5"
     assert aggressive[t] > normal[t]
-    assert aggressive[t] * 0.95 <= 0.20 * 35 + 1e-9               # 20% per-lock cap
+    assert aggressive[t] * 0.95 <= 0.20 * bankroll + 1e-9               # 20% per-lock cap
     assert p_aggr["max_bet_frac_model"] == p_normal["max_bet_frac_model"] == 0.05
     assert p_aggr["min_edge_model"] == p_normal["min_edge_model"]
 
@@ -201,3 +204,8 @@ def test_edge_alerts_shadow_mode_is_silent(monkeypatch):
     rows = ledger.load()
     assert ledger.stats(rows, mode="shadow")["n"] == len(shadow)
     assert ledger.stats(rows)["n"] == len(live)
+
+
+def test_market_url_uses_events_path():
+    from wxbot import kalshi
+    assert kalshi.market_url("KXHIGHPHIL-26NOV05-B74.5") == "https://kalshi.com/events/kxhighphil-26nov05-b74.5"

@@ -5,7 +5,8 @@ The key comes from the environment (GitHub secrets):
   KALSHI_PRIVATE_KEY    the private key file's full text (PEM)
 
 Every request is signed with RSA-PSS over timestamp + method + path. This
-client can only place LIMIT orders; there is no market-order method, and every
+client can only place LIMIT orders (resting post-only, or immediate-or-cancel
+at a stated price); there is no market-order method, and every
 order is checked again here (price 1-99c, whole contracts, hard size ceiling).
 """
 from __future__ import annotations
@@ -86,37 +87,56 @@ class KalshiClient:
     def get_order(self, order_id: str) -> dict:
         return self._get(f"/portfolio/orders/{order_id}").get("order") or {}
 
-    def cancel(self, order_id: str) -> None:
+    def cancel(self, order_id: str, ticker: str = "") -> None:
+        path = f"/portfolio/events/orders/{order_id}"
+        if ticker:
+            path += f"?market_ticker={ticker}"
         try:
-            self._delete(f"/portfolio/orders/{order_id}")
+            self._delete(path)
         except HttpError as exc:
             if exc.status != 404:
                 raise
 
+    # Orders use Kalshi's V2 endpoint (POST /portfolio/events/orders; the old
+    # /portfolio/orders create was retired, HTTP 410). V2 has one YES book:
+    # side "bid" = buy YES, "ask" = sell YES (= buy NO); price is the YES price
+    # as a dollar string, count a string.
+    def _order_v2(self, ticker: str, side: str, buy: bool, price: float, count: int,
+                  client_order_id: str, tif: str, post_only: bool = False,
+                  reduce_only: bool = False) -> dict:
+        check_order(side, price, count)
+        yes_px = price if side == "yes" else 1.0 - price
+        book = "bid" if (side == "yes") == buy else "ask"
+        payload = {"ticker": ticker, "client_order_id": client_order_id, "side": book,
+                   "count": str(int(count)), "price": f"{round(yes_px, 2):.2f}",
+                   "time_in_force": tif, "self_trade_prevention_type": "taker_at_cross"}
+        if post_only:
+            payload["post_only"] = True
+        if reduce_only:
+            payload["reduce_only"] = True
+        js = self._post("/portfolio/events/orders", payload)
+        return js.get("order") or js
+
     def place_limit(self, ticker: str, side: str, price: float, count: int,
                     client_order_id: str) -> dict:
         """Resting BUY limit order (post-only: never crosses the spread)."""
-        check_order(side, price, count)
-        cents = int(round(price * 100))
-        payload = {"ticker": ticker, "client_order_id": client_order_id, "action": "buy",
-                   "side": side, "count": int(count), "type": "limit", "post_only": True,
-                   ("yes_price" if side == "yes" else "no_price"): cents}
-        js = self._post("/portfolio/orders", payload)
-        return js.get("order") or {}
+        return self._order_v2(ticker, side, True, price, count, client_order_id,
+                              "good_till_canceled", post_only=True)
 
+    def buy_now(self, ticker: str, side: str, price: float, count: int,
+                client_order_id: str) -> dict:
+        """Buy at `price` or better right now (takes the ask); whatever doesn't
+        fill immediately is cancelled, never left resting."""
+        return self._order_v2(ticker, side, True, price, count, client_order_id,
+                              "immediate_or_cancel")
 
     def sell_now(self, ticker: str, side: str, price: float, count: int,
                  client_order_id: str) -> dict:
         """Sell contracts we hold, at `price` or better, immediately; whatever
-        doesn't fill right away is cancelled (never left resting)."""
-        check_order(side, price, count)
-        cents = int(round(price * 100))
-        payload = {"ticker": ticker, "client_order_id": client_order_id, "action": "sell",
-                   "side": side, "count": int(count), "type": "limit",
-                   "time_in_force": "immediate_or_cancel",
-                   ("yes_price" if side == "yes" else "no_price"): cents}
-        js = self._post("/portfolio/orders", payload)
-        return js.get("order") or {}
+        doesn't fill right away is cancelled (never left resting). reduce_only:
+        it can only shrink a position, never open a new one."""
+        return self._order_v2(ticker, side, False, price, count, client_order_id,
+                              "immediate_or_cancel", reduce_only=True)
 
 
 def check_order(side: str, price: float, count: int) -> None:

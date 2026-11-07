@@ -90,7 +90,8 @@ Run the workflow with `report` to refresh it any time.
 
 | Setting | Default | What it does |
 |---|---|---|
-| `bankroll` | 35 | Sizes every trade. Update it as your balance changes. |
+| `bankroll` | 49.71 | Fallback only. With the Kalshi API key set, the bot reads your live balance (cash + open positions) every trade run and sizes from that. |
+| `auto_bankroll` | true | false = always use `bankroll` / the `BANKROLL` variable. |
 | `min_edge_lock` / `min_edge_model` | 3¢ / 7¢ | Minimum edge after fees to alert. |
 | `max_bet_frac_lock` / `_model` | 10% / 5% | Max share of bankroll on one alert. |
 | `max_open_frac` | 40% | Max total money tied up at once. |

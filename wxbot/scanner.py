@@ -20,6 +20,7 @@ log = logging.getLogger("wxbot")
 STATE = DATA_DIR / "state.json"
 RUNTIME = CACHE_DIR / "runtime.json"
 LAST_SCAN = CACHE_DIR / "last_scan.json"
+LOCK_SIGNALS = DATA_DIR / "lock_signals.json"
 
 
 # ---------------------------------------------------------------- catalog
@@ -92,6 +93,24 @@ def _in_quiet(hour: int, start: int, end: int) -> bool:
     return start <= hour < end if start < end else (hour >= start or hour < end)
 
 
+def lock_signal(opp, dm, close: str, now: datetime) -> dict:
+    """What the trader needs to buy a LOCK (wxbot/strats/weather_lock.py)."""
+    return {"ticker": opp.ticker, "event": opp.event, "side": opp.side, "city": opp.city,
+            "metric": opp.metric, "date": opp.date, "bracket": opp.label,
+            "price": opp.price, "fair_p": round(opp.fair_p, 4), "close": close,
+            "obs_extreme": None if dm.obs_extreme is None else round(dm.obs_extreme, 1),
+            "guaranteed": dm.guaranteed, "seen_at": now.isoformat(timespec="seconds")}
+
+
+def save_lock_signals(signals: list[dict], now: datetime) -> None:
+    """Every LOCK this scan found (quiet hours and alert limits don't apply).
+    Rewritten each scan; left alone when empty before and after (no commit noise)."""
+    old = read_json(LOCK_SIGNALS, {}) or {}
+    if not signals and not old.get("signals"):
+        return
+    write_json(LOCK_SIGNALS, {"at": now.isoformat(timespec="seconds"), "signals": signals})
+
+
 # ---------------------------------------------------------------- scan
 
 def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
@@ -147,6 +166,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     modes = {"model": edge_mode,                                       # EDGE calls
              "near": str(aparams.get("near_lock_alerts", "shadow")).lower()}
     candidates = []
+    lock_signals: list[dict] = []     # every LOCK this scan, for the trader (data/lock_signals.json)
     shadow_logged = 0
     tomorrow: dict[str, tuple] = {}
 
@@ -228,6 +248,9 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
                                               "price": o.price, "edge": round(o.edge, 4)} for o in opps]})
             for o in opps:
                 candidates.append((o, dm, si))
+            closes = {m.get("ticker"): m.get("close_time") or "" for m in ms}
+            lock_signals += [lock_signal(o, dm, closes.get(o.ticker, ""), now)
+                             for o in opps if o.kind == "lock"]
 
     # 3) alert on the best candidates (locks first, then biggest edge),
     #    at most one new alert per city-day per scan
@@ -269,7 +292,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
                                           ledger.record_line(rows), now)
         delivered = notify.send(http, cfg, title, body, priority=4 if opp.kind == "lock" else 3,
                                 tags=["lock" if opp.kind == "lock" else "chart_with_upwards_trend"],
-                                click=kalshi.market_url(opp.series), dry_run=dry_run)
+                                click=kalshi.market_url(opp.ticker), dry_run=dry_run)
         if not delivered and not dry_run:
             problems.append("alert not delivered (is NTFY_TOPIC set?)")
             continue   # don't log or dedupe an alert you never saw; retry next scan
@@ -358,6 +381,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
 
     _prune(state, now)
     if not dry_run:
+        save_lock_signals(lock_signals, now)
         ledger.save(rows)
         write_json(STATE, state)
         tracking.save_census(census)

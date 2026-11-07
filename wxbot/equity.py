@@ -11,6 +11,7 @@ Rows older than 7 days are thinned to one per hour so the file stays small.
 from __future__ import annotations
 
 import csv
+import json
 import logging
 from datetime import datetime, timedelta
 
@@ -21,6 +22,8 @@ log = logging.getLogger("wxbot")
 EQUITY = DATA_DIR / "equity.csv"
 FIELDS = ["at", "mode", "realized", "unrealized", "exposure", "held", "by_strategy"]
 KEEP_FULL_DAYS = 7
+MARKS = DATA_DIR / "marks.json"
+MARKS_KEEP_H = 3
 
 
 def _f(x, d=0.0) -> float:
@@ -120,5 +123,43 @@ def record(now: datetime, quotes: dict) -> list[dict]:
         w.writeheader()
         w.writerows(rows)
     tmp.replace(EQUITY)
+    try:
+        record_marks(now, quotes)
+    except Exception as exc:  # per-bet history is a dashboard extra
+        log.warning("marks failed: %s", exc)
     log.info("equity: %s", ", ".join(f"{r['mode']} up/down {r['unrealized']}" for r in new))
     return new
+
+
+def record_marks(now: datetime, quotes: dict) -> dict:
+    """Rolling 3 h of each held bet's mid (our side) for the dashboard's "biggest movers".
+
+    data/marks.json = {"at": iso, "marks": {"TICKER|side": [[unix_s, mid], ...]}}
+    """
+    old = {}
+    if MARKS.exists():
+        try:
+            old = json.loads(MARKS.read_text(encoding="utf-8")).get("marks", {})
+        except (ValueError, OSError):
+            old = {}
+    cut, ts = now.timestamp() - MARKS_KEEP_H * 3600, int(now.timestamp())
+    held = set()
+    for r in _rows(DATA_DIR / "trade_orders.csv"):
+        st = r.get("status")
+        if st == "filled" or (st == "resting" and _f(r.get("filled")) > 0):
+            held.add((r.get("ticker") or "", (r.get("side") or "").lower()))
+    out = {}
+    for tk, side in sorted(held):
+        key = f"{tk}|{side}"
+        pts = [p for p in old.get(key, []) if p[0] >= cut]
+        q = quotes.get(tk)
+        m = side_mid(q, side) if q else None
+        if m is not None:
+            pts.append([ts, round(m, 4)])
+        if pts:
+            out[key] = pts
+    MARKS.parent.mkdir(parents=True, exist_ok=True)
+    tmp = MARKS.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"at": now.isoformat(timespec="seconds"), "marks": out}, separators=(",", ":")), encoding="utf-8")
+    tmp.replace(MARKS)
+    return out

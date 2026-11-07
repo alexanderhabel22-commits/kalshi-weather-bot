@@ -16,6 +16,8 @@ def cfg(mode="paper", bankroll=40.0, **mentions_kw):
     c = load_config()
     c.raw["account"]["bankroll"] = bankroll
     c.raw["trading"]["mode"] = mode
+    for name in ("mentions", "favorites", "macro_fade", "locks", "weather"):
+        c.raw["trading"][name]["live"] = False      # tests opt in to real money explicitly
     c.raw["trading"]["mentions"].update(mentions_kw)
     return c
 
@@ -201,6 +203,7 @@ def test_signed_headers_verify():
 class FakeClient:
     def __init__(self):
         self.placed, self.cancelled, self.orders = [], [], {}
+        self.bought, self.cash, self.fill = [], 100.0, 99
 
     def place_limit(self, ticker, side, price, count, cid):
         self.placed.append((ticker, side, price, count))
@@ -210,6 +213,14 @@ class FakeClient:
 
     def get_order(self, oid):
         return self.orders[oid]
+
+    def balance(self):
+        return self.cash
+
+    def buy_now(self, ticker, side, price, count, cid):
+        self.bought.append((ticker, side, price, count, cid))
+        return {"order_id": f"b{len(self.bought)}", "status": "executed",
+                "fill_count": min(count, self.fill)}
 
     def cancel(self, oid):
         self.cancelled.append(oid)
@@ -243,8 +254,6 @@ def test_macro_fade_band_window_and_per_event_cap():
     assert [(i.ticker[-1], i.price) for i in out] == [("b", 0.76), ("d", 0.83), ("a", 0.89)]
     assert all(i.side == "no" and i.strategy == "macro_fade" for i in out)
     assert "macro_fade" in trader.strategies()
-    sp = trader.strategy_settings(cfg(), "macro_fade", trader.settings(cfg()))
-    assert sp.get("live") is False
 
 
 def fav_event(markets, cat="Politics", ev="KXSHUTDOWN-26NOV"):
@@ -386,3 +395,263 @@ def test_paper_exit_books_pnl():
     assert float(rows[0]["pnl"]) == pytest.approx(2 * (0.98 - 0.01 - 0.85))
     rows[0]["status"] = "filled"
     assert trader.exits(H(), rows, NOW, {"mentions": {}}, None, cfg(), False, set()) == 0
+
+
+def test_capacity_scales_with_market_volume():
+    t = trader.settings(cfg())
+    it = trader.Intent("mentions", "A", "E", "no", 0.80, 3, CLOSE, volume=5000)
+    sp = {"max_market_contracts": 200}
+    assert trader.capacity(it, [], t, sp, NOW, [])[0] == 200          # 10% of 5000 = 500, capped 200
+    it.volume = 800
+    assert trader.capacity(it, [], t, sp, NOW, [])[0] == 80           # 10% of volume
+    it.volume = 0
+    assert trader.capacity(it, [], t, sp, NOW, [])[0] == 50           # unknown: the floor
+    held = [{"ticker": "A", "status": "filled", "count": 45, "strategy": "mentions",
+             "placed_at": NOW.isoformat()}]
+    room, why = trader.capacity(it, held, t, sp, NOW, [])
+    assert room == 5 and "market" in why
+
+
+def test_weekly_capacity_ceiling():
+    t = trader.settings(cfg())
+    it = trader.Intent("mentions", "B", "E", "no", 0.80, 3, CLOSE, volume=10_000)
+    old = (NOW - timedelta(days=8)).isoformat()
+    rows = [{"ticker": f"X{i}", "status": "settled", "count": 10, "strategy": "mentions",
+             "placed_at": NOW.isoformat()} for i in range(10)] + \
+           [{"ticker": "Y", "status": "settled", "count": 500, "strategy": "mentions", "placed_at": old}]
+    room, why = trader.capacity(it, rows, t, {"max_week_contracts": 102}, NOW, [])
+    assert room == 2 and "weekly" in why
+
+
+# ---------------------------------------------------------------- live LOCKs
+
+def lcfg(**kw):
+    """Config with LOCKs cleared for real money (as if Alex said go)."""
+    c = cfg(**kw)
+    c.raw["trading"]["locks"]["live"] = True
+    return c
+
+
+def test_only_approved_strategies_trade_real_money():
+    # Alex, Nov 5 7 PM ET: mentions, favorites, macro_fade, weather (small) live; LOCKs paper
+    c = load_config()
+    live = {n for n in trader.strategies()
+            if trader.strategy_mode(c.raw["trading"]["mode"], c.raw["trading"].get(n, {})) == "live"}
+    assert live == {"mentions", "favorites", "macro_fade", "weather"}
+    assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
+
+
+def test_rejected_live_order_alerts_once(monkeypatch):
+    from wxbot.util import HttpError
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+
+    class Refuse(FakeClient):
+        def place_limit(self, *a):
+            raise HttpError(400, "orders", "bad order")
+    http = Http([mkt("a", 0.12, 0.16)])
+    trader.run(cfg(mode="live", live=True), now=NOW, http=http, client=Refuse())
+    trader.run(cfg(mode="live", live=True), now=NOW + timedelta(minutes=30), http=http, client=Refuse())
+    assert sum("rejected" in p["title"] for p in http.posts) == 1
+    assert not trader.load()
+
+
+def test_post_only_cross_is_quiet(monkeypatch):
+    from wxbot.util import HttpError
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+
+    class Cross(FakeClient):
+        def place_limit(self, *a):
+            raise HttpError(400, "orders", '{"error":{"code":"invalid_order","details":"post only cross"}}')
+    http = Http([mkt("a", 0.12, 0.16)])
+    trader.run(cfg(mode="live", live=True), now=NOW, http=http, client=Cross())
+    assert not any("rejected" in p["title"] for p in http.posts)
+    assert not trader.load()
+
+
+LOCK_TK = "KXHIGHPHIL-26NOV06-B74.5"
+
+
+def lock_signal(at=NOW, **kw):
+    from wxbot import scanner
+    from wxbot.util import write_json
+    sig = {"ticker": LOCK_TK, "event": "KXHIGHPHIL-26NOV06", "side": "no", "city": "Philadelphia",
+           "metric": "high", "date": "2026-11-06", "bracket": "74° to 75°", "price": 0.64,
+           "fair_p": 0.995, "close": CLOSE, "obs_extreme": 77.0, "guaranteed": 77,
+           "seen_at": at.isoformat()} | kw
+    write_json(scanner.LOCK_SIGNALS, {"at": at.isoformat(), "signals": [sig]})
+
+
+class LockHttp(Http):
+    def __init__(self, yb=0.33, ya=0.35, result=""):
+        super().__init__([], {LOCK_TK: result} if result else {})
+        self.yb, self.ya = yb, ya
+
+    def get_json(self, url, params=None, headers=None):
+        if url.endswith("/markets/" + LOCK_TK):
+            return {"market": {"ticker": LOCK_TK, "event_ticker": "KXHIGHPHIL-26NOV06",
+                               "status": "active", "close_time": CLOSE, "volume": 4000,
+                               "result": self.results.get(LOCK_TK, ""),
+                               "yes_bid_dollars": f"{self.yb:.2f}", "yes_ask_dollars": f"{self.ya:.2f}",
+                               "no_bid_dollars": f"{1 - self.ya:.2f}", "no_ask_dollars": f"{1 - self.yb:.2f}"}}
+        return super().get_json(url, params, headers)
+
+
+def test_lock_buys_at_the_ask_with_real_money_and_alerts(monkeypatch):
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+    lock_signal()
+    cl, http = FakeClient(), LockHttp(yb=0.33, ya=0.35)       # NO ask 67c (not the 64c alert)
+    out = trader.run(lcfg(mode="live"), now=NOW, http=http, client=cl)
+    assert [b[:4] for b in cl.bought] == [(LOCK_TK, "no", 0.67, 5)]   # Kelly, 10% of $40
+    assert not cl.placed                                     # mentions etc. never live
+    row = [r for r in trader.load() if r["strategy"] == "locks"][0]
+    assert (row["mode"], row["status"], row["filled"], row["fee"]) == ("live", "filled", "5", "0.08")
+    assert any("BOUGHT" in p["title"] for p in http.posts)
+    assert len(out["placed"]) == 1
+    # next scan: same lock is not bought again
+    trader.run(lcfg(mode="live"), now=NOW + timedelta(minutes=5), http=http, client=cl)
+    assert len(cl.bought) == 1
+    # settles NO: +5 x 33c minus the fee
+    http.results[LOCK_TK] = "no"
+    trader.run(lcfg(mode="live"), now=NOW + timedelta(hours=20), http=http, client=cl)
+    row = [r for r in trader.load() if r["strategy"] == "locks"][0]
+    assert row["status"] == "settled" and row["pnl"] == "1.57"
+
+
+def test_lock_skips_when_edge_gone_stale_or_no_cash():
+    cl = FakeClient()
+    lock_signal()
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(yb=0.01, ya=0.02), client=cl)  # NO ask 99c
+    assert not cl.bought
+    lock_signal(at=NOW - timedelta(minutes=40))               # old scan
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert not cl.bought
+    lock_signal()
+    cl.cash = 0.50                                           # account can't pay for one
+    out = trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert not cl.bought and any("cash" in why for *_, why in out["skipped"])
+    cl.cash = 2.0                                            # shrinks to what the cash covers
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert [b[3] for b in cl.bought] == [2]
+
+
+def test_lock_unfilled_ioc_is_not_recorded_and_retries():
+    cl = FakeClient()
+    cl.fill = 0
+    lock_signal()
+    out = trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl)
+    assert len(cl.bought) == 1 and not [r for r in trader.load() if r["strategy"] == "locks"]
+    assert any("nothing left" in why for *_, why in out["skipped"])
+    cl.fill = 99
+    lock_signal(at=NOW + timedelta(minutes=5))
+    trader.run(lcfg(mode="live"), now=NOW + timedelta(minutes=5), http=LockHttp(), client=cl)
+    assert len(cl.bought) == 2 and cl.bought[0][4] != cl.bought[1][4]   # fresh client id
+
+
+def test_lock_respects_event_cap_and_halt():
+    from wxbot.util import write_json
+    cl = FakeClient()
+    lock_signal()
+    c = lcfg(mode="live", bankroll=40)
+    c.raw["trading"]["locks"]["max_event_pct"] = 0.10         # $4 on this city-day
+    c.raw["strategy"]["max_bet_frac_lock"] = 0.5               # Kelly wants 10 contracts...
+    trader.run(c, now=NOW, http=LockHttp(), client=cl)
+    assert [b[3] for b in cl.bought] == [5]                    # ...shrunk to fit $4 at 67c
+    write_json(trader.STATE, {"halted": {"live": {"at": NOW.isoformat(), "pnl": -10}}})
+    cl2 = FakeClient()
+    lock_signal(ticker=LOCK_TK)
+    trader.save([])
+    trader.run(lcfg(mode="live"), now=NOW, http=LockHttp(), client=cl2)
+    assert not cl2.bought
+
+
+def test_taker_only_for_strategies_that_allow_it():
+    it = trader.Intent("mentions", "X", "E", "no", 0.8, 1, CLOSE, taker=True)
+    t = trader.settings(cfg())
+    assert "taker" in trader.vet(it, [], t, {"max_price": 0.9}, NOW, [])
+
+
+def test_scan_writes_lock_signals_only_when_there_are_any(monkeypatch):
+    from wxbot import scanner
+    from wxbot.util import read_json
+    scanner.save_lock_signals([], NOW)
+    assert not scanner.LOCK_SIGNALS.exists()
+    scanner.save_lock_signals([{"ticker": "A"}], NOW)
+    assert read_json(scanner.LOCK_SIGNALS)["signals"] == [{"ticker": "A"}]
+    scanner.save_lock_signals([], NOW + timedelta(minutes=5))   # clears the old lock
+    assert read_json(scanner.LOCK_SIGNALS)["signals"] == []
+
+
+def test_key_check_reads_balance_while_paper(monkeypatch):
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from wxbot.util import read_json
+    pem = rsa.generate_private_key(public_exponent=65537, key_size=2048).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()).decode()
+    monkeypatch.setenv("KALSHI_API_KEY_ID", "kid")
+    monkeypatch.setenv("KALSHI_PRIVATE_KEY", pem)
+
+    class H(Http):
+        def get_json(self, url, params=None, headers=None):
+            if url.endswith("/portfolio/balance"):
+                assert headers and headers["KALSHI-ACCESS-KEY"] == "kid"
+                return {"balance": 4971}
+            return super().get_json(url, params, headers)
+    trader.run(cfg(), now=NOW, http=H([]))
+    kc = read_json(trader.STATE)["key_check"]
+    assert kc["ok"] and kc["balance"] == 49.71
+    monkeypatch.setenv("KALSHI_PRIVATE_KEY", "not a key")
+    trader.save([])
+    trader.run(cfg(), now=NOW + timedelta(hours=7), http=H([]))
+    assert read_json(trader.STATE)["key_check"]["ok"] is False
+
+
+def test_orders_use_kalshi_v2_single_book():
+    """Kalshi retired POST /portfolio/orders (HTTP 410, Nov 5 2026). V2 has one
+    YES book: bid = buy YES, ask = sell YES (= buy NO), YES price as a string."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    pem = rsa.generate_private_key(public_exponent=65537, key_size=2048).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()).decode()
+
+    class H:
+        def __init__(self):
+            self.calls = []
+
+        def post_json(self, url, payload, headers=None):
+            self.calls.append((url, payload))
+            return {"order_id": "o1", "fill_count": "2.00", "remaining_count": "0.00"}
+    h = H()
+    c = KalshiClient(h, "kid", pem)
+    o = c.place_limit("T", "no", 0.85, 2, "cid1")
+    url, p = h.calls[-1]
+    assert url.endswith("/trade-api/v2/portfolio/events/orders")
+    assert p == {"ticker": "T", "client_order_id": "cid1", "side": "ask", "count": "2",
+                 "price": "0.15", "time_in_force": "good_till_canceled",
+                 "self_trade_prevention_type": "taker_at_cross", "post_only": True}
+    assert o["order_id"] == "o1"
+    c.place_limit("T", "yes", 0.96, 1, "cid2")
+    assert (h.calls[-1][1]["side"], h.calls[-1][1]["price"]) == ("bid", "0.96")
+    o = c.buy_now("T", "no", 0.67, 2, "cid3")
+    assert h.calls[-1][1]["side"] == "ask" and h.calls[-1][1]["price"] == "0.33"
+    assert h.calls[-1][1]["time_in_force"] == "immediate_or_cancel"
+    assert order_fill_count(o, 2) == 2
+    c.sell_now("T", "no", 0.90, 2, "cid4")                 # sell NO = buy YES at 10c
+    p = h.calls[-1][1]
+    assert (p["side"], p["price"], p["reduce_only"]) == ("bid", "0.10", True)
+    c.sell_now("T", "yes", 0.98, 1, "cid5")
+    assert (h.calls[-1][1]["side"], h.calls[-1][1]["price"]) == ("ask", "0.98")
+
+
+def test_yes_and_no_in_one_market_net_like_kalshi():
+    base = {"mode": "live", "strategy": "weather", "ticker": "KXLOWTPHIL-26NOV07-T49", "close": CLOSE}
+    rows = [dict(base, id="t|yes", side="yes", price="0.27", count=1, filled=1, status="filled"),
+            dict(base, id="t|no", side="no", price="0.55", count=2, filled=2, status="filled")]
+    assert trader.net_pairs(rows, NOW) == 1
+    netted = [r for r in rows if r.get("result") == "netted"]
+    assert len(netted) == 2 and abs(sum(float(r["pnl"]) for r in netted) - 0.18) < 1e-9
+    left = [r for r in rows if r["status"] == "filled"]
+    assert len(left) == 1 and left[0]["side"] == "no" and left[0]["filled"] == 1
+    assert trader.net_pairs(rows, NOW) == 0
+    assert abs(trader.realized(rows, mode="live") - 0.18) < 1e-9

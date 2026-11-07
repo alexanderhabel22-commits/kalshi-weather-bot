@@ -63,7 +63,7 @@ def candidates(markets: list[dict], p: dict, now) -> list[Intent]:
         title = m.get("title") or m.get("yes_sub_title") or m["ticker"]
         by_event.setdefault(ev, []).append(Intent(
             NAME, m["ticker"], ev, "no", px, count, m.get("close_time") or "", title[:120],
-            f"no bid {no_bid:.2f} / ask {no_ask:.2f}"))
+            f"no bid {no_bid:.2f} / ask {no_ask:.2f}", _vol(m)))
     out = []
     for ev in sorted(by_event):
         out += sorted(by_event[ev], key=lambda i: i.price)[:per_event]
