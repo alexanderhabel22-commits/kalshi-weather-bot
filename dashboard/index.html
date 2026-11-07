@@ -677,9 +677,10 @@ function moversHTML(rows){
     mv.push({r, d:(m - base) * n, was:(base - r.price) * n, now:(m - r.price) * n, base, m, from});
   }
   // ranked by how much the bet's value moved this hour, either way (+50c -> +15c is a -35c mover)
-  const top = mv.filter(x => Math.abs(x.d) > 0.004).sort((a, b) => Math.abs(b.d) - Math.abs(a.d)).slice(0, 6);
+  const up = mv.filter(x => x.d > 0.004).sort((a, b) => b.d - a.d).slice(0, 3), dn = mv.filter(x => x.d < -0.004).sort((a, b) => a.d - b.d).slice(0, 3);
   const item = x => `<div class="item tap" style="padding:7px 0"><span class="side ${esc(x.r.side)}">${esc(x.r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(x.r.title)}</div><div class="s">${x.from ? "new · " + esc(x.from) : `was ${money(x.was)} → now ${money(x.now)}`} · ${c(x.base)}→${c(x.m)}</div></div><div class="r ${cls(x.d)}">${money(x.d)}</div>${details(x.r)}</div>`;
-  const body = mv.length ? (top.length ? `<div class="list">${top.map(item).join("")}</div>` : `<div class="mute" style="font-size:12px">Nothing moved more than half a cent this hour.</div>`)
+  const grp = (label, l, k) => `<div class="lbl ${k}" style="margin:8px 0 0">${label}</div>${l.length ? `<div class="list">${l.map(item).join("")}</div>` : `<div class="mute" style="font-size:12px;padding:6px 0">${k === "pos" ? "Nothing gained" : "Nothing lost"} more than half a cent this hour</div>`}`;
+  const body = mv.length ? grp("▲ Gained the most this hour", up, "pos") + grp("▼ Lost the most this hour", dn, "neg")
     : `<div class="mute" style="font-size:12px">Builds up over the next hour: the bot saves each bet's price every 5 min.</div>`;
   const mins = Math.round((now - oldest) / 60e3), win = mins >= 55 ? "last hour" : mins >= 1 ? `last ${mins} min (full hour once history builds)` : "last hour";
   return `<div class="lbl" style="margin:16px 0 4px">Biggest movers <span class="mute" style="text-transform:none;letter-spacing:0">· change in value, ${win}</span></div>${body}`;
