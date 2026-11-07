@@ -620,8 +620,7 @@ def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple
     at the bid only when the bid after the taker fee is worth more than that.
     Since a bid sits below the mid, this fires only when the book is lopsided in
     our favour, so in practice we hold through swings ("diamond hands").
-    When the overall cap is blocking new orders, a nearly-won position (bid 98c+)
-    is sold to free the money. Fixed stop-losses are deliberately absent: in the
+    (98c+ sells to free money for a blocked order live in free_cap_for.) Fixed stop-losses are deliberately absent: in the
     backtest they cost money (they sell after a bad swing, at a bad price). The
     daily/total loss stops remain the backstop if a strategy is getting killed."""
     if not m or str(sp.get("exit", "ev")).lower() == "hold":
@@ -638,8 +637,6 @@ def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple
     hold = (bid + ask) / 2 + float(sp.get("hold_edge", 0.03))
     if net > min(hold, 1.0) + 0.01:
         return bid, f"bid {bid:.2f} beats hold value {hold:.2f}"
-    if cap_blocked and bid >= 0.98:
-        return bid, "free money for new orders (bid 98c+)"
     return None
 
 
@@ -672,34 +669,87 @@ def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int
             d = exit_decision(r, m, sp, r["mode"] in cap_blocked)
         if not d:
             continue
-        price, why = d
-        count = int(_f(r.get("filled")))
-        if r["mode"] == "live":
-            if dry_run or client is None:
-                continue
-            try:
-                o = client.sell_now(r["ticker"], r["side"], price, count, f"x-{r['client_id']}"[:60])
-            except (HttpError, OrderRejected) as exc:
-                log.warning("exit %s rejected: %s", r["ticker"], exc)
-                continue
-            sold = order_fill_count(o, count)
-            if sold <= 0:
-                continue
-            count = sold
-        pnl = count * (price - _fee(price) - _f(r["price"]))
-        if count < int(_f(r.get("filled"))):
-            # partial exit: keep the rest open on this row, book the sold part on a new row
-            r["filled"] = int(_f(r["filled"])) - count
-            r = dict(r, id=r["id"] + "|exit", filled=count, count=count)
-            rows.append(r)
-        r.update(status="settled", result="exit", pnl=f"{pnl:.2f}",
-                 settled_at=now.isoformat(timespec="seconds"),
-                 note=(r.get("note") or "") + f" | sold {count} @ {price:.2f}: {why}")
-        n += 1
-        if r["mode"] == "live":
-            _alert(http, cfg, f"Sold early ${pnl:+.2f}", f"{r['title'] or r['ticker']} · {why}", dry_run,
-                   bundle=True)
+        if _sell(http, r, rows, d[0], d[1], client, cfg, dry_run, now):
+            n += 1
     return n
+
+
+def _sell(http, r, rows, price, why, client, cfg, dry_run, now) -> bool:
+    """Sell a held position at `price` (immediate-or-cancel for live) and book it."""
+    count = int(_f(r.get("filled")))
+    if r["mode"] == "live":
+        if dry_run or client is None:
+            return False
+        try:
+            o = client.sell_now(r["ticker"], r["side"], price, count, f"x-{r['client_id']}"[:60])
+        except (HttpError, OrderRejected) as exc:
+            log.warning("exit %s rejected: %s", r["ticker"], exc)
+            return False
+        sold = order_fill_count(o, count)
+        if sold <= 0:
+            return False
+        count = sold
+    pnl = count * (price - _fee(price) - _f(r["price"]))
+    if count < int(_f(r.get("filled"))):
+        # partial exit: keep the rest open on this row, book the sold part on a new row
+        r["filled"] = int(_f(r["filled"])) - count
+        r = dict(r, id=r["id"] + "|exit", filled=count, count=count)
+        rows.append(r)
+    r.update(status="settled", result="exit", pnl=f"{pnl:.2f}",
+             settled_at=now.isoformat(timespec="seconds"),
+             note=(r.get("note") or "") + f" | sold {count} @ {price:.2f}: {why}")
+    if r["mode"] == "live":
+        _alert(http, cfg, f"Sold early ${pnl:+.2f}", f"{r['title'] or r['ticker']} · {why}", dry_run,
+               bundle=True)
+    return True
+
+
+def free_cap_for(http, it: Intent, why: str, mode: str, rows: list[dict], planned: list[Intent],
+                 t: dict, specs: dict, now, client, cfg, dry_run) -> list[str]:
+    """Alex (Nov 7): sell a nearly-won position (bid 98c+) only when a specific new
+    order is blocked by the open-$ cap, only as much as that order needs, and only
+    if selling actually lets it through. Returns the tickers sold."""
+    same = [r for r in rows if r.get("mode") == mode]
+    sp = specs.get(it.strategy, {})
+    cost = it.price * it.count
+    pend = sum(p.price * p.count for p in planned)
+    if why == "overall open-$ cap":
+        cap = float(t["max_open_dollars"] if mode == "live" else t["paper_max_open_dollars"])
+        need = exposure(same) + pend + cost - cap
+        pool = [r for r in same if r.get("status") == "filled"]
+    else:   # strategy cap: only that strategy's own positions free it
+        cap = float(sp.get("max_open_dollars", t["max_open_dollars"]))
+        need = exposure(same, it.strategy) + sum(p.price * p.count for p in planned
+                                                 if p.strategy == it.strategy) + cost - cap
+        pool = [r for r in same if r.get("status") == "filled" and r.get("strategy") == it.strategy]
+    pool = [r for r in pool if str(specs.get(r.get("strategy"), {}).get("exit", "ev")).lower() != "hold"]
+    if need <= 0 or not pool:
+        return []
+    mk = kalshi.get_markets(http, [r["ticker"] for r in pool])
+    cands = []
+    for r in pool:
+        m = mk.get(r["ticker"]) or {}
+        yb, ya = kalshi.price(m, "yes_bid"), kalshi.price(m, "yes_ask")
+        if m.get("result") or yb is None or ya is None or not (0 < yb < ya <= 1):
+            continue
+        bid = yb if r.get("side") == "yes" else round(1 - ya, 2)
+        if 0.98 <= bid <= 0.99:
+            cands.append((bid, r))
+    cands.sort(key=lambda x: -x[0])
+    pick, freed = [], 0.0
+    for bid, r in cands:
+        if freed >= need - 1e-9:
+            break
+        pick.append((bid, r))
+        freed += int(_f(r.get("filled"))) * _f(r.get("price"))
+    if freed < need - 1e-9:
+        return []                         # selling everything eligible still wouldn't fit it
+    sold = []
+    for bid, r in pick:
+        if _sell(http, r, rows, bid, f"freed ${freed:.2f} for {it.strategy} {it.ticker} (bid {bid:.2f})",
+                 client, cfg, dry_run, now):
+            sold.append(r["ticker"])
+    return sold
 
 
 def cancel_all(client: KalshiClient | None, rows: list[dict], mode: str) -> int:
@@ -868,6 +918,13 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
             while it.taker and why and "cap" in why and it.count > 1:
                 it.count -= 1               # LOCKs shrink to fit the caps instead of skipping
                 why = vet(it, same, t, sp, now, others, mode)
+            if why in ("overall open-$ cap", "strategy open-$ cap") and not dry_run:
+                try:
+                    if free_cap_for(http, it, why, mode, rows, others, t, specs, now, client, cfg, dry_run):
+                        same = [r for r in rows if r.get("mode") == mode]
+                        why = vet(it, same, t, sp, now, others, mode)
+                except Exception as exc:
+                    log.warning("free cap for %s: %s", it.ticker, exc)
             if why:
                 out["skipped"].append((it.ticker, it.side, why))
                 continue
@@ -948,10 +1005,8 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
 
     # ---- early exits (judgement: sell only when it beats holding)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") == "filled" for r in rows):
-        cap_blocked = {m for m in ("paper", "live")
-                       if any("open-$ cap" in why and "event" not in why for *_, why in out["skipped"])}
         try:
-            out["exits"] = exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked)
+            out["exits"] = exits(http, rows, now, specs, client, cfg, dry_run, set())
         except Exception as exc:
             log.warning("exits failed: %s", exc)
 

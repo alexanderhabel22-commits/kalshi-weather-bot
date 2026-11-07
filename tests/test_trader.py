@@ -367,11 +367,49 @@ def test_exit_holds_through_normal_swings():
     assert trader.exit_decision(r, _book(0.01, 0.02), {}, cap_blocked=False) is None
 
 
-def test_exit_frees_money_when_cap_blocks_and_nearly_won():
-    r = {"side": "no", "price": "0.85"}
-    d = trader.exit_decision(r, _book(0.01, 0.02), {}, cap_blocked=True)
-    assert d and d[0] == 0.98
-    assert trader.exit_decision(r, _book(0.01, 0.02), {"exit": "hold"}, cap_blocked=True) is None
+class _Books:
+    def __init__(self, books):
+        self.books = books
+
+    def get_json(self, url, params=None, headers=None):
+        tks = (params or {}).get("tickers", "").split(",") if params else [url.rsplit("/", 1)[1]]
+        ms = [dict(self.books[t], ticker=t) for t in tks if t in self.books]
+        return {"markets": ms} if params else {"market": ms[0] if ms else {}}
+
+
+def _held(tk, price, n=2, strat="mentions"):
+    return {"id": f"{tk}|no", "client_id": f"c-{tk}", "mode": "paper", "strategy": strat, "ticker": tk,
+            "event": tk, "side": "no", "price": f"{price:.2f}", "count": n, "filled": n,
+            "status": "filled", "title": tk, "note": ""}
+
+
+def test_98c_sale_only_frees_what_a_blocked_order_needs():
+    """Alex (Nov 7): no 98c 'free money' sale unless a real order is waiting for the cash."""
+    T = {"max_open_dollars": 5.0, "paper_max_open_dollars": 5.0}
+    rows = [_held("A", 0.90), _held("B", 0.95), _held("C", 0.50)]          # $3.70 open
+    books = _Books({"A": _book(0.01, 0.02), "B": _book(0.01, 0.02), "C": _book(0.40, 0.45)})
+    it = trader.Intent("favorites", "NEW", "NEW", "yes", 0.80, 2, CLOSE, "new", "")  # $1.60 -> $5.30
+    sold = trader.free_cap_for(books, it, "overall open-$ cap", "paper", rows, [], T, {}, NOW, None, cfg(), False)
+    assert len(sold) == 1                                   # one 98c position is enough, not both
+    assert sum(r["status"] == "settled" for r in rows) == 1 and rows[2]["status"] == "filled"
+    assert trader.exposure(rows) + 1.60 <= 5.0 + 1e-9
+
+
+def test_98c_sale_skipped_when_it_would_not_be_enough():
+    T = {"max_open_dollars": 5.0, "paper_max_open_dollars": 5.0}
+    rows = [_held("A", 0.90, 1), _held("C", 0.50, 6)]                       # $3.90 open
+    books = _Books({"A": _book(0.01, 0.02), "C": _book(0.40, 0.45)})
+    it = trader.Intent("favorites", "NEW", "NEW", "yes", 0.90, 3, CLOSE, "new", "")  # needs $1.60 freed
+    assert trader.free_cap_for(books, it, "overall open-$ cap", "paper", rows, [], T, {}, NOW,
+                               None, cfg(), False) == []
+    assert all(r["status"] == "filled" for r in rows)
+
+
+def test_no_blanket_98c_sale_in_exits():
+    rows = [_held("A", 0.85)]
+    assert trader.exits(_Books({"A": _book(0.01, 0.02)}), rows, NOW, {"mentions": {}}, None, cfg(),
+                        False, {"paper"}) == 0
+    assert rows[0]["status"] == "filled"
 
 
 def test_exit_sells_when_bid_clearly_beats_hold_value():
@@ -384,17 +422,11 @@ def test_exit_sells_when_bid_clearly_beats_hold_value():
 
 
 def test_paper_exit_books_pnl():
-    class H:
-        def get_json(self, url, params=None, headers=None):
-            return {"market": dict(_book(0.01, 0.02), ticker=url.rsplit("/", 1)[1])}
-    rows = [{"id": "A|no", "client_id": "c1", "mode": "paper", "strategy": "mentions",
-             "ticker": "A", "side": "no", "price": "0.85", "count": 2, "filled": 2,
-             "status": "filled", "title": "t", "note": ""}]
-    n = trader.exits(H(), rows, NOW, {"mentions": {}}, None, cfg(), False, {"paper"})
+    rows = [_held("A", 0.50)]
+    n = trader.exits(_Books({"A": _book(0.01, 0.30)}), rows, NOW, {"mentions": {"hold_edge": -0.2}},
+                     None, cfg(), False, set())
     assert n == 1 and rows[0]["status"] == "settled" and rows[0]["result"] == "exit"
-    assert float(rows[0]["pnl"]) == pytest.approx(2 * (0.98 - 0.01 - 0.85))
-    rows[0]["status"] = "filled"
-    assert trader.exits(H(), rows, NOW, {"mentions": {}}, None, cfg(), False, set()) == 0
+    assert float(rows[0]["pnl"]) == pytest.approx(2 * (0.70 - trader._fee(0.70) - 0.50))
 
 
 def test_capacity_scales_with_market_volume():
