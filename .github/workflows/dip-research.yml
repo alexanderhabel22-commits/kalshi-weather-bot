@@ -1,0 +1,57 @@
+name: dip-research
+
+# Research only (buy-the-panic-dip test). Read-only public Kalshi data; never
+# trades, never alerts. Runs only on push to this research branch. Output goes
+# to the dip-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-49blu3"]
+    paths: ["research_dip/fetch.py", "research_dip/cands.csv.gz", ".github/workflows/dip-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dip-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        env:
+          BUDGET_H: "4.5"
+          LIMIT: "40"
+        run: python research_dip/fetch.py ${{ matrix.shard }} 6 out
+      - name: Save to dip-research-data branch
+        if: always() && hashFiles('out/events.csv.gz') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d)-s${{ matrix.shard }}"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6 7 8; do
+            if git fetch origin dip-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/dip-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp" || exit 0
+            git push origin HEAD:dip-research-data && exit 0
+            sleep $((i * 9))
+          done
+          exit 1
