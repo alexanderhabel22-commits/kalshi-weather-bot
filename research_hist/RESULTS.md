@@ -46,3 +46,15 @@ None of these leads gets better with a bigger bankroll, because they are about z
 - `RESULTS_raw_trades.md`: all trade-level tables (category, price, sports type, time to close, hour, momentum, big trades, quirks, grid, volume).
 - `RESULTS_raw_snapshot.md`: bot-snapshot favourite tests by category × band × window (taker, back-of-queue maker, touch maker).
 - `RESULTS_raw_mentions.txt`: the Mentions rule replay.
+
+## Follow-up: cross-market consistency (game winner vs spread), Nov 7 evening
+
+The question: within one game, do the winner market and the "wins by more than X" spread markets ever disagree enough to lock in a profit after fees? I took 2,524 settled games across 12 leagues (NBA, NFL, MLB, NHL, NCAAF, NCAAM, WNBA, World Cup, La Liga, UCL, EPL, MLS; 2025-Nov 2026) and checked 1-minute bid/ask quotes over the last 6 hours before close (6.2M quote-minutes).
+
+| Check | Games with any profitable gap | Gap-minutes | Games where it lasted 5+ min | Median gap |
+|---|---|---|---|---|
+| Spread bid > winner ask (same team) | 95 | 172 | 2 | 0.9c |
+| Spread ladder out of order | 87 | 223 | 1 | 1.6c |
+| Two exclusive outcomes, bids > $1 | 103 | 241 | 3 | 0.7c |
+
+Across all 2,524 games, the gaps add up to about **$21 per contract of depth over 22 months**. Almost all of them last 1-2 minutes, mid-game, and a few cents of book depth is gone in seconds. Only 6 games had a gap that lasted 5 minutes. **NO-GO.** It would need an always-on bot watching every game second by second, and it would still make pennies.
