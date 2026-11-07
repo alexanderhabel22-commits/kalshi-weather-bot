@@ -642,3 +642,16 @@ def test_orders_use_kalshi_v2_single_book():
     assert (p["side"], p["price"], p["reduce_only"]) == ("bid", "0.10", True)
     c.sell_now("T", "yes", 0.98, 1, "cid5")
     assert (h.calls[-1][1]["side"], h.calls[-1][1]["price"]) == ("ask", "0.98")
+
+
+def test_yes_and_no_in_one_market_net_like_kalshi():
+    base = {"mode": "live", "strategy": "weather", "ticker": "KXLOWTPHIL-26NOV07-T49", "close": CLOSE}
+    rows = [dict(base, id="t|yes", side="yes", price="0.27", count=1, filled=1, status="filled"),
+            dict(base, id="t|no", side="no", price="0.55", count=2, filled=2, status="filled")]
+    assert trader.net_pairs(rows, NOW) == 1
+    netted = [r for r in rows if r.get("result") == "netted"]
+    assert len(netted) == 2 and abs(sum(float(r["pnl"]) for r in netted) - 0.18) < 1e-9
+    left = [r for r in rows if r["status"] == "filled"]
+    assert len(left) == 1 and left[0]["side"] == "no" and left[0]["filled"] == 1
+    assert trader.net_pairs(rows, NOW) == 0
+    assert abs(trader.realized(rows, mode="live") - 0.18) < 1e-9
