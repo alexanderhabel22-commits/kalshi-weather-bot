@@ -336,6 +336,43 @@ def crossed(r: dict, m: dict | None) -> bool:
     return yb is not None and 0 < yb and 1 - yb <= price + 1e-9
 
 
+def net_pairs(rows: list[dict], now: datetime) -> int:
+    """Kalshi nets YES against NO in the same market: holding both pays $1 per pair at
+    once and the position closes. Book that like the account does (the weather
+    strategy can buy both sides when the spread is wide: 27c YES + 55c NO = +18c)."""
+    n = 0
+    held = lambda r: (r.get("mode") == "live" and r.get("status") in ("filled", "resting")  # noqa: E731
+                      and int(_f(r.get("filled"))) > 0)
+    by: dict[str, dict[str, list]] = {}
+    for r in rows:
+        if held(r):
+            by.setdefault(r["ticker"], {}).setdefault(r["side"], []).append(r)
+    for tk, sides in by.items():
+        ys, ns = sides.get("yes", []), sides.get("no", [])
+        while ys and ns:
+            y, o = ys[0], ns[0]
+            k = min(int(_f(y["filled"])), int(_f(o["filled"])))
+            each = k * (1.0 - _f(y["price"]) - _f(o["price"])) / 2
+            for leg, other, lst in ((y, o, ys), (o, y, ns)):
+                part = leg
+                if int(_f(leg["filled"])) > k or leg["status"] == "resting":
+                    # keep the rest of this order open on its row; book the netted part apart
+                    leg["filled"] = int(_f(leg["filled"])) - k
+                    leg["count"] = int(_f(leg["count"])) - k
+                    part = dict(leg, id=leg["id"] + "|net", filled=k, count=k, order_id="")
+                    rows.append(part)
+                    if int(_f(leg["filled"])) == 0:
+                        lst.pop(0)
+                else:
+                    lst.pop(0)
+                part.update(status="settled", result="netted", pnl=f"{each:.2f}",
+                            settled_at=now.isoformat(timespec="seconds"),
+                            note=(part.get("note") or "") + f" | netted {k} vs {other['side'].upper()} "
+                                 f"@ {_f(other['price']):.2f}: Kalshi paid $1 per pair")
+            n += k
+    return n
+
+
 def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
     n = 0
     for r in rows:
@@ -579,6 +616,7 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
 
     if client is not None:
         sync_live(client, rows, cfg, http, dry_run)
+    net_pairs(rows, now)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") in OPEN for r in rows):
         try:
             settle(http, rows, now, cfg, dry_run)
