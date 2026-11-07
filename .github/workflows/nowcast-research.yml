@@ -1,0 +1,50 @@
+name: nowcast-research
+
+# Research only (nowcast test). Read-only public Kalshi data; never
+# trades, never alerts. Runs only on push to this research branch. Output goes
+# to the nowcast-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-49blu3"]
+    paths: ["research_nowcast/fetch.py", ".github/workflows/nowcast-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nowcast-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        run: python research_nowcast/fetch.py out
+      - name: Save to nowcast-research-data branch
+        if: always() && hashFiles('out/log.txt') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d)-$(date -u +%H%M)"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6 7 8; do
+            if git fetch origin nowcast-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/nowcast-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp" || exit 0
+            git push origin HEAD:nowcast-research-data && exit 0
+            sleep $((i * 9))
+          done
+          exit 1
