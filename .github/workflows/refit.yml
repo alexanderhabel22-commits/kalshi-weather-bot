@@ -1,0 +1,64 @@
+name: refit
+
+# Weekly: refit the weather model's per-city settings (weights, biases, error sd)
+# from the newest settled days (tools/refit_weekly.py). A city keeps its current
+# settings unless the fresh fit scores at least as well on the last 7 days.
+on:
+  schedule:
+    - cron: "17 11 * * 0"   # Sundays ~6 AM ET
+    - cron: "17 11 * * 1"   # Monday backup (GitHub schedules are unreliable here)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refit
+  cancel-in-progress: false
+
+jobs:
+  refit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Skip if refit in the last 5 days
+        id: gate
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, datetime
+          p = json.load(open("data/daybefore_params.json"))
+          last = p.get("refit_run")
+          fresh = last and (datetime.date.today() - datetime.date.fromisoformat(last)).days < 5
+          print("skip=" + ("true" if fresh and "${{ github.event_name }}" == "schedule" else "false"))
+          PY
+
+      - name: Download the last 70 days
+        if: steps.gate.outputs.skip != 'true'
+        run: python bot.py backtest-fetch --days 70 --out refit_bt -v
+
+      - name: Refit
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          python tools/refit_weekly.py refit_bt data/daybefore_params.json | tee refit.log
+          python -c "import json; p=json.load(open('data/daybefore_params.json')); assert p['series'] and all(v['weights'] for v in p['series'].values())"
+
+      - name: Save
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          git add data/daybefore_params.json
+          git commit -m "bot: weekly weather model refit [skip ci]" -m "$(tail -1 refit.log)" || exit 0
+          for i in 1 2 3 4; do
+            git pull --rebase --autostash -X theirs && git push && break
+            sleep 10
+          done
