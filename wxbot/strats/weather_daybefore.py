@@ -42,9 +42,22 @@ def propose(ctx) -> list[Intent]:
 
 
 def value(http, r: dict, m: dict, now, params: dict | None = None) -> float | None:
-    """Fresh chance that our side of a held weather bracket wins, or None outside
-    the exit window (or when anything is missing: then the bot just holds)."""
-    ex = (params if params is not None else read_json(PARAMS) or {}).get("exit") or {}
+    """Fresh chance that our side of a held weather bracket wins: the same-day
+    forecast check about 12h before close, plus (unless exit_obs.shadow) the
+    live-readings checks at 18/15/12/9/6/3h. None outside both: the bot just holds."""
+    P = params if params is not None else read_json(PARAMS) or {}
+    v = _forecast_value(http, r, m, now, P)
+    ob = P.get("exit_obs") or {}
+    if ob and not ob.get("shadow", True):
+        got = obs_value(http, r, m, now, P)
+        if got is not None and got[3] >= int(ob.get("min_readings", 3)):
+            # sell if either check says so: the lower value for our side wins
+            v = got[1] if v is None else min(v, got[1])
+    return v
+
+
+def _forecast_value(http, r: dict, m: dict, now, params: dict) -> float | None:
+    ex = params.get("exit") or {}
     tk = r.get("ticker", "")
     o = next((o for o in load_orders() if o.get("ticker") == tk), None)
     close = parse_iso((m or {}).get("close_time") or r.get("close"))

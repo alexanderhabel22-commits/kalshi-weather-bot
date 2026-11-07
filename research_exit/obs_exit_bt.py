@@ -78,6 +78,7 @@ for s, L in by.items():
         continue
     for d in L:
         pr = bt.predict(L, d, 'd1')
+        pr0 = bt.predict(L, d, 'd0')
         past = [h for h in L if h.day < d.day and (d.day - h.day).days <= 45]
         models = [m for m in d.fc if 'd1' in d.fc[m]]
         f = bt.fit_city(past, 'd1', models) if len(past) >= 15 and models else None
@@ -93,7 +94,10 @@ for s, L in by.items():
             for H in HS:
                 if H in q and 0 < q[H][0] < q[H][1] < 1:
                     h[H] = (lo, hi) + tuple(q[H])
-            recs.append(dict(d=d, cw=cw, ym=(d.day.year, d.day.month), y=1.0 if won else 0.0, h=h, lo=lo, hi=hi))
+            d0 = None
+            if pr0 and 12 in h:
+                d0 = (lg((q[12][0] + q[12][1]) / 2), lg(bt.bracket_prob(*pr0, lo, hi)), q[12][0], q[12][1])
+            recs.append(dict(d=d, cw=cw, ym=(d.day.year, d.day.month), y=1.0 if won else 0.0, h=h, lo=lo, hi=hi, d0=d0))
 
 def close_time(d):
     # Kalshi weather markets close ~ the morning after; quotes were taken at close - H.
@@ -121,6 +125,7 @@ tot = collections.defaultdict(lambda: [0, 0.0, 0.0]); pm = collections.defaultdi
 for ym in months[3:]:
     tr = [r for r in recs if r['ym'] < ym]; te = [r for r in recs if r['ym'] == ym]
     W36 = fit([dict(m=r['h'][36][0], f=r['h'][36][1], y=r['y']) for r in tr])[0]
+    W0 = fit([dict(m=r['d0'][0], f=r['d0'][1], y=r['y']) for r in tr if r['d0']])[0]
     W = {H: fit([dict(m=r['v'][H][0], f=r['v'][H][1], y=r['y']) for r in tr if H in r['v']])[0] for H in HS}
     pos = []
     for r in te:
@@ -132,16 +137,22 @@ for ym in months[3:]:
         Q = round(1 - (a - 0.01), 2)
         if a - 0.01 > b and thi is not None and thi >= a - 0.01 and (1 - p) - Q >= 0.06 and 0.03 <= Q <= 0.97:
             pos.append(('no', Q, r))
-    keys = [('hold', None, None)] + [(rn, hs, mg) for rn, hs in RULES.items() for mg in MARGINS]
+    keys = [('hold', None, None)] + [(rn, hs, mg) for rn, hs in RULES.items() for mg in MARGINS] \
+        + [('d0@12', ('D0',), 0.08)] + [('combo', HS[:3] + ('D0',) + HS[3:], mg) for mg in MARGINS]
     for name, hs, mg in keys:
         n = 0; pnl = cost = 0.0
         for side, P, r in pos:
             out = None
             for H in (hs or ()):
-                if H not in r['v']:
+                if H == 'D0':
+                    if not r['d0']:
+                        continue
+                    m, f, b, a = r['d0']; Wh = W0
+                elif H not in r['v']:
                     continue
-                m, f, b, a = r['v'][H]
-                v = sig(W[H][0] + W[H][1] * m + W[H][2] * f)
+                else:
+                    m, f, b, a = r['v'][H]; Wh = W[H]
+                v = sig(Wh[0] + Wh[1] * m + Wh[2] * f)
                 v = v if side == 'yes' else 1 - v
                 bid = b if side == 'yes' else round(1 - a, 2)
                 if 0.01 <= bid <= 0.99 and bid - bt.fee(bid) >= v + mg:
