@@ -624,6 +624,8 @@ function settledItem(t, i){
   return `<div class="item tap">${side}<div class="main"><div class="t"><span style="color:${colorOf(t.strategy, i)}">▍</span>${esc(t.title)}</div><div class="s">${esc(sub)}</div></div>
     <div class="r"><span class="${cls(t.pnl)}">${money(t.pnl)}</span><small>$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} · ${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%</small></div>${details(r)}</div>`;
 }
+function isOpen(k){ if (!S.open){ try { S.open = new Set(JSON.parse(ls.get("ovOpen") || "[]")); } catch(e){ S.open = new Set(); } } return S.open.has(k); }
+function moreBtn(k, label){ return `<button class="seeall" data-more="${k}">${isOpen(k) ? "Show less ▲" : label + " ▼"}</button>`; }
 function heldRows(rows){ return rows.filter(r => r.status === "filled" || (r.status === "open" && r.filled > 0)); }
 function settledHTML(mode, rows, strats, B, unrTot){
   const tr = settledTrades(rows), sm = settledSum(tr), start = startBankroll(mode, B, sm.pnl + unrTot);
@@ -632,7 +634,11 @@ function settledHTML(mode, rows, strats, B, unrTot){
   const growth = sm.pnl / start.amt, growthAll = (sm.pnl + unrTot) / start.amt;
   const sp = v => v == null ? "—" : (v > 0.00005 ? "+" : v < -0.00005 ? "−" : "") + Math.abs(v * 100).toFixed(Math.abs(v) < .1 ? 2 : 1) + "%";
   const real = mode === "live" ? "real money" : "paper";
-  let h = `<h2>Settled results <span class="sub">${real} · cashed out</span></h2><div class="card glow">
+  const summary = `<div class="grid g3" style="margin-top:14px">
+      <div><div class="lbl">Growth</div><div class="val ${cls(growth)}">${sp(growth)}</div></div>
+      <div><div class="lbl">Record</div><div class="val">${sm.wins}-${sm.losses}<small> ${sm.winRate == null ? "" : pct(sm.winRate)}</small></div></div>
+      <div><div class="lbl">ROI</div><div class="val ${cls(sm.roi || 0)}">${sp(sm.roi)}</div></div></div>`;
+  let h = `<h2>Settled results <span class="sub">${real} · cashed out</span></h2><div class="card">
     <div class="sgrid">
       <div><div class="lbl">Realized</div><div class="val ${cls(sm.pnl)}">${money(sm.pnl)}<small>${sm.n} trade${sm.n === 1 ? "" : "s"}</small></div></div>
       <div><div class="lbl">Bankroll growth</div><div class="val ${cls(growth)}">${sp(growth)}<small>on $${start.amt.toFixed(2)} start</small></div></div>
@@ -663,18 +669,18 @@ function settledHTML(mode, rows, strats, B, unrTot){
   const list = tr.slice().reverse();
   h += `<h2>Settled trades <span class="sub">${tr.length} · newest first</span></h2><div class="card list">${list.length ? list.slice(0, S.setAll ? list.length : 8).map(t => settledItem(t, Math.max(0, strats.indexOf(t.strategy)))).join("") : `<div class="empty">Nothing settled yet</div>`}
     ${list.length > 8 ? `<button class="seeall" id="setAll">${S.setAll ? "Show less ▲" : `See all ${list.length} ▼`}</button>` : ""}</div>`;
+  let next = "", nextList = "";
   const held = heldRows(rows).filter(r => r.close).sort((a, b) => a.close - b.close);
   if (held.length){
     const n = r => r.status === "filled" ? (r.filled || r.count) : r.filled, c = v => Math.round(v * 100) + "¢";
     const winAll = held.reduce((a, r) => a + n(r) * (1 - r.price), 0), loseAll = held.reduce((a, r) => a + n(r) * r.price, 0);
-    h += `<h2>Settling next <span class="sub">${held.length} held bets</span></h2><div class="card">
-      <div class="grid g3"><div><div class="lbl">If all win</div><div class="val pos">${money(winAll)}<small> ${sp(winAll / start.amt)}</small></div></div>
+    next = `<div class="grid g3" style="margin-top:14px"><div><div class="lbl">If all win</div><div class="val pos">${money(winAll)}<small> ${sp(winAll / start.amt)}</small></div></div>
       <div><div class="lbl">If all lose</div><div class="val neg">${money(-loseAll)}<small> ${sp(-loseAll / start.amt)}</small></div></div>
-      <div><div class="lbl">Next</div><div class="val" style="font-size:17px">${esc(until(held[0].close))}</div></div></div>
-      <div class="list" style="margin-top:8px">${held.slice(0, S.nextAll ? held.length : 6).map(r => `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${n(r)} @ ${c(r.price)} · closes ${esc(fdt(r.close))} (${esc(until(r.close))})</div></div><div class="r"><span class="pos">${money(n(r) * (1 - r.price))}</span><small>or ${money(-n(r) * r.price)}</small></div>${details(r)}</div>`).join("")}</div>
+      <div><div class="lbl">Next settles</div><div class="val" style="font-size:17px">${esc(until(held[0].close))}</div></div></div>`;
+    nextList = `<h2>Settling next <span class="sub">${held.length} held bets</span></h2><div class="card"><div class="list">${held.slice(0, S.nextAll ? held.length : 6).map(r => `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${n(r)} @ ${c(r.price)} · closes ${esc(fdt(r.close))} (${esc(until(r.close))})</div></div><div class="r"><span class="pos">${money(n(r) * (1 - r.price))}</span><small>or ${money(-n(r) * r.price)}</small></div>${details(r)}</div>`).join("")}</div>
       ${held.length > 6 ? `<button class="seeall" id="nextAll">${S.nextAll ? "Show less ▲" : `See all ${held.length} ▼`}</button>` : ""}</div>`;
   }
-  return {h, tr, start, by};
+  return {h, tr, start, by, summary, next, nextList};
 }
 function drawSettled(sx, rows, strats, st, dayStop, totStop){
   const {tr, start, by} = sx, pctU = (ls.get("eqUnit") || "$") === "%", k = pctU ? 1 / start.amt : 1;
@@ -698,8 +704,6 @@ function drawSettled(sx, rows, strats, st, dayStop, totStop){
   const byDay = {}; st.settled.forEach(r => { const d = etDay(r.settled); byDay[d] = (byDay[d] || 0) + r.pnl; });
   const days = Object.keys(byDay).sort().slice(-30);
   barChart($("#daily"), days.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:byDay[d], extra:`${fp(byDay[d] / start.amt)} of bankroll`})), {empty:"No settled days yet"});
-  if ($("#setAll")) $("#setAll").onclick = () => { S.setAll = !S.setAll; renderOverview(); };
-  if ($("#nextAll")) $("#nextAll").onclick = () => { S.nextAll = !S.nextAll; renderOverview(); };
 }
 
 /* ---------------------------------------------------------------- views */
@@ -737,17 +741,15 @@ function renderOverview(){
   const manual = mode === "live" ? model().manual : [];
   const unr = st.open.map(unrealized).filter(v => v != null), unrTot = unr.reduce((a, b) => a + b, 0);
   const strats = strategiesFor(mode);
-  let h = `<div class="card glow" style="margin-top:2px"><div class="hero"><div><div class="lbl">${mode === "live" ? "Real-money P&L" : "Paper P&L"} · all time</div>
+  const sx = settledHTML(mode, rows, strats, B, unrTot);
+  let h = `<h2>All time <span class="sub">${mode === "live" ? "real money" : "paper"}</span></h2><div class="card glow"><div class="hero"><div><div class="lbl">${mode === "live" ? "Real-money P&L" : "Paper P&L"} · all time</div>
     <div class="big ${cls(st.pnl)}">${money(st.pnl)}</div>
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${settledTrades(rows).length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
-    <div class="grid g3" style="margin-top:14px">
-      <div><div class="lbl">Win rate</div><div class="val">${st.winRate == null ? "—" : pct(st.winRate)}</div></div>
-      <div><div class="lbl">Edge / ct</div><div class="val ${cls(st.edgeC)}">${st.contracts ? cents(st.edgeC) : "—"}</div></div>
-      <div><div class="lbl">Open</div><div class="val">${st.open.length}<small> · $${st.exposure.toFixed(2)}</small></div></div>
-    </div></div>`;
-  const sx = settledHTML(mode, rows, strats, B, unrTot); h += sx.h;
+    ${sx.summary}${moreBtn("all", "More all-time stats")}</div>`;
+  if (isOpen("all")) h += sx.h;
+  h += `<h2>Right now <span class="sub">open bets</span></h2>`;
 
   const mk = marked(rows), upAll = upPoints(mode);
   if (mk.priced.length) upAll.push({x:Date.now(), y:+mk.tot.toFixed(2)});
@@ -758,8 +760,8 @@ function renderOverview(){
   if (mk.held.length || upAll.length){
     const list = mk.priced.slice().sort((x, y) => unrealized(y) - unrealized(x));
     const best = list[0], worst = list.at(-1), c = v => Math.round(v * 100) + "¢";
-    h += `<h2>Live up/down <span class="sub">before selling · open bets at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></h2><div class="card rh glow" style="--rc:${upC}">
-      <div class="lbl">If you sold everything now</div>
+    h += `<div class="card rh glow" style="--rc:${upC}">
+      <div class="lbl">If you sold everything now <span class="mute" style="text-transform:none;letter-spacing:0">· at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></div>
       <div class="big ${cls(upNow || 0)}">${upNow == null ? "—" : money(upNow)}</div>
       <div class="chg ${upChg < -0.004 ? "neg" : "pos"}">${upPts.length > 1 ? `${upChg < -0.004 ? "▼" : "▲"} ${money(upChg)} <span class="mute">${rng === "ALL" ? "all time" : "past " + {"1H":"hour","1D":"day","1W":"week"}[rng]}</span>` : `<span class="mute">history builds every 5 min</span>`}</div>
       <div class="chart" id="upc"></div>
@@ -767,12 +769,16 @@ function renderOverview(){
       <div class="grid g3" style="margin-top:14px"><div><div class="lbl">Cost held</div><div class="val">${mk.cost ? "$" + mk.cost.toFixed(2) : "—"}</div></div>
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
-      <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 6).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
+      ${sx.next}
+      <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
-      ${list.length > 6 ? `<button class="seeall" id="upAll">${S.upAll ? "Show less ▲" : `See all ${list.length} ▼`}</button><div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}.</div>` : ""}</div>`;
+      ${list.length ? `<button class="seeall" id="upAll">${S.upAll ? "Hide bets ▲" : `Show ${list.length} bets ▼`}</button><div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}.</div>` : ""}
+      ${moreBtn("now", "More current info")}</div>`;
   }
-  if (mk.priced.length > 1) h += `<h2>Up/down by bet <span class="sub">${mk.priced.length} held · tap a bar</span></h2><div class="card"><div class="chart" id="upBets"></div></div>`;
-  h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
+  const nowOpen = isOpen("now") || !(mk.held.length || upAll.length);
+  if (nowOpen) h += sx.nextList;
+  if (nowOpen && mk.priced.length > 1) h += `<h2>Up/down by bet <span class="sub">${mk.priced.length} held · tap a bar</span></h2><div class="card"><div class="chart" id="upBets"></div></div>`;
+  if (nowOpen) h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
     ${meter("Money at risk (trader orders)", capExp, openCap, {txt:`${pct(capExp / B, 1)} of ${pct(capPct)} cap`, sub:`$${capExp.toFixed(2)} open of $${openCap.toFixed(2)} allowed${mode === "paper" ? ` · paper cap ${pct(capPct)}, live cap ${pct(num(t.max_open_pct, .6))}` : ""}`})}
     ${resExp > 0 ? `<div class="meter"><div class="row"><span class="dim">Weather research log</span><b>$${resExp.toFixed(2)}</b></div><div class="s mute" style="font-size:11px">${research.length} day-before paper orders. Uncapped, no money, not counted against the cap.</div></div>` : ""}
     ${meter("Today's loss vs daily stop", -st.todayPnl, dayStop, {txt:`${money(st.todayPnl)} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} of bankroll in a day pauses new orders until tomorrow`})}
@@ -780,8 +786,10 @@ function renderOverview(){
   </div>`;
 
   const eqRows = equityRows(mode);
-  if (eqRows.length) h += `<h2>Money at risk over time <span class="sub">trader orders · cap $${openCap.toFixed(2)}</span></h2><div class="card"><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div></div>`;
-  h += `<h2>Strategies <span class="sub">${strats.length} ${mode}</span></h2><div class="grid cols2">`;
+  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">trader orders · cap $${openCap.toFixed(2)}</span></h2><div class="card"><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div></div>`;
+  h += `<h2>Strategies <span class="sub">${strats.length} ${mode}</span></h2>`;
+  if (!isOpen("strat")) h += moreBtn("strat", `Show ${strats.length} strategies`);
+  else { h += `<div class="grid cols2">`;
   const bench = (S.data.verdicts || {}).strategies || {};
   strats.forEach((name, i) => {
     const r = rows.filter(x => x.strategy === name), s = stats(r), mk = marked(r), sp = t[name] || {}, m = stratMode(name), b = bench[name] || {};
@@ -813,11 +821,16 @@ function renderOverview(){
       <div><div class="lbl">Pending</div><div class="val">${s.open.length}</div></div></div>
       <div class="note">${esc(b.backtest_note || "")}</div></div>`; }).join("") + `</div>`;
   }
+  h += moreBtn("strat", "");
+  }
   if (manual.length){
     h += `<h2>Your manual trades</h2><div class="card list">` + manual.map(r => `<div class="item"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t">${esc(r.ticker)}</div><div class="s">${esc(r.title)}</div></div><div class="r">${r.count} @ ${Math.round(r.price * 100)}¢</div></div>`).join("") + `</div>`;
   }
   $("#v-overview").innerHTML = h;
+  $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
 
+  if ($("#setAll")) $("#setAll").onclick = () => { S.setAll = !S.setAll; renderOverview(); };
+  if ($("#nextAll")) $("#nextAll").onclick = () => { S.nextAll = !S.nextAll; renderOverview(); };
   if ($("#upAll")) $("#upAll").onclick = () => { S.upAll = !S.upAll; renderOverview(); };
   if ($("#upc")){
     lineChart($("#upc"), [{name:"Up/down", c:upC, w:2.5, pts:upPts}], {h:180, zero:false, refs:upPts.length > 1 ? [{y:upPts[0].y, c:"#6b7699", label:"start"}] : [],
@@ -835,7 +848,7 @@ function renderOverview(){
     $("#expLeg").innerHTML = ex.map(s => `<span><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("");
     lineChart($("#exp"), ex, {h:170, refs:[{y:openCap, c:"#f5b335", label:"cap"}], y1:openCap * 1.02});
   }
-  drawSettled(sx, rows, strats, st, dayStop, totStop);
+  if ($("#eq")) drawSettled(sx, rows, strats, st, dayStop, totStop);
 }
 
 function details(r){
