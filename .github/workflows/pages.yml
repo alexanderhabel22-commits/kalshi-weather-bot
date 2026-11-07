@@ -30,6 +30,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Stamp the build (the page reloads itself when a newer one is live)
+        run: |
+          echo "${GITHUB_SHA}" > dashboard/build.txt
+          sed -i "s/__BUILD__/${GITHUB_SHA}/" dashboard/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dashboard

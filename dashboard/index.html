@@ -1250,6 +1250,17 @@ async function refreshQuotes(){
 setInterval(() => { if (document.hidden) return; if (Date.now() - S.lastData >= DATA_MS) refresh();
   else if (S.lastData){ if (Date.now() - (S.lastQuotes || S.lastData) >= QUOTE_MS) refreshQuotes(); renderStamp(); } }, 1000);
 refresh(true);
+// Self-update: the phone (especially a home-screen icon) can keep an old copy of this page for a while.
+// The deploy stamps BUILD into the page and writes build.txt; when build.txt shows a newer build, reload.
+const BUILD = "__BUILD__";
+async function checkBuild(){
+  if (BUILD.startsWith("__") || document.hidden) return;
+  try { const b = (await (await fetch("build.txt?v=" + Date.now(), {cache:"no-store"})).text()).trim();
+    if (/^[0-9a-f]{7,40}$/.test(b) && b !== BUILD && !document.querySelector(".item.tap.open, .xmodal")) location.replace(location.pathname + "?v=" + b.slice(0, 7)); } catch(e){}
+}
+setInterval(checkBuild, 120e3);
+document.addEventListener("visibilitychange", checkBuild);
+setTimeout(checkBuild, 5e3);
 </script>
 </body>
 </html>
