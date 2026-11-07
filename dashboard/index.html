@@ -136,6 +136,18 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
 .legend span.off{opacity:.35}
 .legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.tbl-wrap{overflow-x:auto;margin:0 -4px}
+.tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+.tbl th{font-size:10px;font-weight:500;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;text-align:right;padding:0 4px 6px}
+.tbl td{padding:8px 4px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left;white-space:normal}
+.tbl td:first-child i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+.tbl tr.tot td{border-top:1px solid var(--line2);font-weight:700}
+.sgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 8px}
+.sgrid .val{font-size:17px}
+.sgrid .val small{display:block;font-size:11px;margin-top:2px}
+.pace{margin-top:14px;padding:10px 12px;border-radius:10px;background:#0a0f1d;border:1px solid var(--line);font-size:12.5px;color:var(--ink2);line-height:1.55}
+.pace b{font-family:var(--mono)}
 .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px;scrollbar-width:none}
 .filters::-webkit-scrollbar{display:none}
 .filters button{all:unset;cursor:pointer;font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2);white-space:nowrap}
@@ -393,7 +405,7 @@ function model(){
     rows.push({src:"trader", strategy:r.strategy, mode:r.mode || "paper", ticker:r.ticker, event:r.event, title:r.title || r.ticker,
       side:(r.side || "").toLowerCase(), price:num(r.price), count:num(r.count), filled:num(r.filled),
       status:STATUS[r.status] || r.status, placed:pdate(r.placed_at), close:pdate(r.close), settled:pdate(r.settled_at),
-      result:r.result, pnl:r.pnl === "" ? null : num(r.pnl), note:r.note, filledAt:pdate(r.filled_at)});
+      result:r.result, pnl:r.pnl === "" ? null : num(r.pnl), note:r.note, filledAt:pdate(r.filled_at), fee:num(r.fee)});
   }
   const traderWx = new Set(rows.filter(r => r.strategy === "weather").map(r => r.ticker + "|" + r.side));
   for (const r of d.paper || []){
@@ -567,6 +579,129 @@ function meter(label, used, cap, opts={}){
   return `<div class="meter"><div class="row"><span class="dim">${label}</span><b>${opts.txt || ""}</b></div><div class="bar"><i class="${k}" style="width:${w}%"></i></div>${opts.sub ? `<div class="s mute" style="font-size:11px;margin-top:4px">${opts.sub}</div>` : ""}</div>`;
 }
 
+/* ---------------------------------------------------------------- settled results */
+// Starting bankroll for growth %: dashboard/verdicts.json "bankroll_start" (deposits are not gains,
+// so add a deposit to its amount); otherwise today's balance minus what trading made.
+function startBankroll(mode, B, gain){
+  const s = ((S.data.verdicts || {}).bankroll_start || {})[mode];
+  if (s && num(s.amount) > 0) return {amt:num(s.amount), at:pdate(s.at), set:true};
+  return {amt:Math.max(1, B - gain), at:null, set:false};
+}
+function settledTrades(rows){
+  // one entry per settled bet; a YES+NO pair Kalshi netted into $1 counts as one trade
+  const g = new Map(); let i = 0;
+  for (const r of rows){
+    if (r.status !== "settled" || r.pnl == null) continue;
+    const k = r.result === "netted" ? "net|" + r.ticker + "|" + Math.round((+r.settled || 0) / 60e3) : "row|" + (i++);
+    if (!g.has(k)) g.set(k, []);
+    g.get(k).push(r);
+  }
+  const n = l => Math.max(1, l.filled || l.count);
+  return [...g.values()].map(legs => {
+    const r = legs[0], netted = r.result === "netted";
+    const cost = legs.reduce((a, l) => a + l.price * n(l) + (l.fee || 0), 0), pnl = legs.reduce((a, l) => a + l.pnl, 0);
+    const contracts = legs.reduce((a, l) => a + n(l), 0);
+    const how = netted ? "netted · Kalshi paid $1/pair" : r.result === "exit" ? "sold early" : r.result ? (r.result === r.side ? "won" : "lost") + ` · settled ${String(r.result).toUpperCase()}` : "";
+    return {legs, r, strategy:r.strategy, title:r.title, settled:r.settled, netted, cost, pnl, payout:cost + pnl, roi:cost ? pnl / cost : 0,
+      contracts, how, fees:legs.reduce((a, l) => a + (l.fee || 0), 0), entryW:legs.reduce((a, l) => a + l.price * n(l), 0), legN:legs.reduce((a, l) => a + n(l), 0),
+      win:pnl > 0.0049, loss:pnl < -0.0049};
+  }).sort((a, b) => (a.settled || 0) - (b.settled || 0));
+}
+function settledSum(tr){
+  const sum = f => tr.reduce((a, t) => a + f(t), 0);
+  const pnl = sum(t => t.pnl), staked = sum(t => t.cost), wins = tr.filter(t => t.win).length, losses = tr.filter(t => t.loss).length;
+  const byPnl = tr.slice().sort((a, b) => b.pnl - a.pnl), legN = sum(t => t.legN);
+  return {n:tr.length, pnl, staked, payout:sum(t => t.payout), fees:sum(t => t.fees), wins, losses, pushes:tr.length - wins - losses,
+    roi:staked ? pnl / staked : null, winRate:wins + losses ? wins / (wins + losses) : null, avg:tr.length ? pnl / tr.length : null,
+    contracts:sum(t => t.contracts), avgEntry:legN ? sum(t => t.entryW) / legN : null, best:byPnl[0], worst:byPnl.at(-1),
+    avgWin:wins ? sum(t => t.win ? t.pnl : 0) / wins : null, avgLoss:losses ? sum(t => t.loss ? t.pnl : 0) / losses : null};
+}
+function settledItem(t, i){
+  const c = v => Math.round(v * 100) + "¢", r = t.r;
+  const legs = t.netted && t.legs.length > 1 ? t.legs.map(l => `${l.side.toUpperCase()} ${Math.max(1, l.filled || l.count)}@${c(l.price)}`).join(" + ") : `${Math.max(1, r.filled || r.count)} @ ${c(r.price)}`;
+  const side = t.netted && t.legs.length > 1 ? `<span class="side" style="color:var(--amber);border:1px solid rgba(245,179,53,.4);background:rgba(245,179,53,.08)">PAIR</span>` : `<span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span>`;
+  const sub = [legs, t.how, t.settled ? fdt(t.settled) : "", strategyName(t.strategy)].filter(Boolean).join(" · ");
+  return `<div class="item tap">${side}<div class="main"><div class="t"><span style="color:${colorOf(t.strategy, i)}">▍</span>${esc(t.title)}</div><div class="s">${esc(sub)}</div></div>
+    <div class="r"><span class="${cls(t.pnl)}">${money(t.pnl)}</span><small>$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} · ${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%</small></div>${details(r)}</div>`;
+}
+function heldRows(rows){ return rows.filter(r => r.status === "filled" || (r.status === "open" && r.filled > 0)); }
+function settledHTML(mode, rows, strats, B, unrTot){
+  const tr = settledTrades(rows), sm = settledSum(tr), start = startBankroll(mode, B, sm.pnl + unrTot);
+  const since = start.at || rows.reduce((a, r) => r.placed && (!a || r.placed < a) ? r.placed : a, null);
+  const days = since ? Math.max(.5, (Date.now() - since) / 864e5) : null;
+  const growth = sm.pnl / start.amt, growthAll = (sm.pnl + unrTot) / start.amt;
+  const sp = v => v == null ? "—" : (v > 0.00005 ? "+" : v < -0.00005 ? "−" : "") + Math.abs(v * 100).toFixed(Math.abs(v) < .1 ? 2 : 1) + "%";
+  const real = mode === "live" ? "real money" : "paper";
+  let h = `<h2>Settled results <span class="sub">${real} · cashed out</span></h2><div class="card glow">
+    <div class="sgrid">
+      <div><div class="lbl">Realized</div><div class="val ${cls(sm.pnl)}">${money(sm.pnl)}<small>${sm.n} trade${sm.n === 1 ? "" : "s"}</small></div></div>
+      <div><div class="lbl">Bankroll growth</div><div class="val ${cls(growth)}">${sp(growth)}<small>on $${start.amt.toFixed(2)} start</small></div></div>
+      <div><div class="lbl">ROI on staked</div><div class="val ${cls(sm.roi || 0)}">${sp(sm.roi)}<small>$${sm.staked.toFixed(2)} staked</small></div></div>
+      <div><div class="lbl">Record</div><div class="val">${sm.wins}-${sm.losses}${sm.pushes ? "-" + sm.pushes : ""}<small>won-lost${sm.pushes ? "-even" : ""}</small></div></div>
+      <div><div class="lbl">Win rate</div><div class="val">${sm.winRate == null ? "—" : pct(sm.winRate)}<small>avg entry ${sm.avgEntry == null ? "—" : Math.round(sm.avgEntry * 100) + "¢"}</small></div></div>
+      <div><div class="lbl">Avg / trade</div><div class="val ${cls(sm.avg || 0)}">${sm.avg == null ? "—" : money(sm.avg)}<small>${sm.contracts ? cents(sm.pnl / sm.contracts * 100) + " / contract" : "—"}</small></div></div>
+      <div><div class="lbl">Paid back</div><div class="val">$${sm.payout.toFixed(2)}<small>fees $${sm.fees.toFixed(2)}</small></div></div>
+      <div><div class="lbl">Best</div><div class="val ${sm.best ? cls(sm.best.pnl) : ""}">${sm.best ? money(sm.best.pnl) : "—"}<small>${sm.avgWin == null ? "&nbsp;" : "avg win " + money(sm.avgWin)}</small></div></div>
+      <div><div class="lbl">Worst</div><div class="val ${sm.worst ? cls(sm.worst.pnl) : ""}">${sm.worst ? money(sm.worst.pnl) : "—"}<small>${sm.avgLoss == null ? "&nbsp;" : "avg loss " + money(sm.avgLoss)}</small></div></div>
+    </div>
+    <div class="pace">${days ? `Since ${esc(fday(since))} (${days.toFixed(1)} days): <b class="${cls(sm.pnl)}">${money(sm.pnl / days)}/day</b> realized, <b class="${cls(growth)}">${sp(growth / days)}/day</b> of bankroll.` : "No trades yet."}
+      ${unrTot ? ` Counting open bets at today's mid: <b class="${cls(growthAll)}">${sp(growthAll)}</b> (${money(sm.pnl + unrTot)}).` : ""}
+      ${sm.n < 30 ? `<div class="mute" style="margin-top:6px">Only ${sm.n} settled trade${sm.n === 1 ? "" : "s"}: this pace is noise, not a forecast. It means something after 30+ trades and a few weeks.</div>`
+        : days ? `<div class="mute" style="margin-top:6px">At this pace: about ${sp(growth / days * 30)} a month (simple, not compounded). Past pace is not a promise.</div>` : ""}
+      ${start.set ? "" : `<div class="mute" style="margin-top:6px">Start bankroll estimated as today's balance minus trading P&L.</div>`}</div>
+  </div>`;
+  h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card"><div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div></div>`;
+  if (tr.length) h += `<h2>Profit per trade <span class="sub">oldest → newest · tap a bar</span></h2><div class="card"><div class="chart" id="perTrade"></div></div>`;
+  const by = strats.map((n, i) => ({n, i, s:settledSum(tr.filter(t => t.strategy === n))})).filter(x => x.s.n).sort((a, b) => b.s.pnl - a.s.pnl);
+  if (by.length){
+    h += `<h2>By strategy <span class="sub">settled only</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>W-L</th><th>Win</th><th>Staked</th><th>P&L</th><th>ROI</th></tr>`
+      + by.map(x => `<tr><td><i style="background:${colorOf(x.n, x.i)}"></i>${esc(strategyName(x.n))}</td><td>${x.s.wins}-${x.s.losses}</td><td>${x.s.winRate == null ? "—" : pct(x.s.winRate)}</td><td>$${x.s.staked.toFixed(2)}</td><td class="${cls(x.s.pnl)}">${money(x.s.pnl)}</td><td class="${cls(x.s.roi || 0)}">${sp(x.s.roi)}</td></tr>`).join("")
+      + (by.length > 1 ? `<tr class="tot"><td>Total</td><td>${sm.wins}-${sm.losses}</td><td>${sm.winRate == null ? "—" : pct(sm.winRate)}</td><td>$${sm.staked.toFixed(2)}</td><td class="${cls(sm.pnl)}">${money(sm.pnl)}</td><td class="${cls(sm.roi || 0)}">${sp(sm.roi)}</td></tr>` : "")
+      + `</table></div>${by.length > 1 ? `<div class="chart" id="byStrat" style="margin-top:12px"></div>` : ""}</div>`;
+  }
+  h += `<h2>Daily P&L</h2><div class="card"><div class="chart" id="daily"></div></div>`;
+  const list = tr.slice().reverse();
+  h += `<h2>Settled trades <span class="sub">${tr.length} · newest first</span></h2><div class="card list">${list.length ? list.slice(0, S.setAll ? list.length : 8).map(t => settledItem(t, Math.max(0, strats.indexOf(t.strategy)))).join("") : `<div class="empty">Nothing settled yet</div>`}
+    ${list.length > 8 ? `<button class="seeall" id="setAll">${S.setAll ? "Show less ▲" : `See all ${list.length} ▼`}</button>` : ""}</div>`;
+  const held = heldRows(rows).filter(r => r.close).sort((a, b) => a.close - b.close);
+  if (held.length){
+    const n = r => r.status === "filled" ? (r.filled || r.count) : r.filled, c = v => Math.round(v * 100) + "¢";
+    const winAll = held.reduce((a, r) => a + n(r) * (1 - r.price), 0), loseAll = held.reduce((a, r) => a + n(r) * r.price, 0);
+    h += `<h2>Settling next <span class="sub">${held.length} held bets</span></h2><div class="card">
+      <div class="grid g3"><div><div class="lbl">If all win</div><div class="val pos">${money(winAll)}<small> ${sp(winAll / start.amt)}</small></div></div>
+      <div><div class="lbl">If all lose</div><div class="val neg">${money(-loseAll)}<small> ${sp(-loseAll / start.amt)}</small></div></div>
+      <div><div class="lbl">Next</div><div class="val" style="font-size:17px">${esc(until(held[0].close))}</div></div></div>
+      <div class="list" style="margin-top:8px">${held.slice(0, S.nextAll ? held.length : 6).map(r => `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${n(r)} @ ${c(r.price)} · closes ${esc(fdt(r.close))} (${esc(until(r.close))})</div></div><div class="r"><span class="pos">${money(n(r) * (1 - r.price))}</span><small>or ${money(-n(r) * r.price)}</small></div>${details(r)}</div>`).join("")}</div>
+      ${held.length > 6 ? `<button class="seeall" id="nextAll">${S.nextAll ? "Show less ▲" : `See all ${held.length} ▼`}</button>` : ""}</div>`;
+  }
+  return {h, tr, start, by};
+}
+function drawSettled(sx, rows, strats, st, dayStop, totStop){
+  const {tr, start, by} = sx, pctU = (ls.get("eqUnit") || "$") === "%", k = pctU ? 1 / start.amt : 1;
+  const fp = v => (v < -1e-9 ? "−" : v > 1e-9 ? "+" : "") + Math.abs(v * 100).toFixed(1) + "%";
+  const scale = s => ({...s, pts:s.pts.map(p => ({...p, y:p.y * k}))});
+  const ser = [cumSeries(rows, "Total", "#e6ecff")];
+  strats.forEach((n, i) => { const s = cumSeries(rows.filter(r => r.strategy === n), strategyName(n), colorOf(n, i)); if (s.pts.length) ser.push(s); });
+  ser[0].w = 2.5;
+  const hidden = new Set(JSON.parse(ls.get("eqHidden") || "[]"));
+  const refs = [{y:-dayStop, c:"#f5b335", label:"daily stop"}, {y:-totStop, c:"#fb6b7b", label:"halt"}].filter(r => st.pnl < -dayStop * .3 || r.label === "daily stop" && st.pnl < 0).map(r => ({...r, y:r.y * k}));
+  const drawEq = () => lineChart($("#eq"), ser.filter(s => !hidden.has(s.name)).map(scale), {empty:"Nothing settled yet. The curve starts with the first settled order.", refs,
+    ...(pctU ? {fy:v => (v * 100).toFixed(Math.abs(v) < .05 ? 1 : 0) + "%", fv:fp, minSpan:.004} : {})});
+  $("#eqLeg").innerHTML = ser.length > 1 ? ser.map(s => `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}"><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("") : "";
+  $("#eqLeg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("eqHidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); drawEq(); };
+  $("#eqUnit").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("eqUnit", b.dataset.u); renderOverview(); };
+  drawEq();
+  if ($("#perTrade")) barChart($("#perTrade"), tr.map(t => ({label:t.title, short:"", v:t.pnl,
+    extra:`${t.how ? t.how + " · " : ""}$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} (${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%) · ${t.settled ? fdt(t.settled) + " · " : ""}${strategyName(t.strategy)}`})), {h:140});
+  if ($("#byStrat")) barChart($("#byStrat"), by.map(x => ({label:strategyName(x.n), short:strategyName(x.n).split(" ")[0], v:x.s.pnl, c:colorOf(x.n, x.i),
+    extra:`${x.s.wins}-${x.s.losses} · ROI ${x.s.roi == null ? "—" : (x.s.roi * 100).toFixed(1) + "%"} · $${x.s.staked.toFixed(2)} staked`})), {h:130});
+  const byDay = {}; st.settled.forEach(r => { const d = etDay(r.settled); byDay[d] = (byDay[d] || 0) + r.pnl; });
+  const days = Object.keys(byDay).sort().slice(-30);
+  barChart($("#daily"), days.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:byDay[d], extra:`${fp(byDay[d] / start.amt)} of bankroll`})), {empty:"No settled days yet"});
+  if ($("#setAll")) $("#setAll").onclick = () => { S.setAll = !S.setAll; renderOverview(); };
+  if ($("#nextAll")) $("#nextAll").onclick = () => { S.nextAll = !S.nextAll; renderOverview(); };
+}
+
 /* ---------------------------------------------------------------- views */
 const SIGNAL = new Set(["edge-shadow","near-shadow"]);
 function modeRows(mode){ const m = model(); return mode === "live" ? m.rows.filter(r => r.mode === "live") : m.rows.filter(r => r.mode !== "live" && !SIGNAL.has(r.strategy)); }
@@ -604,7 +739,7 @@ function renderOverview(){
   const strats = strategiesFor(mode);
   let h = `<div class="card glow" style="margin-top:2px"><div class="hero"><div><div class="lbl">${mode === "live" ? "Real-money P&L" : "Paper P&L"} · all time</div>
     <div class="big ${cls(st.pnl)}">${money(st.pnl)}</div>
-    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${st.settled.length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
+    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${settledTrades(rows).length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
     <div class="grid g3" style="margin-top:14px">
@@ -612,6 +747,7 @@ function renderOverview(){
       <div><div class="lbl">Edge / ct</div><div class="val ${cls(st.edgeC)}">${st.contracts ? cents(st.edgeC) : "—"}</div></div>
       <div><div class="lbl">Open</div><div class="val">${st.open.length}<small> · $${st.exposure.toFixed(2)}</small></div></div>
     </div></div>`;
+  const sx = settledHTML(mode, rows, strats, B, unrTot); h += sx.h;
 
   const mk = marked(rows), upAll = upPoints(mode);
   if (mk.priced.length) upAll.push({x:Date.now(), y:+mk.tot.toFixed(2)});
@@ -645,8 +781,6 @@ function renderOverview(){
 
   const eqRows = equityRows(mode);
   if (eqRows.length) h += `<h2>Money at risk over time <span class="sub">trader orders · cap $${openCap.toFixed(2)}</span></h2><div class="card"><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div></div>`;
-  h += `<h2>Realized P&L <span class="sub">cashed out at settlement</span></h2><div class="card"><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div></div>`;
-  h += `<h2>Daily P&L</h2><div class="card"><div class="chart" id="daily"></div></div>`;
   h += `<h2>Strategies <span class="sub">${strats.length} ${mode}</span></h2><div class="grid cols2">`;
   const bench = (S.data.verdicts || {}).strategies || {};
   strats.forEach((name, i) => {
@@ -701,17 +835,7 @@ function renderOverview(){
     $("#expLeg").innerHTML = ex.map(s => `<span><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("");
     lineChart($("#exp"), ex, {h:170, refs:[{y:openCap, c:"#f5b335", label:"cap"}], y1:openCap * 1.02});
   }
-  const ser = [cumSeries(rows, "Total", "#e6ecff")];
-  strats.forEach((n, i) => { const s = cumSeries(rows.filter(r => r.strategy === n), strategyName(n), colorOf(n, i)); if (s.pts.length) ser.push(s); });
-  ser[0].w = 2.5;
-  const hidden = new Set(JSON.parse(ls.get("eqHidden") || "[]"));
-  const drawEq = () => lineChart($("#eq"), ser.filter(s => !hidden.has(s.name)), {empty:"Nothing settled yet. The curve starts with the first settled order.", refs:[{y:-dayStop, c:"#f5b335", label:"daily stop"}, {y:-totStop, c:"#fb6b7b", label:"halt"}].filter(r => st.pnl < -dayStop * .3 || r.label === "daily stop" && st.pnl < 0)});
-  $("#eqLeg").innerHTML = ser.length > 1 ? ser.map(s => `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}"><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("") : "";
-  $("#eqLeg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("eqHidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); drawEq(); };
-  drawEq();
-  const byDay = {}; st.settled.forEach(r => { const d = etDay(r.settled); byDay[d] = (byDay[d] || 0) + r.pnl; });
-  const days = Object.keys(byDay).sort().slice(-30);
-  barChart($("#daily"), days.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:byDay[d]})), {empty:"No settled days yet"});
+  drawSettled(sx, rows, strats, st, dayStop, totStop);
 }
 
 function details(r){
