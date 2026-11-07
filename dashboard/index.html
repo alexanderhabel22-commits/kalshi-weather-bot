@@ -341,6 +341,21 @@ async function loadApi(){
     S.lastApi = Date.now();
   } catch(e){ S.errors.push("GitHub API: " + e.message); }
 }
+async function loadHist(){
+  // scans-per-hour needs ~290 scan runs for 24h; the general runs call only holds the
+  // newest 100 runs of ALL workflows (~4h of scans). Fetch scan.yml alone, at most every
+  // 30 minutes (3 calls), to stay well inside GitHub's 60 calls/hour for visitors.
+  if (S.lastHist && Date.now() - S.lastHist < 30 * 60e3) return;
+  const since = Date.now() - 24 * 3600e3, out = [];
+  try {
+    for (let page = 1; page <= 3; page++){
+      const js = await getJSON(API + "/actions/workflows/scan.yml/runs?per_page=100&page=" + page, {cache:"no-cache"});
+      const rs = js.workflow_runs || []; out.push(...rs);
+      if (rs.length < 100 || pdate(rs[rs.length - 1].created_at) < since) break;
+    }
+    S.scanHist = out; S.lastHist = Date.now();
+  } catch(e){ /* keep the last copy; the chart marks hours it can't see */ }
+}
 async function loadQuotes(){
   // 1) the bot's snapshot (data/quotes.json, written after every trade run)
   const snap = S.data.qsnap;
@@ -1022,15 +1037,22 @@ function renderHealth(){
   const strip = list => `<div class="runs">${list.slice(0, 48).reverse().map(r => `<i class="${r.status !== "completed" ? "p" : r.conclusion === "success" ? "" : r.conclusion === "skipped" || r.conclusion === "cancelled" ? "s" : "f"}" title="${esc(fdt(pdate(r.created_at)))} ${esc(r.conclusion || r.status)}"></i>`).join("")}</div>`;
   h += `<h2>Recent runs <span class="sub">oldest → newest</span></h2><div class="card"><div class="lbl" style="margin-bottom:6px">Weather scan</div>${strip(scans)}<div class="lbl" style="margin:12px 0 6px">Trader</div>${strip(trades)}
     <div class="lbl" style="margin:12px 0 6px">Research jobs</div><div class="list">${runs.filter(r => !["weather-scan","trade"].includes(r.name)).slice(0, 6).map(r => `<div class="item" style="padding:7px 0"><div class="main"><div class="t" style="font-size:12.5px">${esc(r.name)}</div><div class="s">${esc(fdt(pdate(r.created_at)))}</div></div><div class="r ${r.conclusion === "success" ? "pos" : r.conclusion ? "neg" : ""}">${esc(r.conclusion || r.status)}</div></div>`).join("") || `<div class="empty">None</div>`}</div></div>`;
-  const hours = {}; scans.forEach(r => { const d = pdate(r.created_at); if (Date.now() - d > 24 * 3600e3) return; const k = fmt(d, {hour:"numeric", hour12:false}); hours[k] = (hours[k] || 0) + 1; });
+  // newest runs from the 5-minute call + the 24h scan history (deduplicated by id)
+  const hist = [...new Map([...(S.scanHist || []), ...scans].map(r => [r.id, r])).values()];
+  const seenFrom = hist.length ? Math.min(...hist.map(r => +pdate(r.created_at))) : Date.now();
+  const hours = {}; hist.forEach(r => { const d = pdate(r.created_at); if (Date.now() - d > 24 * 3600e3) return; const k = fmt(d, {hour:"numeric", hour12:false}); hours[k] = (hours[k] || 0) + 1; });
   h += `<h2>Scans per hour <span class="sub">last 24h, ET</span></h2><div class="card"><div class="chart" id="sph"></div></div>`;
   const rep = (S.tree || []).filter(f => /^reports\/(daily|weekly|monthly)\/.+\.md$/.test(f.path)).map(f => f.path).sort().reverse();
   h += `<h2>Reports</h2><div class="card list">${rep.length ? rep.slice(0, 12).map(p => `<div class="item"><div class="main"><div class="t">${esc(p.replace("reports/", "").replace(".md", ""))}</div></div><div class="r"><a href="https://github.com/${REPO}/blob/main/${esc(p)}" target="_blank" rel="noopener">open ↗</a></div></div>`).join("") : `<div class="empty">The first daily report arrives at 9 AM ET.</div>`}</div>`;
   h += `<h2>Bot report <span class="sub">data/REPORT.md</span></h2><div class="card md" id="rep"></div>`;
   if (S.errors.length) h += `<h2>Load errors</h2><div class="card">${S.errors.map(e => `<div class="err">${esc(e)}</div>`).join("")}</div>`;
   $("#v-health").innerHTML = h;
-  const hs = []; for (let i = 23; i >= 0; i--){ const d = new Date(Date.now() - i * 3600e3); const k = fmt(d, {hour:"numeric", hour12:false}); hs.push({label:fmt(d, {hour:"numeric"}), short:fmt(d, {hour:"numeric"}).replace(" ", "").toLowerCase(), v:hours[k] || 0, c:(hours[k] || 0) >= 10 ? "#34d399" : (hours[k] || 0) >= 6 ? "#f5b335" : "#fb6b7b"}); }
-  barChart($("#sph"), runs.length ? hs : [], {h:110, fy:v => v.toFixed(0), fv:v => v + " scans", empty:"GitHub API unavailable right now"});
+  const hs = []; for (let i = 23; i >= 0; i--){ const d = new Date(Date.now() - i * 3600e3); const k = fmt(d, {hour:"numeric", hour12:false});
+    const unseen = +d + 3600e3 < seenFrom;     // this hour ended before the oldest run we could load
+    hs.push({label:fmt(d, {hour:"numeric"}), short:fmt(d, {hour:"numeric"}).replace(" ", "").toLowerCase(), v:unseen ? 0 : hours[k] || 0,
+      extra:unseen ? "no run history loaded for this hour (not a missed scan)" : "",
+      c:unseen ? "#3a4870" : (hours[k] || 0) >= 10 ? "#34d399" : (hours[k] || 0) >= 6 ? "#f5b335" : "#fb6b7b"}); }
+  barChart($("#sph"), hist.length ? hs : [], {h:110, fy:v => v.toFixed(0), fv:v => v + " scans", empty:"GitHub API unavailable right now"});
   const md = S.data.report || "";
   $("#rep").innerHTML = md ? mdToHtml(md) : `<div class="empty">No report yet</div>`;
 }
@@ -1079,7 +1101,7 @@ async function refresh(force){
   if (busy) return; busy = true;
   try {
     if (force || Date.now() - S.lastData >= DATA_MS - 2e3) await loadData();
-    if (force || Date.now() - S.lastApi >= API_MS - 2e3) await loadApi();
+    if (force || Date.now() - S.lastApi >= API_MS - 2e3) { await loadApi(); await loadHist(); }
     await loadQuotes();
     noteLive();
     renderAll();
