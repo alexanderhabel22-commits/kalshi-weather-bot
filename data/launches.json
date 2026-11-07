@@ -6965,6 +6965,7 @@
   "KXGA14SPECIALSECOND",
   "KXGA1ROUND",
   "KXGA4GW",
+  "KXGAABORTION",
   "KXGAAGRICOMM",
   "KXGABBARDANNOUNCEOUT",
   "KXGABBARDCOUNT",
@@ -7301,6 +7302,7 @@
   "KXGOVPANOMR",
   "KXGOVPARTYAK",
   "KXGOVPARTYFL",
+  "KXGOVPOWERS",
   "KXGOVRACE",
   "KXGOVREOPEN2025",
   "KXGOVRINOMD",
@@ -8318,6 +8320,7 @@
   "KXJEFFNADU",
   "KXJEFFRIESFIRST",
   "KXJEFFRIESMENTION",
+  "KXJEFFRIESVOTES",
   "KXJENNINGSLEAVE",
   "KXJENSENMENTION",
   "KXJERSEYCITMOV",
@@ -8398,6 +8401,7 @@
   "KXJUAREZMAYOR",
   "KXJUDGECOUNT",
   "KXJUDGECOUNTYEAR",
+  "KXJUDGEFIRST",
   "KXJUDGEMENTDAYGAME",
   "KXJUDGES",
   "KXJUDGMENT",
@@ -11762,6 +11766,7 @@
   "KXNVIDIAGROQFINE",
   "KXNVIDIARASGONQ",
   "KXNVLTGOV",
+  "KXNVPAIDLEAVE",
   "KXNVPRIMARY",
   "KXNVTREASR",
   "KXNVVISIT",
@@ -12172,6 +12177,7 @@
   "KXPATH",
   "KXPATHA",
   "KXPATIENTSMONOPOLIES",
+  "KXPATRANSIT",
   "KXPAULBELLFIGHT",
   "KXPAULMENTION",
   "KXPAVIAPRESEASON",
@@ -15501,6 +15507,7 @@
   "KXTXSENOUTCOME",
   "KXTXSENRPRIMARYMOV",
   "KXTXSESSION",
+  "KXTXSPEAKER90",
   "KXTXSTATEWIDEDEMS",
   "KXTXSUPREME2",
   "KXTXSUPREME7",
@@ -16595,6 +16602,7 @@
   "KXWHPRESSSPEAKER",
   "KXWHUNDREDMATCH",
   "KXWHVISIT",
+  "KXWIACT10REPEAL",
   "KXWIBPLGAME",
   "KXWICORNYIELD",
   "KXWICOURT",
@@ -17658,11 +17666,11 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-07T00:30:23+00:00",
+ "last_check": "2026-11-07T01:00:26+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -17752,7 +17760,7 @@
   },
   "KXAISCORE": {
    "category": "Science and Technology",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:00:30+00:00",
    "frequency": "annual",
@@ -17782,7 +17790,7 @@
   },
   "KXBCEA": {
    "category": "Financials",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
@@ -17932,7 +17940,7 @@
   },
   "KXEFLL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17942,7 +17950,7 @@
   },
   "KXEFLL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -17982,13 +17990,23 @@
   },
   "KXEPCRMATCH": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXEPCRMATCH",
    "title": "European Professional Club Rugby Match"
+  },
+  "KXGAABORTION": {
+   "category": "Politics",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXGAABORTION",
+   "title": "Georgia abortion ban easing"
   },
   "KXGASARRAY": {
    "category": "Financials",
@@ -18000,9 +18018,19 @@
    "series": "KXGASARRAY",
    "title": "Gas station credit card spend array"
   },
+  "KXGOVPOWERS": {
+   "category": "Politics",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXGOVPOWERS",
+   "title": "Which states will curb their next governor's powers?"
+  },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18012,7 +18040,7 @@
   },
   "KXJ3LEAGUEBTTS": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18022,7 +18050,7 @@
   },
   "KXJ3LEAGUEGAME": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18042,7 +18070,7 @@
   },
   "KXJ3LEAGUETOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18052,13 +18080,33 @@
   },
   "KXJBLUA": {
    "category": "Financials",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
    "new_category": false,
    "series": "KXJBLUA",
    "title": "JetBlue Airways Annual KPI"
+  },
+  "KXJEFFRIESVOTES": {
+   "category": "Elections",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXJEFFRIESVOTES",
+   "title": "Jeffries first-ballot votes for Speaker"
+  },
+  "KXJUDGEFIRST": {
+   "category": "Politics",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXJUDGEFIRST",
+   "title": "First federal judge confirmed in the 120th Congress"
   },
   "KXLIGAPORTUGAL2ADVANCE": {
    "category": "Sports",
@@ -18102,7 +18150,7 @@
   },
   "KXNOR1DIVSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18112,13 +18160,23 @@
   },
   "KXNOR1DIVTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXNOR1DIVTOTAL",
    "title": "Total"
+  },
+  "KXNVPAIDLEAVE": {
+   "category": "Politics",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXNVPAIDLEAVE",
+   "title": "Will Nevada enact private-sector paid family leave?"
   },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
@@ -18129,6 +18187,16 @@
    "new_category": false,
    "series": "KXPARAGUAYIMPEACH",
    "title": "Will Santiago Pe\u00f1a be impeached?"
+  },
+  "KXPATRANSIT": {
+   "category": "Politics",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXPATRANSIT",
+   "title": "Will Pennsylvania dedicate more sales tax to mass transit?"
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
@@ -18202,7 +18270,7 @@
   },
   "KXSUPERETTANSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18212,7 +18280,7 @@
   },
   "KXSUPERETTANTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18232,7 +18300,7 @@
   },
   "KXTA": {
    "category": "Financials",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
@@ -18252,7 +18320,7 @@
   },
   "KXTARIFFRICEINDIA": {
    "category": "Politics",
-   "checked": "2026-11-06T23:30:22+00:00",
+   "checked": "2026-11-07T01:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T22:00:28+00:00",
    "frequency": "one_off",
@@ -18299,6 +18367,16 @@
    "new_category": false,
    "series": "KXTXMEDICAIDEXP",
    "title": "Will Texas expand Medicaid?"
+  },
+  "KXTXSPEAKER90": {
+   "category": "Elections",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTXSPEAKER90",
+   "title": "90th Legislature: Who will be Texas House Speaker?"
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
@@ -18359,6 +18437,16 @@
    "new_category": false,
    "series": "KXVETO120",
    "title": "Trump veto of a 120th Congress bill"
+  },
+  "KXWIACT10REPEAL": {
+   "category": "Politics",
+   "checked": "2026-11-07T01:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T01:00:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXWIACT10REPEAL",
+   "title": "Will Wisconsin repeal Act 10?"
   }
  },
  "queue": []
