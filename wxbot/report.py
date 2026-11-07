@@ -260,7 +260,7 @@ def build_report(rows: list[dict], census: dict, frows: list[dict], cfg, now: da
     lines += rain.report_section(rain.load())
     lines += daybefore.report_section(daybefore.load_orders())
     from . import trader
-    lines += trader.report_section(trader.load(), cfg)
+    lines += trader.report_section(trader.load_all(), cfg)
     lines += launches.report_section(launches.load())
     if runtime:
         scans = runtime.get("scans", {})

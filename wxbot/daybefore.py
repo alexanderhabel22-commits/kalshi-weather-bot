@@ -202,6 +202,27 @@ def trade_prices(http: Http, ticker: str, since: datetime, until: datetime) -> l
     return out
 
 
+def trade_prints(http: Http, ticker: str, since: datetime, until: datetime) -> list[tuple[float | None, float]]:
+    """(unix time or None, YES price) of every trade on `ticker` in [since, until]."""
+    out, cursor = [], None
+    for _ in range(20):
+        params = {"ticker": ticker, "limit": 1000, "min_ts": int(since.timestamp()),
+                  "max_ts": int(until.timestamp())}
+        if cursor:
+            params["cursor"] = cursor
+        js = http.get_json(f"{kalshi.BASE}/markets/trades", params=params)
+        for t in js.get("trades") or []:
+            p = kalshi.price(t, "yes_price")
+            if p is None:
+                continue
+            at = parse_iso(t.get("created_time")) if t.get("created_time") else None
+            out.append((at.timestamp() if at else None, p))
+        cursor = js.get("cursor")
+        if not cursor:
+            break
+    return out
+
+
 def fill_flags(side: str, price: float, prints: list[float]) -> tuple[bool, bool]:
     """(touched, through) for a resting buy at `price` on `side`."""
     if side == "yes":                        # we bid `price` for YES

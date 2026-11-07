@@ -325,6 +325,20 @@ async function loadData(){
   const d = {};
   res.forEach((r, i) => { const k = keys[i]; if (r.status === "fulfilled") d[k] = r.value; else { errs.push(String(r.reason.message || r.reason)); d[k] = S.data["_" + k]; } });
   for (const k of ["orders","paper","alerts","forecasts","mytrades","equity"]) d[k] = typeof d[k] === "string" ? parseCSV(d[k]) : (d[k] || []);
+  // finished orders older than ~2 days live in monthly archives (data/orders/<month>.csv);
+  // add them back so totals and history stay all-time. Months are cached by row count.
+  try {
+    const sum = await raw("data/orders/summary.json", "json");
+    const months = (sum && sum.months) || [], counts = (sum && sum.counts) || {};
+    S.arch = S.arch || {};
+    const got = await Promise.all(months.map(async m => {
+      if (S.arch[m] && S.arch[m].n === counts[m]) return S.arch[m].rows;
+      const rows = parseCSV(await raw(`data/orders/${m}.csv`));
+      S.arch[m] = {n: counts[m], rows}; return rows;
+    }));
+    const hot = new Set(d.orders.map(r => r.id + "|" + r.mode));
+    d.orders = got.flat().filter(r => !hot.has(r.id + "|" + r.mode)).concat(d.orders);
+  } catch(e){ errs.push("order archive: " + String(e.message || e)); }
   d.config = typeof d.config === "string" ? parseTOML(d.config) : (d.config || {});
   if (!d.verdicts) { try { d.verdicts = await getJSON("verdicts.json"); } catch(e){ d.verdicts = {events:[], checkpoints:[], strategies:{}}; } }
   for (const k of keys) d["_" + k] = d[k];
