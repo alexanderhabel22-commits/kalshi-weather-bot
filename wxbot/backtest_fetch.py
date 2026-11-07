@@ -195,13 +195,15 @@ def fetch_mos(http: Http, st, out: Path, start: datetime, end: datetime) -> str:
 
 # ---------------------------------------------------------------- main
 
-def run(out: Path, days: int, user_agent: str, workers: int = 2) -> list[str]:
+def run(out: Path, days: int, user_agent: str, workers: int = 2, recent_only: bool = False) -> list[str]:
+    """recent_only: live Kalshi markets, forecasts and readings only (no /historical
+    archive, no MOS), for the weekly refit."""
     end = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
     start = end - timedelta(days=days)
     catalog = default_catalog()
     lines = []
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        for hist in (False, True):
+        for hist in ((False,) if recent_only else (False, True)):
             for msg in pool.map(lambda si: fetch_series(si.ticker, out, start, user_agent, hist),
                                 catalog):
                 log.info(msg)
@@ -209,7 +211,7 @@ def run(out: Path, days: int, user_agent: str, workers: int = 2) -> list[str]:
     http = Http(user_agent, timeout=60)
     stations = {si.station.icao: si.station for si in catalog}
     for st in stations.values():
-        for fn in (fetch_forecasts, fetch_readings, fetch_mos):
+        for fn in ((fetch_forecasts, fetch_readings) if recent_only else (fetch_forecasts, fetch_readings, fetch_mos)):
             msg = fn(http, st, out, start - timedelta(days=3), end)
             log.info(msg)
             lines.append(msg)

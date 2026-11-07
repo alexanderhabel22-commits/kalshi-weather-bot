@@ -31,6 +31,7 @@ def main(argv=None) -> int:
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
     ap.add_argument("--days", type=int, default=400, help="backtest-fetch: days of history")
     ap.add_argument("--out", default="backtest", help="backtest-fetch: output folder")
+    ap.add_argument("--recent-only", action="store_true", help="backtest-fetch: skip the historical archive and MOS")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -77,7 +78,7 @@ def main(argv=None) -> int:
     if args.command == "backtest-fetch":
         from pathlib import Path
         from wxbot import backtest_fetch
-        for line in backtest_fetch.run(Path(args.out), args.days, cfg.user_agent):
+        for line in backtest_fetch.run(Path(args.out), args.days, cfg.user_agent, recent_only=args.recent_only):
             print(line)
         return 0
 

@@ -43,7 +43,7 @@ jobs:
 
       - name: Download the last 70 days
         if: steps.gate.outputs.skip != 'true'
-        run: python bot.py backtest-fetch --days 70 --out refit_bt -v
+        run: python bot.py backtest-fetch --days 70 --out refit_bt --recent-only -v
 
       - name: Refit
         if: steps.gate.outputs.skip != 'true'
