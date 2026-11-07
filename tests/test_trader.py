@@ -427,7 +427,7 @@ def test_paper_exit_books_pnl():
     n = trader.exits(_Books({"A": _book(0.01, 0.30)}), rows, NOW, {"mentions": {"hold_edge": -0.2}},
                      None, cfg(), False, set())
     assert n == 1 and rows[0]["status"] == "settled" and rows[0]["result"] == "exit"
-    assert float(rows[0]["pnl"]) == pytest.approx(2 * (0.70 - trader._fee(0.70) - 0.50))
+    assert float(rows[0]["pnl"]) == pytest.approx(2 * (0.70 - 0.50) - trader._fee(0.70, 2))
 
 
 def test_capacity_scales_with_market_volume():
