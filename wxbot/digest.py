@@ -101,7 +101,7 @@ def collect(tz: ZoneInfo, include_edge: bool = False) -> list[Result]:
             out.append(Result("Weather day-before", "paper", d, _f(o["price"], 0), _f(o["pnl"], 0), 1,
                               f"{o['city']} {o['metric']} {o['bracket']} {o['side'].upper()}",
                               _f(o.get("blend_p"))))
-    for r in trader.load():
+    for r in trader.load_all():         # archived months too (weekly / monthly reports)
         if r.get("status") != "settled" or r.get("pnl") in (None, ""):
             continue
         d = local(r.get("settled_at"))

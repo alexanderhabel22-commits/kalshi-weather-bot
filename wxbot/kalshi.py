@@ -40,6 +40,31 @@ def get_market(http: Http, ticker: str) -> dict | None:
         return None
 
 
+def get_markets(http: Http, tickers) -> dict[str, dict]:
+    """{ticker: market} for many tickers, ~100 per request (GET /markets?tickers=...).
+    Any ticker the batch call doesn't return is fetched on its own, so a missing
+    or failed batch never hides a market from grading."""
+    want = list(dict.fromkeys(t for t in tickers if t))
+    out: dict[str, dict] = {}
+    for i in range(0, len(want), 100):
+        chunk = want[i:i + 100]
+        try:
+            js = http.get_json(f"{BASE}/markets", params={"tickers": ",".join(chunk),
+                                                          "limit": len(chunk)})
+        except HttpError as exc:
+            log.warning("batch markets (%d): %s", len(chunk), exc)
+            continue
+        for m in js.get("markets") or []:
+            if m.get("ticker") in chunk:
+                out[m["ticker"]] = m
+    for tk in want:
+        if tk not in out:
+            m = get_market(http, tk)
+            if m:
+                out[tk] = m
+    return out
+
+
 def list_weather_series(http: Http) -> list[dict]:
     """All series in Kalshi's climate category (for auto-discovery)."""
     for category in ("Climate and Weather", "Climate"):

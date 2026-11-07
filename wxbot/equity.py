@@ -79,6 +79,11 @@ def marks(quotes: dict) -> dict[str, dict[str, dict]]:
                 m = side_mid(q, (r.get("side") or "").lower()) if q else None
                 if m is not None:
                     a["unrealized"] += (m - price) * held
+    # orders already moved to the monthly archives (data/orders/): realized only
+    from .trader import archive_summary
+    for mode, by in (archive_summary().get("realized") or {}).items():
+        for strat, v in by.items():
+            acc(mode, strat)["realized"] += _f(v)
     # weather day-before research orders (paper): realized only once graded
     for r in _rows(DATA_DIR / "paper_orders.csv"):
         if (r.get("ticker"), (r.get("side") or "").lower()) in trader_wx:

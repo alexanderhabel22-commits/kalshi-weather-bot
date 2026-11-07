@@ -21,7 +21,13 @@ Hard rules, whatever a strategy asks for:
   - daily loss stop: no new orders for the rest of the day (ET)
   - total loss stop: HALT. Cancel every resting order, no new orders until
     Alex clears data/trader_state.json "halted" (or sets reset_halt = true)
-  - ntfy alert on every fill and every stop
+  - ntfy alert on every fill and every stop (fills/settles bundled into one
+    push when a run has more than BUNDLE_MAX of them)
+
+Scale (Nov 7): markets are read in batches, live orders are synced from one
+listing, the paper tape is read once per market from where the last check
+stopped, and finished orders move to monthly archives in data/orders/ so the
+hot ledger (and every 5-minute commit) stays small.
 """
 from __future__ import annotations
 
@@ -30,12 +36,13 @@ import hashlib
 import logging
 import math
 import os
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from . import kalshi, notify
-from .daybefore import fill_flags, trade_prices
+from .daybefore import fill_flags, trade_prints
 from .kalshi_api import KalshiClient, OrderRejected, check_order, order_fill_count
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
 
@@ -45,14 +52,20 @@ ORDERS = DATA_DIR / "trade_orders.csv"
 STATE = DATA_DIR / "trader_state.json"
 FIELDS = ["id", "client_id", "order_id", "mode", "strategy", "placed_at", "ticker", "event",
           "title", "side", "price", "count", "filled", "status", "close", "result", "pnl",
-          "settled_at", "note", "filled_at", "fee"]
+          "settled_at", "note", "filled_at", "fee", "checked_at"]
 # status: resting -> filled (all filled, waiting for result) -> settled
 #         resting -> done-unfilled / cancelled ; settled/partial handled by `filled`
 OPEN = ("resting", "filled")
+DONE = ("settled", "done-unfilled", "cancelled")
+ARCHIVE_DIR = DATA_DIR / "orders"          # monthly archives: data/orders/2026-11.csv
+ARCHIVE_SUMMARY = ARCHIVE_DIR / "summary.json"
+ARCHIVE_AFTER = timedelta(days=2)          # finished + market closed this long ago -> archive
+BUNDLE_MAX = 5                             # more trade alerts than this in a run -> one push
 
 # Limits are fractions of the bankroll ([account] bankroll / BANKROLL variable),
 # so they scale as the bankroll grows. settings() turns them into dollars.
 DEFAULTS = {"mode": "off", "max_contracts_per_order": 3, "max_orders_per_run": 15,
+            "run_budget_s": 240,          # stop placing new orders this many seconds into a run
             "max_open_pct": 0.75,         # at most 75% of the bankroll at risk at once (live)
             "max_event_pct": 0.20,        # at most 20% on any one event (all strategies)
             "paper_max_open_pct": 1.00,   # paper may use the whole bankroll (Alex, Nov 5)
@@ -108,6 +121,109 @@ def save(rows: list[dict]) -> None:
         w.writeheader()
         w.writerows(rows)
     tmp.replace(ORDERS)
+
+
+def _archive_rows(path) -> list[dict]:
+    if not path.exists():
+        return []
+    with open(path, newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def archive_summary() -> dict:
+    """data/orders/summary.json: what the archives hold, so the hot ledger can stay
+    small without losing all-time P&L (loss stops) or the weekly capacity count."""
+    return read_json(ARCHIVE_SUMMARY, {}) or {}
+
+
+def archived_realized(mode: str | None = None, strategy: str | None = None,
+                      summary: dict | None = None) -> float:
+    s = archive_summary() if summary is None else summary
+    tot = 0.0
+    for m, by in (s.get("realized") or {}).items():
+        if mode and m != mode:
+            continue
+        for strat, v in by.items():
+            if strategy and strat != strategy:
+                continue
+            tot += _f(v)
+    return tot
+
+
+def archived_placed(mode: str, strategy: str, since: datetime, summary: dict | None = None) -> int:
+    """Contracts placed since `since` (by day) in orders already archived."""
+    s = archive_summary() if summary is None else summary
+    day0 = since.date().isoformat()
+    by = ((s.get("placed") or {}).get(mode) or {}).get(strategy) or {}
+    return sum(int(_f(v)) for d, v in by.items() if d >= day0)
+
+
+def load_all() -> list[dict]:
+    """Archived + hot orders (reports and digests; the trader itself only needs hot)."""
+    out = []
+    for m in archive_summary().get("months") or []:
+        out += _archive_rows(ARCHIVE_DIR / f"{m}.csv")
+    seen = {(r.get("id"), r.get("mode")) for r in out}
+    return out + [r for r in load() if (r.get("id"), r.get("mode")) not in seen]
+
+
+def archive(rows: list[dict], now: datetime) -> list[dict]:
+    """Move finished orders (settled / unfilled / cancelled) whose market closed more
+    than ARCHIVE_AFTER ago to data/orders/<month>.csv, append-only. Returns the hot
+    rows to keep. Safe to re-run after a crash: rows already in an archive are not
+    written twice, and the summary is rebuilt from the archive files themselves."""
+    keep, move = [], {}
+    for r in rows:
+        close = parse_iso(r.get("close"))
+        done = parse_iso(r.get("settled_at")) or parse_iso(r.get("placed_at"))
+        if (r.get("status") in DONE and done and now - done >= ARCHIVE_AFTER
+                and (close is None or now - close >= ARCHIVE_AFTER)):
+            move.setdefault(done.strftime("%Y-%m"), []).append(r)
+        else:
+            keep.append(r)
+    if not move:
+        return rows
+    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+    for month, rs in sorted(move.items()):
+        path = ARCHIVE_DIR / f"{month}.csv"
+        have = {(r.get("id"), r.get("mode")) for r in _archive_rows(path)}
+        new = [r for r in rs if (r.get("id"), r.get("mode")) not in have]
+        if not new:
+            continue
+        fresh = not path.exists()
+        with open(path, "a", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
+            if fresh:
+                w.writeheader()
+            w.writerows(new)
+    rebuild_summary(now)
+    log.info("archive: moved %d finished orders to %s", sum(len(v) for v in move.values()),
+             ", ".join(sorted(move)))
+    return keep
+
+
+def rebuild_summary(now: datetime) -> dict:
+    months = sorted(p.stem for p in ARCHIVE_DIR.glob("????-??.csv"))
+    realized_: dict = {}
+    placed: dict = {}
+    counts: dict = {}
+    cut = (now - timedelta(days=14)).date().isoformat()
+    for m in months:
+        rs = _archive_rows(ARCHIVE_DIR / f"{m}.csv")
+        counts[m] = len(rs)
+        for r in rs:
+            mode, strat = r.get("mode") or "paper", r.get("strategy") or "?"
+            if r.get("status") == "settled" and r.get("pnl") not in (None, ""):
+                by = realized_.setdefault(mode, {})
+                by[strat] = round(by.get(strat, 0.0) + _f(r["pnl"]), 2)
+            day = (r.get("placed_at") or "")[:10]
+            if day >= cut:
+                d = placed.setdefault(mode, {}).setdefault(strat, {})
+                d[day] = d.get(day, 0) + int(_f(r.get("count")))
+    out = {"at": now.isoformat(timespec="seconds"), "months": months, "counts": counts,
+           "realized": realized_, "placed": placed}
+    write_json(ARCHIVE_SUMMARY, out)
+    return out
 
 
 def _f(x, d=0.0) -> float:
@@ -290,6 +406,9 @@ def capacity(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
         used = sum(int(_f(r.get("count"))) for r in rows if r.get("strategy") == intent.strategy
                    and (parse_iso(r.get("placed_at")) or since) > since) + \
             sum(p.count for p in planned if p.strategy == intent.strategy)
+        mode = t.get("_mode_hint") or next((r.get("mode") for r in rows if r.get("mode")), None)
+        if mode:
+            used += archived_placed(mode, intent.strategy, since)
         if int(week) - used < room:
             room, why = int(week) - used, f"weekly capacity ({int(week)} contracts)"
     return max(0, room), why
@@ -304,7 +423,13 @@ def client_id(intent: Intent, mode: str, now: datetime | None = None) -> str:
 
 # ---------------------------------------------------------------- follow-up
 
-def _alert(http, cfg, title, body, dry_run, priority=3, tags=None):
+_BUNDLE: list | None = None     # trade alerts collected during run(), sent at the end
+
+
+def _alert(http, cfg, title, body, dry_run, priority=3, tags=None, bundle=False):
+    if bundle and _BUNDLE is not None:
+        _BUNDLE.append((title, body, priority, tags))
+        return
     try:
         notify.send(http, cfg, title, body, priority=priority, tags=tags or ["moneybag"],
                     dry_run=dry_run)
@@ -312,15 +437,45 @@ def _alert(http, cfg, title, body, dry_run, priority=3, tags=None):
         log.warning("trade alert failed: %s", exc)
 
 
+def flush_alerts(http, cfg, dry_run) -> int:
+    """Send the trade alerts collected this run: one by one when there are few,
+    otherwise one summary push (thousands of fills a day must not mean thousands
+    of pings)."""
+    global _BUNDLE
+    items, _BUNDLE = _BUNDLE or [], None
+    if len(items) <= BUNDLE_MAX:
+        for title, body, pr, tags in items:
+            _alert(http, cfg, title, body, dry_run, pr, tags)
+        return len(items)
+    lines = [f"- {title}" for title, *_ in items[:12]]
+    if len(items) > 12:
+        lines.append(f"...and {len(items) - 12} more (dashboard has all of them)")
+    _alert(http, cfg, f"{len(items)} trade updates", "\n".join(lines), dry_run,
+           max(pr for _, _, pr, _ in items), ["moneybag"])
+    return 1
+
+
 def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> None:
-    for r in rows:
-        if r.get("mode") != "live" or r.get("status") != "resting" or not r.get("order_id"):
-            continue
+    mine = [r for r in rows
+            if r.get("mode") == "live" and r.get("status") == "resting" and r.get("order_id")]
+    if not mine:
+        return
+    listed = None
+    if len(mine) > 3:
+        # one paginated listing instead of one request per order; orders that left
+        # the resting list (filled or cancelled) are then read one by one
         try:
-            o = client.get_order(r["order_id"])
-        except HttpError as exc:
-            log.warning("order %s: %s", r["order_id"], exc)
-            continue
+            listed = client.resting_orders()
+        except Exception as exc:
+            log.warning("resting order listing failed, checking one by one: %s", exc)
+    for r in mine:
+        o = listed.get(r["order_id"]) if listed is not None else None
+        if o is None:
+            try:
+                o = client.get_order(r["order_id"])
+            except HttpError as exc:
+                log.warning("order %s: %s", r["order_id"], exc)
+                continue
         placed = int(_f(r["count"]))
         got = order_fill_count(o, placed)
         before = int(_f(r.get("filled")))
@@ -328,7 +483,7 @@ def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> Non
             r["filled"] = got
             _alert(http, cfg, f"FILLED: {r['side'].upper()} {got - before} @ {round(_f(r['price']) * 100)}¢",
                    f"{r['title'] or r['ticker']}\n{r['strategy']} · {got}/{placed} filled",
-                   dry_run)
+                   dry_run, bundle=True)
         st = (o.get("status") or "").lower()
         if got >= placed:
             r["status"] = "filled"
@@ -386,30 +541,53 @@ def net_pairs(rows: list[dict], now: datetime) -> int:
     return n
 
 
+def _since(r: dict, now: datetime) -> datetime:
+    """Where this paper order's tape check starts: placement, or where the last
+    check stopped (a minute of overlap), so each run reads only new trades."""
+    placed = parse_iso(r.get("placed_at")) or now
+    last = parse_iso(r.get("checked_at"))
+    return max(placed, last - timedelta(minutes=1)) if last else placed
+
+
 def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
     n = 0
-    for r in rows:
-        if r.get("status") not in OPEN:
-            continue
-        close = parse_iso(r.get("close"))
-        placed = parse_iso(r.get("placed_at")) or now
-        if now - placed < timedelta(minutes=30):
-            continue
-        # markets can settle before their close time (Mentions settle right after
-        # the speech), so ask for the result whenever we grade
+    todo = [r for r in rows if r.get("status") in OPEN
+            and now - (parse_iso(r.get("placed_at")) or now) >= timedelta(minutes=30)]
+    if not todo:
+        return 0
+    # markets can settle before their close time (Mentions settle right after the
+    # speech), so ask for the result whenever we grade: one batched read for all
+    markets = kalshi.get_markets(http, [r["ticker"] for r in todo])
+    # paper fills: read each market's trade tape once, from the earliest point any
+    # of our paper orders there still needs
+    tape: dict[str, list | None] = {}
+    for r in todo:
         if r["mode"] == "paper" and r["status"] == "resting":
-            # paper fill: a real trade printed at our price or better since we "placed" it
-            try:
-                prints = trade_prices(http, r["ticker"], placed, min(close or now, now))
-            except HttpError as exc:
-                log.warning("paper trades %s: %s", r["ticker"], exc)
+            tape.setdefault(r["ticker"], [])
+    for tk in tape:
+        rs = [r for r in todo if r["ticker"] == tk and r["mode"] == "paper" and r["status"] == "resting"]
+        since = min(_since(r, now) for r in rs)
+        until = min(max(parse_iso(r.get("close")) or now for r in rs), now)
+        try:
+            tape[tk] = trade_prints(http, tk, since, until)
+        except HttpError as exc:
+            log.warning("paper trades %s: %s", tk, exc)
+            tape[tk] = None
+    for r in todo:
+        m = markets.get(r["ticker"])
+        if r["mode"] == "paper" and r["status"] == "resting":
+            prints = tape.get(r["ticker"])
+            if prints is None:
                 continue
-            m = kalshi.get_market(http, r["ticker"])
-            if fill_flags(r["side"], _f(r["price"]), prints)[0] or crossed(r, m):
+            lo = _since(r, now).timestamp()
+            close = parse_iso(r.get("close"))
+            hi = min(close or now, now).timestamp()
+            px = [p for at, p in prints if at is None or lo - 1 <= at <= hi + 1]
+            if fill_flags(r["side"], _f(r["price"]), px)[0] or crossed(r, m):
                 r["filled"], r["status"] = int(_f(r["count"])), "filled"
                 r["filled_at"] = now.isoformat(timespec="seconds")
-        else:
-            m = kalshi.get_market(http, r["ticker"])
+            else:
+                r["checked_at"] = min(close or now, now).isoformat(timespec="seconds")
         res = ((m or {}).get("result") or "").lower()
         if res not in ("yes", "no"):
             continue
@@ -422,7 +600,8 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
             r["status"] = "settled"
             if r["mode"] == "live":
                 _alert(http, cfg, f"Settled {'WIN' if pnl > 0 else 'LOSS'} ${pnl:+.2f}",
-                       f"{r['title'] or r['ticker']} · {r['side'].upper()} x{filled}", dry_run)
+                       f"{r['title'] or r['ticker']} · {r['side'].upper()} x{filled}", dry_run,
+                       bundle=True)
         else:
             r["status"] = "done-unfilled"
         n += 1
@@ -467,11 +646,11 @@ def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple
 def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int:
     n = 0
     vals, shads = valuers(), shadows()
-    for r in rows:
-        if r.get("status") != "filled" or r.get("mode") not in ("paper", "live"):
-            continue
+    held = [r for r in rows if r.get("status") == "filled" and r.get("mode") in ("paper", "live")]
+    markets = kalshi.get_markets(http, [r["ticker"] for r in held]) if held else {}
+    for r in held:
         sp = specs.get(r.get("strategy"), {})
-        m = kalshi.get_market(http, r["ticker"])
+        m = markets.get(r["ticker"])
         if (m or {}).get("result"):
             continue                      # settling anyway
         if m and r.get("strategy") in shads:
@@ -518,7 +697,8 @@ def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int
                  note=(r.get("note") or "") + f" | sold {count} @ {price:.2f}: {why}")
         n += 1
         if r["mode"] == "live":
-            _alert(http, cfg, f"Sold early ${pnl:+.2f}", f"{r['title'] or r['ticker']} · {why}", dry_run)
+            _alert(http, cfg, f"Sold early ${pnl:+.2f}", f"{r['title'] or r['ticker']} · {why}", dry_run,
+                   bundle=True)
     return n
 
 
@@ -580,7 +760,7 @@ def _stops(mode: str, rows, state, t, now, midnight, today, client, cfg, http, d
     halts = state.setdefault("halted", {})
     if cfg.raw.get("trading", {}).get("reset_halt"):
         halts.pop(mode, None)
-    total = realized(rows, mode=mode)
+    total = realized(rows, mode=mode) + archived_realized(mode)   # all-time, incl. archived orders
     day = realized(rows, since=midnight, mode=mode)
     if total <= float(t["total_loss_stop"]) and mode not in halts:
         halts[mode] = {"at": now.isoformat(timespec="seconds"), "pnl": round(total, 2)}
@@ -606,6 +786,17 @@ def _stops(mode: str, rows, state, t, now, midnight, today, client, cfg, http, d
 
 def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None = None,
         dry_run: bool = False) -> dict:
+    global _BUNDLE
+    _BUNDLE = []
+    try:
+        return _run(cfg, now=now, http=http, client=client, dry_run=dry_run)
+    finally:
+        flush_alerts(http, cfg, dry_run)
+
+
+def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None = None,
+         dry_run: bool = False) -> dict:
+    t0 = time.monotonic()
     t = settings(cfg)
     gmode = t["mode"]
     out = {"mode": gmode, "placed": [], "skipped": [], "stops": []}
@@ -643,7 +834,7 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
 
     blocked = {m: _stops(m, rows, state, t, now, midnight, today, client, cfg, http, dry_run, out)
                for m in ("paper", "live")}
-    totals = {m: realized(rows, mode=m) for m in ("paper", "live")}
+    totals = {m: realized(rows, mode=m) + archived_realized(m) for m in ("paper", "live")}
 
     planned: list[Intent] = []
     plan_mode: dict[int, str] = {}
@@ -661,8 +852,12 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
         for it in intents:
             if len(planned) >= int(t["max_orders_per_run"]):
                 break
+            if time.monotonic() - t0 > float(t["run_budget_s"]):
+                out["skipped"].append((it.ticker, it.side, "run time budget used up (next run)"))
+                break
             same = [r for r in rows if r.get("mode") == mode]
-            room, cwhy = capacity(it, same, t, sp, now, [p for p in planned if plan_mode[id(p)] == mode])
+            room, cwhy = capacity(it, same, t | {"_mode_hint": mode}, sp, now,
+                                  [p for p in planned if plan_mode[id(p)] == mode])
             if room < 1:
                 out["skipped"].append((it.ticker, it.side, cwhy))
                 continue
@@ -736,7 +931,7 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
                 cash = (cash or 0.0) - got * it.price - fee
                 _alert(http, cfg, f"BOUGHT: {it.side.upper()} {got} @ {round(it.price * 100)}¢",
                        f"{it.title or it.ticker}\n{it.strategy} · real money · ${got * it.price + fee:.2f}"
-                       f" incl. ${fee:.2f} fee", dry_run, 4, ["moneybag"])
+                       f" incl. ${fee:.2f} fee", dry_run, 4, ["moneybag"], bundle=True)
         elif mode == "live" and cash is not None:
             cash -= it.count * it.price
         rows.append(row)
@@ -761,6 +956,12 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
             log.warning("exits failed: %s", exc)
 
     if not dry_run:
+        if state.get("archive_day") != today:
+            try:
+                rows = archive(rows, now)
+                state["archive_day"] = today
+            except Exception as exc:      # archiving is housekeeping; never block trading
+                log.warning("archive failed: %s", exc)
         save(rows)
         write_json(STATE, state)
     log.info("trade (%s, strategies %s): placed %d, skipped %d, stops %s, open $%.2f, "
