@@ -108,3 +108,18 @@ def test_obs_shadow_logs_once_and_never_trades():
     with open(wx.SHADOW_CSV, newline="") as fh:
         got = list(csv.DictReader(fh))
     assert len(got) == 1 and got[0]["would_sell"] == "yes" and got[0]["hours_left"] == "6"
+
+
+def test_value_uses_readings_only_when_switched_on():
+    setup_order()
+    row = {"id": f"{TK}|yes|1", "ticker": TK, "side": "yes", "mode": "live", "price": "0.09"}
+    m = market(0.40, 0.44)
+    t6 = CLOSE - timedelta(hours=6)
+    P = dict(OBS_PARAMS, exit_obs=dict(OBS_PARAMS["exit_obs"], shadow=True))
+    wx._FC.clear(); wx._OBS.clear()
+    assert wx.value(Both(46, 12.0), row, m, t6, P) is None                 # shadow: no 6h value
+    P["exit_obs"]["shadow"] = False
+    wx._FC.clear(); wx._OBS.clear()
+    v = wx.value(Both(46, 12.0), row, m, t6, P)
+    assert v is not None and v < 0.2
+    assert trader.model_exit(row, m, v, 0.08)                               # 40c bid beats a dead bracket

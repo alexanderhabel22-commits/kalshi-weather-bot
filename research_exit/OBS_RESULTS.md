@@ -39,6 +39,9 @@ might be a little flattered by the archive.
 
 ## Status
 
-Shadow only (exit_obs.shadow = true in data/daybefore_params.json). Each trade run
-logs, once per position and check hour, what it would do to data/exit_shadow.csv.
-Nothing is sold by it. Turning it on for real needs Alex's OK.
+LIVE since Nov 7 (Alex: "fine going live with our 50 bucks as test"). Both checks
+run: the 12h same-day forecast check and the readings checks; the bot sells when
+either says the bid after fees beats our side's value by 8c (and the readings
+check needs 3+ precise readings). Every readings check is also logged to
+data/exit_shadow.csv. Back to shadow: set exit_obs.shadow = true in
+data/daybefore_params.json.
