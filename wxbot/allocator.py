@@ -30,6 +30,12 @@ How the grade becomes money
     strategies get first claim on the overall cap. The overall 75% cap, the
     20% per-event cap and the loss stops never change.
 
+15-minute bot (own server, Nov 8): graded per coin (m15_btc, m15_silver, ...)
+from the real fills it uploads to the m15-data branch, one market = one result.
+Its multiplier is report-only even when applied: the server sizes itself, and
+its cut/raise rules (100 / 300 real fills, analysis/checkpoint/CHECKPOINT.md)
+stay in charge of it.
+
 Shadow mode (`apply = false`): grades and multipliers are worked out and
 reported (the "allocator" entry of data/trader_state.json, REPORT.md) but
 sizing is unchanged.

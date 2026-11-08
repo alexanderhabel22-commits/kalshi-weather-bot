@@ -87,3 +87,50 @@ def test_report_section_renders():
     a = allocator.update(cfg, [row("favorites", "F1", .9, 1, True)], [], ["favorites"], NOW, {})
     text = "\n".join(allocator.report_section(a))
     assert "shadow" in text and "favorites" in text
+
+
+def m15_row(series, ticker, cost, won, mode="live", filled=1, close="2026-11-08T04:00:00+00:00"):
+    pnl = filled * (1.0 if won else 0.0) - cost - 0.01
+    return {"ticker": ticker, "series": series, "mode": mode, "close": close, "filled": filled,
+            "cost": f"{cost:.2f}", "fee": "0.01", "won": "" if won is None else int(won), "pnl": f"{pnl:.2f}"}
+
+
+def test_m15_real_fills_graded_per_coin():
+    rows = [m15_row("KXBTC15M", f"BTC{i}", 0.90, i % 10 != 0) for i in range(50)]
+    rows += [m15_row("KXSILVER15M", "S1", 0.80, True),
+             m15_row("KXBTC15M", "P1", 0.90, True, mode="paper"),                 # paper: ignored
+             m15_row("KXBTC15M", "U1", 0.90, True, filled=0),                     # unfilled: ignored
+             m15_row("KXBTC15M", "O1", 0.90, None),                               # not graded yet
+             m15_row("KXBTC15M", "E1", 0.90, True, close="2026-11-07T23:00:00+00:00")]  # before live start
+    r = allocator.results([], [], rows)
+    assert set(r) == {"m15_btc", "m15_silver"}
+    assert len(r["m15_btc"]) == 50 and len(r["m15_silver"]) == 1
+    assert abs(sum(u["pnl"] for u in r["m15_btc"]) - (45 * 1.0 - 50 * 0.91)) < 1e-6
+
+
+def test_m15_names_follow_config():
+    cfg = load_config()
+    cfg.raw["m15"] = {"mode": "live", "live_series": ["KXBTC15M", "KXCOPPER15M"]}
+    assert allocator.m15_names(cfg) == ["m15_btc", "m15_copper"]
+    cfg.raw["m15"]["mode"] = "paper"
+    assert allocator.m15_names(cfg) == []
+
+
+def test_fetch_m15_reads_daily_files_and_skips_missing():
+    from wxbot.util import HttpError
+    cfg = load_config()
+
+    class H:
+        def __init__(self):
+            self.urls = []
+
+        def get_text(self, url):
+            self.urls.append(url)
+            if url.endswith("markets-2026-11-08.csv"):
+                return "ticker,series,mode,close,filled,cost,fee,won,pnl\nT,KXBTC15M,live,2026-11-08T05:00:00+00:00,1,0.9,0.01,1,0.09\n"
+            raise HttpError(404, url)
+
+    h = H()
+    rows = allocator.fetch_m15(h, cfg, datetime(2026, 11, 9, 12, tzinfo=UTC))
+    assert len(rows) == 1 and rows[0]["series"] == "KXBTC15M"
+    assert len(h.urls) == 3 and "/m15-data/m15/markets-2026-11-07.csv" in h.urls[0]
