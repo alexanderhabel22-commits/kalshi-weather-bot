@@ -248,6 +248,24 @@ IP without a token). It never places, changes or cancels anything and needs no s
 - The repo is public, so everything the page shows is already public. Never put NTFY_TOPIC or
   API keys in `dashboard/`.
 
+## 15-minute bot on its own server (built Nov 8, 2026)
+
+- Why: 15-min up/down markets (BTC +7.3c, silver/copper +5.2c, alt crypto +3.1c per contract
+  backtest, maker longshot fade, back-of-queue) close too fast for the 5-minute Actions bot.
+- Code: `wxbot/m15.py` (engine: join the 71-95c favourite's best bid, 1 contract/market,
+  paper fills only on a trade-through, grading to `markets-YYYY-MM-DD.csv`), `wxbot/m15_feeds.py`
+  (Kalshi websocket + Coinbase spot jump guard; REST stays the source of truth).
+  Run: `python bot.py m15`. Settings: `[m15]` in config.toml.
+- Server: DigitalOcean ~$4/mo, Ubuntu, systemd `kalshi-m15` (+ hourly `kalshi-m15-update.timer`
+  that pulls main and restarts). Setup for Alex: `deploy/m15/SETUP.md`.
+- Results: uploaded hourly to branch `m15-data` (`m15/status.json`, `m15/markets-*.csv`).
+- Rails: real orders only with `[m15] mode = "live"`, series in `live_series`, and the repo
+  kill switch allowing it (the Actions trader writes `mode` into data/trader_state.json;
+  TRADING_MODE=off stops the server bot too). Pool 25% of bankroll (Alex: the 25% the 75% cap
+  leaves free), daily stop -10%, halt at -12.5%; no live orders if the switch can't be read for 30 min.
+- Plan: ~24h paper shakedown, then live BTC/silver/copper at 1 contract. Cut a market below
+  -5c/contract after 100 fills. Expect +2-4c live (stale-quote risk vs fast pros), not +7c.
+
 ## Expectations to keep honest
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong
 lock costs ~$3. Order books are thin (some ~5 contracts at the alert price),

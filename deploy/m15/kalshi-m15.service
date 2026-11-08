@@ -1,0 +1,17 @@
+[Unit]
+Description=Kalshi 15-minute fade bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=kalshi
+WorkingDirectory=/opt/kalshi-m15/app
+EnvironmentFile=/etc/kalshi-m15/env
+ExecStart=/opt/kalshi-m15/venv/bin/python bot.py m15 -v
+Restart=always
+RestartSec=10
+MemoryMax=300M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

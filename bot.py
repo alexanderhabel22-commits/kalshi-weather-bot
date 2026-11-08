@@ -9,6 +9,7 @@
   python bot.py test-notify     send a test notification to your phone
   python bot.py backtest-fetch  download history for a backtest (--days, --out)
   python bot.py trade           automatic orders (mode in config [trading]; --dry-run prints only)
+  python bot.py m15             always-on 15-minute fade bot (runs on the server; --once = one step)
 """
 from __future__ import annotations
 
@@ -25,13 +26,14 @@ from wxbot.util import Http, load_config, parse_iso, read_json, utcnow
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify",
-                                            "backtest-fetch", "trade"])
+                                            "backtest-fetch", "trade", "m15"])
     ap.add_argument("--dry-run", action="store_true", help="don't send or save anything")
     ap.add_argument("--every", type=int, default=300, help="loop interval in seconds")
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
     ap.add_argument("--days", type=int, default=400, help="backtest-fetch: days of history")
     ap.add_argument("--out", default="backtest", help="backtest-fetch: output folder")
     ap.add_argument("--recent-only", action="store_true", help="backtest-fetch: skip the historical archive and MOS")
+    ap.add_argument("--once", action="store_true", help="m15: one step, then exit")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -44,6 +46,10 @@ def main(argv=None) -> int:
         print(f"{len(out['events'])} city-days priced, {len(out['sent'])} alerts"
               + (f", problems: {out['problems']}" if out["problems"] else ""))
         return 0
+
+    if args.command == "m15":
+        from wxbot import m15
+        return m15.main(cfg, once=args.once)
 
     if args.command == "trade":
         from wxbot import trader

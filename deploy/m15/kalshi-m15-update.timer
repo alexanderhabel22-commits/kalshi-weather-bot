@@ -1,0 +1,10 @@
+[Unit]
+Description=Hourly update of the Kalshi 15-minute bot
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

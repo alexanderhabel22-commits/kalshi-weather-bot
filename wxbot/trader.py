@@ -898,6 +898,12 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
     gmode = t["mode"]
     out = {"mode": gmode, "placed": [], "skipped": [], "stops": []}
     if gmode == "off":
+        # the always-on 15-minute bot (wxbot/m15.py) reads this to follow the kill switch
+        if not dry_run:
+            st = read_json(STATE, {}) or {}
+            if st.get("mode") != "off":
+                st["mode"] = "off"
+                write_json(STATE, st)
         return out
     specs = {name: strategy_settings(cfg, name, t) for name in strategies()}
     modes = {n: m for n, sp in specs.items() if (m := strategy_mode(gmode, sp))}
@@ -914,6 +920,7 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
     state = read_json(STATE, {}) or {}
     if not isinstance(state.get("halted", {}), dict):
         state["halted"] = {}
+    state["mode"] = gmode           # kill switch for the 15-minute bot on the server
     if not need_live and client is None and not dry_run:
         key_check(state, http, now)
     tz = ZoneInfo(cfg.tz)
