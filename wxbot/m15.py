@@ -552,6 +552,9 @@ class Bot:
                 self._end_order(m)
             return
         want = desired_quote(quote, s) if quote else None
+        m["why"] = "no quote" if not quote else ("out of band" if want is None else "ok")
+        if quote:
+            m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
         room = int(s["contracts"]) - m["filled"] - (o["n"] - o["filled"] if o else 0)
         if left <= s["stop_quote_s"]:
             if o:
@@ -559,12 +562,14 @@ class Bot:
             return
         prod = s["spot"].get(m["series"]) if s["guard"] else None
         if prod and self.spot is not None and self.spot.blocked(prod):
+            m["why"] = "jump guard"
             if o:
                 self._end_order(m)                      # spot just jumped: pull, wait
                 m["pulls"] += 1
             return
         if (prod and m["mode"] == "live" and s["require_guard_live"]
                 and (self.spot is None or not self.spot.healthy())):
+            m["why"] = "spot feed down"
             if o:
                 self._end_order(m)
             return
@@ -586,6 +591,7 @@ class Bot:
         if m["mode"] == "live":
             b = self.bankroll(now) or 0
             if self.exposure("live") + q * room > s["pool_pct"] * b + 1e-9:
+                m["why"] = f"pool full (bankroll {b:.2f})"
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, room, now)
@@ -724,6 +730,11 @@ class Bot:
         status = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
                   "mode": self.effective_mode(now), "switch": self.switch, "control": self.control,
                   "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"), "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
+                  "spot_ok": bool(self.spot is not None and self.spot.healthy()),
+                  "live_now": {k: {"mode": m.get("mode"), "why": m.get("why"), "bid_ask": m.get("bid_ask"),
+                                   "order": bool(m.get("order"))}
+                               for k, m in self.state["markets"].items()
+                               if m["series"] in self.s["live_series"] and not m.get("graded")},
                   "pnl": self.state["pnl"], "open_markets": sum(1 for m in self.state["markets"].values()
                                                                  if not m.get("graded")),
                   "live_exposure": round(self.exposure("live"), 2), "errors": self.errors}
