@@ -388,23 +388,23 @@ function m15HTML(full){
     return ks.length ? `<div class="list">` + ks.map(k => { const b = by[k], c = b.n ? 100 * b.pnl / b.n : 0;
       return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:13px">${esc(k)}</div><div class="s">${b.f}/${b.q} markets filled · ${b.n} contracts</div></div>
         <div class="r"><span class="${cls(c)}">${b.n ? cents(c) + "/ct" : "—"}</span><small class="${cls(b.pnl)}">${money(b.pnl)}</small></div></div>`; }).join("") + `</div>` : `<div class="mute" style="font-size:12px">No graded markets yet.</div>`; };
-  const lr = M.rows.filter(r => r.mode === "live"), pr = M.rows.filter(r => r.mode === "paper");
-  h += `<div class="lbl" style="margin-top:12px">Real money · last 7 days</div>` + tbl(lr);
-  if (full || isOpen("m15")) h += `<div class="lbl" style="margin-top:12px">Paper (coins not live yet) · last 7 days · all time ${money(num(p.paper_total))}</div>` + tbl(pr)
+  const lr = M.rows.filter(r => r.mode === "live");   // real money only (Alex, Nov 8)
+  h += `<div class="lbl" style="margin-top:12px">By market · last 7 days</div>` + tbl(lr)
     + `<div class="mute" style="font-size:11px;margin-top:6px">Backtest: BTC +7¢, silver/copper +5¢ per contract; expect less live. A market is cut if it's below −5¢/ct after 100 fills.</div>`;
-  return h + (full ? "" : moreBtn("m15", "Paper and details")) + `</div>`;
+  return h + `</div>`;
 }
 function m15Page(){
   let h = m15HTML(true);
   const M = S.m15;
-  if (!M || !M.rows.length) return h;
-  const rows = M.rows.slice().sort((a, b) => String(b.close).localeCompare(String(a.close)) || (a.mode === "live" ? -1 : 1));
+  const live = M ? M.rows.filter(r => r.mode === "live") : [];
+  if (!live.length) return h;
+  const rows = live.slice().sort((a, b) => String(b.close).localeCompare(String(a.close)) || (a.mode === "live" ? -1 : 1));
   const shown = isOpen("m15all") ? rows.slice(0, 200) : rows.slice(0, 25);
-  h += `<h2>Recent markets <span class="sub">newest first · real money and paper</span></h2><div class="card list">` + shown.map(r => {
+  h += `<h2>Recent markets <span class="sub">newest first · real money</span></h2><div class="card list">` + shown.map(r => {
     const f = num(r.filled), p = num(r.pnl), t = pdate(r.close), name = String(r.series || "").replace(/^KX|15M$/g, "");
     const res = !f ? `<span class="dim">no fill</span>` : r.won === "1" ? `<span class="pos">won</span>` : r.won === "0" ? `<span class="neg">lost</span>` : esc(r.result || "");
     return `<div class="item" style="padding:7px 0"><span class="side ${r.fav_side === "no" ? "no" : "yes"}">${esc(String(r.fav_side || "–").toUpperCase())}</span>
-      <div class="main"><div class="t" style="font-size:13px">${esc(name)} <span class="mute" style="font-weight:400">${t ? esc(t.toLocaleTimeString("en-US", {timeZone:TZ, hour:"numeric", minute:"2-digit"})) : ""}</span>${r.mode === "live" ? ` <span class="pos" style="font-size:10px">● REAL</span>` : ` <span class="mute" style="font-size:10px">paper</span>`}</div>
+      <div class="main"><div class="t" style="font-size:13px">${esc(name)} <span class="mute" style="font-weight:400">${t ? esc(t.toLocaleTimeString("en-US", {timeZone:TZ, hour:"numeric", minute:"2-digit"})) : ""}</span></div>
       <div class="s">${f ? `${f} @ ${Math.round(num(r.last_q) * 100)}¢` : `quoted ${Math.round(num(r.last_q) * 100)}¢`} · ${res}${num(r.pulls) ? ` · pulled ${r.pulls}×` : ""}</div></div>
       <div class="r"><span class="${cls(p)}">${f ? money(p) : "—"}</span></div></div>`; }).join("") + `</div>`;
   if (rows.length > 25) h += moreBtn("m15all", "Show more");
