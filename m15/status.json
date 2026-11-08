@@ -1,18 +1,40 @@
 {
- "at": "2026-11-08T04:15:41+00:00",
+ "at": "2026-11-08T04:26:09+00:00",
  "control": "live",
+ "cut": {},
  "day_stop": null,
  "errors": 0,
+ "fund_error": "HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}",
  "halted": null,
+ "last_reject": null,
  "live_exposure": 0.0,
+ "live_now": {
+  "KXBTC15M-26NOV072330-30": {
+   "bid_ask": [
+    0.957,
+    0.958
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  }
+ },
  "mode": "live",
- "open_markets": 0,
+ "open_markets": 9,
  "pnl": {
   "paper_days": {
    "2026-11-07": -7.82
   },
   "paper_total": -7.82
  },
+ "series": {},
+ "shards": {
+  "0": 27.767,
+  "1": 0.0,
+  "2": 0.0,
+  "3": 0.0
+ },
+ "spot_ok": true,
  "switch": {
   "halted": false,
   "mode": "live"
