@@ -1,0 +1,6 @@
+[Unit]
+Description=Update the Kalshi 15-minute bot from GitHub
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/kalshi-m15/app/deploy/m15/update.sh

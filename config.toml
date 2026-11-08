@@ -208,3 +208,22 @@ ceiling = 2.0          # never above 2x normal size
 max_step = 0.25        # largest change per re-grade
 regrade_days = 7
 paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for new ideas
+
+[m15]
+# Always-on 15-minute longshot fade (wxbot/m15.py), runs on its own small server, not in
+# GitHub Actions. Research (Nov 8): owning the 71-95c favourite as a resting maker bid,
+# back-of-queue fills, earned BTC +7.3c, silver/copper +5.2c, alt crypto +3.1c per contract.
+# Expect less live (fast pros; stale quotes), so: 1 contract, small pool, jump guard.
+# The server pulls this file every hour and restarts if it changed.
+mode = "paper"                   # off | paper | live. Shakedown on paper first (~24h), then live
+                                 # (Alex, Nov 8: "act like this 50 bucks is yours"). The repo kill
+                                 # switch TRADING_MODE=off stops this bot too (within ~10 min).
+live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M"]   # real money only on these
+contracts = 1                    # per market
+min_fav = 0.71                   # join the favourite's best bid while it's 71-95c
+max_fav = 0.95
+pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
+                                 # Actions strategies' 75% cap leaves free; Alex, Nov 8)
+daily_loss_pct = 0.10            # live P&L today <= -10% of bankroll -> stop until tomorrow
+total_loss_pct = 0.125           # live P&L since start <= -12.5% (~half the pool) -> halt
+guard = true                     # pull bids when BTC/ETH/... spot jumps (Coinbase feed)
