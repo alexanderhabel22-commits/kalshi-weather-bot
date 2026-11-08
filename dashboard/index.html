@@ -54,6 +54,8 @@ header.top{position:sticky;top:0;z-index:20;margin:0 -16px;padding:calc(var(--sa
 .seg button{all:unset;flex:1;text-align:center;padding:8px 0;border-radius:9px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.1em;color:var(--ink2);cursor:pointer}
 .seg button.on[data-m=live]{background:linear-gradient(90deg,rgba(52,211,153,.18),rgba(34,211,238,.14));color:var(--good);box-shadow:inset 0 0 0 1px rgba(52,211,153,.4)}
 .seg button.on[data-m=paper]{background:linear-gradient(90deg,rgba(224,80,240,.18),rgba(139,140,248,.14));color:#f0a8ff;box-shadow:inset 0 0 0 1px rgba(224,80,240,.4)}
+.seg button.on[data-b=main]{background:linear-gradient(90deg,rgba(52,211,153,.18),rgba(34,211,238,.14));color:var(--good);box-shadow:inset 0 0 0 1px rgba(52,211,153,.4)}
+.seg button.on[data-b=m15]{background:linear-gradient(90deg,rgba(245,179,53,.2),rgba(251,146,60,.14));color:#f5b335;box-shadow:inset 0 0 0 1px rgba(245,179,53,.45)}
 .seg small{font-weight:500;letter-spacing:0;opacity:.8;margin-left:4px}
 .banner{margin:12px 0 0;padding:10px 12px;border-radius:12px;font-size:13px;border:1px solid var(--line2);background:var(--panel)}
 .banner.paper{border-color:rgba(224,80,240,.35);background:linear-gradient(90deg,rgba(224,80,240,.08),transparent)}
@@ -217,6 +219,10 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
       <button data-m="live">● LIVE $<small id="cntLive"></small></button>
       <button data-m="paper">◌ PAPER<small id="cntPaper"></small></button>
     </div>
+    <div class="seg" id="botSeg">
+      <button data-b="main">● MAIN BOT</button>
+      <button data-b="m15">⚡ 15-MIN BOT</button>
+    </div>
   </header>
 
   <div id="banner"></div>
@@ -366,7 +372,7 @@ async function loadM15(){
     S.m15 = {status, rows:texts.filter(Boolean).flatMap(t => parseCSV(t)), today:days[0]};
   } catch(e){ S.errors.push("15-min bot: " + String(e.message || e)); }
 }
-function m15HTML(){
+function m15HTML(full){
   const M = S.m15, mc = (S.data.config || {}).m15 || {};
   let h = `<h2>15-minute bot <span class="sub">own server · ${pct(num(mc.pool_pct, .25))} pool</span></h2><div class="card">`;
   if (!M) return h + `<div class="mute" style="font-size:12px;line-height:1.5">Not running yet: it starts once the server is set up. It fades longshots in BTC, silver and copper 15-minute markets, 1 contract per market, with its own 25% slice of the bankroll.</div></div>`;
@@ -384,9 +390,25 @@ function m15HTML(){
         <div class="r"><span class="${cls(c)}">${b.n ? cents(c) + "/ct" : "—"}</span><small class="${cls(b.pnl)}">${money(b.pnl)}</small></div></div>`; }).join("") + `</div>` : `<div class="mute" style="font-size:12px">No graded markets yet.</div>`; };
   const lr = M.rows.filter(r => r.mode === "live"), pr = M.rows.filter(r => r.mode === "paper");
   h += `<div class="lbl" style="margin-top:12px">Real money · last 7 days</div>` + tbl(lr);
-  if (isOpen("m15")) h += `<div class="lbl" style="margin-top:12px">Paper (shakedown + coins not live) · last 7 days · all time ${money(num(p.paper_total))}</div>` + tbl(pr)
+  if (full || isOpen("m15")) h += `<div class="lbl" style="margin-top:12px">Paper (coins not live yet) · last 7 days · all time ${money(num(p.paper_total))}</div>` + tbl(pr)
     + `<div class="mute" style="font-size:11px;margin-top:6px">Backtest: BTC +7¢, silver/copper +5¢ per contract; expect less live. A market is cut if it's below −5¢/ct after 100 fills.</div>`;
-  return h + moreBtn("m15", "Paper and details") + `</div>`;
+  return h + (full ? "" : moreBtn("m15", "Paper and details")) + `</div>`;
+}
+function m15Page(){
+  let h = m15HTML(true);
+  const M = S.m15;
+  if (!M || !M.rows.length) return h;
+  const rows = M.rows.slice().sort((a, b) => String(b.close).localeCompare(String(a.close)) || (a.mode === "live" ? -1 : 1));
+  const shown = isOpen("m15all") ? rows.slice(0, 200) : rows.slice(0, 25);
+  h += `<h2>Recent markets <span class="sub">newest first · real money and paper</span></h2><div class="card list">` + shown.map(r => {
+    const f = num(r.filled), p = num(r.pnl), t = pdate(r.close), name = String(r.series || "").replace(/^KX|15M$/g, "");
+    const res = !f ? `<span class="dim">no fill</span>` : r.won === "1" ? `<span class="pos">won</span>` : r.won === "0" ? `<span class="neg">lost</span>` : esc(r.result || "");
+    return `<div class="item" style="padding:7px 0"><span class="side ${r.fav_side === "no" ? "no" : "yes"}">${esc(String(r.fav_side || "–").toUpperCase())}</span>
+      <div class="main"><div class="t" style="font-size:13px">${esc(name)} <span class="mute" style="font-weight:400">${t ? esc(t.toLocaleTimeString("en-US", {timeZone:TZ, hour:"numeric", minute:"2-digit"})) : ""}</span>${r.mode === "live" ? ` <span class="pos" style="font-size:10px">● REAL</span>` : ` <span class="mute" style="font-size:10px">paper</span>`}</div>
+      <div class="s">${f ? `${f} @ ${Math.round(num(r.last_q) * 100)}¢` : `quoted ${Math.round(num(r.last_q) * 100)}¢`} · ${res}${num(r.pulls) ? ` · pulled ${r.pulls}×` : ""}</div></div>
+      <div class="r"><span class="${cls(p)}">${f ? money(p) : "—"}</span></div></div>`; }).join("") + `</div>`;
+  if (rows.length > 25) h += moreBtn("m15all", "Show more");
+  return h;
 }
 async function loadApi(){
   try {
@@ -875,6 +897,11 @@ function testsHTML(){
   return h + `</div>`;
 }
 function renderOverview(){
+  if (S.bot === "m15"){
+    $("#v-overview").innerHTML = m15Page();
+    $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
+    return;
+  }
   const mode = "live", rows = modeRows(mode), st = stats(rows), B = bankroll(), t = tradingCfg();
   const capPct = mode === "paper" ? num(t.paper_max_open_pct, num(t.max_open_pct, .6)) : num(t.max_open_pct, .6);
   const capped = rows.filter(r => r.src === "trader"), capExp = capped.reduce((a, r) => a + exposureOf(r), 0);
@@ -967,7 +994,6 @@ function renderOverview(){
   }
   h += moreBtn("strat", "");
   }
-  h += m15HTML();
   if (manual.length){
     h += `<h2>Your manual trades</h2><div class="card list">` + manual.map(r => `<div class="item"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t">${esc(r.ticker)}</div><div class="s">${esc(r.title)}</div></div><div class="r">${r.count} @ ${Math.round(r.price * 100)}¢</div></div>`).join("") + `</div>`;
   }
@@ -1285,6 +1311,9 @@ function renderAll(){
   document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.m === S.mode));
   $("#modeSeg").style.display = "none";  // real money is the main view; paper tests sit in their own section
   if (S.view === "overview") S.mode = "live";
+  if (!S.bot) S.bot = ls.get("bot") === "m15" ? "m15" : "main";
+  $("#botSeg").style.display = S.view === "overview" ? "" : "none";
+  document.querySelectorAll("#botSeg button").forEach(b => b.classList.toggle("on", b.dataset.b === S.bot));
   renderBanner(); if (!["overview","orders"].includes(S.view)) $("#banner").innerHTML = "";
   ({overview:renderOverview, orders:renderOrders, weather:renderWeather, research:renderResearch, health:renderHealth})[S.view]();
   renderStamp();
@@ -1301,6 +1330,7 @@ async function refresh(force){
   } catch(e){ S.errors.push(String(e.message || e)); renderAll(); }
   finally { busy = false; }
 }
+$("#botSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.bot = b.dataset.b; ls.set("bot", S.bot); renderAll(); window.scrollTo({top:0}); };
 $("#modeSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.mode = b.dataset.m; ls.set("mode", S.mode); S.filter = "all"; renderAll(); window.scrollTo({top:0}); };
 document.querySelector("nav.tabs").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; ls.set("view", S.view);
   document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("on", x === b));
