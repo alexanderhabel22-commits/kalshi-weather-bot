@@ -461,3 +461,13 @@ def test_started_push_only_when_not_a_routine_code_update(monkeypatch):
     clock.t += 3600
     bot(cfg(), clock).startup_notice()       # new code after an hour down: push
     assert len(sent) == 3
+
+
+def test_extra_contract_only_in_its_band():
+    s = {"contracts": 1, "extra_contracts": 1, "extra_min": 0.80, "extra_max": 0.87}
+    assert m15.target_contracts(0.73, s) == 1
+    assert m15.target_contracts(0.80, s) == 2
+    assert m15.target_contracts(0.87, s) == 2
+    assert m15.target_contracts(0.90, s) == 1
+    assert m15.target_contracts(None, s) == 1
+    assert m15.target_contracts(0.82, dict(s, extra_contracts=0)) == 1

@@ -75,16 +75,26 @@ DEFAULTS = {
                "KXPALLADIUM15M"],
     "live_series": ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M"],
     "contracts": 1,
+    # one more contract when the favourite is in the extra band. Live (Nov 8) the bot bought its
+    # 1 contract at ~73c early in nearly every window and then sat out the 80-87c stretch, which
+    # earned +11c/contract in the backtest (70-79c +14c, 88-95c +4c).
+    "extra_contracts": 0,
+    "extra_min": 0.80,
+    "extra_max": 0.87,
     "min_fav": 0.71,
     "max_fav": 0.95,
     "stop_quote_s": 0,
     # bid only in the last N seconds of the window, per series. Backtest split (Nov 8):
     # silver/copper earn ~0c with 5-15 min left and +6c in the last 5 min; BTC earns at
-    # every point (+9c at 5-10 min, +6c at 0-5 min), so it has no limit.
+    # every point (+9c at 5-10 min, +6c at 0-5 min).
+    # BTC 600 (Nov 8 data check): the old BTC trade pull kept only the last 10,000 trades per
+    # market, which covers ~5 min on average, so the 10-15 min bucket had just 10 markets and was
+    # never really tested. Live agreed: 45 fills with 10-15 min left +1.5c/ct, 19 fills with
+    # <=10 min left +9.5c/ct. So BTC bids only in the part of the window the data covers.
     # Alt coins (paper only): same pattern in the backtest (+5c last 5 min, ~-1 to -3c earlier),
     # and live paper agreed (Nov 7-8: 569 early fills -4.5c/ct, 11 late fills 10 won). So the
     # paper test now runs the last-5-minute version, the only one that could go live.
-    "max_left_s": {"KXSILVER15M": 300, "KXCOPPER15M": 300, "KXETH15M": 300, "KXSOL15M": 300,
+    "max_left_s": {"KXBTC15M": 600, "KXSILVER15M": 300, "KXCOPPER15M": 300, "KXETH15M": 300, "KXSOL15M": 300,
                    "KXXRP15M": 300, "KXDOGE15M": 300, "KXBNB15M": 300, "KXNEAR15M": 300,
                    "KXHYPE15M": 300, "KXZEC15M": 300},
     "requote_gap_s": 5,
@@ -170,6 +180,15 @@ def desired_quote(m: dict, s: dict) -> tuple[str, float] | None:
         if b is not None and s["min_fav"] - 1e-9 <= b <= s["max_fav"] + 1e-9:
             return side, round(b, 2)
     return None
+
+
+def target_contracts(q: float | None, s: dict) -> int:
+    """Contracts wanted in a market while the favourite's bid is at q."""
+    n = int(s["contracts"])
+    if q is not None and s.get("extra_contracts") and \
+            s["extra_min"] - 1e-9 <= q <= s["extra_max"] + 1e-9:
+        n += int(s["extra_contracts"])
+    return n
 
 
 def through(trades: list, side: str, q: float, after: float) -> tuple[float | None, bool]:
@@ -634,7 +653,8 @@ class Bot:
         m["why"] = "no quote" if not quote else ("out of band" if want is None else "ok")
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
-        room = int(s["contracts"]) - m["filled"] - (o["n"] - o["filled"] if o else 0)
+        target = target_contracts(want[1] if want else None, s)
+        room = target - m["filled"] - (o["n"] - o["filled"] if o else 0)
         if left <= s["stop_quote_s"] or left > float((s.get("max_left_s") or {}).get(m["series"], 1e9)):
             if o:
                 self._end_order(m)
@@ -659,7 +679,7 @@ class Bot:
             if side != o["side"] or (q > o["q"] + 1e-9 and now - o["t0"] >= s["requote_gap_s"]):
                 self._end_order(m)
                 o = None
-                room = int(s["contracts"]) - m["filled"]
+                room = target - m["filled"]
             else:
                 return
         if want is None or room <= 0 or now < m.get("retry_at", 0):

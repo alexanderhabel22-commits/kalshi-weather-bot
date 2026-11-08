@@ -220,7 +220,10 @@ mode = "live"                    # off | paper | live. LIVE from the start (Alex
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
 live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M"]   # real money only on these
 contracts = 1                    # per market
-min_fav = 0.71                   # join the favourite's best bid while it's 71-95c
+extra_contracts = 0              # READY, OFF until the Mon Nov 9 read: 1 = +1 contract while the
+extra_min = 0.80                 # favourite is 80-87c (backtest +11c/ct; live the bot buys at ~73c
+extra_max = 0.87                 # then sits out this stretch). Max 2 per market.
+min_fav = 0.71                   # join the favourite's best bid while it's 71-95c (candidate: 0.65)
 max_fav = 0.95
 pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
                                  # Actions strategies' 75% cap leaves free; Alex, Nov 8)
