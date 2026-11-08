@@ -519,6 +519,19 @@ class Bot:
             self._book(m, o, ts)
             m["order"] = None
 
+    def fast_pull(self, now: float) -> int:
+        """Spot just jumped: cancel resting bids on that coin first, before any REST housekeeping."""
+        if not self.s["guard"] or self.spot is None:
+            return 0
+        n = 0
+        for m in list(self.state["markets"].values()):
+            prod = self.s["spot"].get(m["series"])
+            if m.get("order") and m["close"] > now and prod and self.spot.blocked(prod, now):
+                self._end_order(m)
+                m["pulls"] += 1
+                n += 1
+        return n
+
     def manage(self, m: dict, quote: dict | None, mode: str, now: float) -> None:
         s = self.s
         left = m["close"] - now
@@ -714,6 +727,7 @@ class Bot:
 
     def step(self) -> None:
         now = self.clock()
+        self.fast_pull(now)
         self.refresh_switch(now)
         if self.state.get("started") is None:
             self.state["started"] = int(now)
@@ -766,6 +780,10 @@ class Bot:
             if self.wake is not None:
                 self.wake.wait(max(0.0, float(self.s["poll_s"]) - spent))
                 self.wake.clear()
+                try:
+                    self.fast_pull(self.clock())         # react to a jump right away
+                except Exception as exc:
+                    log.warning("fast pull: %s", exc)
                 time.sleep(max(0.0, float(self.s["min_step_s"]) - (self.clock() - t0)))
             else:
                 time.sleep(max(0.5, float(self.s["poll_s"]) - spent))

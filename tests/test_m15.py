@@ -293,3 +293,30 @@ def test_control_file_stops_this_bot(monkeypatch):
     clk.t += 61
     b.step()
     assert cl.cancelled == ["o0"] and b.effective_mode(clk.t) == "off"
+
+
+def test_fast_pull_cancels_live_bid_on_jump(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+
+    class Spot:
+        blocked_now = False
+
+        def blocked(self, prod, now=None):
+            return self.blocked_now
+
+        def healthy(self):
+            return True
+
+        def move_bps(self, prod, now=None):
+            return 0.0
+    sp = Spot()
+    b = m15.Bot(cfg(mode="live", guard=True), http=None, client=cl, clock=clk, spot=sp,
+                fetch_json=lambda url: {"mode": "live", "halted": {}} if "trader_state" in url else {"total": 50.0})
+    b.step()
+    assert len(cl.placed) == 1
+    sp.blocked_now = True
+    assert b.fast_pull(clk.t) == 1                 # cancelled without a full step
+    assert cl.cancelled == ["o0"] and b.state["markets"][TK]["pulls"] == 1
+    assert b.fast_pull(clk.t) == 0
