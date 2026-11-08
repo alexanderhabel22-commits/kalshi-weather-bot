@@ -1002,7 +1002,9 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
     cash = None
     if client is not None and not dry_run and any(plan_mode[id(p)] == "live" for p in planned):
         try:
-            cash = client.balance()     # never spend more than the account holds
+            # never spend more than Exchange 0 (the shard our markets live on) holds; the
+            # 15-min bot's cash sits on Exchange 2 and isn't ours to count
+            cash = client.cash_on(0) if hasattr(client, "cash_on") else client.balance()
         except Exception as exc:
             log.warning("balance check failed: %s", exc)
             cash = 0.0                   # can't see the balance: no live orders this run

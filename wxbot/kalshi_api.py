@@ -95,6 +95,19 @@ class KalshiClient:
                 continue
         return out
 
+    def cash_on(self, shard: int = 0) -> float:
+        """Spendable cash on one exchange shard. Kalshi checks collateral per shard, so
+        a bot can only use the cash on the shard its markets live on. Falls back to the
+        account balance when Kalshi sends no per-shard breakdown."""
+        js = self._get("/portfolio/balance")
+        for b in js.get("balance_breakdown") or []:
+            try:
+                if int(b["exchange_index"]) == int(shard):
+                    return float(b["balance"])
+            except (KeyError, TypeError, ValueError):
+                continue
+        return float(js.get("balance", 0)) / 100.0
+
     def shard_transfer(self, dollars: float, src: int, dst: int) -> dict:
         """Move our own cash between exchange shards of this account (not a withdrawal).
         Kalshi takes the amount in centicents ($1 = 10,000)."""

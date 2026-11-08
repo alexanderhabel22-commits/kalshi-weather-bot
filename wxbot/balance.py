@@ -55,8 +55,17 @@ def fetch(client: KalshiClient) -> dict:
     src = "portfolio_value"
     if pos is None:
         pos, src = positions_value(client), "positions_at_cost"
-    return {"cash": round(cash, 2), "positions": round(pos, 2),
-            "total": round(cash + pos, 2), "positions_source": src}
+    out = {"cash": round(cash, 2), "positions": round(pos, 2),
+           "total": round(cash + pos, 2), "positions_source": src}
+    shards = {}
+    for b in js.get("balance_breakdown") or []:          # cash per exchange shard
+        try:
+            shards[str(int(b["exchange_index"]))] = round(float(b["balance"]), 2)
+        except (KeyError, TypeError, ValueError):
+            continue
+    if shards:
+        out["shards"] = shards
+    return out
 
 
 def refresh(http: Http, now: datetime, client: KalshiClient | None = None) -> dict | None:
