@@ -36,6 +36,7 @@ import hashlib
 import logging
 import math
 import os
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -460,6 +461,13 @@ def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> Non
             if r.get("mode") == "live" and r.get("status") == "resting" and r.get("order_id")]
     if not mine:
         return
+    # contracts of an order that were already sold early or netted live on their own
+    # rows (same order_id); Kalshi's fill count includes them, so take them off again
+    moved: dict[str, int] = {}
+    for x in rows:
+        oid = x.get("order_id")
+        if oid and x.get("mode") == "live" and x.get("status") != "resting" and _is_child(x):
+            moved[oid] = moved.get(oid, 0) + int(_f(x.get("filled")))
     listed = None
     if len(mine) > 3:
         # one paginated listing instead of one request per order; orders that left
@@ -477,7 +485,8 @@ def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> Non
                 log.warning("order %s: %s", r["order_id"], exc)
                 continue
         placed = int(_f(r["count"]))
-        got = order_fill_count(o, placed)
+        gone = moved.get(r["order_id"], 0)
+        got = max(0, order_fill_count(o, placed + gone) - gone)
         before = int(_f(r.get("filled")))
         if got > before:
             r["filled"] = got
@@ -489,6 +498,31 @@ def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> Non
             r["status"] = "filled"
         elif st in ("canceled", "cancelled", "executed"):
             r["status"] = "filled" if got else "cancelled"
+
+
+def _is_child(r: dict) -> bool:
+    """A row split off another order's row (sold early or netted), see _split."""
+    return bool(re.search(r"\|(exit|net)\d*$", str(r.get("id", ""))))
+
+
+def _split(rows: list[dict], r: dict, k: int, tag: str) -> dict:
+    """Move k held contracts of row r onto a new row (an early sale or a netted pair)
+    and return it. The parent keeps the rest, still resting if its order is: count
+    and filled both drop by k, and its entry fee is shared out by contracts. The new
+    row keeps the order_id so sync_live can tell those contracts are already booked."""
+    filled = int(_f(r.get("filled")))
+    fee = _f(r.get("fee"))
+    share = round(fee * k / filled, 2) if filled else 0.0
+    base = f"{r['id']}|{tag}"
+    n = sum(1 for x in rows if re.fullmatch(re.escape(base) + r"\d*", str(x.get("id", ""))))
+    child = dict(r, id=base + (str(n + 1) if n else ""), filled=k, count=k)
+    if r.get("fee") not in (None, ""):
+        child["fee"] = f"{share:.2f}"
+        r["fee"] = f"{fee - share:.2f}"
+    r["filled"] = filled - k
+    r["count"] = int(_f(r.get("count"))) - k
+    rows.append(child)
+    return child
 
 
 def crossed(r: dict, m: dict | None) -> bool:
@@ -525,15 +559,12 @@ def net_pairs(rows: list[dict], now: datetime) -> int:
                 part = leg
                 if int(_f(leg["filled"])) > k or leg["status"] == "resting":
                     # keep the rest of this order open on its row; book the netted part apart
-                    leg["filled"] = int(_f(leg["filled"])) - k
-                    leg["count"] = int(_f(leg["count"])) - k
-                    part = dict(leg, id=leg["id"] + "|net", filled=k, count=k, order_id="")
-                    rows.append(part)
+                    part = _split(rows, leg, k, "net")
                     if int(_f(leg["filled"])) == 0:
                         lst.pop(0)
                 else:
                     lst.pop(0)
-                part.update(status="settled", result="netted", pnl=f"{each:.2f}",
+                part.update(status="settled", result="netted", pnl=f"{each - _f(part.get('fee')):.2f}",
                             settled_at=now.isoformat(timespec="seconds"),
                             note=(part.get("note") or "") + f" | netted {k} vs {other['side'].upper()} "
                                  f"@ {_f(other['price']):.2f}: Kalshi paid $1 per pair")
@@ -608,8 +639,10 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
     return n
 
 
-def _fee(p: float) -> float:
-    return math.ceil(round(0.07 * p * (1 - p) * 100, 6)) / 100
+def _fee(p: float, n: int = 1) -> float:
+    """Kalshi's taker fee for one order of n contracts at price p (rounded up to the cent
+    on the whole order, so per contract it shrinks as n grows)."""
+    return math.ceil(round(0.07 * n * p * (1 - p) * 100, 6)) / 100
 
 
 def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple[float, str] | None:
@@ -640,10 +673,16 @@ def exit_decision(r: dict, m: dict | None, sp: dict, cap_blocked: bool) -> tuple
     return None
 
 
+def _holds(r: dict) -> bool:
+    return r.get("status") in OPEN and int(_f(r.get("filled"))) > 0
+
+
 def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int:
     n = 0
     vals, shads = valuers(), shadows()
-    held = [r for r in rows if r.get("status") == "filled" and r.get("mode") in ("paper", "live")]
+    # every row holding contracts, including an order that is only partly filled so far
+    # (a 6-contract Mentions bid with 4 filled holds 4 we may want to sell)
+    held = [r for r in rows if _holds(r) and r.get("mode") in ("paper", "live")]
     markets = kalshi.get_markets(http, [r["ticker"] for r in held]) if held else {}
     for r in held:
         sp = specs.get(r.get("strategy"), {})
@@ -675,32 +714,40 @@ def exits(http, rows, now, specs, client, cfg, dry_run, cap_blocked: set) -> int
 
 
 def _sell(http, r, rows, price, why, client, cfg, dry_run, now) -> bool:
-    """Sell a held position at `price` (immediate-or-cancel for live) and book it."""
-    count = int(_f(r.get("filled")))
+    """Sell a held position at `price` (immediate-or-cancel for live) and book it.
+
+    Multi-contract positions: we ask for every contract we hold, but only at `price`
+    or better, so we never dump contracts below the price the exit rule approved.
+    Whatever the bid can't take is cancelled and stays held on this row; the next
+    run (5 minutes later) checks it again with a fresh order id."""
+    held = int(_f(r.get("filled")))
+    count = held
     if r["mode"] == "live":
         if dry_run or client is None:
             return False
+        # a fresh id every attempt: Kalshi refuses a reused client id, which used to
+        # block selling the rest of a position after a partial (or empty) sale
+        cid = f"x{now:%d%H%M%S}-{r['client_id']}"[:60]
         try:
-            o = client.sell_now(r["ticker"], r["side"], price, count, f"x-{r['client_id']}"[:60])
+            o = client.sell_now(r["ticker"], r["side"], price, count, cid)
         except (HttpError, OrderRejected) as exc:
             log.warning("exit %s rejected: %s", r["ticker"], exc)
             return False
-        sold = order_fill_count(o, count)
+        sold = min(order_fill_count(o, count), held)
         if sold <= 0:
             return False
         count = sold
-    pnl = count * (price - _fee(price) - _f(r["price"]))
-    if count < int(_f(r.get("filled"))):
-        # partial exit: keep the rest open on this row, book the sold part on a new row
-        r["filled"] = int(_f(r["filled"])) - count
-        r = dict(r, id=r["id"] + "|exit", filled=count, count=count)
-        rows.append(r)
+    if count < held or r.get("status") == "resting":
+        # partial exit, or the order is still resting for more: keep the rest on
+        # this row, book the sold part on its own row
+        r = _split(rows, r, count, "exit")
+    pnl = count * (price - _f(r["price"])) - _fee(price, count) - _f(r.get("fee"))
     r.update(status="settled", result="exit", pnl=f"{pnl:.2f}",
              settled_at=now.isoformat(timespec="seconds"),
              note=(r.get("note") or "") + f" | sold {count} @ {price:.2f}: {why}")
     if r["mode"] == "live":
-        _alert(http, cfg, f"Sold early ${pnl:+.2f}", f"{r['title'] or r['ticker']} · {why}", dry_run,
-               bundle=True)
+        _alert(http, cfg, f"Sold early ${pnl:+.2f}",
+               f"{r['title'] or r['ticker']} · sold {count} of {held} · {why}", dry_run, bundle=True)
     return True
 
 
@@ -716,12 +763,12 @@ def free_cap_for(http, it: Intent, why: str, mode: str, rows: list[dict], planne
     if why == "overall open-$ cap":
         cap = float(t["max_open_dollars"] if mode == "live" else t["paper_max_open_dollars"])
         need = exposure(same) + pend + cost - cap
-        pool = [r for r in same if r.get("status") == "filled"]
+        pool = [r for r in same if _holds(r)]
     else:   # strategy cap: only that strategy's own positions free it
         cap = float(sp.get("max_open_dollars", t["max_open_dollars"]))
         need = exposure(same, it.strategy) + sum(p.price * p.count for p in planned
                                                  if p.strategy == it.strategy) + cost - cap
-        pool = [r for r in same if r.get("status") == "filled" and r.get("strategy") == it.strategy]
+        pool = [r for r in same if _holds(r) and r.get("strategy") == it.strategy]
     pool = [r for r in pool if str(specs.get(r.get("strategy"), {}).get("exit", "ev")).lower() != "hold"]
     if need <= 0 or not pool:
         return []
