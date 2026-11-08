@@ -80,7 +80,12 @@ DEFAULTS = {
     # bid only in the last N seconds of the window, per series. Backtest split (Nov 8):
     # silver/copper earn ~0c with 5-15 min left and +6c in the last 5 min; BTC earns at
     # every point (+9c at 5-10 min, +6c at 0-5 min), so it has no limit.
-    "max_left_s": {"KXSILVER15M": 300, "KXCOPPER15M": 300},
+    # Alt coins (paper only): same pattern in the backtest (+5c last 5 min, ~-1 to -3c earlier),
+    # and live paper agreed (Nov 7-8: 569 early fills -4.5c/ct, 11 late fills 10 won). So the
+    # paper test now runs the last-5-minute version, the only one that could go live.
+    "max_left_s": {"KXSILVER15M": 300, "KXCOPPER15M": 300, "KXETH15M": 300, "KXSOL15M": 300,
+                   "KXXRP15M": 300, "KXDOGE15M": 300, "KXBNB15M": 300, "KXNEAR15M": 300,
+                   "KXHYPE15M": 300, "KXZEC15M": 300},
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
