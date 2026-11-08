@@ -419,3 +419,19 @@ def test_shard_transfer_units():
     c._post = lambda path, payload: sent.update(payload) or {"transfer_id": "x"}
     c.shard_transfer(13.0, 0, 2)
     assert sent["amount"] == 130000 and sent["destination_exchange_shard"] == 2
+
+
+def test_silver_waits_for_last_five_minutes(monkeypatch):
+    World(monkeypatch)
+    monkeypatch.setattr(kalshi, "list_open_markets", lambda http, s: [
+        {"ticker": "KXSILVER15M-X", "close_time": iso(CLOSE)}])
+    monkeypatch.setattr(kalshi, "get_markets", lambda http, tks: {
+        "KXSILVER15M-X": {"ticker": "KXSILVER15M-X", "yes_bid_dollars": "0.80", "yes_ask_dollars": "0.82", "result": ""}})
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", series=["KXSILVER15M"], live_series=["KXSILVER15M"]), clk, cl)
+    b.step()                                      # 10 min left: wait
+    assert cl.placed == []
+    clk.t = CLOSE - 290
+    b.step()
+    assert len(cl.placed) == 1
