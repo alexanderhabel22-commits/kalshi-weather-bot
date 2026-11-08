@@ -1,5 +1,5 @@
 {
- "at": "2026-11-08T15:17:00+00:00",
+ "at": "2026-11-08T15:32:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,16 +7,16 @@
  "fund_error": null,
  "halted": null,
  "last_reject": {
-  "at": 1794147514,
+  "at": 1794151918,
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXBTC15M-26NOV080930-30"
+  "ticker": "KXBTC15M-26NOV081045-45"
  },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV081030-30": {
+  "KXBTC15M-26NOV081045-45": {
    "bid_ask": [
-    0.53,
-    0.54
+    0.7,
+    0.71
    ],
    "mode": "live",
    "order": false,
@@ -28,25 +28,25 @@
  "pnl": {
   "live_days": {
    "2026-11-07": 0.17,
-   "2026-11-08": 0.72
+   "2026-11-08": 1.0
   },
-  "live_total": 0.89,
+  "live_total": 1.17,
   "paper_days": {
    "2026-11-07": -5.8,
-   "2026-11-08": -4.36
+   "2026-11-08": -6.35
   },
-  "paper_total": -10.16
+  "paper_total": -12.15
  },
  "series": {
   "KXBTC15M": {
-   "fills": 43,
-   "pnl": 0.89
+   "fills": 44,
+   "pnl": 1.17
   }
  },
  "shards": {
   "0": 12.607,
   "1": 0.0,
-  "2": 15.16,
+  "2": 15.45,
   "3": 0.0
  },
  "spot_ok": true,
