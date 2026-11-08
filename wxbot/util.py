@@ -78,6 +78,9 @@ class Http:
     def get_json(self, url: str, params: dict | None = None, headers: dict | None = None):
         return self._request("GET", url, params=params, headers=headers).json()
 
+    def get_text(self, url: str, params: dict | None = None, headers: dict | None = None) -> str:
+        return self._request("GET", url, params=params, headers=headers).text
+
     def post_json(self, url: str, payload: dict, headers: dict | None = None):
         r = self._request("POST", url, json=payload, headers=headers)
         try:

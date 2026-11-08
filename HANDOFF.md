@@ -229,6 +229,9 @@ killing any strategy. `wxbot/allocator.py`, settings in `[allocator]`:
   data/trader_state.json ("allocator"). Plan: go live at the Nov 17 checkpoint
   (Alex, Nov 7) by setting `apply = true`.
 - Backtest: research_alloc/RESULTS.md (beat fixed sizing in 20/20 samples).
+- The 15-minute bot is graded too (Nov 8), per coin (m15_btc, m15_silver, m15_copper), from
+  its real fills on the m15-data branch (read on re-grade day and in the report). Report-only:
+  the server's own 100/300-fill cut/raise rules decide its size.
 
 ## Dashboard (built Nov 5, 2026)
 

@@ -30,6 +30,12 @@ How the grade becomes money
     strategies get first claim on the overall cap. The overall 75% cap, the
     20% per-event cap and the loss stops never change.
 
+15-minute bot (own server, Nov 8): graded per coin (m15_btc, m15_silver, ...)
+from the real fills it uploads to the m15-data branch, one market = one result.
+Its multiplier is report-only even when applied: the server sizes itself, and
+its cut/raise rules (100 / 300 real fills, analysis/checkpoint/CHECKPOINT.md)
+stay in charge of it.
+
 Shadow mode (`apply = false`): grades and multipliers are worked out and
 reported (the "allocator" entry of data/trader_state.json, REPORT.md) but
 sizing is unchanged.
@@ -40,7 +46,15 @@ import math
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-from .util import Config, parse_iso
+import csv
+import io
+
+from .util import Config, HttpError, parse_iso
+
+# The 15-minute bot runs on its own server and uploads one CSV per day to the
+# m15-data branch. It is graded per coin, one market = one result, real fills only.
+M15_RAW = "https://raw.githubusercontent.com/{repo}/m15-data/m15/markets-{day}.csv"
+M15_LIVE_FROM = "2026-11-08"        # first real-money market (server live Nov 8, ~03:30 UTC)
 
 DEFAULTS = {"enabled": True, "apply": False,
             "hurdle": 0.03,          # the profit per dollar a strategy is assumed to make until shown otherwise
@@ -62,10 +76,57 @@ def _f(x, d=0.0) -> float:
         return d
 
 
-def results(trade_rows: list[dict], weather_paper: list[dict] = ()) -> dict[str, list[dict]]:
+def m15_name(series: str) -> str:
+    """KXBTC15M -> m15_btc"""
+    s = (series or "").upper()
+    s = s[2:] if s.startswith("KX") else s
+    s = s[:-3] if s.endswith("15M") else s
+    return "m15_" + s.lower()
+
+
+def m15_names(cfg: Config) -> list[str]:
+    m = cfg.raw.get("m15", {}) or {}
+    if str(m.get("mode", "off")).lower() != "live":
+        return []
+    return [m15_name(s) for s in m.get("live_series", [])]
+
+
+def fetch_m15(http, cfg: Config, now: datetime) -> list[dict]:
+    """Every graded market the 15-minute bot has written since it went live."""
+    import os
+    repo = os.environ.get("GITHUB_REPOSITORY") or "alexanderhabel22-commits/kalshi-weather-bot"
+    start = datetime.fromisoformat(str(params(cfg).get("m15_live_from", M15_LIVE_FROM))).date()
+    rows: list[dict] = []
+    day = start - timedelta(days=1)            # files are named by the close day in ET
+    while day <= now.date():
+        try:
+            text = http.get_text(M15_RAW.format(repo=repo, day=day.isoformat()))
+            rows += list(csv.DictReader(io.StringIO(text)))
+        except HttpError:
+            pass                               # no file that day (or not uploaded yet)
+        day += timedelta(days=1)
+    return rows
+
+
+def results(trade_rows: list[dict], weather_paper: list[dict] = (),
+            m15_rows: list[dict] = ()) -> dict[str, list[dict]]:
     """Settled results per strategy, one entry per (mode, event):
     cost, pnl, var (variance of pnl if prices were fair) and weight."""
     acc: dict = defaultdict(lambda: {"cost": 0.0, "pnl": 0.0, "sd": 0.0})
+    start = M15_LIVE_FROM
+    for r in m15_rows:                            # 15-minute bot: real fills only, graded markets
+        n = int(_f(r.get("filled")))
+        if r.get("mode") != "live" or n < 1 or r.get("won") in (None, "") or (r.get("close") or "") < start:
+            continue
+        cost = _f(r.get("cost"))
+        p = cost / n if n else 0.0
+        if not 0 < p < 1:
+            continue
+        a = acc[(m15_name(r.get("series")), "live", r.get("ticker"))]
+        a["cost"] += cost + _f(r.get("fee"))
+        a["pnl"] += _f(r.get("pnl"))
+        a["sd"] += n * math.sqrt(p * (1 - p))
+        a.setdefault("at", r.get("close") or "")
     for r in trade_rows:
         if r.get("status") != "settled" or r.get("pnl") in (None, ""):
             continue
@@ -131,13 +192,18 @@ def step(prev: float, tgt: float, p: dict) -> float:
     return round(prev + d, 3)
 
 
+def due(cfg: Config, store: dict, now: datetime) -> bool:
+    last = parse_iso(store.get("graded_at"))
+    return last is None or now - last >= timedelta(days=float(params(cfg)["regrade_days"]))
+
+
 def update(cfg: Config, trade_rows: list[dict], weather_paper: list[dict], names,
-           now: datetime, store: dict, force: bool = False) -> dict:
+           now: datetime, store: dict, force: bool = False, m15_rows: list[dict] = ()) -> dict:
     """Fresh grades every call; multipliers move only once every `regrade_days`
     (or when forced). `store` is kept in data/trader_state.json ("allocator")."""
     p = params(cfg)
     last = parse_iso(store.get("graded_at"))
-    grades = {s: grade(u, p) for s, u in results(trade_rows, weather_paper).items()}
+    grades = {s: grade(u, p) for s, u in results(trade_rows, weather_paper, m15_rows).items()}
     prev = store.get("multipliers", {}) or {}
     due = force or last is None or now - last >= timedelta(days=float(p["regrade_days"]))
     mult = {}

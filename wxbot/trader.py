@@ -966,8 +966,12 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
         # grade every strategy on its settled results; re-allocate once a week.
         # Shadow (apply = false) only records the grades; sizing is unchanged.
         try:
-            alloc = allocator.update(cfg, load_all(), weather_paper_orders(), list(specs), now,
-                                     state.setdefault("allocator", {}))
+            store = state.setdefault("allocator", {})
+            m15 = allocator.m15_names(cfg)
+            # the 15-minute bot (own server) is graded too; read its uploads only on re-grade day
+            m15_rows = allocator.fetch_m15(http, cfg, now) if m15 and allocator.due(cfg, store, now) else []
+            alloc = allocator.update(cfg, load_all(), weather_paper_orders(), list(specs) + m15, now,
+                                     store, m15_rows=m15_rows)
             specs = allocator.apply_to(specs, alloc, ap)
             order_names = allocator.order(order_names, alloc, ap)
             out["allocation"] = alloc.get("multipliers", {})
@@ -1143,8 +1147,12 @@ def report_section(rows: list[dict], cfg: Config) -> list[str]:
         try:
             store = dict(state.get("allocator", {}) or {"graded_at": "9999-01-01T00:00:00+00:00"})
             names = [n for n in strategies() if (cfg.raw.get("trading", {}).get(n) or {}).get("enabled", True)]
-            alloc = allocator.update(cfg, load_all(), weather_paper_orders(), names,
-                                     datetime.now(ZoneInfo("UTC")), store)
+            now = datetime.now(ZoneInfo("UTC"))
+            m15 = allocator.m15_names(cfg)
+            online = os.environ.get("GITHUB_ACTIONS") == "true"   # tests and local runs stay offline
+            m15_rows = allocator.fetch_m15(Http(cfg.user_agent), cfg, now) if m15 and online else []
+            alloc = allocator.update(cfg, load_all(), weather_paper_orders(), names + m15, now, store,
+                                     m15_rows=m15_rows)
             lines += allocator.report_section(alloc)
         except Exception as exc:
             log.warning("allocator report failed: %s", exc)
