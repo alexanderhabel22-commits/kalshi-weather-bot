@@ -1,0 +1,56 @@
+name: gaps-research
+
+# Research only (coverage-map gap tests: 15-minute markets, daily gas, crypto
+# fair value). Read-only public data; never trades, never alerts. Runs only on
+# push to this research branch. Output goes to the gaps-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-v2e4xk"]
+    paths: ["research_gaps/fetch.py", ".github/workflows/gaps-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gaps-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 320
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [m15, gas, cry]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        env:
+          BUDGET_H: "4.3"
+        run: python research_gaps/fetch.py ${{ matrix.mode }} out
+      - name: Save to gaps-research-data branch
+        if: always() && hashFiles('out/trades.csv.gz') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d)-${{ matrix.mode }}"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6 7 8; do
+            if git fetch origin gaps-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/gaps-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp [skip ci]" || exit 0
+            git push origin HEAD:gaps-research-data && exit 0
+            sleep $((i * 9))
+          done
+          exit 1
