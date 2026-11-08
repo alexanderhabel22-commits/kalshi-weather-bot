@@ -964,6 +964,9 @@ function renderOverview(){
   if ($("#eq")) drawSettled(sx, rows, strats, st, dayStop, totStop);
 }
 
+// kalshi.com/events/<ticker> is an empty page and fails in the iPhone app; /markets/<series>/<any slug>/<event> works in both
+function kalshiURL(r){ const t = String(r.ticker || "").toLowerCase(), p = t.split("-"), ev = String(r.event || (p.length > 2 ? p.slice(0, 2).join("-") : t)).toLowerCase(), se = ev.split("-")[0], e = encodeURIComponent;
+  return `https://kalshi.com/markets/${e(se)}/${e(se)}/${e(ev)}`; }
 function details(r){
   const c = v => v == null || isNaN(v) ? "—" : Math.round(v * 100) + "¢", sq = sideQuote(r), u = unrealized(r);
   const rows = [["Strategy", strategyName(r.strategy) + " · " + r.mode], ["Market", r.ticker], ["Order", `buy ${r.side.toUpperCase()} ${r.count} @ ${c(r.price)}` + (r.filled ? ` · ${r.filled} filled` : "")],
@@ -974,7 +977,7 @@ function details(r){
     ["Model", r.model != null ? Math.round(r.model * 100) + "%" : ""], ["Edge", r.edge != null ? cents(r.edge * 100) : ""], ["Note", r.note || ""]];
   const n = r.status === "filled" ? (r.filled || r.count) : r.filled;
   const tch = n > 0 && r.ticker && r.status !== "settled" ? `<div class="lbl" style="margin:10px 0 2px">Up/down on this bet</div><div class="chart tchart" data-tk="${esc(r.ticker)}" data-side="${esc(r.side)}" data-price="${r.price}" data-n="${n}" data-from="${+(r.filledAt || r.placed) || 0}"><div class="empty">Loading trades…</div></div>` : "";
-  return `<div class="more">${tch}${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="https://kalshi.com/events/${encodeURIComponent(String(r.ticker || r.event).toLowerCase())}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
+  return `<div class="more">${tch}${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="${kalshiURL(r)}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
 }
 document.addEventListener("click", e => { if (e.target.closest("a") || e.target.closest(".chart")) return; const it = e.target.closest(".item.tap"); if (!it) return;
   it.classList.toggle("open"); if (it.classList.contains("open")) it.querySelectorAll(".tchart").forEach(drawTradeChart); });
