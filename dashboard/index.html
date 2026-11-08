@@ -137,6 +137,9 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .rng{display:flex;gap:4px;margin-top:6px}
 .rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
 .rng button.on{background:var(--rc,#34d399);color:#070a12}
+.share{height:4px;border-radius:2px;background:#18213b;margin:5px 0 3px;overflow:hidden}.share i{display:block;height:100%;border-radius:2px;opacity:.85}
+.legend b{font-family:var(--mono);font-weight:600;font-size:11.5px}
+.chead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}.chead b{font-family:var(--mono);font-size:24px;font-weight:700}.chead span{font-size:12px;color:var(--ink2)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2);margin-bottom:8px}
 .legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
 .legend span.off{opacity:.35}
@@ -521,7 +524,10 @@ function upPoints(mode){
 /* ---------------------------------------------------------------- charts */
 function lineChart(el, series, o={}){
   const W = el.clientWidth || 340, H = o.h || 190, P = {l:44, r:12, t:12, b:24};
-  const pts = series.flatMap(s => s.pts); if (!pts.length){ el.innerHTML = `<div class="empty">${o.empty || "No data yet"}</div>`; return; }
+  // o.step: hold each value flat until the next one (balances, totals); o.stack: layers share x and add up
+  let draw = series;
+  if (o.stack){ let acc = null; draw = series.map(s => { const q = s.pts.map((p, j) => ({x:p.x, y:(acc ? acc[j] : 0) + p.y, b:acc ? acc[j] : 0})); acc = q.map(p => p.y); return {...s, pts:q}; }); }
+  const pts = draw.flatMap(s => s.pts); if (!pts.length){ el.innerHTML = `<div class="empty">${o.empty || "No data yet"}</div>`; return; }
   let x0 = Math.min(...pts.map(p => p.x)), x1 = Math.max(...pts.map(p => p.x)); if (x1 === x0){ x0 -= 3600e3; x1 += 3600e3; }
   const z = o.zero === false ? [] : [0]; let y0 = Math.min(...z, ...pts.map(p => p.y)), y1 = Math.max(...z, ...pts.map(p => p.y)); const minSpan = o.minSpan ?? 0.04; if (y1 - y0 < minSpan){ const mid = (y0 + y1) / 2; y0 = mid - minSpan / 2; y1 = mid + minSpan / 2; } // scale to the data, not a fixed 50c window
   if (o.y0 != null) y0 = Math.min(y0, o.y0); if (o.y1 != null) y1 = Math.max(y1, o.y1);
@@ -534,9 +540,13 @@ function lineChart(el, series, o={}){
     return `<line x1="${px}" x2="${px}" y1="${H - P.b}" y2="${H - P.b + 3}" stroke="#3a4870"/><text x="${px}" y="${H - 6}" fill="#6b7699" font-size="10" text-anchor="${a}" font-family="JetBrains Mono">${tt.f(t)}</text>`; }).join("");
   (o.refs || []).forEach(rf => { if (rf.y > y0 && rf.y < y1) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(rf.y)}" y2="${Y(rf.y)}" stroke="${rf.c}" stroke-dasharray="5 4" opacity=".7"/><text x="${W - P.r}" y="${Y(rf.y) - 4}" fill="${rf.c}" font-size="10" text-anchor="end" font-family="JetBrains Mono">${rf.label}</text>`; });
   let paths = "";
-  series.forEach((s, i) => {
+  const f1 = v => v.toFixed(1), path = ps => ps.map((p, j) => !j ? `M${f1(X(p.x))},${f1(Y(p.y))}` : o.step ? `H${f1(X(p.x))}V${f1(Y(p.y))}` : `L${f1(X(p.x))},${f1(Y(p.y))}`).join("");
+  if (o.stack) draw.forEach(s => { if (!s.pts.length) return; const q = s.pts, L = q.length - 1;
+    let back = `L${f1(X(q[L].x))},${f1(Y(q[L].b))}`; for (let j = L; j > 0; j--) back += o.step ? `V${f1(Y(q[j - 1].b))}H${f1(X(q[j - 1].x))}` : `L${f1(X(q[j - 1].x))},${f1(Y(q[j - 1].b))}`;
+    paths += `<path d="${path(q)}${back}Z" fill="${s.c}" fill-opacity=".38"/><path d="${path(q)}" fill="none" stroke="${s.c}" stroke-width="1.5" stroke-linejoin="round"/>`; });
+  else series.forEach((s, i) => {
     if (!s.pts.length) return;
-    const d = s.pts.map((p, j) => (j ? "L" : "M") + X(p.x).toFixed(1) + "," + Y(p.y).toFixed(1)).join("");
+    const d = path(s.pts);
     if (i === 0 && o.area !== false){
       const gid = "g" + Math.random().toString(36).slice(2, 7);
       paths += `<defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${s.c}" stop-opacity=".28"/><stop offset="1" stop-color="${s.c}" stop-opacity="0"/></linearGradient></defs>`;
@@ -550,11 +560,12 @@ function lineChart(el, series, o={}){
   const move = ev => {
     const b = svg.getBoundingClientRect(), mx = (ev.touches ? ev.touches[0].clientX : ev.clientX) - b.left, xv = x0 + (mx * W / b.width - P.l) / (W - P.l - P.r) * (x1 - x0);
     let rows = [], best = null;
-    series.forEach(s => { if (!s.pts.length) return; let p = null; for (const q of s.pts){ if (q.x <= xv) p = q; else break; } if (!p) p = s.pts[0]; rows.push({s, p}); if (!best || Math.abs(p.x - xv) < Math.abs(best.x - xv)) best = p; });
+    series.forEach((s, i) => { if (!s.pts.length) return; let j = 0; s.pts.forEach((q, k) => { if (q.x <= xv) j = k; }); const p = s.pts[j]; rows.push({s, p, d:draw[i].pts[j]}); if (!best || Math.abs(p.x - xv) < Math.abs(best.x - xv)) best = p; });
     if (!best) return;
     const sx = X(Math.min(Math.max(xv, x0), x1)); xh.setAttribute("x1", sx); xh.setAttribute("x2", sx); xh.style.display = "";
-    dots.innerHTML = rows.map(r => `<circle cx="${X(r.p.x)}" cy="${Y(r.p.y)}" r="4" fill="${r.s.c}" stroke="#070a12" stroke-width="2"/>`).join("");
-    tip.innerHTML = `<div class="mute">${fdt(new Date(xv))}</div>` + rows.map(r => `<div class="k"><span class="sw" style="background:${r.s.c}"></span>${esc(r.s.name)} <b>${(o.fv || (v => money(v)))(r.p.y)}</b></div>`).join("") + (best.label ? `<div class="mute">${esc(best.label)}</div>` : "");
+    dots.innerHTML = rows.map(r => `<circle cx="${X(Math.min(Math.max(xv, x0), x1))}" cy="${Y(r.d.y)}" r="4" fill="${r.s.c}" stroke="#070a12" stroke-width="2"/>`).join("");
+    const fv = o.fv || (v => money(v));
+    tip.innerHTML = `<div class="mute">${fdt(new Date(xv))}</div>` + (o.total ? `<div class="k"><b>${esc(o.total)} ${fv(rows.reduce((a, r) => a + r.p.y, 0))}</b></div>` : "") + (o.stack ? rows.slice().reverse() : rows).map(r => `<div class="k"><span class="sw" style="background:${r.s.c}"></span>${esc(r.s.name)} <b>${(o.fv || (v => money(v)))(r.p.y)}</b></div>`).join("") + (best.label ? `<div class="mute">${esc(best.label)}</div>` : "");
     tip.style.display = "block"; const tx = Math.min(Math.max(sx * b.width / W, 80), b.width - 80); tip.style.left = tx + "px"; tip.style.top = "8px"; tip.style.transform = "translate(-50%,-105%)";
   };
   const leave = () => { tip.style.display = "none"; xh.style.display = "none"; dots.innerHTML = ""; };
@@ -601,11 +612,11 @@ function timeTicks(x0, x1, n){
 }
 function niceTicks(a, b, n){ const span = b - a, step0 = span / n, mag = Math.pow(10, Math.floor(Math.log10(step0))), f = step0 / mag;
   const step = (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * mag, out = []; for (let t = Math.ceil(a / step) * step; t <= b + 1e-9; t += step) out.push(+t.toFixed(10)); return out; }
-function cumSeries(rows, name, c){
+function cumSeries(rows, name, c, t0, t1){
   const s = rows.filter(r => r.status === "settled" && r.pnl != null && r.settled).sort((a, b) => a.settled - b.settled);
   let acc = 0; const pts = s.map(r => ({x:+r.settled, y:(acc += r.pnl), label:(r.title || r.ticker).slice(0, 44)}));
-  if (pts.length) pts.unshift({x:pts[0].x - 1, y:0});
-  return {name, c, pts};
+  if (pts.length){ pts.unshift({x:Math.min(t0 ?? Infinity, pts[0].x) - 1, y:0}); if (t1 && t1 > pts.at(-1).x) pts.push({x:t1, y:acc}); }
+  return {name, c, pts, tot:acc};
 }
 function meter(label, used, cap, opts={}){
   const frac = cap > 0 ? Math.max(0, used) / cap : 0, w = Math.min(100, frac * 100);
@@ -690,9 +701,11 @@ function biggestHTML(rows){
   const c = v => Math.round(v * 100) + "¢", n = r => r.status === "filled" ? (r.filled || r.count) : r.filled;
   const top = marked(rows).held.map(r => ({r, n:n(r), cost:n(r) * r.price, m:markPrice(r)})).sort((a, b) => b.cost - a.cost).slice(0, 5);
   if (!top.length) return "";
-  return `<div class="lbl" style="margin:16px 0 4px">Biggest positions <span class="mute" style="text-transform:none;letter-spacing:0">· top ${top.length} by money in</span></div><div class="list">` + top.map(x => {
-    const worth = x.m == null ? null : x.m * x.n, u = worth == null ? null : worth - x.cost;
-    return `<div class="item tap" style="padding:7px 0"><span class="side ${esc(x.r.side)}">${esc(x.r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(x.r.title)}</div><div class="s">${x.n} @ ${c(x.r.price)} · in $${x.cost.toFixed(2)} → worth ${worth == null ? "—" : "$" + worth.toFixed(2)}</div></div><div class="r ${u == null ? "" : cls(u)}">${u == null ? "—" : money(u)}</div>${details(x.r)}</div>`; }).join("") + `</div>`;
+  const all = marked(rows).held.reduce((a, r) => a + n(r) * r.price, 0) || 1;
+  return `<h2>Biggest positions <span class="sub">top ${top.length} by money in</span></h2><div class="card" id="big"><div class="list">` + top.map(x => {
+    const worth = x.m == null ? null : x.m * x.n, u = worth == null ? null : worth - x.cost, sh = x.cost / all;
+    return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(x.r.side)}">${esc(x.r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(x.r.title)}</div><div class="s">${x.n} @ ${c(x.r.price)} · in $${x.cost.toFixed(2)} → worth ${worth == null ? "—" : "$" + worth.toFixed(2)}</div>
+      <div class="share"><i style="width:${Math.min(100, sh * 100).toFixed(1)}%;background:${colorOf(x.r.strategy, 0)}"></i></div><div class="s mute" style="font-size:10.5px">${Math.round(sh * 100)}% of all money in open bets</div></div><div class="r ${u == null ? "" : cls(u)}">${u == null ? "—" : money(u)}</div>${details(x.r)}</div>`; }).join("") + `</div></div>`;
 }
 function winsHTML(tr, strats){
   const w = tr.filter(t => t.win).sort((a, b) => b.pnl - a.pnl).slice(0, 3);
@@ -729,7 +742,7 @@ function settledHTML(mode, rows, strats, B, unrTot){
         : days ? `<div class="mute" style="margin-top:6px">At this pace: about ${sp(growth / days * 30)} a month (simple, not compounded). Past pace is not a promise.</div>` : ""}
       ${start.set ? "" : `<div class="mute" style="margin-top:6px">Start bankroll estimated as today's balance minus trading P&L.</div>`}</div>
   </div>`;
-  h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card"><div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div></div>`;
+  h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card"><div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="chead" id="eqHead"></div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div><div class="mute" style="font-size:11px;margin-top:4px">Each step up or down is a bet settling. Flat stretches mean nothing settled.</div></div>`;
   if (tr.length) h += `<h2>Profit per trade <span class="sub">oldest → newest · tap a bar</span></h2><div class="card"><div class="chart" id="perTrade"></div></div>`;
   const by = strats.map((n, i) => ({n, i, s:settledSum(tr.filter(t => t.strategy === n))})).filter(x => x.s.n).sort((a, b) => b.s.pnl - a.s.pnl);
   if (by.length){
@@ -759,14 +772,17 @@ function drawSettled(sx, rows, strats, st, dayStop, totStop){
   const {tr, start, by} = sx, pctU = (ls.get("eqUnit") || "$") === "%", k = pctU ? 1 / start.amt : 1;
   const fp = v => (v < -1e-9 ? "−" : v > 1e-9 ? "+" : "") + Math.abs(v * 100).toFixed(1) + "%";
   const scale = s => ({...s, pts:s.pts.map(p => ({...p, y:p.y * k}))});
-  const ser = [cumSeries(rows, "Total", "#e6ecff")];
-  strats.forEach((n, i) => { const s = cumSeries(rows.filter(r => r.strategy === n), strategyName(n), colorOf(n, i)); if (s.pts.length) ser.push(s); });
+  const now = Date.now(), t0 = Math.min(...rows.filter(r => r.status === "settled" && r.pnl != null && r.settled).map(r => +r.settled));
+  const ser = [cumSeries(rows, "Total", "#e6ecff", t0, now)];
+  strats.forEach((n, i) => { const s = cumSeries(rows.filter(r => r.strategy === n), strategyName(n), colorOf(n, i), t0, now); if (s.pts.length) ser.push(s); });
   ser[0].w = 2.5;
+  const fmtV = v => pctU ? fp(v * k) : money(v);
+  $("#eqHead").innerHTML = ser[0].pts.length ? `<b class="${cls(ser[0].tot)}">${fmtV(ser[0].tot)}</b><span>${pctU ? money(ser[0].tot) : fp(ser[0].tot / start.amt) + " of bankroll"} · ${tr.length} settled since ${esc(fday(new Date(t0)))}</span>` : "";
   const hidden = new Set(JSON.parse(ls.get("eqHidden") || "[]"));
   const refs = [{y:-dayStop, c:"#f5b335", label:"daily stop"}, {y:-totStop, c:"#fb6b7b", label:"halt"}].filter(r => st.pnl < -dayStop * .3 || r.label === "daily stop" && st.pnl < 0).map(r => ({...r, y:r.y * k}));
-  const drawEq = () => lineChart($("#eq"), ser.filter(s => !hidden.has(s.name)).map(scale), {empty:"Nothing settled yet. The curve starts with the first settled order.", refs,
+  const drawEq = () => lineChart($("#eq"), ser.filter(s => !hidden.has(s.name)).map(scale), {step:true, empty:"Nothing settled yet. The curve starts with the first settled order.", refs,
     ...(pctU ? {fy:v => (v * 100).toFixed(Math.abs(v) < .05 ? 1 : 0) + "%", fv:fp, minSpan:.004} : {})});
-  $("#eqLeg").innerHTML = ser.length > 1 ? ser.map(s => `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}"><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("") : "";
+  $("#eqLeg").innerHTML = ser.length > 1 ? ser.map(s => `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}"><i style="background:${s.c}"></i>${esc(s.name)} <b class="${cls(s.tot)}">${fmtV(s.tot)}</b></span>`).join("") : "";
   $("#eqLeg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("eqHidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); drawEq(); };
   $("#eqUnit").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("eqUnit", b.dataset.u); renderOverview(); };
   drawEq();
@@ -861,13 +877,13 @@ function renderOverview(){
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
       ${moversHTML(rows)}
-      ${biggestHTML(rows)}
       ${sx.next}
       <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
       ${list.length ? `<button class="seeall" id="upAll">${S.upAll ? "Hide bets ▲" : `Show ${list.length} bets ▼`}</button><div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}.</div>` : ""}
       ${moreBtn("now", "More current info")}</div>`;
   }
+  h += biggestHTML(rows);
   const nowOpen = isOpen("now") || !(mk.held.length || upAll.length);
   if (nowOpen) h += sx.nextList;
   if (nowOpen && mk.priced.length > 1) h += `<h2>Up/down by bet <span class="sub">${mk.priced.length} held · tap a bar</span></h2><div class="card"><div class="chart" id="upBets"></div></div>`;
@@ -879,7 +895,7 @@ function renderOverview(){
   </div>`;
 
   const eqRows = equityRows(mode);
-  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">trader orders · cap $${openCap.toFixed(2)}</span></h2><div class="card"><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div></div>`;
+  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">stacked by strategy</span></h2><div class="card"><div class="chead" id="expHead"></div><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div><div class="mute" style="font-size:11px;margin-top:4px">The top edge is the total in open bets (what they cost). The dashed line is the ${pct(capPct)} cap.</div></div>`;
   h += `<h2>Strategies <span class="sub">${strats.length} ${mode}</span></h2>`;
   if (!isOpen("strat")) h += moreBtn("strat", `Show ${strats.length} strategies`);
   else { h += `<div class="grid cols2">`;
@@ -937,10 +953,13 @@ function renderOverview(){
   }
   if ($("#exp")){
     const names = [...new Set(eqRows.flatMap(r => Object.keys(byStrategy(r))))];
-    const ex = [{name:"Total", c:"#e6ecff", w:2.5, pts:eqRows.map(r => ({x:r.x, y:num(r.exposure)}))}];
-    names.forEach(n => ex.push({name:strategyName(n), c:colorOf(n, strats.indexOf(n) < 0 ? names.indexOf(n) : strats.indexOf(n)), pts:eqRows.map(r => ({x:r.x, y:(byStrategy(r)[n] || {}).exposure || 0}))}));
-    $("#expLeg").innerHTML = ex.map(s => `<span><i style="background:${s.c}"></i>${esc(s.name)}</span>`).join("");
-    lineChart($("#exp"), ex, {h:170, refs:[{y:openCap, c:"#f5b335", label:"cap"}], y1:openCap * 1.02});
+    const last = byStrategy(eqRows.at(-1)), cur = n => (last[n] || {}).exposure || 0;
+    names.sort((a, b) => cur(b) - cur(a));  // biggest at the bottom
+    const ex = names.map(n => ({name:strategyName(n), c:colorOf(n, strats.indexOf(n) < 0 ? names.indexOf(n) : strats.indexOf(n)), pts:eqRows.map(r => ({x:r.x, y:(byStrategy(r)[n] || {}).exposure || 0}))}));
+    const now = num(eqRows.at(-1).exposure);
+    $("#expHead").innerHTML = `<b>$${now.toFixed(2)}</b><span>in open bets · ${pct(now / B, 0)} of bankroll · cap $${openCap.toFixed(2)}</span>`;
+    $("#expLeg").innerHTML = ex.map((s, i) => `<span><i style="background:${s.c}"></i>${esc(s.name)} <b>$${cur(names[i]).toFixed(2)}</b></span>`).join("");
+    lineChart($("#exp"), ex, {h:190, stack:true, step:true, total:"Total", fv:v => "$" + v.toFixed(2), refs:[{y:openCap, c:"#f5b335", label:"cap $" + openCap.toFixed(0)}], y1:openCap * 1.02});
   }
   if ($("#eq")) drawSettled(sx, rows, strats, st, dayStop, totStop);
 }
