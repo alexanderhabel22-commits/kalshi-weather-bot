@@ -770,7 +770,12 @@ class Bot:
             self.alert("15-min bot today", self.summary_text(today))
 
     def upload(self, now: float, force: bool = False) -> None:
-        if self.uploader is None or (not force and now - self.last["upload"] < self.s["upload_s"]):
+        if self.uploader is None:
+            return
+        # on the clock: ~2 min after each 15-min close (:02, :17, :32, :47) so results are graded
+        per = float(self.s["upload_s"])
+        slot = (now - 120) // per * per + 120
+        if not force and self.last["upload"] >= slot:
             return
         self.last["upload"] = now
         status = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
