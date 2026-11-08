@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import pytest
 
 from wxbot import kalshi, m15
+from wxbot.kalshi_api import OrderRejected
 from wxbot.m15_feeds import KalshiFeed, SpotFeed
 from wxbot.util import load_config
 
@@ -368,3 +369,16 @@ def test_cut_series_and_reset_survive_restart(monkeypatch):
     b2 = bot(cfg(mode="live"), clk, Client())
     assert b2.state["cut"] == {"KXBTC15M": {"fills": 100}}
     assert b2.state["series"]["KXBTC15M"]["fills"] == 100 and b2.state["reset_seen"] == "r1"
+
+
+def test_rejected_live_order_is_reported(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+
+    class Bad(Client):
+        def place_limit(self, *a):
+            raise OrderRejected("post only cross")
+    b = bot(cfg(mode="live"), clk, Bad())
+    b.step()
+    assert "rejected" in b.state["markets"][TK]["why"]
+    assert b.state["last_reject"]["ticker"] == TK
