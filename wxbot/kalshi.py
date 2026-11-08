@@ -230,10 +230,18 @@ def taker_fee(contracts: int, p: float, rate: float = FEE_RATE) -> float:
     return math.ceil(round(raw * 100, 6)) / 100.0
 
 
-def market_url(ticker: str) -> str:
-    """Kalshi web link for a market (or event) ticker.
+def market_url(ticker: str, event: str = "") -> str:
+    """Kalshi link for a market (or event) ticker that opens in the app and on the web.
 
-    kalshi.com/markets/<series> without its slug shows "something went wrong";
-    kalshi.com/events/<ticker> resolves to the right page (same format as the dashboard).
+    kalshi.com/events/<ticker> is an empty shell page (and fails in the iPhone app);
+    the canonical form is kalshi.com/markets/<series>/<slug>/<event>, where any slug works.
+    A market ticker SERIES-DATE-STRIKE belongs to event SERIES-DATE.
     """
-    return f"https://kalshi.com/events/{quote(ticker.lower(), safe='')}"
+    t = (ticker or "").lower()
+    ev = (event or "").lower()
+    if not ev:
+        parts = t.split("-")
+        ev = "-".join(parts[:2]) if len(parts) > 2 else t
+    series = ev.split("-")[0]
+    q = lambda x: quote(x, safe="")
+    return f"https://kalshi.com/markets/{q(series)}/{q(series)}/{q(ev)}"
