@@ -196,7 +196,9 @@ class Bot:
         st = read_json(STATE, {}) or {}
         self.state = {"markets": st.get("markets", {}), "halted": st.get("halted"),
                       "day_stop": st.get("day_stop"), "pnl": st.get("pnl", {}),
-                      "summary_day": st.get("summary_day"), "started": st.get("started")}
+                      "summary_day": st.get("summary_day"), "started": st.get("started"),
+                      "cut": st.get("cut", {}), "series": st.get("series", {}),
+                      "reset_seen": st.get("reset_seen")}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
                      "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0}
         self.switch = {"mode": None, "halted": False}

@@ -355,3 +355,16 @@ def test_market_seen_in_paper_goes_live_when_switch_flips(monkeypatch):
     clk.t += 61
     b.step()
     assert b.state["markets"][TK]["mode"] == "live"
+
+
+def test_cut_series_and_reset_survive_restart(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    b = bot(cfg(mode="live"), clk, Client())
+    b.state["cut"] = {"KXBTC15M": {"fills": 100}}
+    b.state["series"] = {"KXBTC15M": {"fills": 100, "pnl": -6.0}}
+    b.state["reset_seen"] = "r1"
+    b.save()
+    b2 = bot(cfg(mode="live"), clk, Client())
+    assert b2.state["cut"] == {"KXBTC15M": {"fills": 100}}
+    assert b2.state["series"]["KXBTC15M"]["fills"] == 100 and b2.state["reset_seen"] == "r1"
