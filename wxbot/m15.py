@@ -375,9 +375,16 @@ class Bot:
             try:
                 r = self.client.place_limit(m["ticker"], side, q, n, cid)
             except (HttpError, OrderRejected) as exc:
-                log.info("place %s %s %.2f: %s", m["ticker"], side, q, exc)
+                log.warning("place %s %s %.2f: %s", m["ticker"], side, q, exc)
                 m["retry_at"] = now + 3
+                m["why"] = f"order rejected: {str(exc)[:200]}"
+                self.state["last_reject"] = {"at": int(now), "ticker": m["ticker"], "error": str(exc)[:300]}
+                self.rejects = getattr(self, "rejects", 0) + 1
+                if self.rejects == 5:
+                    self.alert("15-min bot: live orders rejected",
+                               f"Kalshi rejected 5 orders in a row: {str(exc)[:300]}", 4)
                 return False
+            self.rejects = 0
             o["id"] = r.get("order_id")
             if not o["id"]:
                 return False
@@ -730,6 +737,7 @@ class Bot:
         status = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
                   "mode": self.effective_mode(now), "switch": self.switch, "control": self.control,
                   "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"), "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
+                  "last_reject": self.state.get("last_reject"),
                   "spot_ok": bool(self.spot is not None and self.spot.healthy()),
                   "live_now": {k: {"mode": m.get("mode"), "why": m.get("why"), "bid_ask": m.get("bid_ask"),
                                    "order": bool(m.get("order"))}
