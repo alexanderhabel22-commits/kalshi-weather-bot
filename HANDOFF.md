@@ -258,6 +258,7 @@ IP without a token). It never places, changes or cancels anything and needs no s
   Run: `python bot.py m15`. Settings: `[m15]` in config.toml.
 - Server: DigitalOcean ~$4/mo, Ubuntu, systemd `kalshi-m15` (+ hourly `kalshi-m15-update.timer`
   that pulls main and restarts). Setup for Alex: `deploy/m15/SETUP.md`.
+- Fast switch (Claude): `m15_control.json` on main, mode live|paper|off, read every minute (~5 min with the CDN). `reset_halt` = a new string clears a total-loss halt.
 - Results: uploaded every 15 min to branch `m15-data` (`m15/status.json`, `m15/markets-*.csv`).
 - Rails: real orders only with `[m15] mode = "live"`, series in `live_series`, and the repo
   kill switch allowing it (the Actions trader writes `mode` into data/trader_state.json;
