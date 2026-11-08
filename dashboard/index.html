@@ -685,6 +685,15 @@ function moversHTML(rows){
   const mins = Math.round((now - oldest) / 60e3), win = mins >= 55 ? "last hour" : mins >= 1 ? `last ${mins} min (full hour once history builds)` : "last hour";
   return `<div class="lbl" style="margin:16px 0 4px">Biggest movers <span class="mute" style="text-transform:none;letter-spacing:0">· change in value, ${win}</span></div>${body}`;
 }
+// the 5 biggest open positions by money in them (cost), with what they're worth now at mid
+function biggestHTML(rows){
+  const c = v => Math.round(v * 100) + "¢", n = r => r.status === "filled" ? (r.filled || r.count) : r.filled;
+  const top = marked(rows).held.map(r => ({r, n:n(r), cost:n(r) * r.price, m:markPrice(r)})).sort((a, b) => b.cost - a.cost).slice(0, 5);
+  if (!top.length) return "";
+  return `<div class="lbl" style="margin:16px 0 4px">Biggest positions <span class="mute" style="text-transform:none;letter-spacing:0">· top ${top.length} by money in</span></div><div class="list">` + top.map(x => {
+    const worth = x.m == null ? null : x.m * x.n, u = worth == null ? null : worth - x.cost;
+    return `<div class="item tap" style="padding:7px 0"><span class="side ${esc(x.r.side)}">${esc(x.r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(x.r.title)}</div><div class="s">${x.n} @ ${c(x.r.price)} · in $${x.cost.toFixed(2)} → worth ${worth == null ? "—" : "$" + worth.toFixed(2)}</div></div><div class="r ${u == null ? "" : cls(u)}">${u == null ? "—" : money(u)}</div>${details(x.r)}</div>`; }).join("") + `</div>`;
+}
 function winsHTML(tr, strats){
   const w = tr.filter(t => t.win).sort((a, b) => b.pnl - a.pnl).slice(0, 3);
   return `<div class="lbl" style="margin:16px 0 4px">Biggest wins <span class="mute" style="text-transform:none;letter-spacing:0">· all time</span></div>`
@@ -852,6 +861,7 @@ function renderOverview(){
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
       ${moversHTML(rows)}
+      ${biggestHTML(rows)}
       ${sx.next}
       <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
