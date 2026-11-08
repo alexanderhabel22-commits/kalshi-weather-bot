@@ -274,3 +274,22 @@ def test_trader_records_mode_for_server(monkeypatch):
     monkeypatch.setenv("TRADING_MODE", "off")
     trader.run(c, now=datetime.fromtimestamp(T0, timezone.utc), http=None)
     assert read_json(trader.STATE, {})["mode"] == "off"
+
+
+def test_control_file_stops_this_bot(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+    ctl = {"mode": "live"}
+
+    def fetch(url):
+        if "m15_control" in url:
+            return ctl
+        return {"mode": "live", "halted": {}} if "trader_state" in url else {"total": 50.0}
+    b = m15.Bot(cfg(mode="live"), http=None, client=cl, clock=clk, fetch_json=fetch)
+    b.step()
+    assert len(cl.placed) == 1
+    ctl["mode"] = "off"
+    clk.t += 61
+    b.step()
+    assert cl.cancelled == ["o0"] and b.effective_mode(clk.t) == "off"

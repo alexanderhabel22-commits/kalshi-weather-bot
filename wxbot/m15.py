@@ -58,6 +58,9 @@ M15_DIR = Path(os.environ.get("M15_DATA_DIR") or (DATA_DIR / "m15"))
 STATE = M15_DIR / "state.json"
 REPO = os.environ.get("GITHUB_REPO", "alexanderhabel22-commits/kalshi-weather-bot")
 SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.json"
+# Claude's own fast switch for this bot alone: {"mode": "live" | "paper" | "off"}.
+# Read every minute (no restart needed), so a commit to main stops it in ~5 min.
+CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/m15_control.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
 COLS = ["ticker", "series", "mode", "close", "fav_side", "first_q", "last_q", "quotes",
         "contracts", "filled", "cost", "fee", "fill_at", "fill_ttc_s", "model_filled",
@@ -195,6 +198,7 @@ class Bot:
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
                      "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0}
         self.switch = {"mode": None, "halted": False}
+        self.control = None
         self.balance = None
         self.paper_bankroll = None
         self.errors = 0
@@ -233,6 +237,17 @@ class Bot:
         except Exception as exc:
             log.warning("kill switch read failed: %s", exc)
         try:
+            c = self.fetch_json(CONTROL_URL) or {}
+            self.control = (c.get("mode") or "").lower() or None
+            if c.get("reset_halt") and self.state.get("halted"):
+                if self.state.get("reset_seen") != c.get("reset_halt"):
+                    self.state["reset_seen"] = c.get("reset_halt")
+                    self.state["halted"] = None
+                    self.state["pnl"]["halt_base"] = self.state["pnl"].get("live_total", 0.0)
+                    log.warning("halt cleared by m15_control.json")
+        except Exception as exc:
+            log.info("control file: %s", exc)
+        try:
             b = self.fetch_json(BANKROLL_URL) or {}
             self.paper_bankroll = _num(b.get("total")) or self.paper_bankroll
         except Exception:
@@ -241,10 +256,11 @@ class Bot:
     def effective_mode(self, now: float) -> str:
         s = self.s
         mode = s["mode"]
-        if mode == "off" or self.switch["mode"] == "off":
+        if mode == "off" or self.switch["mode"] == "off" or self.control == "off":
             return "off"
         if mode == "live":
-            if self.state.get("halted") or self.switch["halted"] or self.switch["mode"] == "paper":
+            if (self.state.get("halted") or self.switch["halted"] or self.switch["mode"] == "paper"
+                    or self.control == "paper"):
                 return "paper"
             if now - self.last["switch_ok"] > s["switch_stale_s"]:
                 return "paper"
@@ -290,7 +306,7 @@ class Bot:
         today = self.day(now)
         pnl = self.state["pnl"]
         day_pnl = pnl.get("live_days", {}).get(today, 0.0)
-        total = pnl.get("live_total", 0.0)
+        total = pnl.get("live_total", 0.0) - pnl.get("halt_base", 0.0)
         if total <= -s["total_loss_pct"] * b and not self.state.get("halted"):
             self.state["halted"] = {"at": int(now), "pnl": round(total, 2)}
             self.cancel_all("total loss stop")
@@ -667,7 +683,7 @@ class Bot:
             return
         self.last["upload"] = now
         status = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
-                  "mode": self.effective_mode(now), "switch": self.switch,
+                  "mode": self.effective_mode(now), "switch": self.switch, "control": self.control,
                   "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"),
                   "pnl": self.state["pnl"], "open_markets": sum(1 for m in self.state["markets"].values()
                                                                  if not m.get("graded")),
