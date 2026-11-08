@@ -341,3 +341,17 @@ def test_series_not_cut_when_ok():
     b.state["series"] = {"KXBTC15M": {"fills": 99, "pnl": 2.0}}
     b.series_check({"series": "KXBTC15M", "filled": 1, "close": T0}, -0.81)
     assert b.state.get("cut") == {}
+
+
+def test_market_seen_in_paper_goes_live_when_switch_flips(monkeypatch):
+    World(monkeypatch, yb=0.50, ya=0.52)           # coin flip: no quote yet
+    clk = Clock()
+    cl = Client()
+    sw = {"mode": "paper", "halted": {}}
+    b = bot(cfg(mode="live"), clk, cl, sw)
+    b.step()
+    assert b.state["markets"][TK]["mode"] == "paper"
+    sw["mode"] = "live"
+    clk.t += 61
+    b.step()
+    assert b.state["markets"][TK]["mode"] == "live"

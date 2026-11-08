@@ -537,9 +537,12 @@ class Bot:
     def manage(self, m: dict, quote: dict | None, mode: str, now: float) -> None:
         s = self.s
         left = m["close"] - now
+        eligible = (mode == "live" and m["series"] in s["live_series"]
+                    and m["series"] not in self.state.get("cut", {}))
         if m["mode"] is None and mode != "off":
-            m["mode"] = "live" if (mode == "live" and m["series"] in s["live_series"]
-                                   and m["series"] not in self.state.get("cut", {})) else "paper"
+            m["mode"] = "live" if eligible else "paper"
+        elif m["mode"] == "paper" and eligible and not m["filled"] and not m.get("order"):
+            m["mode"] = "live"          # went live mid-window: don't leave this market on paper
         self.tape_check(m)
         o = m.get("order")
         if mode == "off" or (m["mode"] == "live" and mode != "live"):
