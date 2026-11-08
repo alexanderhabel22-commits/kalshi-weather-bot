@@ -386,7 +386,7 @@ def _held(tk, price, n=2, strat="mentions"):
 
 def test_98c_sale_only_frees_what_a_blocked_order_needs():
     """Alex (Nov 7): no 98c 'free money' sale unless a real order is waiting for the cash."""
-    T = {"max_open_dollars": 5.0, "paper_max_open_dollars": 5.0}
+    T = trader.settings(cfg(bankroll=100)) | {"max_open_dollars": 5.0, "paper_max_open_dollars": 5.0}
     rows = [_held("A", 0.90), _held("B", 0.95), _held("C", 0.50)]          # $3.70 open
     books = _Books({"A": _book(0.01, 0.02), "B": _book(0.01, 0.02), "C": _book(0.40, 0.45)})
     it = trader.Intent("favorites", "NEW", "NEW", "yes", 0.80, 2, CLOSE, "new", "")  # $1.60 -> $5.30
@@ -404,6 +404,36 @@ def test_98c_sale_skipped_when_it_would_not_be_enough():
     assert trader.free_cap_for(books, it, "overall open-$ cap", "paper", rows, [], T, {}, NOW,
                                None, cfg(), False) == []
     assert all(r["status"] == "filled" for r in rows)
+
+
+def test_98c_sale_skipped_when_another_cap_still_blocks():
+    """Nov 8 01:32 UTC live: two weather wins were sold at 98-99c to free the overall cap
+    for a Mentions word that the event cap then refused. Sell only if the order then fits."""
+    T = trader.settings(cfg(bankroll=100)) | {"max_open_dollars": 5.0, "paper_max_open_dollars": 5.0,
+                                              "max_event_dollars": 2.0}
+    rows = [_held("A", 0.90), _held("B", 0.95), _held("C", 0.50)]          # $3.70 open
+    rows.append(dict(_held("D", 0.80, 2), event="NEW"))                     # $1.60 already on NEW
+    books = _Books({"A": _book(0.01, 0.02), "B": _book(0.01, 0.02), "C": _book(0.40, 0.45),
+                    "D": _book(0.40, 0.45)})
+    it = trader.Intent("favorites", "NEW2", "NEW", "yes", 0.80, 1, CLOSE, "new", "")
+    assert trader.free_cap_for(books, it, "overall open-$ cap", "paper", rows, [], T, {}, NOW,
+                               None, cfg(), False) == []
+    assert all(r["status"] == "filled" for r in rows)
+
+
+def test_live_fill_time_is_recorded():
+    class Cl:
+        def get_order(self, oid):
+            return {"status": "resting", "fill_count": 1}
+    row = {"id": "T|no", "mode": "live", "strategy": "mentions", "ticker": "T", "side": "no",
+           "price": "0.85", "count": 2, "filled": 0, "status": "resting", "order_id": "o1",
+           "title": "T", "note": ""}
+    trader.sync_live(Cl(), [row], cfg(), None, True, NOW)
+    assert row["filled"] == 1 and row["filled_at"] == NOW.isoformat(timespec="seconds")
+    later = NOW.replace(hour=16)
+    Cl.get_order = lambda self, oid: {"status": "executed", "fill_count": 2}
+    trader.sync_live(Cl(), [row], cfg(), None, True, later)
+    assert row["filled_at"] == NOW.isoformat(timespec="seconds")      # first fill time kept
 
 
 def test_no_blanket_98c_sale_in_exits():
