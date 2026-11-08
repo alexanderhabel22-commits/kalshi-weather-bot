@@ -83,7 +83,7 @@ DEFAULTS = {
     "switch_s": 60,
     "switch_stale_s": 1800,
     "summary_hour": 21,
-    "upload_s": 3600,
+    "upload_s": 900,
     "maker_fee_rate": 0.0175,
     "rest_quote_s": 5,          # REST best-bid refresh (the websocket fills in between)
     "rest_tape_s": 15,          # REST trade tape per market (truth for paper fills)

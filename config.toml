@@ -215,9 +215,9 @@ paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for n
 # back-of-queue fills, earned BTC +7.3c, silver/copper +5.2c, alt crypto +3.1c per contract.
 # Expect less live (fast pros; stale quotes), so: 1 contract, small pool, jump guard.
 # The server pulls this file every hour and restarts if it changed.
-mode = "paper"                   # off | paper | live. Shakedown on paper first (~24h), then live
-                                 # (Alex, Nov 8: "act like this 50 bucks is yours"). The repo kill
-                                 # switch TRADING_MODE=off stops this bot too (within ~10 min).
+mode = "live"                    # off | paper | live. LIVE from the start (Alex, Nov 8: "this is the
+                                 # test", no paper run). Without a Kalshi key on the server it stays
+                                 # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
 live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M"]   # real money only on these
 contracts = 1                    # per market
 min_fav = 0.71                   # join the favourite's best bid while it's 71-95c

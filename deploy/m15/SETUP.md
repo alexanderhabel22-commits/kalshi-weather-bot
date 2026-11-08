@@ -1,7 +1,7 @@
 # Setting up the 15-minute bot server (about 15 minutes, no coding)
 
-You'll do everything in your web browser on your PC. There are 3 parts. Part 3 (the
-Kalshi key) can wait until the bot has run on paper for a day.
+You'll do everything in your web browser on your PC. There are 3 parts; do all 3 in one go
+(the bot trades real money as soon as the key is in).
 
 **Cost:** a DigitalOcean "Basic" server, about **$4/month** (the $6 one is fine too).
 **Break-even:** at +4c per contract that's about 100 fills a month. BTC alone should
@@ -42,10 +42,10 @@ is real. If the edge turns out to be zero, we lose the $4-6 a month and switch t
 6. It ends with **"DONE: the 15-minute bot is running"**, and your phone gets a
    **"15-min bot started"** push. If it shows an error instead, screenshot it and send it to Claude.
 
-That's it for the paper run. The server updates itself from GitHub every hour, so Claude
+The server updates itself from GitHub every hour, so Claude
 can ship fixes and settings changes without you doing anything.
 
-## Part 3: The Kalshi key (only for real money, after the paper shakedown)
+## Part 3: The Kalshi key (real money starts here)
 
 Use a **new, separate** key for the server, so it can be revoked on its own.
 
@@ -59,8 +59,8 @@ Use a **new, separate** key for the server, so it can be revoked on its own.
    ```
 
 4. Paste the Key ID and press Enter. Then paste the whole key and press Enter.
-5. It prints "Key saved and bot restarted". Tell Claude, and Claude switches the
-   bot to live once the paper day looks right.
+5. It prints "Key saved and bot restarted". The bot now trades real money (BTC, silver,
+   copper, 1 contract each). Tell Claude, who watches the first hour of orders.
 
 ---
 
