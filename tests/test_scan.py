@@ -80,12 +80,12 @@ def test_quiet_hours_and_summary(monkeypatch):
     evening = datetime(2026, 11, 4, 2, 15, tzinfo=UTC)
     http = FakeHttp(evening)
     run_scan(cfg, now=evening, http=http)
-    summaries = [p for p in http.posts if p["title"] == "Weather bot daily summary"]
+    summaries = [p for p in http.posts if p["title"] == "Kalshi bot: daily money summary"]
     assert len(summaries) == 1
     assert read_json(STATE)["last_summary"] == "2026-11-03"
     http = FakeHttp(evening)
     run_scan(cfg, now=evening, http=http)
-    assert not [p for p in http.posts if p["title"] == "Weather bot daily summary"]
+    assert not [p for p in http.posts if p["title"] == "Kalshi bot: daily money summary"]
 
 
 def test_outage_alert_after_three_failed_scans(monkeypatch):

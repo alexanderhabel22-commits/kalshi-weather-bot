@@ -2,10 +2,10 @@
 
 Written to reports/daily/YYYY-MM-DD.md, reports/weekly/YYYY-Www.md and
 reports/monthly/YYYY-MM.md, and pushed to the phone (ntfy) with a link.
-Schedule (Eastern time, first trade run after 9 AM):
-  daily    every day, covering yesterday
-  weekly   Mondays, covering Monday-Sunday of last week
-  monthly  the 1st, covering last month
+Schedule (Eastern time, first trade run after the hour):
+  daily    every day at 9 AM, covering yesterday
+  weekly   Mondays at noon (after the ~10 AM settlements), covering Mon-Sun of last week
+  monthly  the 1st at noon, covering last month
 """
 from __future__ import annotations
 
@@ -18,11 +18,12 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import daybefore, ledger, notify, trader
-from .util import DATA_DIR, parse_iso, read_json, write_json
+from .util import BANKROLL_FILE, DATA_DIR, parse_iso, read_json, write_json
 
 REPORTS = DATA_DIR.parent / "reports"     # repo/reports (next to data/)
 STATE = DATA_DIR / "digest_state.json"
 SEND_HOUR = 9
+HOURS = {"daily": 9, "weekly": 12, "monthly": 12}     # Alex, Nov 7: weekly Mondays at noon
 
 
 @dataclass
@@ -58,7 +59,7 @@ THESIS = {
 }
 NAMES = {"mentions": "Mentions NO", "weather": "Weather day-before"}
 # How each mode reads to a person: only live and alert results are money.
-MODE_LABEL = {"live": "REAL money", "alert": "real (alerts you trade)",
+MODE_LABEL = {"live": "REAL money", "alert": "old alerts (money only if you traded them)",
               "paper": "practice, no money", "shadow": "silent test, no money"}
 
 
@@ -156,11 +157,13 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tupl
     title = {"daily": f"Daily report: {start:%a %b %d, %Y}",
              "weekly": f"Weekly report: {start:%b %d} - {end:%b %d, %Y}",
              "monthly": f"Monthly report: {start:%B %Y}"}[kind]
-    money = [r for r in period if r.mode in ("live", "alert")]
+    money = [r for r in period if r.mode == "live"]
     tot = summarize(money)
+    bank = read_json(BANKROLL_FILE, {}) or {}
+    bal = f" Balance now **${float(bank['total']):.2f}**." if bank.get("total") is not None else ""
     lines = [f"# {title}", "",
-             f"Real money (live orders + alerts at suggested size): **{_money(tot['pnl'])}** on "
-             f"{tot['trades']} results. Paper and silent results are tests, not money.", "",
+             f"Real money (the bot's live orders): **{_money(tot['pnl'])}** on "
+             f"{tot['trades']} results.{bal} Practice and old-alert results are not money.", "",
              "| Strategy | Mode | Results | Won | P&L | Return | Per contract | All-time P&L |",
              "|---|---|---|---|---|---|---|---|"]
     keys = sorted(set(groups) | set(alltime))
@@ -191,17 +194,25 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tupl
     if kind in ("weekly", "monthly"):
         lines += _detail(period, start, end, kind)
     lines += ["", "_Generated automatically by the bot._", ""]
-    best = max(groups.items(), key=lambda kv: summarize(kv[1])["pnl"], default=None)
-    phone = [f"REAL money: {_money(tot['pnl'])} ({tot['trades']} results)."]
-    practice = [k for k in keys if k[1] in ("paper", "shadow") and groups.get(k)]
-    if practice:
-        phone.append("Practice only (no money):")
-    for k in practice[:4]:
-        s = summarize(groups[k])
-        phone.append(f"  {k[0]}: {s['trades']} results, {_money(s['pnl'])}")
-    if best is None:
-        phone.append("Nothing settled in this period.")
-    return "\n".join(lines), "\n".join(phone)
+    return "\n".join(lines), phone_text(groups, alltime, tot, rows, bank)
+
+
+def phone_text(groups, alltime, tot, rows, bank) -> str:
+    """Real money first: total, each live strategy (period and all time), balance,
+    open risk; practice in one line; old alerts dropped."""
+    phone = [f"REAL money: {_money(tot['pnl'])} ({tot['wins']}-{tot['trades'] - tot['wins']})"
+             + (f" · balance ${float(bank['total']):.2f}" if bank.get("total") is not None else "")]
+    for k in sorted(k for k in set(groups) | set(alltime) if k[1] == "live"):
+        s, a = summarize(groups.get(k, [])), summarize(alltime.get(k, []))
+        phone.append(f"  {k[0]}: {_money(s['pnl'])} ({s['trades']}) · all time {_money(a['pnl'])}")
+    live_open = [r for r in rows if r.get("mode") == "live"]
+    phone.append(f"Open: ${trader.exposure(live_open):.2f} at risk "
+                 f"({sum(r.get('status') == 'filled' for r in live_open)} positions)")
+    prac = [r for k, v in groups.items() if k[1] in ("paper", "shadow") for r in v]
+    if prac:
+        p = summarize(prac)
+        phone.append(f"Practice (no money): {_money(p['pnl'])} ({p['trades']} results)")
+    return "\n".join(phone)
 
 
 def _detail(period: list[Result], start: date, end: date, kind: str) -> list[str]:
@@ -243,19 +254,17 @@ def _url(path: Path) -> str | None:
 
 def due(now: datetime, tz: ZoneInfo, state: dict) -> list[tuple[str, date, date, str]]:
     local = now.astimezone(tz)
-    if local.hour < SEND_HOUR:
-        return []
     today = local.date()
     y = today - timedelta(days=1)
     out = []
-    if state.get("daily") != y.isoformat():
+    if local.hour >= HOURS["daily"] and state.get("daily") != y.isoformat():
         out.append(("daily", y, y, y.isoformat()))
-    if today.weekday() == 0:
+    if today.weekday() == 0 and local.hour >= HOURS["weekly"]:
         ws = today - timedelta(days=7)
         tag = f"{ws.isocalendar()[0]}-W{ws.isocalendar()[1]:02d}"
         if state.get("weekly") != tag:
             out.append(("weekly", ws, ws + timedelta(days=6), tag))
-    if today.day == 1:
+    if today.day == 1 and local.hour >= HOURS["monthly"]:
         me = y
         ms = me.replace(day=1)
         tag = f"{ms:%Y-%m}"

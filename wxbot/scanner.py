@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import daybefore, kalshi, launches, ledger, notify, rain, report as reportmod, strategy, tracking
+from . import daybefore, kalshi, launches, ledger, moneysum, notify, rain, report as reportmod, strategy, tracking, trader
 from .model import build_day_model
 from .stations import (SeriesInfo, Station, cli_window, climate_day_of,
                        default_catalog, series_from_kalshi)
@@ -365,11 +365,18 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     # 5) daily summary (doubles as a heartbeat)
     if local.hour >= int(aparams.get("summary_hour", 21)) and state.get("last_summary") != local_day:
         midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
-        title, body = notify.format_summary(
-            ledger.stats(rows), ledger.stats(rows, since=midnight), daily["alerts"],
-            scans[local_day], sum(r.get("status") == "open" and not ledger.is_shadow(r) for r in rows),
-            runtime["problems"].get(local_day, []),
-            ledger.stats(rows, kind="model", mode="shadow") if edge_mode == "shadow" else None)
+        old = ledger.stats(rows)
+        alert_line = (f"Weather alerts (old, no money): {daily['alerts']} sent today, "
+                      f"record {old['wins']}-{old['losses']}") if daily["alerts"] or old["n"] else ""
+        try:
+            title, body = moneysum.format_summary(trader.load_all(), midnight, alert_line,
+                                                  runtime["problems"].get(local_day, []))
+        except Exception as exc:  # the heartbeat must still go out
+            log.warning("money summary failed: %s", exc)
+            title, body = notify.format_summary(
+                old, ledger.stats(rows, since=midnight), daily["alerts"], scans[local_day],
+                sum(r.get("status") == "open" and not ledger.is_shadow(r) for r in rows),
+                runtime["problems"].get(local_day, []))
         url = reportmod.report_url()
         if url:
             body += "\nTap for the full report."

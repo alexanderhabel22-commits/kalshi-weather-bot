@@ -86,5 +86,5 @@ def test_report_grades_everything(monkeypatch):
     assert "## Lock census" in text and "## Silent EDGE test" in text
     assert "## Forecast accuracy" in text and "| 6–12h out | 2 | +0.0°F" in text
     assert "Still buyable at the alert price **15 min later: 100%**" in text
-    summary = next(p for p in http.posts if p["title"] == "Weather bot daily summary")
+    summary = next(p for p in http.posts if p["title"] == "Kalshi bot: daily money summary")
     assert summary["click"] == "https://github.com/someone/kalshi-weather-bot/blob/main/data/REPORT.md"
