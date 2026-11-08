@@ -1,0 +1,56 @@
+name: late-research
+
+# Research only (late-game sports fade + props/lines). Read-only public Kalshi and
+# ESPN data; never trades, never alerts. Runs only on push to this research branch.
+# Output goes to the late-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-fsfh1t"]
+    paths: ["research_late/fetch.py", ".github/workflows/late-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: late-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        env:
+          BUDGET_H: "4.8"
+        run: python research_late/fetch.py ${{ matrix.shard }} out
+      - name: Save to late-research-data branch
+        if: always() && hashFiles('out/log.txt') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d)-s${{ matrix.shard }}"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if git fetch origin late-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/late-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp [skip ci]" || exit 0
+            git push origin HEAD:late-research-data && exit 0
+            sleep $((i * 11))
+          done
+          exit 1
