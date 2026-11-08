@@ -10,6 +10,7 @@
   python bot.py backtest-fetch  download history for a backtest (--days, --out)
   python bot.py trade           automatic orders (mode in config [trading]; --dry-run prints only)
   python bot.py m15             always-on 15-minute fade bot (runs on the server; --once = one step)
+  python bot.py checkpoint      real-money scorecard + pass/fail verdicts (rules in CHECKPOINT.md)
 """
 from __future__ import annotations
 
@@ -26,7 +27,7 @@ from wxbot.util import Http, load_config, parse_iso, read_json, utcnow
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify",
-                                            "backtest-fetch", "trade", "m15"])
+                                            "backtest-fetch", "trade", "m15", "checkpoint"])
     ap.add_argument("--dry-run", action="store_true", help="don't send or save anything")
     ap.add_argument("--every", type=int, default=300, help="loop interval in seconds")
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
@@ -84,6 +85,11 @@ def main(argv=None) -> int:
             logging.exception("reports failed: %s", exc)
         print(f"trade ({out['mode']}): placed {len(out['placed'])}, skipped {len(out['skipped'])}"
               + (f", stops: {out['stops']}" if out["stops"] else ""))
+        return 0
+
+    if args.command == "checkpoint":
+        from wxbot import checkpoint
+        print(checkpoint.run(cfg, parse_iso(args.now) if args.now else utcnow()), end="")
         return 0
 
     if args.command == "backtest-fetch":

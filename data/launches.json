@@ -2542,6 +2542,60 @@
    "status": "live",
    "title": "Will the Senate convict Pete Hegseth?",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-08T16:30:24+00:00",
+   "example": "KXRFKIMPEACH-28JAN01-28JAN01",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T23:30:23+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-08T16:30:24+00:00",
+   "median_spread": 0.1,
+   "n_open": 3,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXRFKIMPEACH",
+   "status": "live",
+   "title": "Will Robert F. Kennedy Jr. be impeached?",
+   "volume": 61.52
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-08T16:30:24+00:00",
+   "example": "KXSAPPROPRM-27-LMUR",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-07T23:30:23+00:00",
+   "frequency": "custom",
+   "markets_seen": "2026-11-08T16:30:24+00:00",
+   "median_spread": 0.1,
+   "n_open": 3,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXSAPPROPRM",
+   "status": "live",
+   "title": "Senate Appropriations ranking member",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-08T16:30:24+00:00",
+   "example": "KXCOLOMSCHUMER-27JAN03-YES",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-08T08:30:22+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-08T16:30:24+00:00",
+   "median_spread": 0.91,
+   "n_open": 1,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (91c), so makers haven't arrived yet.",
+   "series": "KXCOLOMSCHUMER",
+   "status": "live",
+   "title": "Will Scott Colom back Schumer for Senate Democratic leader?",
+   "volume": 400.0
   }
  ],
  "known": [
@@ -8010,6 +8064,7 @@
   "KXGOPFAVGOV",
   "KXGOPFAVSEN",
   "KXGOPFIRSTWINNOM",
+  "KXGOPHEGSETHIMPEACHVOTES",
   "KXGOPIMPEACHVOTES",
   "KXGOPLATINOVOTE",
   "KXGOPLEGSUPERMAJ",
@@ -8701,6 +8756,7 @@
   "KXHURTB",
   "KXHURWIL",
   "KXHUTCHISONPANAMA",
+  "KXHVOTEHEGSETHIMPEACH",
   "KXHWAYSMEANSCHAIR",
   "KXHYDESMITHCONCEDE",
   "KXHYPE",
@@ -8996,6 +9052,7 @@
   "KXISRFIRSTMANDATE",
   "KXISRFORMIN",
   "KXISRGOVTYPE",
+  "KXISRHEALTHMIN",
   "KXISRINTMIN",
   "KXISRJUSMIN",
   "KXISRKNESSETCOUNT",
@@ -12976,6 +13033,7 @@
   "KXPASTATESEN",
   "KXPASUPERIORCOURT",
   "KXPATELCOUNT",
+  "KXPATELIMPEACH",
   "KXPATH",
   "KXPATHA",
   "KXPATIENTSMONOPOLIES",
@@ -18481,11 +18539,11 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-08T16:00:31+00:00",
+ "last_check": "2026-11-08T20:00:24+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -18495,7 +18553,7 @@
   },
   "KXAAAGASCDFL": {
    "category": "Economics",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -18505,7 +18563,7 @@
   },
   "KXAAAGASCDIL": {
    "category": "Economics",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -18515,7 +18573,7 @@
   },
   "KXAAAGASCDOH": {
    "category": "Economics",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:30:26+00:00",
    "frequency": "daily",
@@ -18525,7 +18583,7 @@
   },
   "KXAFCCL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18535,7 +18593,7 @@
   },
   "KXAFCCL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18545,7 +18603,7 @@
   },
   "KXAFCCL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18555,7 +18613,7 @@
   },
   "KXAFCCL2SPREAD": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18565,7 +18623,7 @@
   },
   "KXAFCCL2TOTAL": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18575,7 +18633,7 @@
   },
   "KXAISCORE": {
    "category": "Science and Technology",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T16:00:30+00:00",
    "frequency": "annual",
@@ -18585,7 +18643,7 @@
   },
   "KXARTNETSALE": {
    "category": "Entertainment",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T22:30:25+00:00",
    "frequency": "custom",
@@ -18595,7 +18653,7 @@
   },
   "KXBCEA": {
    "category": "Financials",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
@@ -18605,7 +18663,7 @@
   },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18615,7 +18673,7 @@
   },
   "KXBELCHALLBTTS": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18625,7 +18683,7 @@
   },
   "KXBELCHALLGAME": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18635,7 +18693,7 @@
   },
   "KXBELCHALLSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18645,7 +18703,7 @@
   },
   "KXBELCHALLTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18655,7 +18713,7 @@
   },
   "KXBOTOLAADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18665,7 +18723,7 @@
   },
   "KXBOTOLABTTS": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18675,7 +18733,7 @@
   },
   "KXBOTOLAGAME": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18685,7 +18743,7 @@
   },
   "KXBOTOLASPREAD": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18695,7 +18753,7 @@
   },
   "KXBOTOLATOTAL": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18705,7 +18763,7 @@
   },
   "KXBULFLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18713,19 +18771,9 @@
    "series": "KXBULFLADVANCE",
    "title": "Advance"
   },
-  "KXCOLOMSCHUMER": {
-   "category": "Elections",
-   "checked": "2026-11-08T14:30:22+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-08T08:30:22+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXCOLOMSCHUMER",
-   "title": "Will Scott Colom back Schumer for Senate Democratic leader?"
-  },
   "KXDEMCAUCUSCHAIR120": {
    "category": "Elections",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "one_off",
@@ -18735,7 +18783,7 @@
   },
   "KXDEMWHIP120": {
    "category": "Elections",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "one_off",
@@ -18745,7 +18793,7 @@
   },
   "KXEFLL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18755,7 +18803,7 @@
   },
   "KXEFLL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18765,7 +18813,7 @@
   },
   "KXEFLL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18775,7 +18823,7 @@
   },
   "KXEFLL2SPREAD": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18785,7 +18833,7 @@
   },
   "KXEFLL2TOTAL": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18795,7 +18843,7 @@
   },
   "KXEPCR": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "annual",
@@ -18805,7 +18853,7 @@
   },
   "KXEPCRMATCH": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18813,9 +18861,19 @@
    "series": "KXEPCRMATCH",
    "title": "European Professional Club Rugby Match"
   },
+  "KXGOPHEGSETHIMPEACHVOTES": {
+   "category": "Politics",
+   "checked": "2026-11-08T19:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-08T19:30:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXGOPHEGSETHIMPEACHVOTES",
+   "title": "House Republicans voting to impeach Pete Hegseth"
+  },
   "KXHARMEDSERVICESCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -18825,7 +18883,7 @@
   },
   "KXHEGSETHCONVICT": {
    "category": "Politics",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T18:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T23:30:23+00:00",
    "frequency": "custom",
@@ -18835,7 +18893,7 @@
   },
   "KXHINTELCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -18845,7 +18903,7 @@
   },
   "KXHJUDICIARYCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -18853,9 +18911,19 @@
    "series": "KXHJUDICIARYCHAIR",
    "title": "House Judiciary chair"
   },
+  "KXHVOTEHEGSETHIMPEACH": {
+   "category": "Politics",
+   "checked": "2026-11-08T19:30:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-08T19:30:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXHVOTEHEGSETHIMPEACH",
+   "title": "Which Representatives will vote to impeach Pete Hegseth?"
+  },
   "KXHWAYSMEANSCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -18863,9 +18931,19 @@
    "series": "KXHWAYSMEANSCHAIR",
    "title": "House Ways and Means chair"
   },
+  "KXISRHEALTHMIN": {
+   "category": "Politics",
+   "checked": "2026-11-08T19:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-08T19:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXISRHEALTHMIN",
+   "title": "Who will be Israeli health minister after the election?"
+  },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18875,7 +18953,7 @@
   },
   "KXJ3LEAGUEBTTS": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18885,7 +18963,7 @@
   },
   "KXJ3LEAGUEGAME": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18895,7 +18973,7 @@
   },
   "KXJ3LEAGUESPREAD": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18905,7 +18983,7 @@
   },
   "KXJ3LEAGUETOTAL": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18915,7 +18993,7 @@
   },
   "KXJBLUA": {
    "category": "Financials",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
@@ -18925,7 +19003,7 @@
   },
   "KXJUDGEFIRST": {
    "category": "Politics",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T01:00:26+00:00",
    "frequency": "monthly",
@@ -18935,7 +19013,7 @@
   },
   "KXLIGAPORTUGAL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18945,7 +19023,7 @@
   },
   "KXMAJLEAD120": {
    "category": "Elections",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:00:26+00:00",
    "frequency": "one_off",
@@ -18955,7 +19033,7 @@
   },
   "KXNOR1DIVADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18965,7 +19043,7 @@
   },
   "KXNOR1DIVBTTS": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18975,7 +19053,7 @@
   },
   "KXNOR1DIVGAME": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18985,7 +19063,7 @@
   },
   "KXNOR1DIVSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18995,7 +19073,7 @@
   },
   "KXNOR1DIVTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19005,7 +19083,7 @@
   },
   "KXOVERSIGHTCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19015,7 +19093,7 @@
   },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "one_off",
@@ -19023,19 +19101,19 @@
    "series": "KXPARAGUAYIMPEACH",
    "title": "Will Santiago Pe\u00f1a be impeached?"
   },
-  "KXRFKIMPEACH": {
+  "KXPATELIMPEACH": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
-   "first_seen": "2026-11-07T23:30:23+00:00",
+   "first_seen": "2026-11-08T19:30:26+00:00",
    "frequency": "one_off",
    "new_category": false,
-   "series": "KXRFKIMPEACH",
-   "title": "Will Robert F. Kennedy Jr. be impeached?"
+   "series": "KXPATELIMPEACH",
+   "title": "Will Kash Patel be impeached?"
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19043,19 +19121,9 @@
    "series": "KXSAFFADVANCE",
    "title": "Advance"
   },
-  "KXSAPPROPRM": {
-   "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-07T23:30:23+00:00",
-   "frequency": "custom",
-   "new_category": false,
-   "series": "KXSAPPROPRM",
-   "title": "Senate Appropriations ranking member"
-  },
   "KXSARMEDSERVICESCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19065,7 +19133,7 @@
   },
   "KXSFINANCECHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19075,7 +19143,7 @@
   },
   "KXSINTELCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19085,7 +19153,7 @@
   },
   "KXSMILLERANNOUNCEOUT": {
    "category": "Politics",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T18:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T03:00:27+00:00",
    "frequency": "one_off",
@@ -19095,7 +19163,7 @@
   },
   "KXSUPERETTANADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19105,7 +19173,7 @@
   },
   "KXSUPERETTANBTTS": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19115,7 +19183,7 @@
   },
   "KXSUPERETTANGAME": {
    "category": "Sports",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19125,7 +19193,7 @@
   },
   "KXSUPERETTANSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19135,7 +19203,7 @@
   },
   "KXSUPERETTANTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19145,7 +19213,7 @@
   },
   "KXSVK1LADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19155,7 +19223,7 @@
   },
   "KXTA": {
    "category": "Financials",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
@@ -19165,7 +19233,7 @@
   },
   "KXTARIFFRICEINDIA": {
    "category": "Politics",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T22:00:28+00:00",
    "frequency": "one_off",
@@ -19175,7 +19243,7 @@
   },
   "KXTHIRDPARTYSTATE": {
    "category": "Elections",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T19:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
@@ -19185,7 +19253,7 @@
   },
   "KXTHUNELEADER": {
    "category": "Elections",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T18:00:32+00:00",
    "frequency": "one_off",
@@ -19195,7 +19263,7 @@
   },
   "KXTRUMPMEETDEMS": {
    "category": "Politics",
-   "checked": "2026-11-08T14:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "annual",
@@ -19205,7 +19273,7 @@
   },
   "KXTXMEDICAIDEXP": {
    "category": "Politics",
-   "checked": "2026-11-08T16:00:31+00:00",
+   "checked": "2026-11-08T19:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T23:00:28+00:00",
    "frequency": "one_off",
@@ -19215,7 +19283,7 @@
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-08T15:30:22+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19225,7 +19293,7 @@
   },
   "KXULCCA": {
    "category": "Financials",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
@@ -19235,7 +19303,7 @@
   },
   "KXVETO120": {
    "category": "Politics",
-   "checked": "2026-11-08T15:00:31+00:00",
+   "checked": "2026-11-08T20:00:24+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T00:30:23+00:00",
    "frequency": "annual",
