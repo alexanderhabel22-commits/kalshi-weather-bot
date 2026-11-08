@@ -77,6 +77,10 @@ DEFAULTS = {
     "min_fav": 0.71,
     "max_fav": 0.95,
     "stop_quote_s": 0,
+    # bid only in the last N seconds of the window, per series. Backtest split (Nov 8):
+    # silver/copper earn ~0c with 5-15 min left and +6c in the last 5 min; BTC earns at
+    # every point (+9c at 5-10 min, +6c at 0-5 min), so it has no limit.
+    "max_left_s": {"KXSILVER15M": 300, "KXCOPPER15M": 300},
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
@@ -602,7 +606,7 @@ class Bot:
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
         room = int(s["contracts"]) - m["filled"] - (o["n"] - o["filled"] if o else 0)
-        if left <= s["stop_quote_s"]:
+        if left <= s["stop_quote_s"] or left > float((s.get("max_left_s") or {}).get(m["series"], 1e9)):
             if o:
                 self._end_order(m)
             return
