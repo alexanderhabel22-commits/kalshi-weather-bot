@@ -69,3 +69,27 @@ def test_allocator_switch_blocked_by_a_broken_strategy():
 def test_render_runs():
     text = checkpoint.render(build([row("weather", f"W{i}", 0.30, 1, i % 2 == 0) for i in range(12)]))
     assert "## Verdicts" in text and "weather" in text
+
+
+def m15row(series, i, won, filled=1, mode="live", price=0.85):
+    close = (NOW - timedelta(minutes=15 * i)).isoformat()
+    return {"series": series, "mode": mode, "close": close, "filled": filled, "cost": f"{price:.2f}",
+            "fee": "0", "pnl": f"{(1 - price) if won else -price:.2f}" if filled else ""}
+
+
+def test_m15_too_early_then_cut_then_raise():
+    p = checkpoint.params(load_config())
+    early = checkpoint.m15_build([m15row("KXBTC15M", i, True) for i in range(20)], NOW, p)
+    assert early["KXBTC15M"]["verdict"] == "KEEP" and early["KXBTC15M"]["n"] == 20
+    bad = [m15row("KXBTC15M", i, i % 4 != 0) for i in range(120)]          # 75% hit at 85c
+    assert checkpoint.m15_build(bad, NOW, p)["KXBTC15M"]["verdict"].startswith(("KILL", "CUT"))
+    good = [m15row("KXBTC15M", i, i % 50 != 0) for i in range(320)]        # 98% hit at 85c
+    assert checkpoint.m15_build(good, NOW, p)["KXBTC15M"]["verdict"].startswith("RAISE")
+
+
+def test_m15_ignores_paper_and_counts_fill_rate():
+    p = checkpoint.params(load_config())
+    rows = [m15row("KXSILVER15M", i, True, filled=i % 2) for i in range(10)]
+    rows += [m15row("KXSILVER15M", 99, True, mode="paper")]
+    s = checkpoint.m15_build(rows, NOW, p)["KXSILVER15M"]
+    assert s["quoted"] == 10 and s["n"] == 5 and s["rate"] == 0.5

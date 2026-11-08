@@ -1,6 +1,6 @@
-# Checkpoint scorecard (Nov 08 02:38 UTC)
+# Checkpoint scorecard (Nov 08 03:40 UTC)
 
-Real money only, since 2026-11-05 23:03 UTC (2.1 days). Bankroll $50.96. Decision day: 2026-11-17. Rules: CHECKPOINT.md (written Nov 8, before the data).
+Real money only, since 2026-11-05 23:03 UTC (2.2 days). Bankroll $51.79. Decision day: 2026-11-17. Rules: CHECKPOINT.md (written Nov 8, before the data).
 
 Settled real money so far: $+1.72 on $5.17 risked.
 
@@ -27,10 +27,10 @@ Settled real money so far: $+1.72 on $5.17 risked.
 
 | Strategy | Orders | Still resting | Contracts offered | Filled | Fill rate so far | Avg price paid | Filled events/week | Backtest pace | Awaiting settlement |
 |---|---|---|---|---|---|---|---|---|---|
-| mentions | 5 | 0 | 10 | 10 | 100% | 86c | 3.3 | 10 | 1 |
-| favorites | 7 | 2 | 18 | 12 | 67% | 91c | 6.5 | 5 | 1 |
-| macro_fade | 4 | 1 | 4 | 3 | 75% | 88c | 9.8 | 1.5 | 3 |
-| weather | 27 | 5 | 27 | 22 | 81% | 30c | 42.3 | 20 | 9 |
+| mentions | 5 | 0 | 10 | 10 | 100% | 86c | 3.2 | 10 | 1 |
+| favorites | 7 | 2 | 18 | 12 | 67% | 91c | 6.4 | 5 | 1 |
+| macro_fade | 4 | 1 | 4 | 3 | 75% | 88c | 9.6 | 1.5 | 3 |
+| weather | 27 | 5 | 27 | 22 | 81% | 30c | 41.5 | 20 | 9 |
 
 ## When does each result mean something?
 
@@ -38,10 +38,10 @@ Events needed = settled events at which a strategy really earning its backtest e
 
 | Strategy | Spread per event | Events needed | Have | Expected by checkpoint | Reaches it (live pace) |
 |---|---|---|---|---|---|
-| mentions | 29% (backtest) | 326 | 0 | ~5 | Oct 08 2028 |
-| favorites | 25% (from price) | 274 | 1 | ~10 | Aug 28 2027 |
-| macro_fade | 39% (from price) | 233 | 0 | ~15 | Apr 24 2027 |
-| weather | 111% (from price) | 18,900 | 4 | ~67 | 5+ years |
+| mentions | 29% (backtest) | 326 | 0 | ~5 | Oct 23 2028 |
+| favorites | 25% (from price) | 274 | 1 | ~10 | Sep 03 2027 |
+| macro_fade | 39% (from price) | 233 | 0 | ~15 | Apr 27 2027 |
+| weather | 111% (from price) | 18,900 | 4 | ~65 | 5+ years |
 
 ## Allocator (shadow) would-be sizes
 
@@ -57,3 +57,13 @@ Backtest sources:
 - favorites: research_alloc streams: 659 fills, 97% hit, +3.8c per $1
 - macro_fade: research_alloc streams: 256 fills, 93% hit, +6.3c per $1
 - weather: day-before maker ~+1c/contract this fall (unproven)
+
+## 15-minute bot (server, real money)
+
+One market = one result. Rules: CHECKPOINT.md, section 15-minute bot.
+
+| Series | Verdict | Quoted | Filled | Fill rate | Profit | Per contract | 90% range (per $1) | Backtest per contract | Fills needed | Reaches it |
+|---|---|---|---|---|---|---|---|---|---|---|
+| KXBTC15M | **KEEP** (too early: 0 of 100 fills for a verdict) | 0 | 0 | - | $+0.00 | - | needs 10+ | +7.3c | 148 | no fills yet |
+| KXCOPPER15M | **KEEP** (too early: 0 of 100 fills for a verdict) | 0 | 0 | - | $+0.00 | - | needs 10+ | +5.2c | 292 | no fills yet |
+| KXSILVER15M | **KEEP** (too early: 0 of 100 fills for a verdict) | 0 | 0 | - | $+0.00 | - | needs 10+ | +5.2c | 292 | no fills yet |

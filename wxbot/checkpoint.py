@@ -19,8 +19,11 @@ Read-only: it never changes sizes, config or orders.
 from __future__ import annotations
 
 import copy
+import csv
+import io
 import math
 import random
+import subprocess
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -332,6 +335,99 @@ def render(out: dict) -> str:
     return "\n".join(L) + "\n"
 
 
+# ---------------------------------------------------------------- 15-minute bot (server)
+
+# Research (Nov 8, PR #53): resting maker bid on the 71-95c favourite, back of the queue.
+M15_EXPECTED = {"KXBTC15M": 0.073, "KXSILVER15M": 0.052, "KXCOPPER15M": 0.052}
+M15_RULES = {"min_fills": 100,      # no verdict before 100 filled markets per series
+             "cut_below": -0.05,    # after 100 fills, under -5c per contract -> that series back to paper
+             "raise_fills": 300,    # 300+ fills and the 90% range above zero -> 2 contracts per market
+             "price": 0.85}
+
+
+def m15_rows(path=None) -> list[dict]:
+    """The server bot's market log: local data/m15/markets-*.csv if this machine has it
+    (the server itself), else the m15-data branch the server uploads every 15 min."""
+    from .m15 import M15_DIR
+    from pathlib import Path
+    d = Path(path) if path else M15_DIR
+    files = sorted(d.glob("markets-*.csv")) if d.exists() else []
+    if files:
+        out = []
+        for f in files:
+            with open(f, newline="", encoding="utf-8") as fh:
+                out += list(csv.DictReader(fh))
+        return out
+    try:
+        subprocess.run(["git", "fetch", "-q", "origin", "m15-data"], timeout=60,
+                       capture_output=True, check=False)
+        names = subprocess.run(["git", "ls-tree", "--name-only", "origin/m15-data", "m15/"],
+                               capture_output=True, text=True, timeout=30).stdout.split()
+        out = []
+        for n in sorted(x for x in names if x.startswith("m15/markets-")):
+            txt = subprocess.run(["git", "show", f"origin/m15-data:{n}"], capture_output=True,
+                                 text=True, timeout=30).stdout
+            out += list(csv.DictReader(io.StringIO(txt)))
+        return out
+    except (OSError, subprocess.SubprocessError):
+        return []
+
+
+def m15_build(rows: list[dict], now: datetime, p: dict) -> dict:
+    """Per live series: one market = one result (one contract each)."""
+    out = {}
+    live = [r for r in rows if r.get("mode") == "live"]
+    for series in sorted(set(M15_EXPECTED) | {r.get("series") for r in live if r.get("series")}):
+        rs = [r for r in live if r.get("series") == series]
+        quoted = len(rs)
+        filled = [r for r in rs if int(_f(r.get("filled"))) > 0 and r.get("pnl") not in (None, "")]
+        units = [{"cost": _f(r.get("cost")) + _f(r.get("fee")), "pnl": _f(r["pnl"])} for r in filled]
+        n = len(units)
+        contracts = sum(int(_f(r.get("filled"))) for r in filled)
+        cost = sum(u["cost"] for u in units)
+        pnl = sum(u["pnl"] for u in units)
+        exp = M15_EXPECTED.get(series, 0.03)
+        closes = [parse_iso(r.get("close")) for r in rs if parse_iso(r.get("close"))]
+        span = max(0.25, (now - min(closes)).total_seconds() / 86400) if closes else None
+        pace = n / span if span else 0.0               # filled markets per day
+        sd = math.sqrt(M15_RULES["price"] * (1 - M15_RULES["price"]))   # per contract
+        need = needed(sd, exp, float(p["power_z"]))
+        ci = bootstrap(units, int(p["boot_reps"]), float(p["ci"]), int(p["seed"])) if n >= 10 else None
+        per_c = pnl / contracts if contracts else None
+        if n >= M15_RULES["min_fills"] and ci and ci[1] < 0:
+            v, why = "KILL (back to paper)", "clearly losing: the whole 90% range is below zero"
+        elif n >= M15_RULES["min_fills"] and per_c is not None and per_c < M15_RULES["cut_below"]:
+            v, why = "CUT (back to paper)", f"{per_c * 100:+.1f}c per contract is under -5c after {n} fills"
+        elif n >= M15_RULES["raise_fills"] and ci and ci[0] > 0:
+            v, why = "RAISE (2 contracts)", "edge confirmed: the whole 90% range is above zero"
+        else:
+            v, why = "KEEP", (f"too early: {n} of {M15_RULES['min_fills']} fills for a verdict"
+                              if n < M15_RULES["min_fills"] else "not proven either way")
+        eta = None if pace <= 0 else now + timedelta(days=max(0, need - n) / pace)
+        out[series] = {"quoted": quoted, "n": n, "contracts": contracts, "cost": cost, "pnl": pnl,
+                       "per_c": per_c, "roi": pnl / cost if cost else None, "ci": ci, "exp": exp,
+                       "rate": n / quoted if quoted else None, "pace": pace, "need": need,
+                       "eta": eta, "verdict": v, "why": why}
+    return out
+
+
+def m15_render(m: dict, at: datetime) -> str:
+    if not m:
+        return ""
+    L = ["", "## 15-minute bot (server, real money)", "",
+         "One market = one result. Rules: CHECKPOINT.md, section 15-minute bot.", "",
+         "| Series | Verdict | Quoted | Filled | Fill rate | Profit | Per contract | 90% range (per $1) | Backtest per contract | Fills needed | Reaches it |",
+         "|---|---|---|---|---|---|---|---|---|---|---|"]
+    for s, r in m.items():
+        rate = "-" if r["rate"] is None else f"{r['rate']:.0%}"
+        ci = "needs 10+" if not r["ci"] else f"{r['ci'][0] * 100:+.0f}c to {r['ci'][1] * 100:+.0f}c"
+        eta = ("already" if r["n"] >= r["need"] else "no fills yet" if r["eta"] is None
+               else f"{r['eta']:%b %d}")
+        L.append(f"| {s} | **{r['verdict']}** ({r['why']}) | {r['quoted']} | {r['n']} | {rate} | "
+                 f"${r['pnl']:+.2f} | {_pct(r['per_c'])} | {ci} | {_pct(r['exp'])} | {r['need']} | {eta} |")
+    return "\n".join(L) + "\n"
+
+
 def run(cfg: Config, now: datetime) -> str:
     from . import trader
     from .util import read_json
@@ -341,4 +437,9 @@ def run(cfg: Config, now: datetime) -> str:
     out["halted"] = state.get("halted")
     if out["halted"]:
         out["allocator"] = allocator_rule(out, state.get("allocator"), out["params"])
-    return render(out)
+    text = render(out)
+    try:
+        text += m15_render(m15_build(m15_rows(), now, out["params"]), now)
+    except Exception as exc:  # the server bot's data must never break the scorecard
+        text += f"\n15-minute bot: could not read its data ({exc}).\n"
+    return text

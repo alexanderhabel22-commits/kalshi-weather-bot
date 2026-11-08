@@ -67,6 +67,28 @@ growing the bet count and letting the allocator learn slowly is the plan,
 rather than waiting for proof. Weather's edge is too small to ever prove at
 these sizes; it stays only while it isn't clearly losing, at the 15% cap.
 
+## 15-minute bot (server, real money since Nov 8, 2026)
+
+The always-on bot (wxbot/m15.py) joins the 71-95c favourite's bid on BTC,
+silver and copper 15-minute markets, 1 contract each. One market = one result.
+Its data comes from the m15-data branch the server uploads every 15 minutes.
+
+| # | Rule (per series) | Verdict |
+|---|---|---|
+| 1 | 100+ filled markets and the whole 90% range is below zero | **KILL**: that series goes back to paper |
+| 2 | 100+ filled markets and under -5c per contract | **CUT**: that series goes back to paper |
+| 3 | 300+ filled markets and the whole 90% range is above zero | **RAISE**: 2 contracts per market |
+| 4 | Anything else | **KEEP** |
+
+The server's own stops (-10% a day, halt at -12.5% overall, the jump guard)
+are unchanged. Backtest: BTC +7.3c per contract, silver and copper +5.2c,
+expected lower live because fast traders get the good fills first.
+
+This is the fastest feedback in the project. About 150 BTC fills (and ~290 for
+silver or copper) would show a real edge, and BTC alone has 96 markets a day,
+so the first verdict should come within days, not months. The dates show in
+the scorecard once fills arrive.
+
 ## Backtest figures used
 
 - Mentions: research_mn/RESULTS.md, +4-6c per contract, last 6 months +4.3c; per-event spread 29%.
