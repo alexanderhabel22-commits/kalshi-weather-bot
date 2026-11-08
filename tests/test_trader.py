@@ -711,3 +711,12 @@ def test_per_event_limits_count_open_orders_across_scans():
     fev = evs[0]["event_ticker"]
     out = favorites.candidates(evs, NOW, {"contracts": 2}, {fev: {"KXOTHER"}})
     assert len(out) == 1
+
+
+def test_per_event_pick_handles_event_with_no_picks():
+    # Nov 8: an event with no market in the band made favorites crash every scan
+    assert trader.per_event_pick([], {}, 2) == []
+    assert trader.per_event_pick([], None, 2) == []
+    evs = [fav_event([fav_mkt("c", 0.50, 0.55, vol=2_000_000)]),  # no favorite in band
+           fav_event([fav_mkt("a", 0.88, 0.91, vol=2_000_000, ev="KXB")], ev="KXB")]
+    assert len(favorites.candidates(evs, NOW, {"contracts": 2}, {})) == 1
