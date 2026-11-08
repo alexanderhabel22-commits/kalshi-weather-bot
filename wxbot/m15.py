@@ -42,6 +42,7 @@ import json
 import logging
 import math
 import os
+import subprocess
 import threading
 import time
 from datetime import datetime, timezone
@@ -209,7 +210,8 @@ class Bot:
                       "day_stop": st.get("day_stop"), "pnl": st.get("pnl", {}),
                       "summary_day": st.get("summary_day"), "started": st.get("started"),
                       "cut": st.get("cut", {}), "series": st.get("series", {}),
-                      "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted")}
+                      "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted"),
+                      "code_version": st.get("code_version"), "saved_at": st.get("saved_at")}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
                      "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0}
         self.switch = {"mode": None, "halted": False}
@@ -232,7 +234,29 @@ class Bot:
             log.warning("alert failed: %s", exc)
 
     def save(self) -> None:
+        self.state["saved_at"] = self.clock()
         write_json(STATE, self.state)
+
+    @staticmethod
+    def code_version() -> str:
+        try:
+            return subprocess.run(["git", "rev-parse", "HEAD"], cwd=Path(__file__).resolve().parent.parent,
+                                  capture_output=True, text=True, timeout=5).stdout.strip()
+        except Exception:
+            return ""
+
+    def startup_notice(self) -> None:
+        """Push "started" only when it means something. A restart by the hourly updater (new code,
+        bot was running a moment ago) is routine and only logged; a crash, reboot or first start
+        still pushes (Alex, Nov 8: six "started" pushes in a day were all code updates)."""
+        ver, prev, saved = self.code_version(), self.state.get("code_version"), self.state.get("saved_at")
+        self.state["code_version"] = ver or prev
+        body = (f"mode {self.s['mode']} · live series {', '.join(self.s['live_series'])} · "
+                f"{self.s['contracts']} contract(s)/market")
+        if ver and prev and ver != prev and saved and self.clock() - float(saved) < 600:
+            log.info("restarted for a code update %s -> %s (no push): %s", prev[:7], ver[:7], body)
+            return
+        self.alert("15-min bot started", body, 2)
 
     def day(self, ts: float) -> str:
         return datetime.fromtimestamp(ts, self.tz).date().isoformat()
@@ -865,8 +889,7 @@ class Bot:
 
     def run_forever(self) -> None:
         self.startup_cleanup()
-        self.alert("15-min bot started", f"mode {self.s['mode']} · live series "
-                   f"{', '.join(self.s['live_series'])} · {self.s['contracts']} contract(s)/market", 2)
+        self.startup_notice()
         while True:
             t0 = self.clock()
             try:

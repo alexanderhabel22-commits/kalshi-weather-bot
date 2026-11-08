@@ -435,3 +435,29 @@ def test_silver_waits_for_last_five_minutes(monkeypatch):
     clk.t = CLOSE - 290
     b.step()
     assert len(cl.placed) == 1
+
+
+def test_started_push_only_when_not_a_routine_code_update(monkeypatch):
+    sent = []
+    clock = Clock()
+    monkeypatch.setattr(m15.Bot, "alert", lambda self, t, b, p=3: sent.append(t))
+    ver = {"v": "aaa"}
+    monkeypatch.setattr(m15.Bot, "code_version", staticmethod(lambda: ver["v"]))
+    b = bot(cfg(), clock)
+    b.state.update(code_version=None, saved_at=None)
+    b.startup_notice()                       # first start: push
+    assert sent == ["15-min bot started"]
+    b.save()
+    ver["v"] = "bbb"
+    clock.t += 60
+    b2 = bot(cfg(), clock)
+    b2.startup_notice()                      # updater restart a minute later: quiet
+    assert len(sent) == 1
+    b2.save()
+    clock.t += 30
+    bot(cfg(), clock).startup_notice()       # same code restarting = crash: push
+    assert len(sent) == 2
+    ver["v"] = "ccc"
+    clock.t += 3600
+    bot(cfg(), clock).startup_notice()       # new code after an hour down: push
+    assert len(sent) == 3
