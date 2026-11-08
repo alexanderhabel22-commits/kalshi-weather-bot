@@ -6,7 +6,10 @@ before=$(sudo -u kalshi git -C "$APP" rev-parse HEAD)
 sudo -u kalshi git -C "$APP" fetch -q origin main
 sudo -u kalshi git -C "$APP" reset -q --hard origin/main
 after=$(sudo -u kalshi git -C "$APP" rev-parse HEAD)
-if [ "$before" != "$after" ]; then
+# main also gets the Actions bot's data commits every few minutes; restart only when the
+# bot's own code or config changed (otherwise this restarts hourly and pushes "started").
+if [ "$before" != "$after" ] && sudo -u kalshi git -C "$APP" diff --name-only "$before" "$after" -- \
+     wxbot bot.py config.toml requirements.txt requirements-m15.txt deploy/m15 | grep -q .; then
   sudo -u kalshi /opt/kalshi-m15/venv/bin/pip install -q -r "$APP/requirements.txt" -r "$APP/requirements-m15.txt"
   install -m 644 "$APP/deploy/m15/kalshi-m15.service" /etc/systemd/system/
   systemctl daemon-reload
