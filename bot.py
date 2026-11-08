@@ -53,12 +53,7 @@ def main(argv=None) -> int:
         if cfg.get("account", "auto_bankroll", True):
             from wxbot import balance
             balance.refresh(http, now)       # bankroll follows the Kalshi balance
-        out = trader.run(cfg, now=now, http=http, dry_run=args.dry_run)
-        try:
-            for path in digest.run_due(cfg, now, http, dry_run=args.dry_run):
-                print(f"report written: {path}")
-        except Exception as exc:  # reports must never break trading
-            logging.exception("reports failed: %s", exc)
+        out = trader.run(cfg, now=now, http=http, dry_run=args.dry_run)   # syncs fills + settlements
         if not args.dry_run:
             try:
                 from wxbot import quotes
@@ -71,6 +66,16 @@ def main(argv=None) -> int:
                 equity.record(now, (snap or {}).get("quotes") or {})
             except Exception as exc:  # dashboard history must never break trading
                 logging.exception("equity failed: %s", exc)
+        # reports last: balance, fills, settlements and live marks are all from this run
+        try:
+            if digest.anything_due(cfg, now) and cfg.get("account", "auto_bankroll", True):
+                from wxbot import balance
+                balance.refresh(http, now)   # balance again, after this run's orders
+            for path in digest.run_due(cfg, now, http, dry_run=args.dry_run):
+                print(f"report written: {path}")
+            digest.run_money_summary(cfg, now, http, dry_run=args.dry_run)
+        except Exception as exc:  # reports must never break trading
+            logging.exception("reports failed: %s", exc)
         print(f"trade ({out['mode']}): placed {len(out['placed'])}, skipped {len(out['skipped'])}"
               + (f", stops: {out['stops']}" if out["stops"] else ""))
         return 0

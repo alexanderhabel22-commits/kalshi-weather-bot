@@ -382,8 +382,12 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             body += "\nTap for the full report."
         if not dry_run:
             reportmod.write_report(rows, census, frows, cfg, now, runtime)
-        if notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], click=url,
-                       dry_run=dry_run):
+        if trader.settings(cfg)["mode"] != "off":
+            # the trade run sends the money summary with freshly synced Kalshi data
+            # (digest.run_money_summary); the scan only writes the report
+            state["last_summary"] = local_day
+        elif notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], click=url,
+                         dry_run=dry_run):
             state["last_summary"] = local_day
 
     _prune(state, now)

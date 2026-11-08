@@ -65,6 +65,7 @@ def test_forecasts_logged_every_3h_and_graded(monkeypatch):
 
 def test_report_grades_everything(monkeypatch):
     monkeypatch.setenv("NTFY_TOPIC", "t")
+    monkeypatch.setenv("TRADING_MODE", "off")      # with trading on, the trade run sends it
     monkeypatch.setenv("GITHUB_REPOSITORY", "someone/kalshi-weather-bot")
     cfg = cfg_for_test()
     cfg.raw["alerts"]["edge_alerts"] = "shadow"

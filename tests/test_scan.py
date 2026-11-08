@@ -69,6 +69,7 @@ def test_scan_alerts_dedupes_and_settles(monkeypatch):
 
 def test_quiet_hours_and_summary(monkeypatch):
     monkeypatch.setenv("NTFY_TOPIC", "t")
+    monkeypatch.setenv("TRADING_MODE", "off")      # with trading on, the trade run sends it
     cfg = cfg_for_test()
     # 2:30 AM ET -> quiet: nothing sent, nothing recorded
     quiet = datetime(2026, 11, 3, 7, 30, tzinfo=UTC)

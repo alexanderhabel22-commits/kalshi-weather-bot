@@ -273,6 +273,37 @@ def due(now: datetime, tz: ZoneInfo, state: dict) -> list[tuple[str, date, date,
     return out
 
 
+def anything_due(cfg, now: datetime) -> bool:
+    tz = ZoneInfo(cfg.tz)
+    st = read_json(STATE, {}) or {}
+    local = now.astimezone(tz)
+    return bool(due(now, tz, st)) or (local.hour >= int(cfg.get("alerts", "summary_hour", 21))
+                                      and st.get("money_summary") != local.date().isoformat())
+
+
+def run_money_summary(cfg, now: datetime, http, dry_run: bool = False) -> bool:
+    """The 9 PM real-money push. Sent from the trade run, right after it has
+    refreshed the Kalshi balance, synced fills and settlements and re-marked open
+    positions at live prices, so the numbers are seconds old."""
+    from . import moneysum
+    tz = ZoneInfo(cfg.tz)
+    local = now.astimezone(tz)
+    day = local.date().isoformat()
+    hour = int(cfg.get("alerts", "summary_hour", 21))
+    state = read_json(STATE, {}) or {}
+    if local.hour < hour or state.get("money_summary") == day:
+        return False
+    old = ledger.stats(ledger.load())
+    alert_line = f"Weather alerts (old, no money): record {old['wins']}-{old['losses']}" if old["n"] else ""
+    midnight = local.replace(hour=0, minute=0, second=0, microsecond=0)
+    title, body = moneysum.format_summary(trader.load_all(), midnight, alert_line)
+    sent = notify.send(http, cfg, title, body, priority=2, tags=["bar_chart"], dry_run=dry_run)
+    if (sent or not os.environ.get("NTFY_TOPIC")) and not dry_run:
+        state["money_summary"] = day
+        write_json(STATE, state)
+    return sent
+
+
 def run_due(cfg, now: datetime, http, dry_run: bool = False) -> list[Path]:
     tz = ZoneInfo(cfg.tz)
     state = read_json(STATE, {}) or {}

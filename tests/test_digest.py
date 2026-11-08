@@ -82,3 +82,23 @@ def test_weekly_phone_text_leads_with_real_money_by_strategy(monkeypatch):
     assert lines[0].startswith("REAL money: +$0.20 (1-1)")
     assert any("Mentions" in x and "all time +$0.30" in x for x in lines)
     assert any(x.startswith("Open: $1.00 at risk") for x in lines)
+
+
+def test_money_summary_sent_once_from_trade_run_after_9pm(monkeypatch):
+    monkeypatch.setenv("NTFY_TOPIC", "t")
+    trader.save(_live_rows())
+
+    class H:
+        def __init__(self):
+            self.posts = []
+
+        def post_json(self, url, payload, headers=None):
+            self.posts.append(payload)
+            return {}
+
+    cfg = load_config()
+    h = H()
+    assert digest.run_money_summary(cfg, datetime(2026, 11, 7, 20, 0, tzinfo=UTC), h) is False  # 3 PM ET
+    assert digest.run_money_summary(cfg, datetime(2026, 11, 8, 2, 5, tzinfo=UTC), h)            # 9:05 PM ET
+    assert digest.run_money_summary(cfg, datetime(2026, 11, 8, 2, 10, tzinfo=UTC), h) is False  # once a day
+    assert len(h.posts) == 1 and "money summary" in h.posts[0]["title"]
