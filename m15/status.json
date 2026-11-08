@@ -1,5 +1,5 @@
 {
- "at": "2026-11-08T04:56:09+00:00",
+ "at": "2026-11-08T05:11:09+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -11,12 +11,12 @@
   "error": "HTTP 404 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_shard_balance\",\"message\":\"insufficient shard balance\",\"details\":\"Exchange user not found. For Predictions: reference documentation Exchange Sharding documentation.\"}}",
   "ticker": "KXBTC15M-26NOV072330-30"
  },
- "live_exposure": 0.75,
+ "live_exposure": 0.74,
  "live_now": {
-  "KXBTC15M-26NOV080000-00": {
+  "KXBTC15M-26NOV080015-15": {
    "bid_ask": [
-    0.035,
-    0.036
+    0.967,
+    0.968
    ],
    "mode": "live",
    "order": false,
@@ -27,24 +27,26 @@
  "open_markets": 9,
  "pnl": {
   "live_days": {
-   "2026-11-07": 0.17
+   "2026-11-07": 0.17,
+   "2026-11-08": 0.24
   },
-  "live_total": 0.17,
+  "live_total": 0.41,
   "paper_days": {
-   "2026-11-07": -5.8
+   "2026-11-07": -5.8,
+   "2026-11-08": 0.94
   },
-  "paper_total": -5.8
+  "paper_total": -4.86
  },
  "series": {
   "KXBTC15M": {
-   "fills": 1,
-   "pnl": 0.17
+   "fills": 2,
+   "pnl": 0.41
   }
  },
  "shards": {
   "0": 14.767,
   "1": 0.0,
-  "2": 12.43,
+  "2": 12.69,
   "3": 0.0
  },
  "spot_ok": true,
