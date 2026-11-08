@@ -103,6 +103,28 @@ class Context:
     state: dict
     orders: list[dict]
     params: dict = field(default_factory=dict)    # this strategy's [trading.<name>] table
+    mode: str = ""                                # "live" or "paper": the mode this strategy runs in
+
+
+def held_by_event(rows: list[dict], strategy: str, mode: str = "") -> dict[str, set]:
+    """{event: tickers} this strategy already has open (resting or held) in `mode`,
+    so per-event limits (max words / markets per event) count across scans."""
+    out: dict[str, set] = {}
+    for r in rows:
+        if r.get("strategy") != strategy or r.get("status") not in ("resting", "filled"):
+            continue
+        if mode and r.get("mode") != mode:
+            continue
+        out.setdefault(r.get("event") or "", set()).add(r.get("ticker"))
+    return out
+
+
+def per_event_pick(intents: list, held: dict | None, n: int) -> list:
+    """At most n markets per event, counting the ones already open there: the
+    remaining slots go to new markets (in the order given)."""
+    have = (held or {})
+    fresh = [i for i in intents if i.ticker not in have.get(i.event, ())]
+    return fresh[:max(0, n - len(have.get(intents[0].event, ()) if intents else 0))]
 
 
 # ---------------------------------------------------------------- ledger
@@ -962,7 +984,7 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
         if mode is None or blocked[mode]:
             continue
         sp = specs[name]
-        ctx = Context(cfg, http, now, state.setdefault(name, {}), rows, sp)
+        ctx = Context(cfg, http, now, state.setdefault(name, {}), rows, sp, mode)
         try:
             intents = propose(ctx)
         except Exception as exc:  # a broken strategy must not stop the others

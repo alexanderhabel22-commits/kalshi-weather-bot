@@ -20,7 +20,7 @@ import os
 from datetime import timedelta
 
 from .. import kalshi
-from ..trader import Intent
+from ..trader import Intent, held_by_event, per_event_pick
 from ..util import HttpError, parse_iso
 
 NAME = "mentions"
@@ -110,7 +110,7 @@ def word_count(px: float, p: dict, bankroll: float | None) -> int:
 
 
 def candidates(markets: list[dict], series: set[str], p: dict,
-               bankroll: float | None = None) -> list[Intent]:
+               bankroll: float | None = None, held: dict | None = None) -> list[Intent]:
     lo, hi = float(p.get("min_price", 0.75)), float(p.get("max_price", 0.90))
     n_words = int(p.get("max_words_per_event", 3))
     min_vol = float(p.get("min_volume", 100))
@@ -136,7 +136,7 @@ def candidates(markets: list[dict], series: set[str], p: dict,
             title[:120], f"no bid {no_bid:.2f} / ask {no_ask:.2f}", _vol(m)))
     out = []
     for ev in sorted(by_event):
-        out += sorted(by_event[ev], key=lambda i: i.price)[:n_words]
+        out += per_event_pick(sorted(by_event[ev], key=lambda i: i.price), held, n_words)
     return out
 
 
@@ -152,7 +152,8 @@ def propose(ctx) -> list[Intent]:
         return []
     # skip markets whose close we can't read
     markets = [m for m in markets if parse_iso(m.get("close_time"))]
-    out = candidates(markets, series, p, getattr(ctx.cfg, "bankroll", None))
+    out = candidates(markets, series, p, getattr(ctx.cfg, "bankroll", None),
+                     held_by_event(ctx.orders, NAME, ctx.mode))
     band = sum(1 for m in markets if (ya := kalshi.price(m, "yes_ask")) and
                float(p.get("min_price", 0.75)) <= 1 - ya + 0.01 <= float(p.get("max_price", 0.90)))
     log.info("mentions: %d series (%d active), %d markets closing soon, %d near the price band, "

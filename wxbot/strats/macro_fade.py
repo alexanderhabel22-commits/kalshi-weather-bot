@@ -27,7 +27,7 @@ import os
 from datetime import timedelta
 
 from .. import kalshi
-from ..trader import Intent
+from ..trader import Intent, held_by_event, per_event_pick
 from ..util import HttpError, parse_iso
 from .mentions import _series_markets, _vol
 
@@ -36,7 +36,7 @@ SERIES = ["KXFED", "KXFEDDECISION", "KXCPI", "KXCPIYOY", "KXCPICORE", "KXPCECORE
 log = logging.getLogger("wxbot")
 
 
-def candidates(markets: list[dict], p: dict, now) -> list[Intent]:
+def candidates(markets: list[dict], p: dict, now, held: dict | None = None) -> list[Intent]:
     lo, hi = float(p.get("min_price", 0.71)), float(p.get("max_price", 0.95))
     per_event = int(p.get("max_markets_per_event", 3))
     count = int(p.get("contracts", 1))
@@ -66,7 +66,7 @@ def candidates(markets: list[dict], p: dict, now) -> list[Intent]:
             f"no bid {no_bid:.2f} / ask {no_ask:.2f}", _vol(m)))
     out = []
     for ev in sorted(by_event):
-        out += sorted(by_event[ev], key=lambda i: i.price)[:per_event]
+        out += per_event_pick(sorted(by_event[ev], key=lambda i: i.price), held, per_event)
     return out
 
 
@@ -80,7 +80,7 @@ def propose(ctx) -> list[Intent]:
             markets += _series_markets(ctx, s)
         except HttpError as exc:
             log.info("macro_fade %s: %s", s, exc)
-    out = candidates(markets, p, ctx.now)
+    out = candidates(markets, p, ctx.now, held_by_event(ctx.orders, NAME, ctx.mode))
     log.info("macro_fade: %d open markets in %d series, %d candidates",
              len(markets), len(p.get("series") or SERIES), len(out))
     return out

@@ -28,7 +28,7 @@ import os
 from datetime import timedelta
 
 from .. import kalshi
-from ..trader import Intent
+from ..trader import Intent, held_by_event, per_event_pick
 from ..util import HttpError, parse_iso
 from .mentions import _series_markets
 
@@ -105,7 +105,7 @@ def open_events(ctx, series: dict, active: list[str]) -> list[dict]:
     return list(by_ev.values())
 
 
-def candidates(events: list[dict], now, p: dict) -> list[Intent]:
+def candidates(events: list[dict], now, p: dict, held: dict | None = None) -> list[Intent]:
     cats = set(p.get("categories") or DEFAULT_CATS)
     lo, hi = float(p.get("min_price", 0.85)), float(p.get("max_price", 0.96))
     min_ev_vol = float(p.get("min_event_volume", 1_000_000))
@@ -146,7 +146,7 @@ def candidates(events: list[dict], now, p: dict) -> list[Intent]:
                 NAME, m["ticker"], ev.get("event_ticker") or m.get("event_ticker") or "", side,
                 px, count, m.get("close_time") or "", f"{title} {sub}".strip()[:120],
                 f"{ev.get('category')} · {side} bid {bid:.2f} / ask {ask:.2f}", _vol(m)))
-        out += sorted(picks, key=lambda i: -i.price)[:per_event]
+        out += per_event_pick(sorted(picks, key=lambda i: -i.price), held, per_event)
     return out
 
 
@@ -162,7 +162,7 @@ def propose(ctx) -> list[Intent]:
     except HttpError as exc:
         log.warning("favorites scan: %s", exc)
         return []
-    out = candidates(events, ctx.now, p)
+    out = candidates(events, ctx.now, p, held_by_event(ctx.orders, NAME, ctx.mode))
     big = sum(1 for e in events if sum(_vol(m) for m in e["markets"]) >=
               float(p.get("min_event_volume", 1_000_000)))
     log.info("favorites: %d big series, %d with open events, %d open events, %d over the "

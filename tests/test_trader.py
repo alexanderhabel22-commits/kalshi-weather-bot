@@ -688,3 +688,26 @@ def test_yes_and_no_in_one_market_net_like_kalshi():
     assert len(left) == 1 and left[0]["side"] == "no" and left[0]["filled"] == 1
     assert trader.net_pairs(rows, NOW) == 0
     assert abs(trader.realized(rows, mode="live") - 0.18) < 1e-9
+
+
+def test_per_event_limits_count_open_orders_across_scans():
+    # Nov 8 audit: 5 live words on one speech although max_words_per_event = 3,
+    # because each 30-minute scan picked its own 3. Open orders now use up slots.
+    ms = [mkt("a", 0.12, 0.16), mkt("b", 0.20, 0.24), mkt("c", 0.15, 0.19), mkt("d", 0.11, 0.13)]
+    ev = ms[0]["event_ticker"]
+    held = {ev: {ms[1]["ticker"], "OLD-WORD"}}             # 2 words already open there
+    out = mentions.candidates(ms, {"KXTRUMPMENTION"}, {"contracts": 2}, None, held)
+    assert [i.ticker[-1] for i in out] == ["c"]            # 1 slot left; held "b" not repeated
+    full = {ev: {"x", "y", "z"}}
+    assert mentions.candidates(ms, {"KXTRUMPMENTION"}, {"contracts": 2}, None, full) == []
+    # only open orders of this strategy and mode count
+    rows = [{"strategy": "mentions", "status": "filled", "mode": "live", "event": ev, "ticker": "x"},
+            {"strategy": "mentions", "status": "settled", "mode": "live", "event": ev, "ticker": "y"},
+            {"strategy": "mentions", "status": "resting", "mode": "paper", "event": ev, "ticker": "z"},
+            {"strategy": "favorites", "status": "filled", "mode": "live", "event": ev, "ticker": "w"}]
+    assert trader.held_by_event(rows, "mentions", "live") == {ev: {"x"}}
+    # favorites: 2 markets per event, one already held
+    evs = [fav_event([fav_mkt("a", 0.88, 0.91), fav_mkt("b", 0.05, 0.08)])]
+    fev = evs[0]["event_ticker"]
+    out = favorites.candidates(evs, NOW, {"contracts": 2}, {fev: {"KXOTHER"}})
+    assert len(out) == 1
