@@ -80,6 +80,8 @@ DEFAULTS = {
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
+    "shard": 2,                     # Kalshi exchange shard of crypto + commodities markets
+    "fund_s": 300,                  # top the shard up to the pool this often (live only)
     "cut_after_fills": 100,         # a live series below cut_below_ct per contract after this
     "cut_below_ct": -0.05,          # many real fills goes back to paper by itself
     "total_loss_pct": 0.125,
@@ -198,7 +200,7 @@ class Bot:
                       "day_stop": st.get("day_stop"), "pnl": st.get("pnl", {}),
                       "summary_day": st.get("summary_day"), "started": st.get("started"),
                       "cut": st.get("cut", {}), "series": st.get("series", {}),
-                      "reset_seen": st.get("reset_seen")}
+                      "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted")}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
                      "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0}
         self.switch = {"mode": None, "halted": False}
@@ -290,6 +292,43 @@ class Bot:
         if self.balance is not None:
             return self.balance + self.exposure("live")
         return None
+
+    def fund_shard(self, now: float) -> float:
+        """Kalshi keeps a separate cash balance per exchange shard, and API orders don't move
+        cash for us (the app does). Keep this bot's shard funded up to the pool: cash there +
+        live money at risk <= pool_pct of the account. Only moves cash between shards of
+        this same account."""
+        s = self.s
+        if now - self.last.get("fund", 0.0) < s["fund_s"] or not hasattr(self.client, "shard_balances"):
+            return 0.0
+        self.last["fund"] = now
+        try:
+            bal = self.client.shard_balances()
+        except Exception as exc:
+            log.warning("shard balances: %s", exc)
+            return 0.0
+        b = self.bankroll(now) or 0
+        dst = int(s["shard"])
+        have = bal.get(dst, 0.0) + self.exposure("live")
+        need = math.floor((s["pool_pct"] * b - have) * 100) / 100
+        src_free = bal.get(0, 0.0)
+        amt = min(need, src_free - 1.0)               # leave $1 on the main shard at least
+        self.state["shards"] = {str(k): v for k, v in bal.items()}
+        if amt < 1.0:
+            return 0.0
+        try:
+            self.client.shard_transfer(amt, 0, dst)
+        except Exception as exc:
+            log.warning("shard transfer %.2f: %s", amt, exc)
+            self.state["fund_error"] = str(exc)[:300]
+            if not self.state.get("fund_alerted"):
+                self.state["fund_alerted"] = True
+                self.alert("15-min bot can't fund its shard",
+                           f"Moving ${amt:.2f} to exchange {dst} failed: {str(exc)[:200]}", 4)
+            return 0.0
+        log.warning("moved $%.2f from exchange 0 to exchange %d (pool)", amt, dst)
+        self.state["fund_error"] = None
+        return amt
 
     def exposure(self, mode: str) -> float:
         tot = 0.0
@@ -738,6 +777,7 @@ class Bot:
                   "mode": self.effective_mode(now), "switch": self.switch, "control": self.control,
                   "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"), "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
                   "last_reject": self.state.get("last_reject"),
+                  "shards": self.state.get("shards"), "fund_error": self.state.get("fund_error"),
                   "spot_ok": bool(self.spot is not None and self.spot.healthy()),
                   "live_now": {k: {"mode": m.get("mode"), "why": m.get("why"), "bid_ask": m.get("bid_ask"),
                                    "order": bool(m.get("order"))}
@@ -785,6 +825,8 @@ class Bot:
         if self.client is not None:
             self.check_stops(now)
             mode = self.effective_mode(now)
+            if mode == "live":
+                self.fund_shard(now)
             self.sync_live()
         self.discover(now)
         live_open = [m for m in self.state["markets"].values() if m["close"] > now]
