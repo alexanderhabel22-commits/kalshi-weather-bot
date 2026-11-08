@@ -54,3 +54,19 @@ def test_stale_file_or_switched_off_falls_back(monkeypatch):
 def test_no_key_does_nothing(monkeypatch):
     monkeypatch.delenv("KALSHI_API_KEY_ID", raising=False)
     assert balance.refresh(None, NOW) is None
+
+
+def test_saves_cash_per_exchange_shard():
+    info = balance.refresh(None, NOW, FakeClient({"balance": 2798, "portfolio_value": 2400, "balance_breakdown": [
+        {"exchange_index": 0, "balance": "14.7700"}, {"exchange_index": 2, "balance": "13.2100"}]}))
+    assert info["shards"] == {"0": 14.77, "2": 13.21} and info["cash"] == 27.98
+
+
+def test_cash_on_reads_one_shard():
+    from wxbot.kalshi_api import KalshiClient
+    c = KalshiClient.__new__(KalshiClient)
+    c._get = lambda path, params=None: {"balance": 2798, "balance_breakdown": [
+        {"exchange_index": 0, "balance": "14.77"}, {"exchange_index": 2, "balance": "13.21"}]}
+    assert c.cash_on(0) == 14.77 and c.cash_on(2) == 13.21
+    c._get = lambda path, params=None: {"balance": 2798}
+    assert c.cash_on(0) == 27.98

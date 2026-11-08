@@ -383,6 +383,11 @@ function m15HTML(full){
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">mode ${esc(mode)} · updated ${esc(ago(at))}${stale ? ` · <span class="neg">server quiet</span>` : ""}${flags.length ? ` · <span class="neg">${esc(flags.join(", "))}</span>` : ""}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(today)}">${money(today)}</div>
     <div class="lbl" style="margin-top:8px">At risk now</div><div class="val" style="font-size:17px">$${num(st.live_exposure).toFixed(2)} <small class="mute">/ $${pool.toFixed(2)}</small></div></div></div>`;
+  const pc = st.shards && st.shards["2"] != null ? num(st.shards["2"]) : null, risk = num(st.live_exposure);
+  h += `<div class="lbl" style="margin-top:14px">This bot's money</div><div class="grid g3" style="margin-top:4px">
+    <div><div class="lbl">Cash · Exchange 2</div><div class="val">${pc == null ? "—" : "$" + pc.toFixed(2)}</div></div>
+    <div><div class="lbl">At risk now</div><div class="val">$${risk.toFixed(2)}</div></div>
+    <div><div class="lbl">Pool total</div><div class="val">${pc == null ? "—" : "$" + (pc + risk).toFixed(2)} <small class="mute">/ $${pool.toFixed(2)} target</small></div></div></div>`;
   const tbl = rows => { const by = {}; for (const r of rows){ const k = String(r.series || "").replace(/^KX|15M$/g, ""), b = by[k] = by[k] || {q:0, f:0, n:0, pnl:0}; b.q++; if (num(r.filled)){ b.f++; b.n += num(r.filled); b.pnl += num(r.pnl); } }
     const ks = Object.keys(by).sort((x, y) => by[y].n - by[x].n);
     return ks.length ? `<div class="list">` + ks.map(k => { const b = by[k], c = b.n ? 100 * b.pnl / b.n : 0;
@@ -476,6 +481,23 @@ function sideQuote(r){ const q = S.quotes[r.ticker]; if (!q) return null;
 /* ---------------------------------------------------------------- model */
 const STATUS = {resting:"open", filled:"filled", settled:"settled", "done-unfilled":"unfilled", cancelled:"cancelled"};
 function strategyName(k){ const v = (S.data.verdicts || {}).strategies || {}; return (v[k] && v[k].label) || k.replace(/(^|[-_])(\w)/g, (m, a, b) => (a ? " " : "") + b.toUpperCase()); }
+function shardCash(i){
+  // cash per Kalshi exchange: the main bot's markets use Exchange 0, the 15-min bot's Exchange 2
+  const b = S.data.broll || {}, sh = b.shards || {};
+  if (sh[String(i)] != null) return num(sh[String(i)]);
+  const m = S.m15 && S.m15.status && S.m15.status.shards;
+  if (m && m[String(i)] != null) return num(m[String(i)]);
+  return i === 0 ? num(b.cash, 0) : null;
+}
+function botMoneyHTML(risk, B){
+  const cash = shardCash(0), mc = (S.data.config || {}).m15 || {};
+  const cap = num(tradingCfg().max_open_pct, .75) * B;
+  return `<h2>Main bot money <span class="sub">what this bot can use</span></h2><div class="card"><div class="grid g3">
+    <div><div class="lbl">Cash · Exchange 0</div><div class="val">${cash == null ? "—" : "$" + cash.toFixed(2)}</div></div>
+    <div><div class="lbl">At risk now</div><div class="val">$${risk.toFixed(2)}</div></div>
+    <div><div class="lbl">Bot total</div><div class="val">${cash == null ? "—" : "$" + (cash + risk).toFixed(2)}</div></div></div>
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Cap: $${cap.toFixed(2)} at risk (${pct(num(tradingCfg().max_open_pct, .75))} of the account). Whole account $${B.toFixed(2)}, both bots: the 15-min bot keeps its ${pct(num(mc.pool_pct, .25))} pool on Exchange 2.</div></div>`;
+}
 function bankroll(){
   // live Kalshi balance (cash + positions) saved by each trade run; fresh = under 6h
   const b = S.data.broll || {};
@@ -918,6 +940,7 @@ function renderOverview(){
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
     ${sx.summary}${winsHTML(sx.tr, strats)}${moreBtn("all", "More all-time stats")}</div>`;
   if (isOpen("all")) h += sx.h;
+  h += botMoneyHTML(capExp, B);
   h += `<h2>Right now <span class="sub">open bets</span></h2>`;
 
   const mk = marked(rows), upAll = upPoints(mode);
