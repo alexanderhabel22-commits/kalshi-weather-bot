@@ -382,3 +382,40 @@ def test_rejected_live_order_is_reported(monkeypatch):
     b.step()
     assert "rejected" in b.state["markets"][TK]["why"]
     assert b.state["last_reject"]["ticker"] == TK
+
+
+def test_funds_crypto_shard_up_to_pool(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+
+    class Sharded(Client):
+        def __init__(self):
+            super().__init__()
+            self.moves = []
+            self.sh = {0: 27.77, 2: 0.0}
+
+        def shard_balances(self):
+            return dict(self.sh)
+
+        def shard_transfer(self, d, src, dst):
+            self.moves.append((round(d, 2), src, dst))
+            self.sh[src] -= d
+            self.sh[dst] += d
+            return {"transfer_id": "t1"}
+    cl = Sharded()
+    b = bot(cfg(mode="live"), clk, cl)
+    b.step()
+    assert cl.moves == [(12.5, 0, 2)]              # 25% of $50
+    assert len(cl.placed) == 1
+    clk.t += 400
+    b.step()
+    assert len(cl.moves) == 1                      # already funded
+
+
+def test_shard_transfer_units():
+    from wxbot.kalshi_api import KalshiClient
+    sent = {}
+    c = KalshiClient.__new__(KalshiClient)
+    c._post = lambda path, payload: sent.update(payload) or {"transfer_id": "x"}
+    c.shard_transfer(13.0, 0, 2)
+    assert sent["amount"] == 130000 and sent["destination_exchange_shard"] == 2

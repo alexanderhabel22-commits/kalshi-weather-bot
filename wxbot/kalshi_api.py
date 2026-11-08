@@ -84,6 +84,27 @@ class KalshiClient:
         js = self._get("/portfolio/balance")
         return float(js.get("balance", 0)) / 100.0
 
+    def shard_balances(self) -> dict:
+        """{exchange_index: available $} from /portfolio/balance balance_breakdown (exchange sharding)."""
+        js = self._get("/portfolio/balance")
+        out = {}
+        for b in js.get("balance_breakdown") or []:
+            try:
+                out[int(b["exchange_index"])] = float(b["balance"])
+            except (KeyError, TypeError, ValueError):
+                continue
+        return out
+
+    def shard_transfer(self, dollars: float, src: int, dst: int) -> dict:
+        """Move our own cash between exchange shards of this account (not a withdrawal).
+        Kalshi takes the amount in centicents ($1 = 10,000)."""
+        amt = int(round(dollars * 100)) * 100
+        if amt <= 0 or dollars > 1000:
+            raise OrderRejected(f"bad transfer {dollars!r}")
+        return self._post("/portfolio/intra_exchange_instance_transfer", {
+            "source": "event_contract", "destination": "event_contract", "amount": amt,
+            "source_exchange_shard": int(src), "destination_exchange_shard": int(dst)})
+
     def get_order(self, order_id: str) -> dict:
         return self._get(f"/portfolio/orders/{order_id}").get("order") or {}
 
