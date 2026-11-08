@@ -40,7 +40,7 @@ def load(root):
     games, mk, trades = {}, [], defaultdict(list)
     for run in runs(root, "props"):
         for g in rows(run / "espn_games.csv.gz"):
-            games[(g["league"], g["event_id"])] = g
+            games[(g["league"], g["event_id"])] = [g[c] for c in F.GCOLS]
         for m in rows(run / "markets.csv.gz"):
             if m["fetched"] == "1":
                 mk.append(m)
@@ -49,7 +49,7 @@ def load(root):
                                         float(t["count"])))
     by = defaultdict(dict)
     for g in games.values():
-        by[g["league"]].setdefault(g["sb_date"], []).append(g)
+        by[g[0]].setdefault(g[3], []).append(g)
     return by, mk, trades
 
 
@@ -67,7 +67,7 @@ def main():
         ev = m["event"]
         if ev not in start_cache:
             g = F.match(ev, by.get(lg, {})) if lg else None
-            start_cache[ev] = F.ts(g["start"]) if g else None
+            start_cache[ev] = F.ts(g[2].replace("Z", ":00Z")) if g else None
         st = start_cache[ev]
         if not st:
             unmatched[s] += 1
@@ -95,36 +95,38 @@ def main():
             p = last[-1][1]
             for lo, hi in BANDS:
                 if lo <= p <= hi:
-                    buy_yes = False  # cheap YES -> buy NO
+                    cheap_yes = True
                 elif lo <= 1 - p <= hi:
-                    buy_yes = True
+                    cheap_yes = False
                 else:
                     continue
-                won = yes_won == buy_yes
-                key = (fam, s, wname, (lo, hi))
-                # taker
-                for t, yp, side, _ in trs:
-                    if t0 < t <= t0 + 600 and side == ("yes" if buy_yes else "no"):
-                        cost = yp if buy_yes else 1 - yp
-                        res[key + ("taker", per)].append(((1 if won else 0) - cost
-                                                          - taker_fee(cost), ev))
-                        break
-                # maker, back of queue
-                bid = (p if buy_yes else 1 - p) - 0.01
-                if bid <= 0:
-                    continue
-                for cancel, lab in ((st, "maker-cancel@start"), (close, "maker-rest")):
-                    if cancel <= t0:
-                        continue
+                for dirn in ("fade", "follow"):
+                    buy_yes = (not cheap_yes) if dirn == "fade" else cheap_yes
+                    won = yes_won == buy_yes
+                    key = (fam + ("|yes-cheap" if cheap_yes else "|no-cheap"), s, wname, (lo, hi))
                     for t, yp, side, _ in trs:
-                        if t <= t0 or t > cancel:
-                            continue
-                        through = (side == "no" and yp < bid - 1e-9) if buy_yes else \
-                            (side == "yes" and 1 - yp < bid - 1e-9)
-                        if through:
-                            fee = maker_fee(bid) if s in MAKER_FEE_SERIES else 0.0
-                            res[key + (lab, per)].append(((1 if won else 0) - bid - fee, ev))
+                        if t0 < t <= t0 + 600 and side == ("yes" if buy_yes else "no"):
+                            cost = yp if buy_yes else 1 - yp
+                            res[key + (dirn + " taker", per)].append(
+                                ((1 if won else 0) - cost - taker_fee(cost), ev))
                             break
+                    bid = (p if buy_yes else 1 - p) - 0.01
+                    if bid <= 0:
+                        continue
+                    for cancel, lab in ((st, "maker-cancel@start"), (close, "maker-rest")):
+                        if cancel <= t0:
+                            continue
+                        for t, yp, side, _ in trs:
+                            if t <= t0 or t > cancel:
+                                continue
+                            through = (side == "no" and yp < bid - 1e-9) if buy_yes else \
+                                (side == "yes" and 1 - yp < bid - 1e-9)
+                            if through:
+                                fee = maker_fee(bid) if s in MAKER_FEE_SERIES else 0.0
+                                res[key + (dirn + " " + lab, per)].append(
+                                    ((1 if won else 0) - bid - fee, ev))
+                                break
+                break
                 break
     print("# Props and lines: longshot-fade backtest\n")
     print("Markets matched to a game start:", sum(nm.values()),
@@ -136,10 +138,12 @@ def main():
     for k, xs in res.items():
         fam, s, w, band, role, per = k
         pooled[(fam, w, band, role, per)] += xs
-    for fam in ("props", "lines"):
+    ROLES = [d + " " + r for d in ("fade", "follow")
+             for r in ("taker", "maker-cancel@start", "maker-rest")]
+    for fam in sorted({k[0] for k in pooled}):
         for w in WHEN:
             for band in BANDS:
-                for role in ("taker", "maker-cancel@start", "maker-rest"):
+                for role in ROLES:
                     a = pooled.get((fam, w, band, role, "IS"), [])
                     b = pooled.get((fam, w, band, role, "OOS"), [])
                     if not a and not b:
@@ -148,16 +152,16 @@ def main():
                     sb = stat([x[0] for x in b], [x[1] for x in b]) if b else None
                     print(f"| {fam} | {w} | {band[0]:.2f}-{band[1]:.2f} | {role} | {fmt(sa)} | "
                           f"{fmt(sb)} |")
-    print("\n## By series (pre2h, band 0.10-0.40 pooled)\n")
+    print("\n## By series (pre2h, cheap side = YES, band 0.10-0.40 pooled)\n")
     print("| series | role | IS | OOS | pre-game volume (contracts, sampled mkts) |")
     print("|---|---|---|---|---|")
     ser = defaultdict(list)
     for k, xs in res.items():
         fam, s, w, band, role, per = k
-        if w == "pre2h" and band != (0.03, 0.10):
+        if w == "pre2h" and band != (0.03, 0.10) and fam.endswith("yes-cheap"):
             ser[(s, role, per)] += xs
     for s in sorted({k[0] for k in ser}):
-        for role in ("taker", "maker-cancel@start", "maker-rest"):
+        for role in ROLES:
             a, b = ser.get((s, role, "IS"), []), ser.get((s, role, "OOS"), [])
             if not a and not b:
                 continue
