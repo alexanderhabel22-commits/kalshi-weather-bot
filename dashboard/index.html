@@ -410,7 +410,7 @@ function m15Page(){
     const res = !f ? `<span class="dim">no fill</span>` : r.won === "1" ? `<span class="pos">won</span>` : r.won === "0" ? `<span class="neg">lost</span>` : esc(r.result || "");
     return `<div class="item" style="padding:7px 0"><span class="side ${r.fav_side === "no" ? "no" : "yes"}">${esc(String(r.fav_side || "–").toUpperCase())}</span>
       <div class="main"><div class="t" style="font-size:13px">${esc(name)} <span class="mute" style="font-weight:400">${t ? esc(t.toLocaleTimeString("en-US", {timeZone:TZ, hour:"numeric", minute:"2-digit"})) : ""}</span></div>
-      <div class="s">${f ? `${f} @ ${Math.round(num(r.last_q) * 100)}¢` : `quoted ${Math.round(num(r.last_q) * 100)}¢`} · ${res}${num(r.pulls) ? ` · pulled ${r.pulls}×` : ""}</div></div>
+      <div class="s">${f ? (f > 1 ? `${f} @ ${Math.round(num(r.cost) / f * 100)}¢ avg` : `${f} @ ${Math.round(num(r.cost) * 100)}¢`) : `quoted ${Math.round(num(r.last_q) * 100)}¢`} · ${res}${num(r.pulls) ? ` · pulled ${r.pulls}×` : ""}</div></div>
       <div class="r"><span class="${cls(p)}">${f ? money(p) : "—"}</span></div></div>`; }).join("") + `</div>`;
   if (rows.length > 25) h += moreBtn("m15all", "Show more");
   return h;
