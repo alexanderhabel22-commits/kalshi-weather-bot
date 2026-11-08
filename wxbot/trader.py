@@ -122,9 +122,12 @@ def held_by_event(rows: list[dict], strategy: str, mode: str = "") -> dict[str, 
 def per_event_pick(intents: list, held: dict | None, n: int) -> list:
     """At most n markets per event, counting the ones already open there: the
     remaining slots go to new markets (in the order given)."""
-    have = (held or {})
-    fresh = [i for i in intents if i.ticker not in have.get(i.event, ())]
-    return fresh[:max(0, n - len(have.get(intents[0].event, ()) if intents else 0))]
+    if not intents:
+        return []
+    have = held or {}
+    taken = have.get(intents[0].event, ())
+    fresh = [i for i in intents if i.ticker not in taken]
+    return fresh[:max(0, n - len(taken))]
 
 
 # ---------------------------------------------------------------- ledger
