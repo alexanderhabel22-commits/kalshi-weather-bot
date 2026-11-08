@@ -258,12 +258,12 @@ IP without a token). It never places, changes or cancels anything and needs no s
   Run: `python bot.py m15`. Settings: `[m15]` in config.toml.
 - Server: DigitalOcean ~$4/mo, Ubuntu, systemd `kalshi-m15` (+ hourly `kalshi-m15-update.timer`
   that pulls main and restarts). Setup for Alex: `deploy/m15/SETUP.md`.
-- Results: uploaded hourly to branch `m15-data` (`m15/status.json`, `m15/markets-*.csv`).
+- Results: uploaded every 15 min to branch `m15-data` (`m15/status.json`, `m15/markets-*.csv`).
 - Rails: real orders only with `[m15] mode = "live"`, series in `live_series`, and the repo
   kill switch allowing it (the Actions trader writes `mode` into data/trader_state.json;
   TRADING_MODE=off stops the server bot too). Pool 25% of bankroll (Alex: the 25% the 75% cap
   leaves free), daily stop -10%, halt at -12.5%; no live orders if the switch can't be read for 30 min.
-- Plan: ~24h paper shakedown, then live BTC/silver/copper at 1 contract. Cut a market below
+- Plan: LIVE from the start (Alex, Nov 8: no paper run) on BTC/silver/copper at 1 contract. Cut a market below
   -5c/contract after 100 fills. Expect +2-4c live (stale-quote risk vs fast pros), not +7c.
 
 ## Expectations to keep honest

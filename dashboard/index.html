@@ -350,8 +350,43 @@ async function loadData(){
   d.config = typeof d.config === "string" ? parseTOML(d.config) : (d.config || {});
   if (!d.verdicts) { try { d.verdicts = await getJSON("verdicts.json"); } catch(e){ d.verdicts = {events:[], checkpoints:[], strategies:{}}; } }
   for (const k of keys) d["_" + k] = d[k];
+  await loadM15();
   S.noQuotes = false;
   S.data = d; S.errors = errs; S.lastData = Date.now();
+}
+// the 15-minute bot runs on its own server and uploads to the m15-data branch every 15 min
+async function loadM15(){
+  const get = async (path, json) => { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${path}?t=${Date.now()}`, {cache:"no-store"});
+    if (!r.ok) return null; return json ? r.json() : r.text(); };
+  try {
+    const status = await get("status.json", true);
+    if (!status){ S.m15 = null; return; }
+    const days = [...Array(7).keys()].map(i => new Date(Date.now() - i * 864e5).toLocaleDateString("en-CA", {timeZone:TZ}));
+    const texts = await Promise.all(days.map(d => get(`markets-${d}.csv`).catch(() => null)));
+    S.m15 = {status, rows:texts.filter(Boolean).flatMap(t => parseCSV(t)), today:days[0]};
+  } catch(e){ S.errors.push("15-min bot: " + String(e.message || e)); }
+}
+function m15HTML(){
+  const M = S.m15, mc = (S.data.config || {}).m15 || {};
+  let h = `<h2>15-minute bot <span class="sub">own server · ${pct(num(mc.pool_pct, .25))} pool</span></h2><div class="card">`;
+  if (!M) return h + `<div class="mute" style="font-size:12px;line-height:1.5">Not running yet: it starts once the server is set up. It fades longshots in BTC, silver and copper 15-minute markets, 1 contract per market, with its own 25% slice of the bankroll.</div></div>`;
+  const st = M.status, at = pdate(st.at), stale = !at || Date.now() - at > 2 * 3600e3, mode = String(st.mode || "?").toUpperCase();
+  const p = st.pnl || {}, live = num(p.live_total), today = num((p.live_days || {})[M.today]), B = bankroll(), pool = num(mc.pool_pct, .25) * B;
+  const flags = [st.halted ? "HALTED (total loss stop)" : "", st.day_stop === M.today ? "paused for today (daily stop)" : ""].filter(Boolean);
+  h += `<div class="hero"><div><div class="lbl">Real-money P&L · all time</div><div class="big ${cls(live)}">${money(live)}</div>
+    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">mode ${esc(mode)} · updated ${esc(ago(at))}${stale ? ` · <span class="neg">server quiet</span>` : ""}${flags.length ? ` · <span class="neg">${esc(flags.join(", "))}</span>` : ""}</div></div>
+    <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(today)}">${money(today)}</div>
+    <div class="lbl" style="margin-top:8px">At risk now</div><div class="val" style="font-size:17px">$${num(st.live_exposure).toFixed(2)} <small class="mute">/ $${pool.toFixed(2)}</small></div></div></div>`;
+  const tbl = rows => { const by = {}; for (const r of rows){ const k = String(r.series || "").replace(/^KX|15M$/g, ""), b = by[k] = by[k] || {q:0, f:0, n:0, pnl:0}; b.q++; if (num(r.filled)){ b.f++; b.n += num(r.filled); b.pnl += num(r.pnl); } }
+    const ks = Object.keys(by).sort((x, y) => by[y].n - by[x].n);
+    return ks.length ? `<div class="list">` + ks.map(k => { const b = by[k], c = b.n ? 100 * b.pnl / b.n : 0;
+      return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:13px">${esc(k)}</div><div class="s">${b.f}/${b.q} markets filled · ${b.n} contracts</div></div>
+        <div class="r"><span class="${cls(c)}">${b.n ? cents(c) + "/ct" : "—"}</span><small class="${cls(b.pnl)}">${money(b.pnl)}</small></div></div>`; }).join("") + `</div>` : `<div class="mute" style="font-size:12px">No graded markets yet.</div>`; };
+  const lr = M.rows.filter(r => r.mode === "live"), pr = M.rows.filter(r => r.mode === "paper");
+  h += `<div class="lbl" style="margin-top:12px">Real money · last 7 days</div>` + tbl(lr);
+  if (isOpen("m15")) h += `<div class="lbl" style="margin-top:12px">Paper (shakedown + coins not live) · last 7 days · all time ${money(num(p.paper_total))}</div>` + tbl(pr)
+    + `<div class="mute" style="font-size:11px;margin-top:6px">Backtest: BTC +7¢, silver/copper +5¢ per contract; expect less live. A market is cut if it's below −5¢/ct after 100 fills.</div>`;
+  return h + moreBtn("m15", "Paper and details") + `</div>`;
 }
 async function loadApi(){
   try {
@@ -932,6 +967,7 @@ function renderOverview(){
   }
   h += moreBtn("strat", "");
   }
+  h += m15HTML();
   if (manual.length){
     h += `<h2>Your manual trades</h2><div class="card list">` + manual.map(r => `<div class="item"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t">${esc(r.ticker)}</div><div class="s">${esc(r.title)}</div></div><div class="r">${r.count} @ ${Math.round(r.price * 100)}¢</div></div>`).join("") + `</div>`;
   }
