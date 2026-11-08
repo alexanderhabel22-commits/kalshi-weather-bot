@@ -481,7 +481,8 @@ def flush_alerts(http, cfg, dry_run) -> int:
     return 1
 
 
-def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> None:
+def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run,
+              now: datetime | None = None) -> None:
     mine = [r for r in rows
             if r.get("mode") == "live" and r.get("status") == "resting" and r.get("order_id")]
     if not mine:
@@ -515,6 +516,10 @@ def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run) -> Non
         before = int(_f(r.get("filled")))
         if got > before:
             r["filled"] = got
+            if not r.get("filled_at") and now is not None:
+                # first fill seen (within one 5-min run): lets the checkpoint measure
+                # fill delay and price moves after the fill, as the backtests assume
+                r["filled_at"] = now.isoformat(timespec="seconds")
             _alert(http, cfg, f"FILLED: {r['side'].upper()} {got - before} @ {round(_f(r['price']) * 100)}¢",
                    f"{r['title'] or r['ticker']}\n{r['strategy']} · {got}/{placed} filled",
                    dry_run, bundle=True)
@@ -816,6 +821,13 @@ def free_cap_for(http, it: Intent, why: str, mode: str, rows: list[dict], planne
         freed += int(_f(r.get("filled"))) * _f(r.get("price"))
     if freed < need - 1e-9:
         return []                         # selling everything eligible still wouldn't fit it
+    gone = {id(r) for _, r in pick}
+    after = [dict(r, status="settled") if id(r) in gone else r for r in same]
+    if vet(it, after, t, sp, now, planned, mode):
+        # another limit (strategy or event cap) would still block it: selling frees nothing
+        # useful (Nov 8 01:32 UTC: two weather wins sold at 98-99c for a Mentions word the
+        # event cap then refused)
+        return []
     sold = []
     for bid, r in pick:
         if _sell(http, r, rows, bid, f"freed ${freed:.2f} for {it.strategy} {it.ticker} (bid {bid:.2f})",
@@ -953,7 +965,7 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
     midnight = now.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
 
     if client is not None:
-        sync_live(client, rows, cfg, http, dry_run)
+        sync_live(client, rows, cfg, http, dry_run, now)
     net_pairs(rows, now)
     if now.minute % 30 < 5 or any(r.get("mode") == "live" and r.get("status") in OPEN for r in rows):
         try:
@@ -1119,9 +1131,17 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
                 log.warning("archive failed: %s", exc)
         save(rows)
         write_json(STATE, state)
+    if out["skipped"]:
+        why: dict[str, int] = {}
+        for _, _, w in out["skipped"]:
+            k = re.sub(r"\(\$[0-9.]+\)", "", str(w)).strip()[:60]
+            why[k] = why.get(k, 0) + 1
+        log.info("skipped because: %s", ", ".join(f"{k} x{n}" for k, n in
+                                                 sorted(why.items(), key=lambda x: -x[1])))
     log.info("trade (%s, strategies %s): placed %d, skipped %d, stops %s, open $%.2f, "
              "P&L paper $%+.2f live $%+.2f", gmode, modes, len(out["placed"]), len(out["skipped"]),
-             out["stops"], exposure(rows), totals["paper"], totals["live"])
+             out["stops"], exposure([r for r in rows if r.get("mode") == gmode]),
+             totals["paper"], totals["live"])
     return out
 
 
