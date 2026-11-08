@@ -80,6 +80,8 @@ DEFAULTS = {
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
+    "cut_after_fills": 100,         # a live series below cut_below_ct per contract after this
+    "cut_below_ct": -0.05,          # many real fills goes back to paper by itself
     "total_loss_pct": 0.125,
     "poll_s": 3.0,
     "discover_s": 60,
@@ -536,7 +538,8 @@ class Bot:
         s = self.s
         left = m["close"] - now
         if m["mode"] is None and mode != "off":
-            m["mode"] = "live" if (mode == "live" and m["series"] in s["live_series"]) else "paper"
+            m["mode"] = "live" if (mode == "live" and m["series"] in s["live_series"]
+                                   and m["series"] not in self.state.get("cut", {})) else "paper"
         self.tape_check(m)
         o = m.get("order")
         if mode == "off" or (m["mode"] == "live" and mode != "live"):
@@ -627,9 +630,27 @@ class Bot:
                 days = p.setdefault(f"{m['mode']}_days", {})
                 d = self.day(m["close"])
                 days[d] = round(days.get(d, 0.0) + pnl, 4)
+                if m["mode"] == "live":
+                    self.series_check(m, pnl)
         # forget graded markets after a day
         self.state["markets"] = {k: v for k, v in self.state["markets"].items()
                                  if not (v.get("graded") and now - v["close"] > 86400)}
+
+    def series_check(self, m: dict, pnl: float) -> None:
+        """Pre-registered cut rule: below cut_below_ct per contract after cut_after_fills real fills."""
+        st = self.state.setdefault("series", {}).setdefault(m["series"], {"fills": 0, "pnl": 0.0})
+        st["fills"] += m["filled"]
+        st["pnl"] = round(st["pnl"] + pnl, 4)
+        cut = self.state.setdefault("cut", {})
+        if m["series"] in cut or st["fills"] < int(self.s["cut_after_fills"]):
+            return
+        per = st["pnl"] / st["fills"]
+        if per < float(self.s["cut_below_ct"]):
+            cut[m["series"]] = {"at": self.day(m["close"]), "fills": st["fills"], "per_ct": round(per, 4)}
+            self.alert(f"15-min bot: {m['series']} cut",
+                       f"{per * 100:+.1f}c per contract over {st['fills']} real fills (rule: below "
+                       f"{float(self.s['cut_below_ct']) * 100:+.0f}c after {self.s['cut_after_fills']}). "
+                       "It runs on paper from now on.", 4)
 
     def record(self, m: dict) -> None:
         path = M15_DIR / f"markets-{self.day(m['close'])}.csv"
@@ -697,7 +718,7 @@ class Bot:
         self.last["upload"] = now
         status = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
                   "mode": self.effective_mode(now), "switch": self.switch, "control": self.control,
-                  "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"),
+                  "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"), "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
                   "pnl": self.state["pnl"], "open_markets": sum(1 for m in self.state["markets"].values()
                                                                  if not m.get("graded")),
                   "live_exposure": round(self.exposure("live"), 2), "errors": self.errors}

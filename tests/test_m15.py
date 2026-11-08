@@ -320,3 +320,24 @@ def test_fast_pull_cancels_live_bid_on_jump(monkeypatch):
     assert b.fast_pull(clk.t) == 1                 # cancelled without a full step
     assert cl.cancelled == ["o0"] and b.state["markets"][TK]["pulls"] == 1
     assert b.fast_pull(clk.t) == 0
+
+
+def test_series_cut_after_100_losing_fills(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live"), clk, cl)
+    b.state["series"] = {"KXBTC15M": {"fills": 99, "pnl": -5.0}}
+    m = {"series": "KXBTC15M", "filled": 1, "close": clk.t}
+    b.series_check(m, -0.81)
+    assert "KXBTC15M" in b.state["cut"]
+    b.step()
+    assert cl.placed == [] and b.state["markets"][TK]["mode"] == "paper"
+
+
+def test_series_not_cut_when_ok():
+    c = cfg(mode="live")
+    b = m15.Bot(c, http=None, clock=Clock(), fetch_json=lambda url: {})
+    b.state["series"] = {"KXBTC15M": {"fills": 99, "pnl": 2.0}}
+    b.series_check({"series": "KXBTC15M", "filled": 1, "close": T0}, -0.81)
+    assert b.state.get("cut") == {}
