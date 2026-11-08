@@ -20,7 +20,7 @@ def iso(ts):
 
 def cfg(**kw):
     c = load_config()
-    c.raw["m15"].update({"series": ["KXBTC15M"], "guard": False, "contracts": 1})
+    c.raw["m15"].update({"series": ["KXBTC15M"], "guard": False, "contracts": 1, "extra_contracts": 0})
     c.raw["m15"].update(kw)
     return c
 
@@ -471,3 +471,24 @@ def test_extra_contract_only_in_its_band():
     assert m15.target_contracts(0.90, s) == 1
     assert m15.target_contracts(None, s) == 1
     assert m15.target_contracts(0.82, dict(s, extra_contracts=0)) == 1
+
+
+def test_second_contract_when_favourite_reaches_extra_band(monkeypatch):
+    w = World(monkeypatch, yb=0.73, ya=0.75)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", extra_contracts=1), clk, cl)
+    b.step()
+    assert cl.placed == [(TK, "yes", 0.73, 1)]               # 73c: just the base contract
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 10
+    b.step()
+    assert len(cl.placed) == 1                                 # filled, 73c: nothing more
+    w.book.update(yes_bid=0.82, yes_ask=0.84)
+    clk.t += 10
+    b.step()
+    assert cl.placed[-1] == (TK, "yes", 0.82, 1)               # 82c: one more, max 2 total
+    cl.orders["o1"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 10
+    b.step()
+    assert b.state["markets"][TK]["filled"] == 2 and len(cl.placed) == 2
