@@ -1,22 +1,18 @@
 {
- "at": "2026-11-08T05:26:09+00:00",
+ "at": "2026-11-08T05:27:54+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
  "errors": 0,
- "fund_error": "HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}",
+ "fund_error": null,
  "halted": null,
- "last_reject": {
-  "at": 1794112075,
-  "error": "HTTP 404 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_shard_balance\",\"message\":\"insufficient shard balance\",\"details\":\"Exchange user not found. For Predictions: reference documentation Exchange Sharding documentation.\"}}",
-  "ticker": "KXBTC15M-26NOV072330-30"
- },
+ "last_reject": null,
  "live_exposure": 0.72,
  "live_now": {
   "KXBTC15M-26NOV080030-30": {
    "bid_ask": [
-    0.034,
-    0.035
+    0.021,
+    0.022
    ],
    "mode": "live",
    "order": false,
