@@ -100,6 +100,7 @@ DEFAULTS = {
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
+    "window_pct": 0.07,              # max live $ at risk across markets closing at the same time
     "shard": 2,                     # Kalshi exchange shard of crypto + commodities markets
     "fund_s": 300,                  # top the shard up to the pool this often (live only)
     "cut_after_fills": 100,         # a live series below cut_below_ct per contract after this
@@ -393,10 +394,10 @@ class Bot:
         self.state["fund_error"] = None
         return amt
 
-    def exposure(self, mode: str) -> float:
+    def exposure(self, mode: str, close: int | None = None) -> float:
         tot = 0.0
         for m in self.state["markets"].values():
-            if m.get("mode") != mode or m.get("graded"):
+            if m.get("mode") != mode or m.get("graded") or (close is not None and m.get("close") != close):
                 continue
             tot += m.get("cost", 0.0)
             o = m.get("order")
@@ -710,6 +711,12 @@ class Bot:
             b = self.bankroll(now) or 0
             if self.exposure("live") + q * n_new > s["pool_pct"] * b + 1e-9:
                 m["why"] = f"pool full (bankroll {b:.2f})"
+                return
+            # markets closing together can all lose together (Nov 8 10:30 PM ET: BTC, silver and
+            # copper all flipped). Keep one window's total below the daily stop so a single bad
+            # window can't pause the bot for the day.
+            if self.exposure("live", close=m["close"]) + q * n_new > s["window_pct"] * b + 1e-9:
+                m["why"] = f"window cap ({s['window_pct']:.0%} of {b:.2f})"
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, n_new, now)
