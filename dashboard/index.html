@@ -561,7 +561,7 @@ function drawM15(){
   bars($("#m15Hr"), m15Group(fs, hk, ["00","03","06","09","12","15","18","21"]), k => { const a = +k, f = x => x === 0 ? "12a" : x < 12 ? x + "a" : x === 12 ? "12p" : (x - 12) + "p"; return f(a); });
 }
 function m15Page(){
-  let h = liveAcctHTML() + m15HTML(true) + liveFillsHTML(true);
+  let h = liveAcctHTML() + m15HTML(true);
   const M = S.m15;
   const live = M ? M.rows.filter(r => r.mode === "live") : [];
   if (!live.length) return h;
@@ -1158,7 +1158,7 @@ function testsHTML(){
 }
 function renderOverview(){
   if (S.bot === "m15"){
-    $("#v-overview").innerHTML = m15Page();
+    $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
     drawM15();
     $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
     return;
@@ -1178,7 +1178,7 @@ function renderOverview(){
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
     ${sx.summary}${winsHTML(sx.tr, strats)}${moreBtn("all", "More all-time stats")}</div>`;
-  h = liveAcctHTML() + liveFillsHTML(false) + h;
+  h = liveAcctHTML() + h;
   if (isOpen("all")) h += sx.h;
   h += botMoneyHTML(capExp, B);
   h += `<h2>Right now <span class="sub">open bets</span></h2>`;
@@ -1261,7 +1261,7 @@ function renderOverview(){
     h += `<h2>Your manual trades</h2><div class="card list">` + manual.map(r => `<div class="item"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t">${esc(r.ticker)}</div><div class="s">${esc(r.title)}</div></div><div class="r">${r.count} @ ${Math.round(r.price * 100)}¢</div></div>`).join("") + `</div>`;
   }
   h += testsHTML();
-  $("#v-overview").innerHTML = h;
+  $("#v-overview").innerHTML = h + liveFillsHTML(false);
   $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
 
   if ($("#setAll")) $("#setAll").onclick = () => { S.setAll = !S.setAll; renderOverview(); };
