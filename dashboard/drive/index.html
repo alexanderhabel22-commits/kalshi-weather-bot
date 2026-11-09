@@ -359,12 +359,20 @@ const mShow = () => { mBtn.textContent = "♪ MUSIC: " + (Music.on ? "ON" : "OFF
 document.querySelectorAll("#btns button").forEach(b => b.addEventListener("pointerdown", e => e.stopPropagation()));
 // your own songs: picked from your computer, played locally in a loop, never uploaded anywhere
 const player = new Audio(), fileIn = document.getElementById("files"), myBtn = document.getElementById("mine"); let songs = [], si = 0;
-const playSong = () => { if (!songs.length) return; player.src = songs[si % songs.length].url; player.play(); myBtn.textContent = "♫ " + songs[si % songs.length].name.replace(/\.[^.]+$/, "").slice(0, 22).toUpperCase(); myBtn.className = "on"; };
+let resumeAt = 0;
+const playSong = () => { if (!songs.length) return; const sg = songs[si % songs.length];
+  if (player.dataset.url !== sg.url){ player.src = sg.url; player.dataset.url = sg.url;
+    if (resumeAt > 0){ const t = resumeAt; player.addEventListener("loadedmetadata", () => { player.currentTime = t; }, { once:true }); } }
+  resumeAt = 0; player.play(); myBtn.textContent = "♫ " + songs[si % songs.length].name.replace(/\.[^.]+$/, "").slice(0, 22).toUpperCase(); myBtn.className = "on"; };
 player.addEventListener("ended", () => { si++; playSong(); });
+// remember where the music was, so reopening the page picks up the same song at the same spot
+const savePos = () => { if (songs.length && player.dataset.url) try { localStorage.setItem("driveSongPos", JSON.stringify({ si:si % songs.length, t:player.currentTime })); } catch(e){} };
+setInterval(() => { if (!player.paused) savePos(); }, 2000);
+addEventListener("pagehide", savePos);
 myBtn.addEventListener("click", () => { if (songs.length && !player.paused){ player.pause(); myBtn.className = ""; } else if (songs.length) playSong(); else fileIn.click(); });
 myBtn.addEventListener("contextmenu", e => { e.preventDefault(); fileIn.click(); });
 const setSongs = files => { songs.forEach(x => URL.revokeObjectURL(x.url)); songs = files.map(f => ({ name:f.name, url:URL.createObjectURL(f) })); si = 0; };
-fileIn.addEventListener("change", () => { const files = [...fileIn.files]; setSongs(files); saveSongs(files); try { localStorage.setItem("driveMusic", "0"); } catch(e){}
+fileIn.addEventListener("change", () => { const files = [...fileIn.files]; setSongs(files); player.dataset.url = ""; try { localStorage.removeItem("driveSongPos"); } catch(e){} saveSongs(files); try { localStorage.setItem("driveMusic", "0"); } catch(e){}
   if (Music.on){ Music.stop(); mShow(); } playSong(); });
 // remember the picked songs in this browser (IndexedDB) so they come back next time; nothing leaves the computer
 function db(){ return new Promise((ok, no) => { const r = indexedDB.open("nightdrive", 1);
@@ -374,6 +382,7 @@ async function saveSongs(files){ try { const d = await db(), tx = d.transaction(
 (async () => { try { const d = await db(); const all = await new Promise((ok, no) => { const r = d.transaction("songs").objectStore("songs").getAll(); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); });
   if (!all.length) return;
   setSongs(all.map(x => new File([x.blob], x.name)));
+  try { const pos = JSON.parse(localStorage.getItem("driveSongPos") || "null"); if (pos && pos.si < songs.length){ si = pos.si; resumeAt = +pos.t || 0; } } catch(e){}
   myBtn.textContent = "♫ PLAY MY MUSIC";
   // browsers only allow sound after a click: start your songs on the first click anywhere
   addEventListener("pointerdown", () => { if (player.paused && !Music.on) playSong(); }, { once:true });
