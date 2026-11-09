@@ -83,6 +83,12 @@ def main(argv=None) -> int:
             digest.run_money_summary(cfg, now, http, dry_run=args.dry_run)
         except Exception as exc:  # reports must never break trading
             logging.exception("reports failed: %s", exc)
+        try:                         # milestone performance reviews (Alex, Nov 9)
+            from wxbot import review
+            for path in review.run(cfg, now, http, dry_run=args.dry_run):
+                print(f"review written: {path}")
+        except Exception as exc:  # reviews must never break trading
+            logging.exception("reviews failed: %s", exc)
         print(f"trade ({out['mode']}): placed {len(out['placed'])}, skipped {len(out['skipped'])}"
               + (f", stops: {out['stops']}" if out["stops"] else ""))
         return 0
