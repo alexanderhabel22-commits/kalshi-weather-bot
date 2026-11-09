@@ -35,10 +35,12 @@ export default {
 };
 
 async function account(env) {
-  const [bal, pos, fills] = await Promise.all([
+  const since = Math.floor(Date.now() / 1000) - 3 * 86400;
+  const [bal, pos, fills, sets] = await Promise.all([
     get(env, "/portfolio/balance"),
     get(env, "/portfolio/positions", "?limit=200&count_filter=position"),
     get(env, "/portfolio/fills", "?limit=25"),
+    get(env, "/portfolio/settlements", `?limit=200&min_ts=${since}`).catch(() => ({ settlements: [] })),
   ]);
   const cash = money(bal, "balance"), positions = money(bal, "portfolio_value");
   return {
@@ -47,6 +49,14 @@ async function account(env) {
     open: (pos.market_positions || []).map(p => ({
       ticker: p.ticker, position: num(p.position_fp ?? p.position),
       exposure: money(p, "market_exposure"), realized: money(p, "realized_pnl"),
+    })),
+    // settled markets of the last 3 days: what you paid, what came back (all $)
+    settlements: (sets.settlements || []).map(x => ({
+      ticker: x.ticker, result: x.market_result, at: x.settled_time,
+      yes: num(x.yes_count_fp ?? x.yes_count), no: num(x.no_count_fp ?? x.no_count),
+      cost: (money(x, "yes_total_cost") || 0) + (money(x, "no_total_cost") || 0),
+      revenue: money(x, "revenue") || 0,
+      fee: x.fee_cost == null ? 0 : (String(x.fee_cost).includes(".") ? +x.fee_cost : x.fee_cost / 100),
     })),
     fills: (fills.fills || []).map(f => ({
       id: f.trade_id || f.fill_id, ticker: f.ticker, side: f.side, action: f.action,
