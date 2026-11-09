@@ -40,6 +40,11 @@
   #btns button { font-family:Orbitron, sans-serif; font-size:12px; letter-spacing:.2em; color:var(--pink);
     background:rgba(12,2,34,.7); border:2px solid var(--pink); border-radius:8px; padding:8px 14px; cursor:pointer; box-shadow:0 0 10px rgba(255,61,242,.6); }
   #btns button.on { color:var(--cyan); border-color:var(--cyan); box-shadow:0 0 12px var(--cyan); }
+  #fillpop { position:fixed; top:24vh; left:50%; transform:translate(-50%,-20px); opacity:0; pointer-events:none; text-align:center;
+    font-family:Orbitron, sans-serif; color:var(--cyan); text-shadow:0 0 10px var(--cyan), 0 0 30px var(--cyan); transition:opacity .5s, transform .5s; }
+  #fillpop.show { opacity:1; transform:translate(-50%,0); }
+  #fillpop .big { font-family:Monoton, sans-serif; font-size:clamp(22px,3vw,44px); }
+  #fillpop .small { font-size:clamp(10px,1vw,14px); letter-spacing:.15em; margin-top:4px; color:#e9f6ff; }
   #help { position:fixed; right:2vw; bottom:2.6vh; font-size:10px; letter-spacing:.15em; color:#c9a8ff; opacity:.55; text-align:right; }
   #help a { color:inherit; }
 </style>
@@ -47,8 +52,9 @@
 <body>
 <div id="pnl" class="hud"><div class="lbl">TODAY · REAL MONEY</div><div class="num up" id="pnlNum">$0.00</div></div>
 <div id="sign" class="hud"><div class="box run" id="signBox">LOADING</div><div class="sub" id="signSub">connecting…</div></div>
-<div id="odo" class="hud"><div class="lbl">BANKROLL</div><div class="wheels" id="odoWheels"></div></div>
+<div id="odo" class="hud"><div class="lbl" id="odoLbl">BANKROLL</div><div class="wheels" id="odoWheels"></div></div>
 <div id="tip"></div>
+<div id="fillpop"></div>
 <div id="btns"><button id="recenter">⌖ CENTER (M)</button><button id="mine">♫ MY MUSIC</button><button id="music">♪ MUSIC: OFF</button></div>
 <input type="file" id="files" accept="audio/*,video/mp4,.mp3,.mp4,.m4a" multiple hidden>
 <div id="help">HOVER A ROADSIDE LIGHT FOR THE TRADE · DRAG TO LOOK · M TO RECENTER<br>
@@ -253,7 +259,7 @@ async function load(){
   const mainToday = main.filter(t => etDay(t.at) === today).reduce((s, t) => s + t.pnl, 0);
   const m15Today = +((m15s && m15s.pnl && m15s.pnl.live_days || {})[today] || 0);
   setPnl(mainToday + m15Today);
-  if (broll && broll.total != null) setOdo(+broll.total);
+  if (broll && broll.total != null && !live.ok) setOdo(+broll.total);
   // status sign
   const halted = (tstate && tstate.halted && Object.keys(tstate.halted).length) || (m15s && m15s.halted);
   const paused = m15s && m15s.day_stop === today;
@@ -274,6 +280,30 @@ function setOdo(v){
   [...s].forEach((c, i) => { const strip = cells[i].querySelector(".strip"); if (strip) strip.style.transform = `translateY(${-10 * +c}%)`; });
 }
 setOdo(0);
+
+/* ------------------------------------------------------------ live account feed (read-only Cloudflare worker, every 2 s) */
+// Source: tools/kalshi-account-worker.js. Signs with a READ-ONLY Kalshi key, so it can't trade.
+const ACCOUNT = "https://kalshi-account.alexanderhabel22.workers.dev/account";
+const live = { ok:false, seen:null, last:0 };
+async function pollAccount(){
+  if (document.hidden) return;
+  try {
+    const r = await fetch(ACCOUNT, { cache:"no-store" }); if (!r.ok) throw new Error(r.status);
+    const a = await r.json(); if (a.total == null) throw new Error("no total");
+    live.ok = true; live.last = Date.now(); setOdo(a.total);
+    const ids = (a.fills || []).map(f => f.id);
+    if (live.seen){ const fresh = (a.fills || []).filter(f => !live.seen.has(f.id)); if (fresh.length) showFill(fresh[0], fresh.length); }
+    live.seen = new Set(ids);
+    document.getElementById("odoLbl").textContent = "BANKROLL · LIVE";
+  } catch(e){ if (live.ok && Date.now() - live.last > 15e3){ live.ok = false; document.getElementById("odoLbl").textContent = "BANKROLL"; } }
+}
+let popT = 0;
+function showFill(f, n){
+  const el = document.getElementById("fillpop");
+  el.innerHTML = `<div class="big">FILLED</div><div class="small">${esc(f.action === "sell" ? "SOLD" : "BOUGHT")} ${esc(f.count)} ${esc(String(f.side).toUpperCase())} @ ${Math.round(100 * f.price)}¢ · ${esc(pretty(String(f.ticker).split("-")[0]))}${n > 1 ? ` · +${n - 1} more` : ""}</div>`;
+  el.className = "show"; clearTimeout(popT); popT = setTimeout(() => el.className = "", 5000);
+}
+pollAccount(); setInterval(pollAccount, 2000);
 load().catch(e => console.warn(e)).finally(() => posts.forEach(assignTrade));
 setInterval(() => load().catch(e => console.warn(e)), 60e3);
 
