@@ -1,5 +1,5 @@
 {
- "at": "2026-11-09T02:53:14+00:00",
+ "at": "2026-11-09T03:02:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,30 +7,30 @@
  "fund_error": null,
  "halted": null,
  "last_reject": null,
- "live_exposure": 1.74,
+ "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV082200-00": {
+  "KXBTC15M-26NOV082215-15": {
    "bid_ask": [
-    0.073,
-    0.074
-   ],
-   "mode": "live",
-   "order": false,
-   "why": "ok"
-  },
-  "KXCOPPER15M-26NOV082200-00": {
-   "bid_ask": [
-    0.35,
-    0.39
+    0.45,
+    0.46
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXSILVER15M-26NOV082200-00": {
+  "KXCOPPER15M-26NOV082215-15": {
    "bid_ask": [
-    0.039,
-    0.044
+    0.52,
+    0.56
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXSILVER15M-26NOV082215-15": {
+   "bid_ask": [
+    0.6,
+    0.61
    ],
    "mode": "live",
    "order": false,
@@ -42,23 +42,35 @@
  "pnl": {
   "live_days": {
    "2026-11-07": 0.17,
-   "2026-11-08": 7.02
+   "2026-11-08": 7.72
   },
-  "live_total": 7.19,
+  "live_total": 7.89,
   "paper_days": {
    "2026-11-07": -5.8,
-   "2026-11-08": -49.27
+   "2026-11-08": -47.26
   },
-  "paper_total": -55.07
+  "paper_total": -53.06
  },
  "series": {
   "KXBTC15M": {
-   "fills": 102,
-   "pnl": 3.35
+   "fills": 104,
+   "pnl": 3.6,
+   "recent": [
+    [
+     2,
+     0.25
+    ]
+   ]
   },
   "KXCOPPER15M": {
-   "fills": 22,
-   "pnl": 3.58
+   "fills": 24,
+   "pnl": 4.03,
+   "recent": [
+    [
+     2,
+     0.45
+    ]
+   ]
   },
   "KXSILVER15M": {
    "fills": 18,
@@ -68,7 +80,7 @@
  "shards": {
   "0": 11.177,
   "1": 0.0,
-  "2": 19.91,
+  "2": 18.38,
   "3": 0.0
  },
  "spot_ok": true,
