@@ -142,7 +142,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .share{height:4px;border-radius:2px;background:#18213b;margin:5px 0 3px;overflow:hidden}.share i{display:block;height:100%;border-radius:2px;opacity:.85}
 .legend b{font-family:var(--mono);font-weight:600;font-size:11.5px}
 .chead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}.chead b{font-family:var(--mono);font-size:24px;font-weight:700}.chead span{font-size:12px;color:var(--ink2)}
-.wl{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}.wl i{width:10px;height:14px;border-radius:2px;display:block}.wl i.w{background:#34d399}.wl i.l{background:#fb6b7b}
+.wl{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin-top:6px}.wl i{height:14px;border-radius:2px;display:block}.wl i.w{background:#34d399}.wl i.l{background:#fb6b7b}
 .berow{padding:6px 0}.berow .row{display:flex;justify-content:space-between;font-size:13px}.berow b{font-family:var(--mono);font-size:12.5px}
 .bebar{position:relative;height:8px;border-radius:4px;background:#18213b;margin:6px 0 4px}.bebar i{display:block;height:100%;border-radius:4px;opacity:.85}.bebar u{position:absolute;top:-3px;width:2px;height:14px;background:#e6ecff;transform:translateX(-1px)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2);margin-bottom:8px}
@@ -438,8 +438,8 @@ function m15ChartsHTML(fs){
       <div><div class="lbl">Best run</div><div class="val pos">${bestW} W</div></div>
       <div><div class="lbl">Worst run</div><div class="val ${worstL ? "neg" : ""}">${worstL} L</div></div>
     </div>
-    <div class="lbl" style="margin-top:14px">Last ${Math.min(60, fs.length)} fills <span class="mute" style="text-transform:none;letter-spacing:0">· oldest → newest</span></div>
-    <div class="wl">${fs.slice(-60).map(f => `<i class="${f.won ? "w" : "l"}" title="${esc(f.name)} ${f.won ? "won" : "lost"} ${money(f.pnl)}"></i>`).join("")}</div>
+    <div class="lbl" style="margin-top:14px">Last ${Math.min(100, fs.length)} fills <span class="mute" style="text-transform:none;letter-spacing:0">· ${fs.slice(-100).filter(f => f.won).length} won, ${fs.slice(-100).filter(f => !f.won).length} lost · oldest → newest, rows of 20</span></div>
+    <div class="wl">${fs.slice(-100).map(f => `<i class="${f.won ? "w" : "l"}" title="${esc(f.name)} ${f.won ? "won" : "lost"} ${money(f.pnl)}"></i>`).join("")}</div>
     <div class="mute" style="font-size:11px;margin-top:6px">Includes every market that closed through ${esc(thru)} ET${up ? ` (server upload ${esc(ago(up))})` : ""}. The server uploads every 15 minutes, so the newest 1-2 closes in the Kalshi app can take up to ~20 minutes to show here.</div>
     <div class="mute" style="font-size:11px;margin-top:6px">A win pays about 25¢, a loss costs about 75¢, so it needs roughly 3 wins per loss. The win rate has to stay above the break-even line.</div></div>`;
   const xm = ls.get("m15X") || "n";
