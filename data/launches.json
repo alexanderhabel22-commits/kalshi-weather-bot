@@ -2884,6 +2884,60 @@
    "status": "live",
    "title": "Serbian presidential election winner by candidate",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-09T22:00:26+00:00",
+   "example": "KXBRCHAMBERPRES-27FEB01-SCAV",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T17:00:34+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T22:00:26+00:00",
+   "median_spread": 0.07,
+   "n_open": 4,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (7c), so makers haven't arrived yet.",
+   "series": "KXBRCHAMBERPRES",
+   "status": "live",
+   "title": "Brazil Chamber of Deputies President",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-09T22:00:26+00:00",
+   "example": "KXEPSTEINFILES-28-JUL01",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T17:00:34+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T22:00:26+00:00",
+   "median_spread": 0.1,
+   "n_open": 5,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXEPSTEINFILES",
+   "status": "live",
+   "title": "When will the federal government release more Epstein files?",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-09T22:00:26+00:00",
+   "example": "KXFRPRESCANDCOUNT-27APR17-AL16",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T17:00:34+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T22:00:26+00:00",
+   "median_spread": 0.1,
+   "n_open": 4,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXFRPRESCANDCOUNT",
+   "status": "live",
+   "title": "How many candidates will be on the French presidential first-round ballot?",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -4490,6 +4544,7 @@
   "KXAUDUSDAD",
   "KXAUDUSDAH",
   "KXAUDUSDAW",
+  "KXAUDUSDEVENT",
   "KXAUDUSDH",
   "KXAUDUSDQ",
   "KXAUDUSDW",
@@ -17101,6 +17156,7 @@
   "KXUSDCADAD",
   "KXUSDCADAH",
   "KXUSDCADAW",
+  "KXUSDCADEVENT",
   "KXUSDCADW",
   "KXUSDCCAPACITY",
   "KXUSDCHFAD",
@@ -18897,7 +18953,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-09T21:30:25+00:00",
+ "last_check": "2026-11-09T22:00:26+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -18971,7 +19027,7 @@
   },
   "KXAFCCL2SPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -18981,7 +19037,7 @@
   },
   "KXAFCCL2TOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19039,6 +19095,16 @@
    "series": "KXAUDITORRACE",
    "title": "Auditor race winner?"
   },
+  "KXAUDUSDEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-09T22:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T22:00:26+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXAUDUSDEVENT",
+   "title": "AUD/USD after economic events"
+  },
   "KXAUSHOME": {
    "category": "Economics",
    "checked": "2026-11-09T21:30:25+00:00",
@@ -19061,7 +19127,7 @@
   },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T19:30:24+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19071,7 +19137,7 @@
   },
   "KXBELCHALLBTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T19:30:24+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19091,7 +19157,7 @@
   },
   "KXBELCHALLSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19101,7 +19167,7 @@
   },
   "KXBELCHALLTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19141,7 +19207,7 @@
   },
   "KXBOTOLASPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T19:30:24+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19151,23 +19217,13 @@
   },
   "KXBOTOLATOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T19:30:24+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXBOTOLATOTAL",
    "title": "Total"
-  },
-  "KXBRCHAMBERPRES": {
-   "category": "Elections",
-   "checked": "2026-11-09T19:00:29+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T17:00:34+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXBRCHAMBERPRES",
-   "title": "Brazil Chamber of Deputies President"
   },
   "KXBTCHITBY": {
    "category": "Crypto",
@@ -19221,7 +19277,7 @@
   },
   "KXCORRPAPERPPI": {
    "category": "Economics",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T19:00:29+00:00",
    "frequency": "quarterly",
@@ -19379,16 +19435,6 @@
    "series": "KXEPCRMATCH",
    "title": "European Professional Club Rugby Match"
   },
-  "KXEPSTEINFILES": {
-   "category": "Politics",
-   "checked": "2026-11-09T19:00:29+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T17:00:34+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXEPSTEINFILES",
-   "title": "When will the federal government release more Epstein files?"
-  },
   "KXEURUSDEVENT": {
    "category": "Financials",
    "checked": "2026-11-09T21:30:25+00:00",
@@ -19408,16 +19454,6 @@
    "new_category": false,
    "series": "KXEVERIFYLAW",
    "title": "E-Verify required by law"
-  },
-  "KXFRPRESCANDCOUNT": {
-   "category": "Elections",
-   "checked": "2026-11-09T19:00:29+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T17:00:34+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXFRPRESCANDCOUNT",
-   "title": "How many candidates will be on the French presidential first-round ballot?"
   },
   "KXGOPSTATESWEEP": {
    "category": "Elections",
@@ -19571,7 +19607,7 @@
   },
   "KXJ3LEAGUESPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19581,7 +19617,7 @@
   },
   "KXJ3LEAGUETOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19621,7 +19657,7 @@
   },
   "KXJUDGEFIRST": {
    "category": "Politics",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T01:00:26+00:00",
    "frequency": "monthly",
@@ -19781,7 +19817,7 @@
   },
   "KXNOR1DIVSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19791,7 +19827,7 @@
   },
   "KXNOR1DIVTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19891,7 +19927,7 @@
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T19:30:24+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19991,7 +20027,7 @@
   },
   "KXSUPERETTANADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T19:30:24+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -20091,7 +20127,7 @@
   },
   "KXTHUNELEADER": {
    "category": "Elections",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T18:00:32+00:00",
    "frequency": "one_off",
@@ -20171,7 +20207,7 @@
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -20181,13 +20217,23 @@
   },
   "KXULCCA": {
    "category": "Financials",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
    "new_category": false,
    "series": "KXULCCA",
    "title": "Frontier Group Holdings Annual KPI"
+  },
+  "KXUSDCADEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-09T22:00:26+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T22:00:26+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXUSDCADEVENT",
+   "title": "USD/CAD after economic events"
   },
   "KXVENICEHOME": {
    "category": "Economics",
@@ -20201,7 +20247,7 @@
   },
   "KXVETO120": {
    "category": "Politics",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T22:00:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T00:30:23+00:00",
    "frequency": "annual",
