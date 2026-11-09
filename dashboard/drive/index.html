@@ -300,7 +300,7 @@ async function pollAccount(){
 let popT = 0;
 function showFill(f, n){
   const el = document.getElementById("fillpop");
-  el.innerHTML = `<div class="big">FILLED</div><div class="small">${esc(f.action === "sell" ? "SOLD" : "BOUGHT")} ${esc(f.count)} ${esc(String(f.side).toUpperCase())} @ ${Math.round(100 * f.price)}¢ · ${esc(pretty(String(f.ticker).split("-")[0]))}${n > 1 ? ` · +${n - 1} more` : ""}</div>`;
+  el.innerHTML = `<div class="big">FILLED</div><div class="small">${esc(pretty(String(f.ticker).split("-")[0]))} · ${esc(+(+f.count).toFixed(2))} contract${+f.count === 1 ? "" : "s"}${n > 1 ? ` · +${n - 1} more` : ""}</div>`;
   el.className = "show"; clearTimeout(popT); popT = setTimeout(() => el.className = "", 5000);
 }
 pollAccount(); setInterval(pollAccount, 2000);
