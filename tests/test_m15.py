@@ -572,3 +572,56 @@ def test_daily_stop_guard_uses_room_left_today(monkeypatch):
     clk.t += 10
     b.step()
     assert cl.placed == [(TK, "yes", 0.73, 1)]
+
+
+def test_refused_retry_adopts_order_that_was_placed(monkeypatch):
+    """Nov 9: WTI held 4 contracts (max 2). A POST refused on retry ("post only cross") may
+    already have placed the order: the bot must find and track it, not place another."""
+    World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+
+    class Retry(Client):
+        def place_limit(self, ticker, side, price, count, cid):
+            super().place_limit(ticker, side, price, count, cid)
+            self.orders["o0"]["client_order_id"] = cid
+            raise OrderRejected("invalid order: post only cross")
+
+        def find_order(self, ticker, cid):
+            return next((o for o in self.orders.values() if o.get("client_order_id") == cid), {})
+    cl = Retry()
+    b = bot(cfg(mode="live", extra_contracts=0), clk, cl)
+    b.step()
+    assert b.state["markets"][TK]["order"]["id"] == "o0"
+    clk.t += 10
+    b.step()
+    assert len(cl.placed) == 1
+
+
+def test_untracked_resting_order_is_cancelled_and_booked(monkeypatch):
+    World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", extra_contracts=0), clk, cl)
+    b.step()
+    cl.orders["ghost"] = {"order_id": "ghost", "ticker": TK, "status": "resting",
+                          "fill_count": "1", "remaining_count": "1"}
+    b.sync_live(force=True)
+    assert "ghost" in cl.cancelled
+    assert b.state["markets"][TK]["filled"] == 1 and b.state["orphans"] == 1
+    assert "o0" not in cl.cancelled                            # the tracked order is left alone
+
+
+def test_failed_cancel_never_stacks_a_second_order(monkeypatch):
+    w = World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+
+    class Stuck(Client):
+        def cancel(self, oid, ticker=""):
+            raise m15.HttpError(503, "x", "busy")
+    cl = Stuck()
+    b = bot(cfg(mode="live", extra_contracts=0), clk, cl)
+    b.step()
+    w.book.update(yes_bid=0.75, yes_ask=0.77)                 # favourite firms: would requote
+    clk.t += 10
+    b.step()
+    assert len(cl.placed) == 1 and b.state["markets"][TK]["order"]["id"] == "o0"
