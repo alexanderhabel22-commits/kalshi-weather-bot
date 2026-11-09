@@ -532,3 +532,22 @@ def test_edge_decay_alert_then_rolling_cut(monkeypatch):
         b.series_check({"series": "KXBTC15M", "filled": 1, "close": T0}, -0.10)
     assert "KXBTC15M" in b.state["cut"]                                 # all-time still +
     assert b.state["series"]["KXBTC15M"]["pnl"] > 0
+
+
+def test_partial_contract_fill_is_kept_and_not_rebought(monkeypatch):
+    """Nov 9: Kalshi filled half a contract; int() read it as 0, the bot re-bid, and the
+    silver window ended with 2.5 contracts. Fractions are now kept and count toward the max."""
+    w = World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", extra_contracts=0), clk, cl)
+    b.step()
+    assert cl.placed == [(TK, "yes", 0.73, 1)]
+    cl.orders["o0"].update(fill_count="0.50", remaining_count="0.50")
+    w.book.update(yes_bid=0.74, yes_ask=0.76)                 # favourite firms: requote
+    clk.t += 10
+    b.step()
+    m = b.state["markets"][TK]
+    assert m["filled"] == 0.5                                  # kept, not truncated to 0
+    assert len(cl.placed) == 1                                 # 0.5 left: no whole contract to add
+    assert m15.qty_str(0.5) == 0.5 and m15.qty_str(2.0) == 2

@@ -50,7 +50,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import kalshi, notify
-from .kalshi_api import KalshiClient, OrderRejected, order_fill_count
+from .kalshi_api import KalshiClient, OrderRejected, fill_qty
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
 
 log = logging.getLogger("wxbot")
@@ -185,6 +185,12 @@ def desired_quote(m: dict, s: dict) -> tuple[str, float] | None:
         if b is not None and s["min_fav"] - 1e-9 <= b <= s["max_fav"] + 1e-9:
             return side, round(b, 2)
     return None
+
+
+def qty_str(x) -> int | float:
+    """Whole numbers stay ints in the CSV (2, not 2.0); partial fills keep 2 decimals."""
+    x = round(float(x or 0), 2)
+    return int(x) if x == int(x) else x
 
 
 def target_contracts(q: float | None, s: dict) -> int:
@@ -505,7 +511,7 @@ class Bot:
             try:
                 self.client.cancel(o["id"], m["ticker"])
                 ko = self.client.get_order(o["id"])
-                o["filled"] = max(o["filled"], order_fill_count(ko, o["n"]))
+                o["filled"] = max(o["filled"], fill_qty(ko, o["n"]))
             except HttpError as exc:
                 log.warning("cancel %s: %s", o["id"], exc)
         self._book(m, o, None)
@@ -555,7 +561,7 @@ class Bot:
             o = m.get("order")
             if o and m["mode"] == "live" and o.get("id"):
                 try:
-                    o["filled"] = max(o["filled"], order_fill_count(self.client.get_order(o["id"]), o["n"]))
+                    o["filled"] = max(o["filled"], fill_qty(self.client.get_order(o["id"]), o["n"]))
                 except HttpError:
                     pass
                 self._book(m, o, None)
@@ -569,7 +575,7 @@ class Bot:
         if self.kfeed is not None:
             for m in mine:
                 o = m["order"]
-                got = int(self.kfeed.fills.get(o["id"], 0))
+                got = round(float(self.kfeed.fills.get(o["id"], 0)), 2)
                 if got > o["filled"]:
                     o["filled"] = min(o["n"], got)
                     self._book(m, o, self.clock())
@@ -595,7 +601,7 @@ class Bot:
                 except HttpError as exc:
                     log.warning("order %s: %s", o["id"], exc)
                     continue
-            o["filled"] = max(o["filled"], order_fill_count(ko, o["n"]))
+            o["filled"] = max(o["filled"], fill_qty(ko, o["n"]))
             self._book(m, o, self.clock())
             if gone or o["filled"] >= o["n"]:
                 m["order"] = None
@@ -694,16 +700,19 @@ class Bot:
                 return
         if want is None or room <= 0 or now < m.get("retry_at", 0):
             return
+        n_new = int(room + 1e-9)                         # whole contracts only; a partial fill
+        if n_new < 1:                                    # (e.g. 1.5 held of 2) leaves no room
+            return
         side, q = want
         if m.get("fav_side") and side != m["fav_side"] and m["filled"]:
             return                                       # one side per market
         if m["mode"] == "live":
             b = self.bankroll(now) or 0
-            if self.exposure("live") + q * room > s["pool_pct"] * b + 1e-9:
+            if self.exposure("live") + q * n_new > s["pool_pct"] * b + 1e-9:
                 m["why"] = f"pool full (bankroll {b:.2f})"
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
-        self._place(m, side, q, room, now)
+        self._place(m, side, q, n_new, now)
 
     # ------------------------------------------------------------ grading
 
@@ -801,7 +810,7 @@ class Bot:
             "close": datetime.fromtimestamp(m["close"], timezone.utc).isoformat(timespec="seconds"),
             "fav_side": m.get("fav_side", ""), "first_q": m.get("first_q", ""),
             "last_q": m.get("last_q", ""), "quotes": m["quotes"], "contracts": self.s["contracts"],
-            "filled": m["filled"], "cost": round(m["cost"], 2), "fee": round(m["fee"], 2),
+            "filled": qty_str(m["filled"]), "cost": round(m["cost"], 2), "fee": round(m["fee"], 2),
             "fill_at": m.get("fill_at") or "",
             "fill_ttc_s": (m["close"] - m["fill_at"]) if m.get("fill_at") else "",
             "model_filled": 1 if m.get("model_filled") else 0,
@@ -828,8 +837,8 @@ class Bot:
             rs = [r for r in rows if r["mode"] == mode]
             if not rs:
                 continue
-            fills = [r for r in rs if int(r["filled"] or 0)]
-            n = sum(int(r["filled"]) for r in fills)
+            fills = [r for r in rs if float(r["filled"] or 0)]
+            n = round(sum(float(r["filled"]) for r in fills), 2)
             pnl = sum(float(r["pnl"] or 0) for r in fills)
             cpc = 100 * pnl / n if n else 0.0
             lines.append(f"{mode.upper()}: {len(fills)}/{len(rs)} markets filled, {n} contracts, "
@@ -837,7 +846,7 @@ class Bot:
             by = {}
             for r in fills:
                 b = by.setdefault(r["series"], [0, 0.0])
-                b[0] += int(r["filled"])
+                b[0] += float(r["filled"])
                 b[1] += float(r["pnl"])
             for ser, (k, p) in sorted(by.items(), key=lambda x: -x[1][1]):
                 lines.append(f"  {ser.replace('KX', '').replace('15M', '')}: {k} @ {100 * p / k:+.1f}c")

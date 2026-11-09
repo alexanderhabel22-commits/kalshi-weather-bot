@@ -227,6 +227,19 @@ def check_order(side: str, price: float, count: int) -> None:
         raise OrderRejected(f"bad price {price!r}")
 
 
+def fill_qty(order: dict, placed: float) -> float:
+    """Contracts filled so far, keeping fractions: Kalshi fills can be partial contracts
+    (Nov 9: a silver window ended with 2.5). int() truncation read 0.5 as 0, and the 15-min
+    bot then re-bid for a contract it already partly held."""
+    for k in ("fill_count_fp", "fill_count"):
+        if order.get(k) not in (None, ""):
+            return round(float(order[k]), 2)
+    for k in ("remaining_count_fp", "remaining_count"):
+        if order.get(k) not in (None, ""):
+            return round(max(0.0, placed - float(order[k])), 2)
+    return 0.0
+
+
 def order_fill_count(order: dict, placed: int) -> int:
     """Contracts filled so far, from a Kalshi order record."""
     for k in ("fill_count", "fill_count_fp"):
