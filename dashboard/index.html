@@ -142,7 +142,9 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .share{height:4px;border-radius:2px;background:#18213b;margin:5px 0 3px;overflow:hidden}.share i{display:block;height:100%;border-radius:2px;opacity:.85}
 .legend b{font-family:var(--mono);font-weight:600;font-size:11.5px}
 .chead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}.chead b{font-family:var(--mono);font-size:24px;font-weight:700}.chead span{font-size:12px;color:var(--ink2)}
-.wl{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin-top:6px}.wl i{height:14px;border-radius:2px;display:block}.wl i.w{background:#34d399}.wl i.l{background:#fb6b7b}
+.wl{display:grid;grid-template-columns:repeat(20,1fr);gap:3px;margin-top:6px}.wl i{aspect-ratio:1;min-height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center}.wl i svg{width:72%;height:72%;display:block}
+.wl i{cursor:pointer}.wl i.sel{outline:2px solid #fff;outline-offset:1px}
+.wlk{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:11px;color:var(--ink2)}.wlk span{display:inline-flex;align-items:center;gap:4px}.wlk i{width:14px;height:14px;border-radius:3px;background:#2a3452;display:inline-flex;align-items:center;justify-content:center}.wlk i svg{width:72%;height:72%}.wl i.w{background:#34d399}.wl i.l{background:#fb6b7b}
 .berow{padding:6px 0}.berow .row{display:flex;justify-content:space-between;font-size:13px}.berow b{font-family:var(--mono);font-size:12.5px}
 .bebar{position:relative;height:8px;border-radius:4px;background:#18213b;margin:6px 0 4px}.bebar i{display:block;height:100%;border-radius:4px;opacity:.85}.bebar u{position:absolute;top:-3px;width:2px;height:14px;background:#e6ecff;transform:translateX(-1px)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2);margin-bottom:8px}
@@ -405,6 +407,36 @@ function m15HTML(full){
   return h + `</div>`;
 }
 // graded real-money fills of the 15-min bot (Alex, Nov 8: real money only on this tab)
+// small white icon per market for the win/loss squares (Alex, Nov 9): coins get their logo letter or shape,
+// oil a barrel (WTI) or a drop (Brent), gas a flame, gold/silver an ingot, other metals their element symbol
+const M15I = (() => { const t = (c, fs = 10) => `<text x="6" y="${fs >= 9 ? 9.6 : 8.6}" font-size="${fs}" font-weight="800" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" fill="#fff">${c}</text>`;
+  const pth = (d, ex = "") => `<path d="${d}" fill="#fff" ${ex}/>`;
+  return {BTC:t("₿"), ETH:pth("M6 .6L9.8 6.2 6 8.3 2.2 6.2Z") + pth("M6 9.1L9.8 7 6 11.4 2.2 7Z"), SOL:pth("M3.2 1.6h7.3L8.8 3.7H1.5ZM1.5 5h7.3l1.7 2.1H3.2ZM3.2 8.3h7.3l-1.7 2.1H1.5Z"),
+    XRP:`<path d="M2.2 2.2L9.8 9.8M9.8 2.2L2.2 9.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>`, DOGE:t("Ð"), BNB:pth("M6 .8L11.2 6 6 11.2.8 6ZM6 4.2L4.2 6 6 7.8 7.8 6Z", 'fill-rule="evenodd"'),
+    NEAR:t("N"), HYPE:t("H"), ZEC:t("Z"), GOLD:pth("M3 3.6h6l2.4 5.6H.6Z"), SILVER:`<path d="M3.4 4.2h5.2l2 4.6H1.4Z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>`,
+    COPPER:t("Cu", 7.2), PALLADIUM:t("Pd", 7.2), PLATINUM:t("Pt", 7.2),
+    WTI:`<rect x="2.4" y="1" width="7.2" height="10" rx="1.8" fill="#fff"/><path d="M2.4 4.2h7.2M2.4 7.8h7.2" stroke="rgba(0,0,0,.45)" stroke-width="1"/>`,
+    BRENT:pth("M6 .8C6 .8 2.2 5.4 2.2 7.8a3.8 3.8 0 0 0 7.6 0C9.8 5.4 6 .8 6 .8Z"),
+    NATGAS:pth("M6.2.6c.6 2.2 3.4 3.6 3.4 6.8a3.6 3.6 0 0 1-7.2 0c0-1.9 1.2-3 1.6-4.4.8.9 1 1.9 1 2.6 1-1.2 1.5-2.9 1.2-5Z")}; })();
+// what a tapped win/loss square shows: one graded real-money fill
+function m15Detail(f){
+  if (!f) return `<span class="mute">Tap a square for that trade's details</span>`;
+  const r = f.r, c = v => Math.round(v * 100) + "¢", t = new Date(f.t), side = String(r.fav_side || "").toUpperCase();
+  const ttc = f.ttc == null ? null : Math.max(0, Math.round(f.ttc / 60)), fillAt = num(r.fill_at, null);
+  const rows = [["Market", `${f.name} · window closing ${fmt(t, {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"})} ET`],
+    ["Bet", `${side} · ${f.n} contract${f.n === 1 ? "" : "s"} @ ${c(f.px)}${f.n > 1 ? " avg" : ""}`],
+    ["Filled", fillAt ? `${fmt(new Date(fillAt * 1000), {hour:"numeric", minute:"2-digit"})} ET${ttc != null ? ` · ${ttc} min before close` : ""}` : ttc != null ? `${ttc} min before close` : ""],
+    ["Result", `${f.won ? "won" : "lost"} · settled ${String(r.result || "").toUpperCase()}`],
+    ["Cost", `$${num(r.cost).toFixed(2)} + $${num(r.fee).toFixed(2)} fee · break-even ${Math.round(f.be * 100)}%`],
+    ["Paid out", `$${(f.won ? f.n : 0).toFixed(2)}`], ["P&L", `${money(f.pnl)} · ${cents(100 * f.pnl / f.n)}/ct`],
+    ["Spot vs target at fill", r.spot_bps !== "" && r.spot_bps != null ? `${num(r.spot_bps) > 0 ? "+" : ""}${num(r.spot_bps).toFixed(1)} bps` : ""],
+    ["Order pulled", num(r.pulls) ? `${r.pulls}x before filling` : ""]].filter(x => x[1]);
+  return `<div style="display:flex;justify-content:space-between;align-items:center"><b>${m15IconInline(f.name)} ${esc(f.name)} ${side}</b><b class="${cls(f.pnl)}">${money(f.pnl)}</b></div>`
+    + rows.map(([k, v]) => `<div class="mute"><span style="color:var(--ink2)">${k}:</span> ${esc(v)}</div>`).join("")
+    + `<div><a href="${kalshiURL({ticker:r.ticker})}" target="_blank" rel="noopener">open on Kalshi ↗</a></div>`;
+}
+function m15IconInline(n){ return `<i style="width:14px;height:14px;border-radius:3px;background:#2a3452;display:inline-flex;align-items:center;justify-content:center;vertical-align:-2px">${m15Icon(n).replace("<svg ", '<svg style="width:72%;height:72%" ')}</i>`; }
+function m15Icon(n){ return `<svg viewBox="0 0 12 12" aria-hidden="true">${M15I[n] || `<text x="6" y="9.4" font-size="9" font-weight="800" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" fill="#fff">${esc(String(n || "?")[0])}</text>`}</svg>`; }
 const M15C = {BTC:"#f7931a", SILVER:"#a8b2bd", COPPER:"#b4532a", GOLD:"#ffd700", PALLADIUM:"#a78bfa", PLATINUM:"#7dd3fc", WTI:"#14b8a6", BRENT:"#8b5a2b", NATGAS:"#3b82f6"};   // match the metal/coin (Alex, Nov 9); palladium/platinum are silver-white metals, so violet/ice blue; oil = petrol teal (WTI) and crude brown (Brent)
 const darkC = c => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m) return false; const v = parseInt(m[1], 16); return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) < 70; };   // too dark to see on the dark page: draw a light outline under it
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
@@ -440,7 +472,9 @@ function m15ChartsHTML(fs){
       <div><div class="lbl">Worst run</div><div class="val ${worstL ? "neg" : ""}">${worstL} L</div></div>
     </div>
     <div class="lbl" style="margin-top:14px">Last ${Math.min(100, fs.length)} fills <span class="mute" style="text-transform:none;letter-spacing:0">· ${fs.slice(-100).filter(f => f.won).length} won, ${fs.slice(-100).filter(f => !f.won).length} lost · oldest → newest, rows of 20</span></div>
-    <div class="wl">${fs.slice(-100).map(f => `<i class="${f.won ? "w" : "l"}" title="${esc(f.name)} ${f.won ? "won" : "lost"} ${money(f.pnl)}"></i>`).join("")}</div>
+    <div class="wl" id="m15WL">${fs.slice(-100).map(f => `<i class="${f.won ? "w" : "l"}${S.m15Sel === f.r.ticker ? " sel" : ""}" data-tk="${esc(f.r.ticker)}" title="${esc(f.name)} ${f.won ? "won" : "lost"} ${money(f.pnl)}">${m15Icon(f.name)}</i>`).join("")}</div>
+    <div class="bcap" id="m15WD">${m15Detail(fs.find(f => f.r.ticker === S.m15Sel))}</div>
+    <div class="wlk">${[...new Set(fs.slice(-100).map(f => f.name))].sort().map(n => `<span><i>${m15Icon(n)}</i>${esc(n === "WTI" ? "WTI oil" : n === "BRENT" ? "Brent oil" : n === "NATGAS" ? "Nat gas" : n.length <= 3 ? n : n.charAt(0) + n.slice(1).toLowerCase())}</span>`).join("")}</div>
     <div class="mute" style="font-size:11px;margin-top:6px">Includes every market that closed through ${esc(thru)} ET${up ? ` (server upload ${esc(ago(up))})` : ""}. The server uploads every 15 minutes, so the newest 1-2 closes in the Kalshi app can take up to ~20 minutes to show here.</div>
     <div class="mute" style="font-size:11px;margin-top:6px">A win pays about 25¢, a loss costs about 75¢, so it needs roughly 3 wins per loss. The win rate has to stay above the break-even line.</div></div>`;
   const xm = ls.get("m15X") || "n";
@@ -456,6 +490,9 @@ function m15ChartsHTML(fs){
 const M15R = {"1H":3600e3, "12H":432e5, "1D":864e5, "1W":7 * 864e5, "1M":30 * 864e5, "ALL":Infinity};
 function drawM15(){
   const fs = m15Fills(); if (!fs.length || !$("#m15Cum")) return;
+  if ($("#m15WL")) $("#m15WL").onclick = e => { const i = e.target.closest("i[data-tk]"); if (!i) return; const tk = i.dataset.tk;
+    S.m15Sel = S.m15Sel === tk ? null : tk; $("#m15WL").querySelectorAll("i").forEach(x => x.classList.toggle("sel", x.dataset.tk === S.m15Sel));
+    $("#m15WD").innerHTML = m15Detail(fs.find(f => f.r.ticker === S.m15Sel)); };
   const names = [...new Set(fs.map(f => f.name))], col = (n, i) => M15C[n] || EXTRA[i % EXTRA.length];
   const now = Date.now(), PACE = 0.03, RULES = Date.parse("2026-11-08T22:50:00Z");
   const byN = () => (ls.get("m15X") || "n") === "n";
