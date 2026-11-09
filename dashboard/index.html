@@ -151,7 +151,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .mkrow{display:grid;grid-template-columns:92px 1fr 78px;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--line,#1e2640)}
 .mkrow>div{display:flex;flex-direction:column;gap:2px;font-size:12px}.mkrow>div:first-child{position:relative;padding-left:12px}
 .mkrow i{position:absolute;left:0;top:5px;width:6px;height:6px;border-radius:50%}.mkrow b{font-family:var(--mono);font-size:13px}.mkrow span{font-size:11px}
-.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}
+.legend i{width:12px;height:3px;border-radius:2px;display:inline-block}.legend i,.mkrow i{box-shadow:0 0 0 1px rgba(203,213,225,.45)}
 .tbl-wrap{overflow-x:auto;margin:0 -4px}
 .tbl{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
 .tbl th{font-size:10px;font-weight:500;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;text-align:right;padding:0 4px 6px}
@@ -405,7 +405,8 @@ function m15HTML(full){
   return h + `</div>`;
 }
 // graded real-money fills of the 15-min bot (Alex, Nov 8: real money only on this tab)
-const M15C = {BTC:"#f7931a", SILVER:"#38bdf8", COPPER:"#f472b6", PALLADIUM:"#a78bfa", PLATINUM:"#4ade80", WTI:"#2dd4bf", GOLD:"#facc15", BRENT:"#fb923c", NATGAS:"#60a5fa"};   // distinct hues: white = total, orange/blue/pink = markets
+const M15C = {BTC:"#f7931a", SILVER:"#a8b2bd", COPPER:"#b4532a", GOLD:"#ffd700", PALLADIUM:"#a78bfa", PLATINUM:"#7dd3fc", WTI:"#000000", BRENT:"#6b4423", NATGAS:"#3b82f6"};   // match the metal/coin (Alex, Nov 9); palladium/platinum are silver-white metals, so violet/ice blue; oil black with a light outline
+const darkC = c => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m) return false; const v = parseInt(m[1], 16); return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) < 70; };   // too dark to see on the dark page: draw a light outline under it
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
 function m15Fills(){
   const M = S.m15; if (!M) return [];
@@ -478,7 +479,7 @@ function drawM15(){
   const spark = (pts, c, x0, x1, step, sm) => { const W = 120, H = 34, ys = pts.map(p => p.y), lo = Math.min(0, ...ys), hi = Math.max(0, ...ys), sp = hi - lo || 1;
     const X = x => ((x - x0) / ((x1 - x0) || 1)) * W, Y = y => H - 2 - ((y - lo) / sp) * (H - 4);
     let d = ""; if (sm && pts.length > 2) d = smoothPath(pts.map(p => [X(p.x), Y(p.y)])); else pts.forEach((p, i) => { d += i ? (step ? `H${X(p.x).toFixed(1)}V${Y(p.y).toFixed(1)}` : `L${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`) : `M${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`; });
-    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3a4466" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/><path d="${d}" fill="none" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`; };
+    return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3a4466" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>${darkC(c) ? `<path d="${d}" fill="none" stroke="#cbd5e1" stroke-width="4.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>` : ""}<path d="${d}" fill="none" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`; };
   const draw = () => { const n = byN(), r = rng();
     $("#m15Head").innerHTML = `<b class="${cls(ser[0].tot)}">${money(ser[0].tot)}</b><span>${k} contracts · ${sel.length} fills ${r === "ALL" ? "since " + esc(fday(new Date(fs[0].t))) : RL[r]}${k ? ` · ${cents(100 * ser[0].tot / k)}/ct` : ""}</span>`;
     $("#m15Leg").innerHTML = ser.map(x => `<span><i style="background:${x.c}"></i>${esc(x.name)} <b class="${x.pace ? "mute" : cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
@@ -758,6 +759,7 @@ function lineChart(el, series, o={}){
       paths += `<defs><linearGradient id="${gid}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${s.c}" stop-opacity=".28"/><stop offset="1" stop-color="${s.c}" stop-opacity="0"/></linearGradient></defs>`;
       paths += `<path d="${d}L${X(s.pts.at(-1).x)},${Y(Math.max(y0, 0))}L${X(s.pts[0].x)},${Y(Math.max(y0, 0))}Z" fill="url(#${gid})"/>`;
     }
+    if (darkC(s.c)) paths += `<path d="${d}" fill="none" stroke="#cbd5e1" stroke-width="${(s.w || 2) + 2.5}" stroke-linejoin="round" stroke-linecap="round" ${s.dash ? 'stroke-dasharray="4 3"' : ""}/>`;
     paths += `<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w || 2}" stroke-linejoin="round" stroke-linecap="round" ${i === 0 ? `style="filter:drop-shadow(0 0 4px ${s.c}88)"` : ""} ${s.dash ? 'stroke-dasharray="4 3"' : ""}/>`;
     const L = s.pts.at(-1); paths += `<circle cx="${X(L.x)}" cy="${Y(L.y)}" r="3.5" fill="${s.c}" stroke="#070a12" stroke-width="2"/>`;
   });
