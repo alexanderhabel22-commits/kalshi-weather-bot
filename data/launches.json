@@ -2722,6 +2722,24 @@
    "status": "live",
    "title": "Bitcoin above $90,000 by a date",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Crypto",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "example": "KXBTCHIT95K-01JAN270000-9500000-YES",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T17:30:25+00:00",
+   "frequency": "custom",
+   "markets_seen": "2026-11-09T20:00:32+00:00",
+   "median_spread": 0.1,
+   "n_open": 1,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXBTCHIT95K",
+   "status": "live",
+   "title": "Bitcoin above $95,000 by a date",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -3724,6 +3742,7 @@
   "KXAGNOMSCR",
   "KXAGNOMTXD",
   "KXAGNOMTXR",
+  "KXAGRACE",
   "KXAGTELIMINATION",
   "KXAGTWINNER",
   "KXAGUASCALIENTESGOV",
@@ -5768,6 +5787,7 @@
   "KXCOLOMHYDESMITHDEBATE",
   "KXCOLOMSCHUMER",
   "KXCOLONIZEMARS",
+  "KXCOLORADOSPRINGSMAYOR",
   "KXCOLUMBPRESIDENT",
   "KXCOMEYDISMISS",
   "KXCOMEYNDIDISMISS",
@@ -6337,6 +6357,7 @@
   "KXDENSUPERLIGASPREAD",
   "KXDENSUPERLIGATOTAL",
   "KXDENTONCOUNTYJUDGE",
+  "KXDENVERMAYOR",
   "KXDEPCIA",
   "KXDEPORTATION",
   "KXDEPORTATIONS",
@@ -8277,6 +8298,7 @@
   "KXGOVNJNOMR",
   "KXGOVNMNOMD",
   "KXGOVNMNOMR",
+  "KXGOVNOM",
   "KXGOVNVNOMD",
   "KXGOVNYNOMD",
   "KXGOVNYNOMR",
@@ -8994,6 +9016,7 @@
   "KXINDCOUNT",
   "KXINDEXADD",
   "KXINDIACLIMATE",
+  "KXINDIANAPOLISMAYORNOMD",
   "KXINDIANAPOWELL",
   "KXINDIANPM",
   "KXINDIAOIL",
@@ -9286,6 +9309,7 @@
   "KXJACKBOYS2",
   "KXJACKSMITHCHARGE",
   "KXJACKSONOPEN",
+  "KXJACKSONVILLEMAYOR",
   "KXJACWSNOWM",
   "KXJAMAICANHOR",
   "KXJAMESBEARD",
@@ -10191,6 +10215,7 @@
   "KXLTGOVID",
   "KXLTGOVOK",
   "KXLTGOVOKNOMR",
+  "KXLTGOVRACE",
   "KXLTGOVRI",
   "KXLTGOVRINOMD",
   "KXLTGOVTX",
@@ -13360,6 +13385,7 @@
   "KXPHARMARACEM",
   "KXPHARMARACETEST",
   "KXPHEIC",
+  "KXPHILADELPHIAMAYORNOMD",
   "KXPHILHIGH",
   "KXPHILIPPINESHOUSE",
   "KXPHILIPPINESPRES",
@@ -14355,6 +14381,7 @@
   "KXSANHSNAP",
   "KXSANTACATARINA",
   "KXSANTAFEGOV",
+  "KXSANTAMONICAHOME",
   "KXSAOPAULOSENATE",
   "KXSAOTOMEPRES",
   "KXSAPPOROMAYOR",
@@ -14622,6 +14649,7 @@
   "KXSENATENHD",
   "KXSENATENHR",
   "KXSENATENJR",
+  "KXSENATENOM",
   "KXSENATENYD",
   "KXSENATEOHSD",
   "KXSENATEOHSR",
@@ -14996,6 +15024,7 @@
   "KXSONORAGOV",
   "KXSORA",
   "KXSORONDO",
+  "KXSOSRACE",
   "KXSOTHLEAVE",
   "KXSOTW",
   "KXSOUTHPARKMENTION",
@@ -15645,6 +15674,7 @@
   "KXTALARICOPRIMARYCOUNTIES",
   "KXTALLAHASSEEMAYOR",
   "KXTALLSHIPRACE",
+  "KXTAMPAMAYOR",
   "KXTANZANIANPRES",
   "KXTANZANIAPRES",
   "KXTAOL",
@@ -16435,6 +16465,9 @@
   "KXTTANA",
   "KXTTELITEGAME",
   "KXTTELITEMATCH",
+  "KXTTFD",
+  "KXTTFMON",
+  "KXTTFW",
   "KXTTMATCH",
   "KXTTNSNOWM",
   "KXTTSTARMATCH",
@@ -18695,7 +18728,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-09T19:30:24+00:00",
+ "last_check": "2026-11-09T20:00:32+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -18787,6 +18820,16 @@
    "series": "KXAFCCL2TOTAL",
    "title": "Total"
   },
+  "KXAGRACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXAGRACE",
+   "title": "Attorney General race winner?"
+  },
   "KXAISCORE": {
    "category": "Science and Technology",
    "checked": "2026-11-09T19:30:24+00:00",
@@ -18839,7 +18882,7 @@
   },
   "KXBELCHALLGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18869,7 +18912,7 @@
   },
   "KXBOTOLAADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18879,7 +18922,7 @@
   },
   "KXBOTOLABTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18889,7 +18932,7 @@
   },
   "KXBOTOLAGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18937,19 +18980,9 @@
    "series": "KXBRSENATEPRES",
    "title": "Brazil Senate President"
   },
-  "KXBTCHIT95K": {
-   "category": "Crypto",
-   "checked": "2026-11-09T17:30:25+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T17:30:25+00:00",
-   "frequency": "custom",
-   "new_category": false,
-   "series": "KXBTCHIT95K",
-   "title": "Bitcoin above $95,000 by a date"
-  },
   "KXBTCHITBY": {
    "category": "Crypto",
-   "checked": "2026-11-09T17:30:25+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T17:30:25+00:00",
    "frequency": "custom",
@@ -18976,6 +19009,16 @@
    "new_category": false,
    "series": "KXCHIPEXPORTLAW",
    "title": "Chip export restrictions"
+  },
+  "KXCOLORADOSPRINGSMAYOR": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXCOLORADOSPRINGSMAYOR",
+   "title": "Who will win the Colorado Springs, Colorado mayoral election?"
   },
   "KXCORRPAPERPPI": {
    "category": "Economics",
@@ -19006,6 +19049,16 @@
    "new_category": false,
    "series": "KXDEMWHIP120",
    "title": "House Democratic Whip (120th Congress)"
+  },
+  "KXDENVERMAYOR": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXDENVERMAYOR",
+   "title": "Who will win the Denver, Colorado mayoral election?"
   },
   "KXDREAMERHOUSE": {
    "category": "Politics",
@@ -19137,6 +19190,16 @@
    "series": "KXFRPRESCANDCOUNT",
    "title": "How many candidates will be on the French presidential first-round ballot?"
   },
+  "KXGOVNOM": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXGOVNOM",
+   "title": "Governor nominee?"
+  },
   "KXH200REVOKE": {
    "category": "Politics",
    "checked": "2026-11-09T18:00:33+00:00",
@@ -19217,6 +19280,16 @@
    "series": "KXIMPEACHPEOPLE",
    "title": "Number of people the House impeaches before 2028"
   },
+  "KXINDIANAPOLISMAYORNOMD": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXINDIANAPOLISMAYORNOMD",
+   "title": "Indianapolis Democratic mayoral primary winner?"
+  },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
    "checked": "2026-11-09T18:30:26+00:00",
@@ -19267,9 +19340,19 @@
    "series": "KXJ3LEAGUETOTAL",
    "title": "Total"
   },
+  "KXJACKSONVILLEMAYOR": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXJACKSONVILLEMAYOR",
+   "title": "Who will win the Jacksonville, Florida mayoral election?"
+  },
   "KXJBLUA": {
    "category": "Financials",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
@@ -19316,6 +19399,16 @@
    "new_category": false,
    "series": "KXLIGAPORTUGAL2ADVANCE",
    "title": "Advance"
+  },
+  "KXLTGOVRACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXLTGOVRACE",
+   "title": "Lieutenant Governor race winner?"
   },
   "KXLVBPGAME": {
    "category": "Sports",
@@ -19427,6 +19520,16 @@
    "series": "KXPARAGUAYIMPEACH",
    "title": "Will Santiago Pe\u00f1a be impeached?"
   },
+  "KXPHILADELPHIAMAYORNOMD": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXPHILADELPHIAMAYORNOMD",
+   "title": "Philadelphia Democratic mayoral nominee"
+  },
   "KXPRESRUNBOTH2": {
    "category": "Elections",
    "checked": "2026-11-09T18:30:26+00:00",
@@ -19487,6 +19590,16 @@
    "series": "KXSAFFADVANCE",
    "title": "Advance"
   },
+  "KXSANTAMONICAHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXSANTAMONICAHOME",
+   "title": "Santa Monica home values"
+  },
   "KXSARMEDSERVICESCHAIR": {
    "category": "Politics",
    "checked": "2026-11-09T18:30:26+00:00",
@@ -19496,6 +19609,16 @@
    "new_category": false,
    "series": "KXSARMEDSERVICESCHAIR",
    "title": "Senate Armed Services chair"
+  },
+  "KXSENATENOM": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXSENATENOM",
+   "title": "Senate nominee?"
   },
   "KXSERBIAPRESPERSON": {
    "category": "Elections",
@@ -19527,6 +19650,16 @@
    "series": "KXSINTELCHAIR",
    "title": "Senate Intelligence chair"
   },
+  "KXSOSRACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSOSRACE",
+   "title": "Secretary of State race winner?"
+  },
   "KXSPRLVLDATE": {
    "category": "Politics",
    "checked": "2026-11-09T19:30:24+00:00",
@@ -19549,7 +19682,7 @@
   },
   "KXSUPERETTANBTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19559,7 +19692,7 @@
   },
   "KXSUPERETTANGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19599,13 +19732,23 @@
   },
   "KXTA": {
    "category": "Financials",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:00:32+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
    "new_category": false,
    "series": "KXTA",
    "title": "TELUS Annual KPI"
+  },
+  "KXTAMPAMAYOR": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTAMPAMAYOR",
+   "title": "Who will win the Tampa, Florida mayoral election?"
   },
   "KXTARIFFRICEINDIA": {
    "category": "Politics",
@@ -19646,6 +19789,36 @@
    "new_category": false,
    "series": "KXTRUMPMEETDEMS",
    "title": "Which Democrats will Trump meet?"
+  },
+  "KXTTFD": {
+   "category": "Financials",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "daily",
+   "new_category": false,
+   "series": "KXTTFD",
+   "title": "Dutch TTF gas daily"
+  },
+  "KXTTFMON": {
+   "category": "Financials",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXTTFMON",
+   "title": "Dutch TTF gas monthly"
+  },
+  "KXTTFW": {
+   "category": "Financials",
+   "checked": "2026-11-09T20:00:32+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:00:32+00:00",
+   "frequency": "weekly",
+   "new_category": false,
+   "series": "KXTTFW",
+   "title": "Dutch TTF gas weekly"
   },
   "KXTXLTGOVPOWERS": {
    "category": "Politics",
