@@ -1,7 +1,7 @@
 """Milestone performance reviews (Alex, Nov 9 2026).
 
 Every live bot gets an automatic review when its real-money contract count first
-passes 300, 500, 750, 1,000, 2,000 and 5,000, then every 5,000 after that. A "bot"
+passes 100 (an early check-in), 300, 500, 750, 1,000, 2,000 and 5,000, then every 5,000 after that. A "bot"
 is one 15-minute market (BTC, silver, ...) or one main-bot strategy (Mentions,
 favorites, ...). Each review is written to reports/reviews/ and pushed to ntfy.
 
@@ -24,7 +24,7 @@ from pathlib import Path
 from .util import DATA_DIR, Config, read_json, write_json
 
 REVIEW_DIR = Path(DATA_DIR).parent / "reports" / "reviews"
-FIRST = [300, 500, 750, 1000, 2000, 5000]
+FIRST = [100, 300, 500, 750, 1000, 2000, 5000]   # 100 = early check-in (Alex, Nov 9)
 EVERY = 5000
 NAMES = {"KXBTC15M": "BTC", "KXSILVER15M": "Silver", "KXCOPPER15M": "Copper",
          "KXPALLADIUM15M": "Palladium", "KXPLATINUM15M": "Platinum", "KXWTI15M": "WTI oil",
@@ -210,6 +210,7 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
     state_path = trader.STATE
     state = read_json(state_path, {}) or {}
     done = state.get("reviews") or {}
+    seed = not state.get("reviews_seeded_100")   # bots already past 100 on Nov 9 skip that check-in
     last = state.get("reviews_checked_at")
     try:                              # an hourly check is plenty (milestones are days apart)
         if last and (now - datetime.fromisoformat(last)).total_seconds() < 3300:
@@ -225,6 +226,8 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
         units.sort(key=lambda u: u["at"])
         n = sum(u["n"] for u in units)
         mark = milestone(n)
+        if seed and mark == 100:
+            done.setdefault(series, 100)
         if mark and mark > int(done.get(series, 0)):
             first = units[0]["at"]
             try:
@@ -243,6 +246,8 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
     for strat, units in main_units(rows, live_main).items():
         n = sum(u["n"] for u in units)
         mark = milestone(n)
+        if seed and mark == 100:
+            done.setdefault(strat, 100)
         if mark and mark > int(done.get(strat, 0)):
             ctx = {"bot": "main bot", "contracts": (tcfg.get(strat) or {}).get("contracts", 1),
                    "days": max(1, (now - datetime.fromisoformat("2026-11-05T23:03:00+00:00")).days),
@@ -261,6 +266,7 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
     if not dry_run:
         state = read_json(state_path, {}) or {}
         state["reviews"] = done
+        state["reviews_seeded_100"] = True
         state["reviews_checked_at"] = now.isoformat(timespec="seconds")
         write_json(state_path, state)
     if todo:

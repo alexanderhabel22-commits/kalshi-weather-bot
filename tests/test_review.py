@@ -2,7 +2,8 @@ from wxbot import review
 
 
 def test_milestones():
-    assert review.milestone(299) == 0
+    assert review.milestone(99) == 0
+    assert review.milestone(299) == 100
     assert review.milestone(300) == 300
     assert review.milestone(749) == 500
     assert review.milestone(1999) == 1000
