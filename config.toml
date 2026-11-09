@@ -218,7 +218,10 @@ paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for n
 mode = "live"                    # off | paper | live. LIVE from the start (Alex, Nov 8: "this is the
                                  # test", no paper run). Without a Kalshi key on the server it stays
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
-live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M"]   # real money only on these
+live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M", "KXPALLADIUM15M"]   # real money only on these
+                                 # palladium live Nov 9 (Alex OK). Paper: 106 ct +7.7c, earned on
+                                 # whole-window bids (early +8.6c on 96 ct; last 5 min only 10 ct), so it
+                                 # keeps the tested whole-window timing (no max_left_s entry).
 contracts = 1                    # per market
 extra_contracts = 1              # ON Nov 8 5:15 PM ET (Alex OK'd): +1 contract while the
 extra_min = 0.80                 # favourite is 80-87c (backtest +11c/ct; live the bot buys at ~73c
