@@ -470,6 +470,11 @@ class Bot:
                 m["retry_at"] = now + 3
                 m["why"] = f"order rejected: {str(exc)[:200]}"
                 self.state["last_reject"] = {"at": int(now), "ticker": m["ticker"], "error": str(exc)[:300]}
+                if "post only cross" in str(exc):
+                    # benign race: the ask moved onto our price before the order landed. The next
+                    # step re-reads the book and requotes; don't count it toward the alert
+                    # (Nov 8: 5 of these in one fast window pushed a false "rejected" alert).
+                    return False
                 self.rejects = getattr(self, "rejects", 0) + 1
                 if self.rejects == 5:
                     self.alert("15-min bot: live orders rejected",
