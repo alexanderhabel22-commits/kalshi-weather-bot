@@ -443,8 +443,8 @@ function m15ChartsHTML(fs){
     <div class="mute" style="font-size:11px;margin-top:6px">Includes every market that closed through ${esc(thru)} ET${up ? ` (server upload ${esc(ago(up))})` : ""}. The server uploads every 15 minutes, so the newest 1-2 closes in the Kalshi app can take up to ~20 minutes to show here.</div>
     <div class="mute" style="font-size:11px;margin-top:6px">A win pays about 25¢, a loss costs about 75¢, so it needs roughly 3 wins per loss. The win rate has to stay above the break-even line.</div></div>`;
   const xm = ls.get("m15X") || "n";
-  h += `<h2>Profit over time <span class="sub">real money</span></h2><div class="card"><div class="rng" id="m15X" style="--rc:#f5b335;margin:0 0 10px">${[["n","By trade"],["t","By time"]].map(([k, l]) => `<button data-x="${k}" class="${xm === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="chead" id="m15Head"></div><div class="rng" id="m15L" style="--rc:#94a3c8;margin:0 0 6px">${[["t","Total only"],["a","All markets"]].map(([k, l]) => `<button data-l="${k}" class="${(ls.get("m15L") || "t") === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="rng" id="m15R" style="--rc:#f5b335;margin:2px 0 8px">${Object.keys(M15R).map(r => `<button data-r="${r}" class="${(ls.get("m15R") || "ALL") === r ? "on" : ""}">${r}</button>`).join("")}</div><div class="legend" id="m15Leg"></div><div class="chart" id="m15Cum"></div><div class="lbl" style="margin:14px 0 2px">By market</div><div id="m15Mk"></div>
-    <div class="mute" style="font-size:11px;margin-top:4px">"Total only" shows the combined profit; "All markets" adds each market's line in its own color, and the rows under the chart show each market on its own. "By trade" spaces every contract evenly, so quiet hours and closed weekends don't squash the picture. The dashed line is the pace of a +3¢/contract edge (my realistic target); staying above it is good. The yellow line marks the rule change on Nov 8 (BTC last 10 min only, 2nd contract at 80-87¢).</div></div>`;
+  h += `<h2>Profit over time <span class="sub">real money</span></h2><div class="card"><div class="rng" id="m15X" style="--rc:#f5b335;margin:0 0 10px">${[["n","By trade"],["t","By time"]].map(([k, l]) => `<button data-x="${k}" class="${xm === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="chead" id="m15Head"></div><div class="rng" id="m15L" style="--rc:#94a3c8;margin:0 0 6px">${[["t","Total only"],["a","All markets"]].map(([k, l]) => `<button data-l="${k}" class="${(ls.get("m15L") || "t") === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="rng" id="m15R" style="--rc:#f5b335;margin:2px 0 8px">${Object.keys(M15R).map(r => `<button data-r="${r}" class="${(ls.get("m15R") || "ALL") === r ? "on" : ""}">${r}</button>`).join("")}</div><div class="legend" id="m15Leg"></div><div class="chart" id="m15Cum"></div><div class="rng" id="m15S" style="--rc:#94a3c8;margin:8px 0 0">${[["s","Smooth"],["e","Every fill"]].map(([k, l]) => `<button data-s="${k}" class="${(ls.get("m15S") || "s") === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="lbl" style="margin:14px 0 2px">By market</div><div id="m15Mk"></div>
+    <div class="mute" style="font-size:11px;margin-top:4px">"Smooth" averages the ups and downs of single bets into a trend line that still ends at today's exact total; "Every fill" shows each win and loss. "Total only" shows the combined profit; "All markets" adds each market's line in its own color, and the rows under the chart show each market on its own. "By trade" spaces every contract evenly, so quiet hours and closed weekends don't squash the picture. The dashed line is the pace of a +3¢/contract edge (my realistic target); staying above it is good. The yellow line marks the rule change on Nov 8 (BTC last 10 min only, 2nd contract at 80-87¢).</div></div>`;
   h += `<h2>Win rate vs break-even <span class="sub">by market</span></h2><div class="card" id="m15Be"></div>`;
   h += `<h2>Daily profit</h2><div class="card"><div class="chart" id="m15Day"></div></div>`;
   h += `<h2>By minutes left at fill <span class="sub">¢ per contract</span></h2><div class="card"><div class="chart" id="m15Ttc"></div><div class="mute" style="font-size:11px;margin-top:4px">Since Nov 8, BTC only bids with 10 minutes or less left. This shows whether late fills really do better.</div></div>`;
@@ -475,26 +475,29 @@ function drawM15(){
     return [t, {name:"+3¢ pace", c:"#6b7699", dash:true, w:1.5, pace:true, tot:PACE * k, pts:[{x:n ? 0 : t0, y:0}, ...sel.map(f => ({x:n ? f.k : f.t, y:PACE * f.k}))]}, ...mk]; };
   let ser;
   const RL = {"1H":"past hour", "12H":"past 12 hours", "1D":"past day", "1W":"past week", "1M":"past month"};
-  const spark = (pts, c, x0, x1, step) => { const W = 120, H = 34, ys = pts.map(p => p.y), lo = Math.min(0, ...ys), hi = Math.max(0, ...ys), sp = hi - lo || 1;
+  const spark = (pts, c, x0, x1, step, sm) => { const W = 120, H = 34, ys = pts.map(p => p.y), lo = Math.min(0, ...ys), hi = Math.max(0, ...ys), sp = hi - lo || 1;
     const X = x => ((x - x0) / ((x1 - x0) || 1)) * W, Y = y => H - 2 - ((y - lo) / sp) * (H - 4);
-    let d = ""; pts.forEach((p, i) => { d += i ? (step ? `H${X(p.x).toFixed(1)}V${Y(p.y).toFixed(1)}` : `L${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`) : `M${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`; });
+    let d = ""; if (sm && pts.length > 2) d = smoothPath(pts.map(p => [X(p.x), Y(p.y)])); else pts.forEach((p, i) => { d += i ? (step ? `H${X(p.x).toFixed(1)}V${Y(p.y).toFixed(1)}` : `L${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`) : `M${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`; });
     return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3a4466" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/><path d="${d}" fill="none" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`; };
   const draw = () => { const n = byN(), r = rng();
     $("#m15Head").innerHTML = `<b class="${cls(ser[0].tot)}">${money(ser[0].tot)}</b><span>${k} contracts · ${sel.length} fills ${r === "ALL" ? "since " + esc(fday(new Date(fs[0].t))) : RL[r]}${k ? ` · ${cents(100 * ser[0].tot / k)}/ct` : ""}</span>`;
     $("#m15Leg").innerHTML = ser.map(x => `<span><i style="background:${x.c}"></i>${esc(x.name)} <b class="${x.pace ? "mute" : cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
     if (!sel.length) { $("#m15Cum").innerHTML = `<div class="mute" style="padding:40px 0;text-align:center">No fills in the ${RL[r]}</div>`; $("#m15Mk").innerHTML = ""; return; }
     const rf = sel.find(f => f.t >= RULES), rv = rf && rf !== sel[0] ? [{x:n ? rf.k - rf.n : RULES, label:"new rules"}] : [];
-    lineChart($("#m15Cum"), ser, {step:!n, h:200, xnum:n, xlab:t => Math.round(t) + " ct",
+    const sm = (ls.get("m15S") || "s") === "s", shown = sm ? ser.map(x => x.pace ? x : {...x, pts:thinPts(x.pts, 16)}) : ser;
+    lineChart($("#m15Cum"), shown, {step:!n && !sm, smooth:sm, h:200, xnum:n, xlab:t => Math.round(t) + " ct",
       xtip:(x, p) => `contract ${Math.round(x)}${p && p.t ? " · " + fdt(new Date(p.t)) : ""}`, vlines:rv});
     const x0 = ser[0].pts[0].x, x1 = ser[0].pts.at(-1).x;
     $("#m15Mk").innerHTML = names.map((nm, i) => { const l = sel.filter(f => f.name === nm), c = cum(l, nm, col(nm, i)), ct = l.reduce((a, f) => a + f.n, 0);
       if (!ct) return "";
       // pad the market's line to the full x range so every sparkline shares the same time/contract axis
       if (c.pts.at(-1).x < x1) c.pts.push({x:x1, y:c.tot});
-      return `<div class="mkrow"><div><i style="background:${c.c}"></i><b>${esc(nm)}</b><span class="mute">${ct} ct</span></div>${spark(c.pts, c.c, x0, x1, !n)}<div style="text-align:right"><b class="${cls(c.tot)}">${money(c.tot)}</b><span class="${cls(c.tot)}">${cents(100 * c.tot / ct)}/ct</span></div></div>`; }).join(""); };
+      const smk = (ls.get("m15S") || "s") === "s";
+      return `<div class="mkrow"><div><i style="background:${c.c}"></i><b>${esc(nm)}</b><span class="mute">${ct} ct</span></div>${spark(smk ? thinPts(c.pts, 12) : c.pts, c.c, x0, x1, !n && !smk, smk)}<div style="text-align:right"><b class="${cls(c.tot)}">${money(c.tot)}</b><span class="${cls(c.tot)}">${cents(100 * c.tot / ct)}/ct</span></div></div>`; }).join(""); };
   ser = build();
   $("#m15X").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15X", b.dataset.x); $("#m15X").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); ser = build(); draw(); };
   $("#m15L").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15L", b.dataset.l); $("#m15L").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); ser = build(); draw(); };
+  $("#m15S").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15S", b.dataset.s); $("#m15S").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); draw(); };
   $("#m15R").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15R", b.dataset.r); $("#m15R").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); ser = build(); draw(); };
   draw();
   // win rate vs break-even per market: a bar to the win rate with a tick at break-even
@@ -743,7 +746,7 @@ function lineChart(el, series, o={}){
   (o.vlines || []).forEach(v => { if (v.x > x0 && v.x < x1){ const px = X(v.x); g += `<line x1="${px}" x2="${px}" y1="${P.t}" y2="${H - P.b}" stroke="${v.c || "#f5b335"}" stroke-dasharray="3 4" opacity=".75"/><text x="${px + 4}" y="${P.t + 9}" fill="${v.c || "#f5b335"}" font-size="10" font-family="JetBrains Mono">${v.label}</text>`; } });
   (o.refs || []).forEach(rf => { if (rf.y > y0 && rf.y < y1) g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(rf.y)}" y2="${Y(rf.y)}" stroke="${rf.c}" stroke-dasharray="5 4" opacity=".7"/><text x="${W - P.r}" y="${Y(rf.y) - 4}" fill="${rf.c}" font-size="10" text-anchor="end" font-family="JetBrains Mono">${rf.label}</text>`; });
   let paths = "";
-  const f1 = v => v.toFixed(1), path = ps => ps.map((p, j) => !j ? `M${f1(X(p.x))},${f1(Y(p.y))}` : o.step ? `H${f1(X(p.x))}V${f1(Y(p.y))}` : `L${f1(X(p.x))},${f1(Y(p.y))}`).join("");
+  const f1 = v => v.toFixed(1), path = ps => o.smooth && ps.length > 2 ? smoothPath(ps.map(p => [X(p.x), Y(p.y)])) : ps.map((p, j) => !j ? `M${f1(X(p.x))},${f1(Y(p.y))}` : o.step ? `H${f1(X(p.x))}V${f1(Y(p.y))}` : `L${f1(X(p.x))},${f1(Y(p.y))}`).join("");
   if (o.stack) draw.forEach(s => { if (!s.pts.length) return; const q = s.pts, L = q.length - 1;
     let back = `L${f1(X(q[L].x))},${f1(Y(q[L].b))}`; for (let j = L; j > 0; j--) back += o.step ? `V${f1(Y(q[j - 1].b))}H${f1(X(q[j - 1].x))}` : `L${f1(X(q[j - 1].x))},${f1(Y(q[j - 1].b))}`;
     paths += `<path d="${path(q)}${back}Z" fill="${s.c}" fill-opacity=".38"/><path d="${path(q)}" fill="none" stroke="${s.c}" stroke-width="1.5" stroke-linejoin="round"/>`; });
@@ -774,6 +777,26 @@ function lineChart(el, series, o={}){
   const leave = () => { tip.style.display = "none"; xh.style.display = "none"; dots.innerHTML = ""; };
   svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move); svg.addEventListener("pointerleave", leave);
   svg.addEventListener("touchmove", move, {passive:true}); svg.addEventListener("touchend", () => setTimeout(leave, 1800));
+}
+// monotone cubic curve through screen points (no overshoot past the real values)
+function smoothPath(P){
+  const n = P.length, d = [], m = new Array(n).fill(0), f = v => v.toFixed(1);
+  for (let i = 0; i < n - 1; i++) d.push((P[i + 1][1] - P[i][1]) / ((P[i + 1][0] - P[i][0]) || 1e-9));
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : 2 / (1 / d[i - 1] + 1 / d[i]);
+  let s = `M${f(P[0][0])},${f(P[0][1])}`;
+  for (let i = 0; i < n - 1; i++){ const h = (P[i + 1][0] - P[i][0]) / 3;
+    s += `C${f(P[i][0] + h)},${f(P[i][1] + m[i] * h)} ${f(P[i + 1][0] - h)},${f(P[i + 1][1] - m[i + 1] * h)} ${f(P[i + 1][0])},${f(P[i + 1][1])}`; }
+  return s;
+}
+// trend for the "Smooth" view: average the points in n equal slices of x (spikes from single
+// fills average out); the first and last points stay exact so the line still ends at today's total
+function thinPts(pts, n){
+  if (pts.length <= n) return pts;
+  const x0 = pts[0].x, x1 = pts.at(-1).x, w = (x1 - x0) / n || 1, b = [];
+  for (const p of pts.slice(1, -1)){ const k = Math.min(n - 1, Math.floor((p.x - x0) / w)); (b[k] = b[k] || []).push(p); }
+  const out = [pts[0], ...b.filter(Boolean).map(g => ({...g.at(-1), x:g.reduce((a, p) => a + p.x, 0) / g.length, y:g.reduce((a, p) => a + p.y, 0) / g.length})), pts.at(-1)];
+  return out.filter((p, i) => !i || p.x > out[i - 1].x);
 }
 function barChart(el, bars, o={}){
   const W = el.clientWidth || 340, H = o.h || 150, P = {l:40, r:8, t:10, b:22};
