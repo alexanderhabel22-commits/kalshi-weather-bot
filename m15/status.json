@@ -1,5 +1,5 @@
 {
- "at": "2026-11-09T11:02:00+00:00",
+ "at": "2026-11-09T11:17:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,34 +7,34 @@
  "fund_error": null,
  "halted": null,
  "last_reject": {
-  "at": 1794221844,
+  "at": 1794222605,
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXSILVER15M-26NOV090600-00"
+  "ticker": "KXSILVER15M-26NOV090615-15"
  },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV090615-15": {
+  "KXBTC15M-26NOV090630-30": {
    "bid_ask": [
-    0.32,
-    0.33
+    0.78,
+    0.79
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   },
-  "KXCOPPER15M-26NOV090615-15": {
+  "KXCOPPER15M-26NOV090630-30": {
    "bid_ask": [
-    0.34,
-    0.36
+    0.73,
+    0.8
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   },
-  "KXSILVER15M-26NOV090615-15": {
+  "KXSILVER15M-26NOV090630-30": {
    "bid_ask": [
-    0.65,
-    0.66
+    0.57,
+    0.58
    ],
    "mode": "live",
    "order": false,
@@ -47,20 +47,20 @@
   "live_days": {
    "2026-11-07": 0.17,
    "2026-11-08": 2.35,
-   "2026-11-09": 8.12
+   "2026-11-09": 9.27
   },
-  "live_total": 10.64,
+  "live_total": 11.79,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
-   "2026-11-09": 7.05
+   "2026-11-09": 5.99
   },
-  "paper_total": -49.47
+  "paper_total": -50.53
  },
  "series": {
   "KXBTC15M": {
-   "fills": 163,
-   "pnl": 0.64,
+   "fills": 165,
+   "pnl": 1.1,
    "recent": [
     [
      2,
@@ -189,12 +189,16 @@
     [
      2,
      0.43
+    ],
+    [
+     2,
+     0.46
     ]
    ]
   },
   "KXCOPPER15M": {
-   "fills": 58,
-   "pnl": 5.79,
+   "fills": 60,
+   "pnl": 6.12,
    "recent": [
     [
      2,
@@ -283,12 +287,16 @@
     [
      2,
      0.23
+    ],
+    [
+     2,
+     0.33
     ]
    ]
   },
   "KXSILVER15M": {
-   "fills": 60,
-   "pnl": 4.21,
+   "fills": 62,
+   "pnl": 4.57,
    "recent": [
     [
      2,
@@ -385,6 +393,10 @@
     [
      2,
      0.23
+    ],
+    [
+     2,
+     0.36
     ]
    ]
   }
@@ -392,7 +404,7 @@
  "shards": {
   "0": 0.1942,
   "1": 0.0,
-  "2": 22.1868,
+  "2": 22.6568,
   "3": 0.0
  },
  "spot_ok": true,
