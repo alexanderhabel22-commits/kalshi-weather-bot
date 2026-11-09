@@ -283,7 +283,7 @@ setOdo(0);
 
 /* ------------------------------------------------------------ live account feed (read-only Cloudflare worker, every 2 s) */
 // Source: tools/kalshi-account-worker.js. Signs with a READ-ONLY Kalshi key, so it can't trade.
-const ACCOUNT = "https://kalshi-account.alexanderhabel22.workers.dev/account";
+const ACCOUNT = "https://snowy-rain-7e20.alexanderhabel22.workers.dev/account";
 const live = { ok:false, seen:null, last:0 };
 async function pollAccount(){
   if (document.hidden) return;
