@@ -385,10 +385,10 @@ function m15HTML(full){
   let h = `<h2>15-minute bot <span class="sub">own server · ${pct(num(mc.pool_pct, .25))} pool</span></h2><div class="card">`;
   if (!M) return h + `<div class="mute" style="font-size:12px;line-height:1.5">Not running yet: it starts once the server is set up. It fades longshots in BTC, silver and copper 15-minute markets, 1 contract per market, with its own 25% slice of the bankroll.</div></div>`;
   const st = M.status, at = pdate(st.at), stale = !at || Date.now() - at > 2 * 3600e3, mode = String(st.mode || "?").toUpperCase();
-  const p = st.pnl || {}, live = num(p.live_total), today = num((p.live_days || {})[M.today]), B = bankroll(), pool = num(mc.pool_pct, .25) * B;
+  const p = st.pnl || {}, live = num(p.live_total) + (M.kxAll || 0), today = num((p.live_days || {})[M.today]) + (M.kxToday || 0), B = bankroll(), pool = num(mc.pool_pct, .25) * B;
   const flags = [st.halted ? "HALTED (total loss stop)" : "", st.day_stop === M.today ? "paused for today (daily stop)" : ""].filter(Boolean);
   h += `<div class="hero"><div><div class="lbl">Real-money P&L · all time</div><div class="big ${cls(live)}">${money(live)}</div>
-    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">mode ${esc(mode)} · updated ${esc(ago(at))}${stale ? ` · <span class="neg">server quiet</span>` : ""}${flags.length ? ` · <span class="neg">${esc(flags.join(", "))}</span>` : ""}</div></div>
+    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">mode ${esc(mode)} · server ${esc(ago(at))}${liveOK() && S.live.sets ? ` · <span class="pos">● Kalshi results live</span>` : ""}${stale ? ` · <span class="neg">server quiet</span>` : ""}${flags.length ? ` · <span class="neg">${esc(flags.join(", "))}</span>` : ""}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(today)}">${money(today)}</div>
     <div class="lbl" style="margin-top:8px">At risk now</div><div class="val" style="font-size:17px">$${num(st.live_exposure).toFixed(2)} <small class="mute">/ $${pool.toFixed(2)}</small></div></div></div>`;
   const pc = st.shards && st.shards["2"] != null ? num(st.shards["2"]) : null, risk = num(st.live_exposure);
@@ -669,8 +669,9 @@ async function pollLive(){
     const r = await fetch(ACCOUNT, {cache:"no-store"}); if (!r.ok) return;
     const a = await r.json(); if (!(num(a.total, 0) > 0)) return;
     const prev = S.live, fills = a.fills || [];
-    S.live = {total:num(a.total), cash:num(a.cash), positions:num(a.positions), at:Date.now(), fills, open:(a.open || []).length};
-    const changed = !prev || prev.total !== S.live.total || (prev.fills[0] || {}).id !== (fills[0] || {}).id;
+    S.live = {total:num(a.total), cash:num(a.cash), positions:num(a.positions), at:Date.now(), fills, open:(a.open || []).length, sets:a.settlements || null};
+    const added = m15FromKalshi();
+    const changed = added || !prev || prev.total !== S.live.total || (prev.fills[0] || {}).id !== (fills[0] || {}).id;
     if (S.lastData && S.view === "overview" && changed && !document.querySelector(".item.tap.open, .xmodal")) renderAll();
     loadDayOpen();
   } catch(e){}
@@ -700,6 +701,24 @@ function liveFillsHTML(only15){
     return `<div class="item" style="padding:7px 0"><div class="main"><div class="t" style="font-size:13px">${esc(name(f.ticker))}</div>
       <div class="s">${esc(+n.toFixed(2))} contract${n === 1 ? "" : "s"} filled</div></div><div class="r"><small class="mute">${esc(f.at ? fdt(new Date(f.at)) : "")}</small></div></div>`; }).join("")
     : `<div class="mute" style="font-size:12px">No recent fills.</div>`) + `</div>`;
+}
+// 15-min bot: the server uploads its results every 15 min; Kalshi's own settlements fill the gap within a minute.
+// Each settled 15-min market the server hasn't reported yet becomes a row like the server's (real money only).
+function m15FromKalshi(){
+  const M = S.m15, sets = S.live && S.live.sets; if (!M || !sets) return false;
+  M.kx = M.kx || {}; const have = new Set(M.rows.filter(r => r.mode === "live" && r.won !== "" && r.won != null && !r.kx).map(r => r.ticker));
+  let added = 0;
+  for (const x of sets){
+    if (!/15M-/.test(x.ticker || "") || have.has(x.ticker) || M.kx[x.ticker]) continue;
+    const n = (x.yes || 0) + (x.no || 0); if (!(n > 0)) continue;
+    const pnl = x.revenue - x.cost - x.fee;
+    const row = {ticker:x.ticker, series:x.ticker.split("-")[0], mode:"live", close:x.at, fav_side:x.yes > 0 ? "yes" : "no", contracts:String(Math.round(n)),
+      filled:String(n), cost:String(x.cost), fee:String(x.fee), pnl:String(+pnl.toFixed(4)), result:x.result, won:x.revenue > 0 ? "1" : "0", kx:true};
+    M.kx[x.ticker] = row; M.rows.push(row); added++;
+  }
+  // today's P&L: add what the server hasn't counted yet
+  { M.kxAll = Object.values(M.kx).filter(r => !have.has(r.ticker)).reduce((a, r) => a + num(r.pnl), 0); const today = new Date().toLocaleDateString("en-CA", {timeZone:TZ}); M.kxToday = Object.values(M.kx).filter(r => !have.has(r.ticker) && new Date(r.close).toLocaleDateString("en-CA", {timeZone:TZ}) === today).reduce((a, r) => a + num(r.pnl), 0); }
+  return added > 0;
 }
 const liveOK = () => S.live && Date.now() - S.live.at < 60e3;
 function liveAcctHTML(){
