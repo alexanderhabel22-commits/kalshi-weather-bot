@@ -2830,6 +2830,60 @@
    "status": "live",
    "title": "First listed Democrat to announce a 2028 presidential run",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "example": "KXPRESRUNFIRSTR-28-28JAN01",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:30:25+00:00",
+   "median_spread": 0.98,
+   "n_open": 7,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (98c), so makers haven't arrived yet.",
+   "series": "KXPRESRUNFIRSTR",
+   "status": "live",
+   "title": "First listed Republican to announce a 2028 presidential run",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "example": "KXRUBIOHEGSETHFIRST-29-PHEG",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:30:25+00:00",
+   "median_spread": 0.98,
+   "n_open": 3,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (98c), so makers haven't arrived yet.",
+   "series": "KXRUBIOHEGSETHFIRST",
+   "status": "live",
+   "title": "Who will leave Trump's Cabinet first: Rubio or Hegseth?",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "example": "KXSERBIAPRESPERSON-26DEC27-VSES",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:30:25+00:00",
+   "median_spread": 0.11,
+   "n_open": 15,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (11c), so makers haven't arrived yet.",
+   "series": "KXSERBIAPRESPERSON",
+   "status": "live",
+   "title": "Serbian presidential election winner by candidate",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -4445,6 +4499,7 @@
   "KXAUNABCONF",
   "KXAUSCOALITION",
   "KXAUSEUFTA",
+  "KXAUSHOME",
   "KXAUSPM",
   "KXAUSSEATALBANESE",
   "KXAUSSEATBENNELONG",
@@ -5634,6 +5689,7 @@
   "KXCHICKENWINGM",
   "KXCHICOUTIMI",
   "KXCHIEFSKANSAS",
+  "KXCHIHOME",
   "KXCHIHUAHUAGOV",
   "KXCHIKCOUNT",
   "KXCHILDS",
@@ -6279,6 +6335,7 @@
   "KXDAILYGUESTMUSK",
   "KXDAILYSHOW",
   "KXDALCC",
+  "KXDALHOME",
   "KXDALSNOWM",
   "KXDANAWHITEDECLINE",
   "KXDANAWHITEFB",
@@ -7477,6 +7534,7 @@
   "KXEURUSDD",
   "KXEURUSDE",
   "KXEURUSDEOY",
+  "KXEURUSDEVENT",
   "KXEURUSDH",
   "KXEURUSDHA",
   "KXEURUSDMAX",
@@ -8848,6 +8906,7 @@
   "KXHNLTOTAL",
   "KXHOBARTMAYOR",
   "KXHOBBYTEMP",
+  "KXHOBHOME",
   "KXHOCHULMENTION",
   "KXHODGE",
   "KXHOEKSTRAOUT",
@@ -9431,6 +9490,7 @@
   "KXJBLEAGUEGAME",
   "KXJBLU",
   "KXJBLUA",
+  "KXJCHOME",
   "KXJCOLECBA",
   "KXJDGREENLAND",
   "KXJEFFERSON",
@@ -9733,6 +9793,7 @@
   "KXLAGOSGOV",
   "KXLAGOVISITCOUNT",
   "KXLAGOVRUN",
+  "KXLAHOME",
   "KXLAHOUSE1R",
   "KXLAIOUT",
   "KXLAIVISITUSA",
@@ -10737,6 +10798,7 @@
   "KXMFT",
   "KXMI11D",
   "KXMI13D",
+  "KXMIAHOME",
   "KXMIAHOMEVAL",
   "KXMIASNOWM",
   "KXMIAUTOEMP",
@@ -11568,6 +11630,7 @@
   "KXNBAPTS",
   "KXNBAPTSALLGAMES",
   "KXNBAPTSLEADER",
+  "KXNBAPTSPRECISE",
   "KXNBAPTSPROT",
   "KXNBARA",
   "KXNBARACE",
@@ -12951,6 +13014,7 @@
   "KXNYCGROCERY",
   "KXNYCGROCERYCASE",
   "KXNYCHECKS",
+  "KXNYCHOME",
   "KXNYCHOT",
   "KXNYCLASTROUNDMARGIN",
   "KXNYCMAYOR",
@@ -13254,6 +13318,7 @@
   "KXPALLADIUM15M",
   "KXPALLADIUMH",
   "KXPALNYT",
+  "KXPALOHOME",
   "KXPAMAILMARGIN",
   "KXPAMAILREQ",
   "KXPAMARIJUANA",
@@ -13492,10 +13557,12 @@
   "KXPHILSNOWM",
   "KXPHKLGAME",
   "KXPHLGAME",
+  "KXPHLHOME",
   "KXPHOENIXOPEN",
   "KXPHONERECORD",
   "KXPHPED",
   "KXPHPKEV",
+  "KXPHXHOME",
   "KXPHXHOMEVAL",
   "KXPHXVSHYP",
   "KXPICHINCHAPREFECT",
@@ -14616,6 +14683,7 @@
   "KXSDCATTLE",
   "KXSDCORNYIELD",
   "KXSDEBT",
+  "KXSDHOME",
   "KXSDHOMEVAL",
   "KXSDPRIMARY",
   "KXSDRGOVADVANCE",
@@ -18829,7 +18897,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-09T21:00:29+00:00",
+ "last_check": "2026-11-09T21:30:25+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -18883,7 +18951,7 @@
   },
   "KXAFCCL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18970,6 +19038,16 @@
    "new_category": false,
    "series": "KXAUDITORRACE",
    "title": "Auditor race winner?"
+  },
+  "KXAUSHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXAUSHOME",
+   "title": "Austin home values"
   },
   "KXBCEA": {
    "category": "Financials",
@@ -19111,6 +19189,16 @@
    "series": "KXBULFLADVANCE",
    "title": "Advance"
   },
+  "KXCHIHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXCHIHOME",
+   "title": "Chicago home values"
+  },
   "KXCHIPEXPORTLAW": {
    "category": "Politics",
    "checked": "2026-11-09T20:30:27+00:00",
@@ -19140,6 +19228,16 @@
    "new_category": false,
    "series": "KXCORRPAPERPPI",
    "title": "Corrugated paper PPI average"
+  },
+  "KXDALHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXDALHOME",
+   "title": "Dallas home values"
   },
   "KXDEMCAUCUSCHAIR120": {
    "category": "Elections",
@@ -19291,6 +19389,16 @@
    "series": "KXEPSTEINFILES",
    "title": "When will the federal government release more Epstein files?"
   },
+  "KXEURUSDEVENT": {
+   "category": "Financials",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXEURUSDEVENT",
+   "title": "EUR/USD after economic events"
+  },
   "KXEVERIFYLAW": {
    "category": "Politics",
    "checked": "2026-11-09T20:30:27+00:00",
@@ -19381,6 +19489,16 @@
    "series": "KXHJUDICIARYCHAIR",
    "title": "House Judiciary chair"
   },
+  "KXHOBHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXHOBHOME",
+   "title": "Hoboken home values"
+  },
   "KXHWAYSMEANSCHAIR": {
    "category": "Politics",
    "checked": "2026-11-09T21:00:29+00:00",
@@ -19443,7 +19561,7 @@
   },
   "KXJ3LEAGUEGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19491,6 +19609,16 @@
    "series": "KXJBLUA",
    "title": "JetBlue Airways Annual KPI"
   },
+  "KXJCHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXJCHOME",
+   "title": "Jersey City home values"
+  },
   "KXJUDGEFIRST": {
    "category": "Politics",
    "checked": "2026-11-09T19:00:29+00:00",
@@ -19500,6 +19628,16 @@
    "new_category": false,
    "series": "KXJUDGEFIRST",
    "title": "First federal judge confirmed in the 120th Congress"
+  },
+  "KXLAHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXLAHOME",
+   "title": "LA home values"
   },
   "KXLBPRCGAME": {
    "category": "Sports",
@@ -19523,7 +19661,7 @@
   },
   "KXLIGAPORTUGAL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19561,6 +19699,16 @@
    "series": "KXMAJLEAD120",
    "title": "House Majority Leader (120th Congress)"
   },
+  "KXMIAHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXMIAHOME",
+   "title": "Miami home values"
+  },
   "KXNASHVILLEMAYOR": {
    "category": "Elections",
    "checked": "2026-11-09T20:30:27+00:00",
@@ -19581,6 +19729,16 @@
    "series": "KXNBAH2HPTSMARGIN",
    "title": "NBA H2H Player Points Bracketed"
   },
+  "KXNBAPTSPRECISE": {
+   "category": "Sports",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXNBAPTSPRECISE",
+   "title": "NBA Player Points Range"
+  },
   "KXNBATOTALPRECISE": {
    "category": "Sports",
    "checked": "2026-11-09T21:00:29+00:00",
@@ -19593,7 +19751,7 @@
   },
   "KXNOR1DIVADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19603,7 +19761,7 @@
   },
   "KXNOR1DIVBTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19613,7 +19771,7 @@
   },
   "KXNOR1DIVGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19641,6 +19799,16 @@
    "series": "KXNOR1DIVTOTAL",
    "title": "Total"
   },
+  "KXNYCHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXNYCHOME",
+   "title": "NYC home values"
+  },
   "KXOVERSIGHTCHAIR": {
    "category": "Politics",
    "checked": "2026-11-09T21:00:29+00:00",
@@ -19661,9 +19829,19 @@
    "series": "KXPALISADESHOME",
    "title": "Pacific Palisades home values"
   },
+  "KXPALOHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXPALOHOME",
+   "title": "Palo Alto home values"
+  },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T16:30:31+00:00",
    "frequency": "one_off",
@@ -19681,15 +19859,25 @@
    "series": "KXPHILADELPHIAMAYORNOMD",
    "title": "Philadelphia Democratic mayoral nominee"
   },
-  "KXPRESRUNFIRSTR": {
-   "category": "Elections",
-   "checked": "2026-11-09T18:30:26+00:00",
+  "KXPHLHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
    "new_category": false,
-   "series": "KXPRESRUNFIRSTR",
-   "title": "First listed Republican to announce a 2028 presidential run"
+   "series": "KXPHLHOME",
+   "title": "Philly home values"
+  },
+  "KXPHXHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXPHXHOME",
+   "title": "Phoenix home values"
   },
   "KXREDISTRICTLAW": {
    "category": "Politics",
@@ -19700,16 +19888,6 @@
    "new_category": false,
    "series": "KXREDISTRICTLAW",
    "title": "Which states will pass a new congressional map?"
-  },
-  "KXRUBIOHEGSETHFIRST": {
-   "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXRUBIOHEGSETHFIRST",
-   "title": "Who will leave Trump's Cabinet first: Rubio or Hegseth?"
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
@@ -19741,6 +19919,16 @@
    "series": "KXSARMEDSERVICESCHAIR",
    "title": "Senate Armed Services chair"
   },
+  "KXSDHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T21:30:25+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXSDHOME",
+   "title": "San Diego home values"
+  },
   "KXSENATENOM": {
    "category": "Elections",
    "checked": "2026-11-09T20:00:32+00:00",
@@ -19750,16 +19938,6 @@
    "new_category": false,
    "series": "KXSENATENOM",
    "title": "Senate nominee?"
-  },
-  "KXSERBIAPRESPERSON": {
-   "category": "Elections",
-   "checked": "2026-11-09T18:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXSERBIAPRESPERSON",
-   "title": "Serbian presidential election winner by candidate"
   },
   "KXSFINANCECHAIR": {
    "category": "Politics",
@@ -19863,7 +20041,7 @@
   },
   "KXSVK1LADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T19:00:29+00:00",
+   "checked": "2026-11-09T21:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
