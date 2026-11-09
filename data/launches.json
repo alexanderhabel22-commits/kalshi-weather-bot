@@ -2740,6 +2740,96 @@
    "status": "live",
    "title": "Bitcoin above $95,000 by a date",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-09T21:00:29+00:00",
+   "example": "KXBRSENATEPRES-27FEB01-TCRI",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:00:29+00:00",
+   "median_spread": 0.1,
+   "n_open": 3,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
+   "series": "KXBRSENATEPRES",
+   "status": "live",
+   "title": "Brazil Senate President",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-09T21:00:29+00:00",
+   "example": "KXIMPEACHPEOPLE-28JAN01-AL8",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:00:29+00:00",
+   "median_spread": 0.98,
+   "n_open": 8,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (98c), so makers haven't arrived yet.",
+   "series": "KXIMPEACHPEOPLE",
+   "status": "live",
+   "title": "Number of people the House impeaches before 2028",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-09T21:00:29+00:00",
+   "example": "KXMANDERSSONOUT-28-28JAN01",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:00:29+00:00",
+   "median_spread": 0.2,
+   "n_open": 3,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (20c), so makers haven't arrived yet.",
+   "series": "KXMANDERSSONOUT",
+   "status": "live",
+   "title": "Magdalena Andersson out as Social Democrats leader",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-09T21:00:29+00:00",
+   "example": "KXPRESRUNBOTH2-28-28JAN01",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:00:29+00:00",
+   "median_spread": 0.98,
+   "n_open": 8,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (98c), so makers haven't arrived yet.",
+   "series": "KXPRESRUNBOTH2",
+   "status": "live",
+   "title": "2028 primary fields with two candidates on each side",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Elections",
+   "checked": "2026-11-09T21:00:29+00:00",
+   "example": "KXPRESRUNFIRSTD-28-28JAN01",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T16:30:28+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-09T21:00:29+00:00",
+   "median_spread": 0.98,
+   "n_open": 8,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (98c), so makers haven't arrived yet.",
+   "series": "KXPRESRUNFIRSTD",
+   "status": "live",
+   "title": "First listed Democrat to announce a 2028 presidential run",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -11549,6 +11639,7 @@
   "KXNBATOP5ROTY",
   "KXNBATOPPICK",
   "KXNBATOTAL",
+  "KXNBATOTALPRECISE",
   "KXNBATRADE",
   "KXNBAUNBEATEN",
   "KXNBAUPSET",
@@ -18738,7 +18829,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-09T20:30:27+00:00",
+ "last_check": "2026-11-09T21:00:29+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -18782,7 +18873,7 @@
   },
   "KXAFCCL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -18802,7 +18893,7 @@
   },
   "KXAFCCL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19000,16 +19091,6 @@
    "series": "KXBRCHAMBERPRES",
    "title": "Brazil Chamber of Deputies President"
   },
-  "KXBRSENATEPRES": {
-   "category": "Elections",
-   "checked": "2026-11-09T18:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXBRSENATEPRES",
-   "title": "Brazil Senate President"
-  },
   "KXBTCHITBY": {
    "category": "Crypto",
    "checked": "2026-11-09T20:00:32+00:00",
@@ -19022,7 +19103,7 @@
   },
   "KXBULFLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19122,7 +19203,7 @@
   },
   "KXEFLL2ADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19132,7 +19213,7 @@
   },
   "KXEFLL2BTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19142,7 +19223,7 @@
   },
   "KXEFLL2GAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19192,7 +19273,7 @@
   },
   "KXEPCRMATCH": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19282,7 +19363,7 @@
   },
   "KXHINTELCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19292,7 +19373,7 @@
   },
   "KXHJUDICIARYCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19302,7 +19383,7 @@
   },
   "KXHWAYSMEANSCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19319,16 +19400,6 @@
    "new_category": false,
    "series": "KXIMMLEGALSTATUS",
    "title": "Legal status for undocumented immigrants"
-  },
-  "KXIMPEACHPEOPLE": {
-   "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXIMPEACHPEOPLE",
-   "title": "Number of people the House impeaches before 2028"
   },
   "KXINDIANAPOLISMAYORNOMD": {
    "category": "Elections",
@@ -19352,7 +19423,7 @@
   },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19362,7 +19433,7 @@
   },
   "KXJ3LEAGUEBTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19442,7 +19513,7 @@
   },
   "KXLIDOMGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T18:00:33+00:00",
    "frequency": "custom",
@@ -19472,7 +19543,7 @@
   },
   "KXLVBPGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T18:00:33+00:00",
    "frequency": "custom",
@@ -19490,16 +19561,6 @@
    "series": "KXMAJLEAD120",
    "title": "House Majority Leader (120th Congress)"
   },
-  "KXMANDERSSONOUT": {
-   "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXMANDERSSONOUT",
-   "title": "Magdalena Andersson out as Social Democrats leader"
-  },
   "KXNASHVILLEMAYOR": {
    "category": "Elections",
    "checked": "2026-11-09T20:30:27+00:00",
@@ -19512,13 +19573,23 @@
   },
   "KXNBAH2HPTSMARGIN": {
    "category": "Sports",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T02:30:25+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXNBAH2HPTSMARGIN",
    "title": "NBA H2H Player Points Bracketed"
+  },
+  "KXNBATOTALPRECISE": {
+   "category": "Sports",
+   "checked": "2026-11-09T21:00:29+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T21:00:29+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXNBATOTALPRECISE",
+   "title": "NBA Total Points Precise"
   },
   "KXNOR1DIVADVANCE": {
    "category": "Sports",
@@ -19572,7 +19643,7 @@
   },
   "KXOVERSIGHTCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19609,26 +19680,6 @@
    "new_category": false,
    "series": "KXPHILADELPHIAMAYORNOMD",
    "title": "Philadelphia Democratic mayoral nominee"
-  },
-  "KXPRESRUNBOTH2": {
-   "category": "Elections",
-   "checked": "2026-11-09T18:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXPRESRUNBOTH2",
-   "title": "2028 primary fields with two candidates on each side"
-  },
-  "KXPRESRUNFIRSTD": {
-   "category": "Elections",
-   "checked": "2026-11-09T18:30:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T16:30:28+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXPRESRUNFIRSTD",
-   "title": "First listed Democrat to announce a 2028 presidential run"
   },
   "KXPRESRUNFIRSTR": {
    "category": "Elections",
@@ -19682,7 +19733,7 @@
   },
   "KXSARMEDSERVICESCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19712,7 +19763,7 @@
   },
   "KXSFINANCECHAIR": {
    "category": "Politics",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19852,7 +19903,7 @@
   },
   "KXTHIRDPARTYSTATE": {
    "category": "Elections",
-   "checked": "2026-11-09T18:30:26+00:00",
+   "checked": "2026-11-09T21:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T17:30:23+00:00",
    "frequency": "one_off",
