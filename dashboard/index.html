@@ -405,7 +405,7 @@ function m15HTML(full){
   return h + `</div>`;
 }
 // graded real-money fills of the 15-min bot (Alex, Nov 8: real money only on this tab)
-const M15C = {BTC:"#f7931a", SILVER:"#38bdf8", COPPER:"#f472b6", PALLADIUM:"#a78bfa"};   // distinct hues: white = total, orange/blue/pink = markets
+const M15C = {BTC:"#f7931a", SILVER:"#38bdf8", COPPER:"#f472b6", PALLADIUM:"#a78bfa", PLATINUM:"#4ade80", WTI:"#facc15"};   // distinct hues: white = total, orange/blue/pink = markets
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
 function m15Fills(){
   const M = S.m15; if (!M) return [];

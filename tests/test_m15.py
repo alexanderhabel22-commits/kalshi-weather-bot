@@ -496,6 +496,9 @@ def test_extra_contract_only_in_its_band():
     assert m15.target_contracts(0.90, s) == 1
     assert m15.target_contracts(None, s) == 1
     assert m15.target_contracts(0.82, dict(s, extra_contracts=0)) == 1
+    s1 = dict(s, single_series=["KXWTI15M"])
+    assert m15.target_contracts(0.82, s1, "KXWTI15M") == 1
+    assert m15.target_contracts(0.82, s1, "KXBTC15M") == 2
 
 
 def test_second_contract_when_favourite_reaches_extra_band(monkeypatch):
