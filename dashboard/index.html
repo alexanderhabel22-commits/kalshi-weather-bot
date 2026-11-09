@@ -142,6 +142,9 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .share{height:4px;border-radius:2px;background:#18213b;margin:5px 0 3px;overflow:hidden}.share i{display:block;height:100%;border-radius:2px;opacity:.85}
 .legend b{font-family:var(--mono);font-weight:600;font-size:11.5px}
 .chead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}.chead b{font-family:var(--mono);font-size:24px;font-weight:700}.chead span{font-size:12px;color:var(--ink2)}
+.wl{display:flex;flex-wrap:wrap;gap:3px;margin-top:6px}.wl i{width:10px;height:14px;border-radius:2px;display:block}.wl i.w{background:#34d399}.wl i.l{background:#fb6b7b}
+.berow{padding:6px 0}.berow .row{display:flex;justify-content:space-between;font-size:13px}.berow b{font-family:var(--mono);font-size:12.5px}
+.bebar{position:relative;height:8px;border-radius:4px;background:#18213b;margin:6px 0 4px}.bebar i{display:block;height:100%;border-radius:4px;opacity:.85}.bebar u{position:absolute;top:-3px;width:2px;height:14px;background:#e6ecff;transform:translateX(-1px)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink2);margin-bottom:8px}
 .legend span{display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
 .legend span.off{opacity:.35}
@@ -398,11 +401,89 @@ function m15HTML(full){
     + `<div class="mute" style="font-size:11px;margin-top:6px">Backtest: BTC +7¢, silver/copper +5¢ per contract; expect less live. A market is cut if it's below −5¢/ct after 100 fills.</div>`;
   return h + `</div>`;
 }
+// graded real-money fills of the 15-min bot (Alex, Nov 8: real money only on this tab)
+const M15C = {BTC:"#f7931a", SILVER:"#c0c8d8", COPPER:"#e0875a"};
+function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
+function m15Fills(){
+  const M = S.m15; if (!M) return [];
+  return M.rows.filter(r => r.mode === "live" && num(r.filled) > 0 && (r.won === "1" || r.won === "0"))
+    .map(r => { const n = num(r.filled), cost = num(r.cost), fee = num(r.fee);
+      return {r, name:m15Name(r), n, px:cost / n, be:(cost + fee) / n, pnl:num(r.pnl), won:r.won === "1", t:+pdate(r.close) || 0, ttc:num(r.fill_ttc_s, null), ct:num(r.contracts, 1)}; })
+    .filter(f => f.t).sort((a, b) => a.t - b.t);
+}
+function m15Group(fs, key, order){
+  const g = {}; for (const f of fs){ const k = key(f); if (k == null) continue; const b = g[k] = g[k] || {k, n:0, fills:0, wins:0, pnl:0, be:0}; b.fills++; b.n += f.n; b.wins += f.won ? 1 : 0; b.pnl += f.pnl; b.be += f.be; }
+  const out = Object.values(g).map(b => ({...b, win:b.wins / b.fills, beR:b.be / b.fills, c:100 * b.pnl / b.n}));
+  return order ? order.filter(k => g[k]).map(k => out.find(b => b.k === k)) : out;
+}
+function m15ChartsHTML(fs){
+  if (!fs.length) return "";
+  const wins = fs.filter(f => f.won).length, n = fs.reduce((a, f) => a + f.n, 0), pnl = fs.reduce((a, f) => a + f.pnl, 0);
+  const be = fs.reduce((a, f) => a + f.be, 0) / fs.length, win = wins / fs.length;
+  let cur = 0, curW = null, bestW = 0, worstL = 0, run = 0, runW = null;
+  for (const f of fs){ if (f.won === runW) run++; else { runW = f.won; run = 1; } if (runW) bestW = Math.max(bestW, run); else worstL = Math.max(worstL, run); }
+  cur = run; curW = runW;
+  const days = Math.max(1, (fs.at(-1).t - fs[0].t) / 864e5);
+  let h = `<h2>How it's doing <span class="sub">real money · ${fs.length} graded fills</span></h2><div class="card">
+    <div class="grid g3">
+      <div><div class="lbl">Win rate</div><div class="val ${win >= be ? "pos" : "neg"}">${pct(win)}</div><small class="mute">need ${pct(be)} to break even</small></div>
+      <div><div class="lbl">Per contract</div><div class="val ${cls(pnl)}">${cents(100 * pnl / n)}</div><small class="mute">after fees · ${n} contracts</small></div>
+      <div><div class="lbl">Fills / day</div><div class="val">${(fs.length / days).toFixed(days < 1.5 ? 0 : 1)}</div><small class="mute">${wins} won · ${fs.length - wins} lost</small></div>
+      <div><div class="lbl">Streak now</div><div class="val ${curW ? "pos" : "neg"}">${cur} ${curW ? "W" : "L"}</div></div>
+      <div><div class="lbl">Best run</div><div class="val pos">${bestW} W</div></div>
+      <div><div class="lbl">Worst run</div><div class="val ${worstL ? "neg" : ""}">${worstL} L</div></div>
+    </div>
+    <div class="lbl" style="margin-top:14px">Last ${Math.min(60, fs.length)} fills <span class="mute" style="text-transform:none;letter-spacing:0">· oldest → newest</span></div>
+    <div class="wl">${fs.slice(-60).map(f => `<i class="${f.won ? "w" : "l"}" title="${esc(f.name)} ${f.won ? "won" : "lost"} ${money(f.pnl)}"></i>`).join("")}</div>
+    <div class="mute" style="font-size:11px;margin-top:6px">A win pays about 25¢, a loss costs about 75¢, so it needs roughly 3 wins per loss. The win rate has to stay above the break-even line.</div></div>`;
+  h += `<h2>Profit over time <span class="sub">real money · tap a name to hide</span></h2><div class="card"><div class="chead" id="m15Head"></div><div class="legend" id="m15Leg"></div><div class="chart" id="m15Cum"></div></div>`;
+  h += `<h2>Win rate vs break-even <span class="sub">by market</span></h2><div class="card" id="m15Be"></div>`;
+  h += `<h2>Daily profit</h2><div class="card"><div class="chart" id="m15Day"></div></div>`;
+  h += `<h2>By minutes left at fill <span class="sub">¢ per contract</span></h2><div class="card"><div class="chart" id="m15Ttc"></div><div class="mute" style="font-size:11px;margin-top:4px">Since Nov 8, BTC only bids with 10 minutes or less left. This shows whether late fills really do better.</div></div>`;
+  h += `<h2>By entry price <span class="sub">¢ per contract</span></h2><div class="card"><div class="chart" id="m15Px"></div><div class="lbl" style="margin-top:12px">1 contract vs doubled up (2nd contract at 80-87¢)</div><div class="chart" id="m15Ct" style="margin-top:4px"></div></div>`;
+  h += `<h2>By hour of day <span class="sub">ET · 3-hour blocks · ¢ per contract</span></h2><div class="card"><div class="chart" id="m15Hr"></div><div class="mute" style="font-size:11px;margin-top:4px">Each bar is the 3 hours starting at its label. Small samples swing a lot, so read this as a hint, not a rule.</div></div>`;
+  return h;
+}
+function drawM15(){
+  const fs = m15Fills(); if (!fs.length || !$("#m15Cum")) return;
+  const names = [...new Set(fs.map(f => f.name))], col = (n, i) => M15C[n] || EXTRA[i % EXTRA.length];
+  const now = Date.now(), t0 = fs[0].t - 1;
+  const cum = (list, name, c) => { let a = 0; const pts = [{x:t0, y:0}, ...list.map(f => ({x:f.t, y:(a += f.pnl), label:`${f.name} ${f.won ? "won" : "lost"} ${money(f.pnl)}`}))]; if (now > pts.at(-1).x) pts.push({x:now, y:a}); return {name, c, pts, tot:a}; };
+  const ser = [cum(fs, "Total", "#e6ecff"), ...names.map((n, i) => cum(fs.filter(f => f.name === n), n, col(n, i)))]; ser[0].w = 2.5;
+  const hidden = new Set(JSON.parse(ls.get("m15Hidden") || "[]"));
+  $("#m15Head").innerHTML = `<b class="${cls(ser[0].tot)}">${money(ser[0].tot)}</b><span>${fs.length} fills since ${esc(fday(new Date(fs[0].t)))}</span>`;
+  const draw = () => lineChart($("#m15Cum"), ser.filter(x => !hidden.has(x.name)), {step:true, h:190});
+  $("#m15Leg").innerHTML = ser.map(x => `<span data-n="${esc(x.name)}" class="${hidden.has(x.name) ? "off" : ""}"><i style="background:${x.c}"></i>${esc(x.name)} <b class="${cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
+  $("#m15Leg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("m15Hidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); draw(); };
+  draw();
+  // win rate vs break-even per market: a bar to the win rate with a tick at break-even
+  const bm = m15Group(fs, f => f.name).sort((a, b) => b.fills - a.fills), all = m15Group(fs, () => "All markets")[0];
+  $("#m15Be").innerHTML = [...bm, ...(bm.length > 1 ? [all] : [])].map(b => { const i = names.indexOf(b.k), c = b.k === "All markets" ? "#e6ecff" : col(b.k, i), ok = b.win >= b.beR;
+    return `<div class="berow"><div class="row"><span>${esc(b.k)} <span class="mute">· ${b.fills} fills</span></span><b class="${ok ? "pos" : "neg"}">${pct(b.win)} <span class="mute" style="font-weight:400">vs ${pct(b.beR)}</span></b></div>
+      <div class="bebar"><i style="width:${(b.win * 100).toFixed(1)}%;background:${c}"></i><u style="left:${(b.beR * 100).toFixed(1)}%"></u></div>
+      <div class="s mute" style="font-size:11px">${ok ? "above" : "below"} break-even by ${Math.abs((b.win - b.beR) * 100).toFixed(1)} pts · ${cents(b.c)}/ct · ${money(b.pnl)}</div></div>`; }).join("")
+    + `<div class="mute" style="font-size:11px;margin-top:6px">The white tick is the win rate needed to break even at the prices paid (fees included). With under ~100 fills a market's rate is still mostly luck.</div>`;
+  const byDay = {}; fs.forEach(f => { const d = etDay(new Date(f.t)); byDay[d] = (byDay[d] || 0) + f.pnl; });
+  const dd = Object.keys(byDay).sort().slice(-14);
+  barChart($("#m15Day"), dd.map(d => { const l = fs.filter(f => etDay(new Date(f.t)) === d), w = l.filter(f => f.won).length;
+    return {label:d, short:d.slice(5).replace("-", "/"), v:byDay[d], extra:`${l.length} fills · ${w}-${l.length - w}`}; }), {h:130});
+  const bars = (el, groups, lab, cf) => barChart(el, groups.map(b => ({label:lab(b.k), short:lab(b.k), v:b.c / 100, c:cf ? cf(b) : null,
+    extra:`${b.fills} fills · won ${pct(b.win)} (need ${pct(b.beR)}) · ${money(b.pnl)} total`})), {h:130, fy:v => Math.round(v * 100) + "¢", fv:v => cents(v * 100) + "/ct", hint:"Tap a bar for fills and win rate"});
+  bars($("#m15Ttc"), m15Group(fs, f => f.ttc == null ? null : f.ttc <= 300 ? "0-5" : f.ttc <= 600 ? "5-10" : "10-15", ["10-15", "5-10", "0-5"]), k => k + " min");
+  bars($("#m15Px"), m15Group(fs, f => { const c = Math.round(f.px * 100); return c < 75 ? "≤74" : c < 80 ? "75-79" : c < 84 ? "80-83" : "84+"; }, ["≤74", "75-79", "80-83", "84+"]), k => k + "¢");
+  const ct = m15Group(fs, f => f.n > 1 || f.ct > 1 ? "2" : "1", ["1", "2"]);
+  if (ct.length > 1) bars($("#m15Ct"), ct, k => k === "1" ? "1 ct" : "2 cts");
+  else $("#m15Ct").innerHTML = `<div class="mute" style="font-size:11px">The 2nd contract at 80-87¢ (on since Nov 8) hasn't filled yet; a single vs doubled-up split shows here once it does.</div>`;
+  const hr = f => +new Intl.DateTimeFormat("en-US", {timeZone:TZ, hour:"numeric", hourCycle:"h23"}).format(new Date(f.t - 60e3));
+  const hk = f => { const x = hr(f); return String(Math.floor(x / 3) * 3).padStart(2, "0"); };
+  bars($("#m15Hr"), m15Group(fs, hk, ["00","03","06","09","12","15","18","21"]), k => { const a = +k, f = x => x === 0 ? "12a" : x < 12 ? x + "a" : x === 12 ? "12p" : (x - 12) + "p"; return f(a); });
+}
 function m15Page(){
   let h = m15HTML(true);
   const M = S.m15;
   const live = M ? M.rows.filter(r => r.mode === "live") : [];
   if (!live.length) return h;
+  h += m15ChartsHTML(m15Fills());
   const rows = live.slice().sort((a, b) => String(b.close).localeCompare(String(a.close)) || (a.mode === "live" ? -1 : 1));
   const shown = isOpen("m15all") ? rows.slice(0, 200) : rows.slice(0, 25);
   h += `<h2>Recent markets <span class="sub">newest first · real money</span></h2><div class="card list">` + shown.map(r => {
@@ -921,6 +1002,7 @@ function testsHTML(){
 function renderOverview(){
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = m15Page();
+    drawM15();
     $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
     return;
   }
