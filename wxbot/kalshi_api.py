@@ -166,8 +166,35 @@ class KalshiClient:
             payload["post_only"] = True
         if reduce_only:
             payload["reduce_only"] = True
-        js = self._post("/portfolio/events/orders", payload)
+        try:
+            js = self._post("/portfolio/events/orders", payload)
+        except HttpError as exc:
+            # The HTTP layer retries a POST after a timeout or 5xx. If the first try
+            # actually reached Kalshi, the retry gets 409 order_already_exists and the
+            # order would rest untracked (Nov 8: an orphan copper bid filled a 3rd
+            # contract). Adopt the existing order instead of reporting a reject.
+            if exc.status == 409 and "already_exists" in (exc.body or ""):
+                found = self.find_order(ticker, client_order_id)
+                if found:
+                    return found
+            raise
         return js.get("order") or js
+
+    def find_order(self, ticker: str, client_order_id: str) -> dict:
+        """Our order on `ticker` with this client_order_id, in any status ({} if none)."""
+        cursor = None
+        for _ in range(5):
+            params = {"ticker": ticker, "limit": 200}
+            if cursor:
+                params["cursor"] = cursor
+            js = self._get("/portfolio/orders", params)
+            for o in js.get("orders") or []:
+                if o.get("client_order_id") == client_order_id:
+                    return o
+            cursor = js.get("cursor")
+            if not cursor:
+                break
+        return {}
 
     def place_limit(self, ticker: str, side: str, price: float, count: int,
                     client_order_id: str) -> dict:

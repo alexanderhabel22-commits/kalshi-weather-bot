@@ -750,3 +750,32 @@ def test_per_event_pick_handles_event_with_no_picks():
     evs = [fav_event([fav_mkt("c", 0.50, 0.55, vol=2_000_000)]),  # no favorite in band
            fav_event([fav_mkt("a", 0.88, 0.91, vol=2_000_000, ev="KXB")], ev="KXB")]
     assert len(favorites.candidates(evs, NOW, {"contracts": 2}, {})) == 1
+
+
+def test_retried_post_adopts_existing_order():
+    """Nov 8: a POST timed out after reaching Kalshi; the HTTP retry got 409
+    order_already_exists and the bot lost track of a bid that later filled a 3rd
+    contract. The client now looks the order up by client_order_id and returns it."""
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    from wxbot.util import HttpError
+    pem = rsa.generate_private_key(public_exponent=65537, key_size=2048).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()).decode()
+
+    class H:
+        def __init__(self, orders):
+            self.orders = orders
+
+        def post_json(self, url, payload, headers=None):
+            raise HttpError(409, url, '{"error":{"code":"order_already_exists"}}')
+
+        def get_json(self, url, params=None, headers=None):
+            assert params["ticker"] == "T"
+            return {"orders": self.orders}
+    c = KalshiClient(H([{"order_id": "x", "client_order_id": "other"},
+                        {"order_id": "o9", "client_order_id": "cid1", "fill_count": "0.00"}]), "kid", pem)
+    assert c.place_limit("T", "no", 0.85, 1, "cid1")["order_id"] == "o9"
+    c = KalshiClient(H([]), "kid", pem)                       # not found: still a reject
+    with pytest.raises(HttpError):
+        c.place_limit("T", "no", 0.85, 1, "cid1")
