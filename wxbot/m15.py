@@ -665,7 +665,9 @@ class Bot:
             if m is not None and got > 0:
                 q = m.get("last_q") or 0.85
                 self._book(m, {"q": q, "n": got, "filled": got}, None)
-            if self.state["orphans"] in (1, 5, 25):
+            # Alex (Nov 9): no pings for harmless sweeps. Only when a stray actually filled
+            # (real extra exposure), or if they pile up enough to mean something is wrong.
+            if got > 0 or self.state["orphans"] in (100, 500):
                 self.alert("15-min bot: untracked order cancelled",
                            f"{tk}: an order the bot wasn't tracking was cancelled "
                            f"({got:.2f} had filled). Total so far: {self.state['orphans']}.", 3)
