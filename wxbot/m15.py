@@ -81,6 +81,7 @@ DEFAULTS = {
     "extra_contracts": 0,
     "extra_min": 0.80,
     "extra_max": 0.87,
+    "single_series": [],
     "min_fav": 0.71,
     "max_fav": 0.95,
     "stop_quote_s": 0,
@@ -196,9 +197,12 @@ def qty_str(x) -> int | float:
     return int(x) if x == int(x) else x
 
 
-def target_contracts(q: float | None, s: dict) -> int:
-    """Contracts wanted in a market while the favourite's bid is at q."""
+def target_contracts(q: float | None, s: dict, series: str | None = None) -> int:
+    """Contracts wanted in a market while the favourite's bid is at q. Series in
+    single_series never take the extra contract (new live tests, Nov 9)."""
     n = int(s["contracts"])
+    if series is not None and series in (s.get("single_series") or []):
+        return n
     if q is not None and s.get("extra_contracts") and \
             s["extra_min"] - 1e-9 <= q <= s["extra_max"] + 1e-9:
         n += int(s["extra_contracts"])
@@ -672,7 +676,7 @@ class Bot:
         m["why"] = "no quote" if not quote else ("out of band" if want is None else "ok")
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
-        target = target_contracts(want[1] if want else None, s)
+        target = target_contracts(want[1] if want else None, s, m["series"])
         room = target - m["filled"] - (o["n"] - o["filled"] if o else 0)
         if left <= s["stop_quote_s"] or left > float((s.get("max_left_s") or {}).get(m["series"], 1e9)):
             if o:
