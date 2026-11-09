@@ -8,9 +8,9 @@ def test_milestones():
     assert review.milestone(749) == 500
     assert review.milestone(1999) == 1000
     assert review.milestone(5000) == 5000
-    assert review.milestone(9999) == 5000
-    assert review.milestone(10000) == 10000
-    assert review.milestone(23000) == 20000
+    assert review.milestone(7499) == 5000
+    assert review.milestone(7500) == 7500
+    assert review.milestone(23000) == 22500
 
 
 def _units(n, pnl):

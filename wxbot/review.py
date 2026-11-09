@@ -1,7 +1,7 @@
 """Milestone performance reviews (Alex, Nov 9 2026).
 
 Every live bot gets an automatic review when its real-money contract count first
-passes 100 (an early check-in), 300, 500, 750, 1,000, 2,000 and 5,000, then every 5,000 after that. A "bot"
+passes 100 (an early check-in), 300, 500, 750, 1,000, 2,000 and 5,000, then every 2,500 after that. A "bot"
 is one 15-minute market (BTC, silver, ...) or one main-bot strategy (Mentions,
 favorites, ...). Each review is written to reports/reviews/ and pushed to ntfy.
 
@@ -25,7 +25,7 @@ from .util import DATA_DIR, Config, read_json, write_json
 
 REVIEW_DIR = Path(DATA_DIR).parent / "reports" / "reviews"
 FIRST = [100, 300, 500, 750, 1000, 2000, 5000]   # 100 = early check-in (Alex, Nov 9)
-EVERY = 5000
+EVERY = 2500     # after 5,000 (Alex, Nov 9: 5,000 steps were ~7 weeks apart for BTC)
 NAMES = {"KXBTC15M": "BTC", "KXSILVER15M": "Silver", "KXCOPPER15M": "Copper",
          "KXPALLADIUM15M": "Palladium", "KXPLATINUM15M": "Platinum", "KXWTI15M": "WTI oil",
          "KXBRENT15M": "Brent oil", "KXGOLD15M": "Gold", "KXNATGAS15M": "Natural gas",
