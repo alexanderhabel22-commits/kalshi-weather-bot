@@ -408,12 +408,12 @@ function m15HTML(full){
 }
 // graded real-money fills of the 15-min bot (Alex, Nov 8: real money only on this tab)
 // small white icon per market for the win/loss squares (Alex, Nov 9): coins get their logo letter or shape,
-// oil a barrel (WTI) or a drop (Brent), gas a flame, gold/silver an ingot, other metals their element symbol
+// oil a barrel (WTI) or a drop (Brent), gas a flame, metals their element symbol (Au, Ag, Cu, Pd, Pt)
 const M15I = (() => { const t = (c, fs = 10) => `<text x="6" y="${fs >= 9 ? 9.6 : 8.6}" font-size="${fs}" font-weight="800" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" fill="#fff">${c}</text>`;
   const pth = (d, ex = "") => `<path d="${d}" fill="#fff" ${ex}/>`;
   return {BTC:t("₿"), ETH:pth("M6 .6L9.8 6.2 6 8.3 2.2 6.2Z") + pth("M6 9.1L9.8 7 6 11.4 2.2 7Z"), SOL:pth("M3.2 1.6h7.3L8.8 3.7H1.5ZM1.5 5h7.3l1.7 2.1H3.2ZM3.2 8.3h7.3l-1.7 2.1H1.5Z"),
     XRP:`<path d="M2.2 2.2L9.8 9.8M9.8 2.2L2.2 9.8" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/>`, DOGE:t("Ð"), BNB:pth("M6 .8L11.2 6 6 11.2.8 6ZM6 4.2L4.2 6 6 7.8 7.8 6Z", 'fill-rule="evenodd"'),
-    NEAR:t("N"), HYPE:t("H"), ZEC:t("Z"), GOLD:pth("M3 3.6h6l2.4 5.6H.6Z"), SILVER:`<path d="M3.4 4.2h5.2l2 4.6H1.4Z" fill="none" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/>`,
+    NEAR:t("N"), HYPE:t("H"), ZEC:t("Z"), GOLD:t("Au", 7.2), SILVER:t("Ag", 7.2),
     COPPER:t("Cu", 7.2), PALLADIUM:t("Pd", 7.2), PLATINUM:t("Pt", 7.2),
     WTI:`<rect x="2.4" y="1" width="7.2" height="10" rx="1.8" fill="#fff"/><path d="M2.4 4.2h7.2M2.4 7.8h7.2" stroke="rgba(0,0,0,.45)" stroke-width="1"/>`,
     BRENT:pth("M6 .8C6 .8 2.2 5.4 2.2 7.8a3.8 3.8 0 0 0 7.6 0C9.8 5.4 6 .8 6 .8Z"),
