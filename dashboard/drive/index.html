@@ -49,6 +49,17 @@
   #fillpop .small { font-size:clamp(10px,1vw,14px); letter-spacing:.15em; margin-top:4px; color:#e9f6ff; }
   #help { position:fixed; right:2vw; bottom:2.6vh; font-size:10px; letter-spacing:.15em; color:#c9a8ff; opacity:.55; text-align:right; }
   #help a { color:inherit; }
+  /* OLED care: every overlay drifts slowly, buttons hide when idle, the static text dims */
+  .hud, #btns, #help { transition:opacity 2s; }
+  body.idle #btns, body.idle #help { opacity:0; pointer-events:none; }
+  body.idle .hud { opacity:.72; }
+  body.idle { cursor:none; }
+  canvas { transition:filter 3s; }
+  body.idle canvas { filter:brightness(.85); }
+  #sleep { position:fixed; inset:0; background:#000; display:none; z-index:50; cursor:none; }
+  #toast { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); font-family:Orbitron, sans-serif; font-size:16px; letter-spacing:.2em;
+    color:var(--cyan); background:rgba(12,2,34,.85); border:2px solid var(--cyan); border-radius:10px; padding:14px 22px; opacity:0; transition:opacity .4s; pointer-events:none; z-index:60; }
+  #toast.show { opacity:1; }
 </style>
 </head>
 <body>
@@ -57,9 +68,10 @@
 <div id="odo" class="hud"><div class="lbl" id="odoLbl">BANKROLL</div><div class="wheels" id="odoWheels"></div></div>
 <div id="tip"></div>
 <div id="fillpop"></div>
+<div id="sleep"></div><div id="toast"></div>
 <div id="btns"><button id="recenter">⌖ CENTER (M)</button><button id="mine">♫ MY MUSIC</button><button id="music">♪ MUSIC: OFF</button><label id="vol" title="Volume">🔊<input type="range" id="volR" min="0" max="100" value="70"></label></div>
 <input type="file" id="files" accept="audio/*,video/mp4,.mp3,.mp4,.m4a" multiple hidden>
-<div id="help">HOVER A ROADSIDE LIGHT FOR THE TRADE · DRAG TO LOOK · M TO RECENTER<br>
+<div id="help">HOVER A LIGHT FOR THE TRADE · DRAG TO LOOK · M RECENTER · S SLEEP TIMER<br>
   <span id="upd">—</span> · car: <a href="https://kenney.nl/assets/car-kit" target="_blank" style="pointer-events:auto">Kenney Car Kit (CC0)</a></div>
 
 <script type="importmap">
@@ -105,11 +117,12 @@ scene.add(new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), new THREE.Shader
 })));
 
 // stars
+let stars, range = [];
 { const n = 1400, pos = new Float32Array(n * 3);
   for (let i = 0; i < n; i++){ const th = Math.random() * Math.PI * 2, ph = Math.random() * 1.25 + 0.06, r = 380;
     pos.set([Math.cos(th) * Math.cos(ph) * r, Math.sin(ph) * r * 0.9 + 10, Math.sin(th) * Math.cos(ph) * r], i * 3); }
   const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color:0xffe6ff, size:1.3, sizeAttenuation:false, fog:false }))); }
+  stars = new THREE.Points(g, new THREE.PointsMaterial({ color:0xffe6ff, size:1.3, sizeAttenuation:false, fog:false })); scene.add(stars); }
 
 // striped sun
 const sun = new THREE.Mesh(new THREE.PlaneGeometry(150, 150), new THREE.ShaderMaterial({
@@ -170,7 +183,7 @@ ground.position.z = -170; scene.add(ground);
     p.setY(i, k * r); }
   const fill = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:0x12042a, fog:false }));
   const wire = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:0xc23cff, wireframe:true, fog:false, transparent:true, opacity:.55 }));
-  for (const m of [fill, wire]) { m.position.set(0, -1, -300); scene.add(m); }
+  for (const m of [fill, wire]) { m.position.set(0, -1, -300); scene.add(m); range.push(m); }
   wire.position.z += .5; }
 
 /* ------------------------------------------------------------ car (real asset, Kenney CC0) */
@@ -402,20 +415,54 @@ try { if (localStorage.getItem("driveMusic") === "1") addEventListener("pointerd
 
 /* ------------------------------------------------------------ loop */
 const clock = new THREE.Clock(); let dist = 0;
+let asleep = false;
 function frame(){
+  if (asleep){ clock.getDelta(); requestAnimationFrame(frame); return; }
   const dt = Math.min(clock.getDelta(), .1), t = clock.elapsedTime; dist += SPEED * dt;
   groundMat.uniforms.off.value = -(dist % 400);                   // grid + mountains roll toward us (period 400 = multiple of grid/dash spacing)
   sun.material.uniforms.t.value = t;
+  if (stars) stars.rotation.y = t / 900;
+  for (const m of range) m.position.x = Math.sin(t / 173) * 25;
+  sun.position.y = 30 + Math.sin(t / 97) * 2.5; sun.position.x = Math.sin(t / 151) * 3;   // the sun never sits on the same pixels for long
   for (const p of posts){ p.position.z += SPEED * dt; if (p.position.z > 12){ p.position.z -= POSTS * GAP; assignTrade(p); } }
   for (const w of wheels) w.rotation.x += SPEED * dt / .45;
-  car.position.y = Math.sin(t * 9) * .012; car.rotation.z = Math.sin(t * .7) * .01;
+  car.position.y = Math.sin(t * 9) * .012; car.position.x = Math.sin(t / 53) * 1.3 + Math.sin(t / 211) * .6; car.rotation.z = Math.sin(t * .7) * .01;
   glow.material.opacity = .09 + Math.sin(t * 3) * .02;
-  camera.position.set(camBase.x + look.x * 3 + Math.sin(t * .4) * .08, camBase.y + look.y * 2, camBase.z);
+  camera.position.set(camBase.x + car.position.x * .45 + look.x * 3 + Math.sin(t * .4) * .08, camBase.y + look.y * 2, camBase.z);
   camera.lookAt(look.x * 6, 1.2 + look.y * 3, -40);
   hover();
   composer.render(); requestAnimationFrame(frame);
 }
 frame();
+
+/* ------------------------------------------------------------ OLED care + keep the screen awake */
+// every overlay wanders a few pixels on a slow loop (about 10 minutes), so no glyph stays on the same pixels
+const drifters = [...document.querySelectorAll(".hud, #btns, #help")];
+const baseTf = drifters.map(el => getComputedStyle(el).transform === "none" ? "" : getComputedStyle(el).transform);
+setInterval(() => { const t = Date.now() / 1000;
+  drifters.forEach((el, i) => { const dx = Math.sin(t / 97 + i) * 14, dy = Math.cos(t / 131 + i * 2) * 10;
+    el.style.transform = `${baseTf[i]} translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`; }); }, 1000);
+// after a minute without mouse or keys: hide the buttons, dim the text and the scene a little
+let idleT = 0; const wake = () => { document.body.classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add("idle"), 60e3); };
+["pointermove", "pointerdown", "keydown"].forEach(ev => addEventListener(ev, wake)); wake();
+// ask the browser to keep the screen on while this page is showing (Chrome / Edge)
+const SLEEP_OPTS = [0, 1, 2, 4, 8];   // hours; 0 = never
+let sleepH = 4, sleepAt = 0;
+try { const v = localStorage.getItem("driveSleepH"); if (v != null) sleepH = +v; } catch(e){}
+const toast = msg => { const el = document.getElementById("toast"); el.textContent = msg; el.className = "show"; clearTimeout(toast.t); toast.t = setTimeout(() => el.className = "", 2200); };
+const armSleep = () => { sleepAt = sleepH ? Date.now() + sleepH * 3600e3 : 0; };
+function goSleep(){ asleep = true; document.getElementById("sleep").style.display = "block"; player.pause(); if (Music.on){ Music.stop(); mShow(); } }
+function unSleep(){ if (!asleep) return; asleep = false; document.getElementById("sleep").style.display = "none"; armSleep(); }
+["pointermove", "pointerdown", "keydown"].forEach(ev => addEventListener(ev, () => { if (asleep) unSleep(); else armSleep(); }));
+addEventListener("keydown", e => { if (e.key !== "s" && e.key !== "S") return;
+  sleepH = SLEEP_OPTS[(SLEEP_OPTS.indexOf(sleepH) + 1) % SLEEP_OPTS.length]; armSleep();
+  try { localStorage.setItem("driveSleepH", sleepH); } catch(e){}
+  toast(sleepH ? `SCREEN OFF AFTER ${sleepH}H IDLE` : "SLEEP TIMER OFF"); });
+setInterval(() => { if (!asleep && sleepAt && Date.now() > sleepAt) goSleep(); }, 10e3);
+armSleep();
+let lock = null;
+async function keepAwake(){ try { if ("wakeLock" in navigator && !document.hidden && !lock){ lock = await navigator.wakeLock.request("screen"); lock.addEventListener("release", () => { lock = null; }); } } catch(e){} }
+document.addEventListener("visibilitychange", keepAwake); addEventListener("pointerdown", keepAwake); keepAwake();
 addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
 </script>
