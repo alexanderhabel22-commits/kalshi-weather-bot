@@ -94,13 +94,13 @@ DEFAULTS = {
     # Alt coins (paper only): same pattern in the backtest (+5c last 5 min, ~-1 to -3c earlier),
     # and live paper agreed (Nov 7-8: 569 early fills -4.5c/ct, 11 late fills 10 won). So the
     # paper test now runs the last-5-minute version, the only one that could go live.
-    "max_left_s": {"KXBTC15M": 600, "KXSILVER15M": 300, "KXCOPPER15M": 300, "KXETH15M": 300, "KXSOL15M": 300,
+    "max_left_s": {"KXBTC15M": 600, "KXSILVER15M": 300, "KXCOPPER15M": 300, "KXPALLADIUM15M": 300,
+                   "KXPLATINUM15M": 300, "KXETH15M": 300, "KXSOL15M": 300,
                    "KXXRP15M": 300, "KXDOGE15M": 300, "KXBNB15M": 300, "KXNEAR15M": 300,
                    "KXHYPE15M": 300, "KXZEC15M": 300},
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
-    "window_pct": 0.07,              # max live $ at risk across markets closing at the same time
     "shard": 2,                     # Kalshi exchange shard of crypto + commodities markets
     "fund_s": 300,                  # top the shard up to the pool this often (live only)
     "cut_after_fills": 100,         # a live series below cut_below_ct per contract after this
@@ -713,10 +713,13 @@ class Bot:
                 m["why"] = f"pool full (bankroll {b:.2f})"
                 return
             # markets closing together can all lose together (Nov 8 10:30 PM ET: BTC, silver and
-            # copper all flipped). Keep one window's total below the daily stop so a single bad
-            # window can't pause the bot for the day.
-            if self.exposure("live", close=m["close"]) + q * n_new > s["window_pct"] * b + 1e-9:
-                m["why"] = f"window cap ({s['window_pct']:.0%} of {b:.2f})"
+            # copper all flipped). Never let everything open losing at once reach the daily stop:
+            # open live $ + this order must fit in what's left before the stop. Up on the day =
+            # more room; already down = less (Alex, Nov 9).
+            day_pnl = self.state["pnl"].get("live_days", {}).get(self.day(now), 0.0)
+            room_to_stop = s["daily_loss_pct"] * b + day_pnl
+            if self.exposure("live") + q * n_new > room_to_stop - 0.01:
+                m["why"] = f"daily-stop guard (room ${room_to_stop:.2f})"
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, n_new, now)

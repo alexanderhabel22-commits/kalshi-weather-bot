@@ -220,9 +220,8 @@ mode = "live"                    # off | paper | live. LIVE from the start (Alex
                                  # test", no paper run). Without a Kalshi key on the server it stays
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
 live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M", "KXPALLADIUM15M"]   # real money only on these
-                                 # palladium live Nov 9 (Alex OK). Paper: 106 ct +7.7c, earned on
-                                 # whole-window bids (early +8.6c on 96 ct; last 5 min only 10 ct), so it
-                                 # keeps the tested whole-window timing (no max_left_s entry).
+                                 # palladium live Nov 9 (Alex OK); last 5 minutes only like the other
+                                 # metals (Alex, Nov 9: early paper fills don't hold up live).
 contracts = 1                    # per market
 extra_contracts = 1              # ON Nov 8 5:15 PM ET (Alex OK'd): +1 contract while the
 extra_min = 0.80                 # favourite is 80-87c (backtest +11c/ct; live the bot buys at ~73c
@@ -232,8 +231,8 @@ max_fav = 0.95
 pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
                                  # Actions strategies' 75% cap leaves free; Alex, Nov 8)
 daily_loss_pct = 0.10            # live P&L today <= -10% of bankroll -> stop until tomorrow
-window_pct = 0.07                # one 15-min window (all markets closing together) risks at most 7% of
-                                 # the bankroll, so one all-lose window stays under the daily stop (Nov 9, Alex)
+                                 # Guard (Nov 9, Alex): no new order if everything open losing at once
+                                 # would reach this stop (room = 10% of bankroll + today's live P&L).
 total_loss_pct = 0.125           # live P&L since start <= -12.5% (~half the pool) -> halt
 cut_after_fills = 100            # a live market below -5c/contract after 100 real fills goes
 cut_below_ct = -0.05             # back to paper by itself (pre-registered, Nov 8)
