@@ -405,7 +405,7 @@ function m15HTML(full){
   return h + `</div>`;
 }
 // graded real-money fills of the 15-min bot (Alex, Nov 8: real money only on this tab)
-const M15C = {BTC:"#f7931a", SILVER:"#a8b2bd", COPPER:"#b4532a", GOLD:"#ffd700", PALLADIUM:"#a78bfa", PLATINUM:"#7dd3fc", WTI:"#000000", BRENT:"#6b4423", NATGAS:"#3b82f6"};   // match the metal/coin (Alex, Nov 9); palladium/platinum are silver-white metals, so violet/ice blue; oil black with a light outline
+const M15C = {BTC:"#f7931a", SILVER:"#a8b2bd", COPPER:"#b4532a", GOLD:"#ffd700", PALLADIUM:"#a78bfa", PLATINUM:"#7dd3fc", WTI:"#14b8a6", BRENT:"#8b5a2b", NATGAS:"#3b82f6"};   // match the metal/coin (Alex, Nov 9); palladium/platinum are silver-white metals, so violet/ice blue; oil = petrol teal (WTI) and crude brown (Brent)
 const darkC = c => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m) return false; const v = parseInt(m[1], 16); return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) < 70; };   // too dark to see on the dark page: draw a light outline under it
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
 function m15Fills(){
