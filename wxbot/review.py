@@ -21,7 +21,11 @@ import random
 from datetime import datetime
 from pathlib import Path
 
+from zoneinfo import ZoneInfo
+
 from .util import DATA_DIR, Config, read_json, write_json
+
+ET = ZoneInfo("America/New_York")
 
 REVIEW_DIR = Path(DATA_DIR).parent / "reports" / "reviews"
 FIRST = [100, 300, 500, 750, 1000, 2000, 5000]   # 100 = early check-in (Alex, Nov 9)
@@ -92,9 +96,11 @@ def m15_units(rows: list[dict], live: list[str]) -> dict[str, list[dict]]:
         n = _f(r.get("filled"))
         if n <= 0:
             continue
+        ttc = r.get("fill_ttc_s")
         out.setdefault(r["series"], []).append(
             {"n": n, "cost": _f(r.get("cost")) + _f(r.get("fee")), "pnl": _f(r["pnl"]),
-             "at": r.get("close") or ""})
+             "at": r.get("close") or "",
+             "late": None if ttc in (None, "") else _f(ttc) <= 300})
     return out
 
 
@@ -165,40 +171,184 @@ def review(key: str, units: list[dict], mark: int, ctx: dict) -> dict:
             "pnl": pnl, "per_c": per_c, "price": price, "ci": ci, "recent_c": recent_c,
             "fading": fading, "per_day": per_day, "action": action, "why": why,
             "cur": cur, "rec": rec, "kelly": k, "need_money": need_money,
-            "month_now": month_now, "month_rec": month_rec, "grow": grow, "bot": ctx["bot"]}
+            "month_now": month_now, "month_rec": month_rec, "grow": grow, "bot": ctx["bot"],
+            "exp": ctx.get("exp"), "grade": grade(ci), "x": extras(units),
+            "freeze_at": ctx.get("freeze_at")}
 
 
 def _c(x) -> str:
     return f"{x * 100:+.1f}c"
 
 
+GRADES = [(0.97, "A+", "Money printer. The edge is about as clear as this data can show."),
+          (0.90, "A", "Clearly working. Odds strongly favor a real edge."),
+          (0.75, "B", "Looking good, but luck can't be ruled out yet."),
+          (0.55, "C", "Coin-flip territory. Slightly ahead, nothing proven."),
+          (0.30, "D", "Struggling. More likely losing than winning."),
+          (0.0, "F", "Losing. The numbers say this isn't working.")]
+
+
+def grade(ci) -> tuple[str, str]:
+    share = ci[2] if ci else 0.5
+    for cut, g, line in GRADES:
+        if share >= cut:
+            return g, line
+    return GRADES[-1][1:]
+
+
+def _bar(x: float, scale: float = 0.10, width: int = 10) -> str:
+    """Text bar for a per-contract number: green right of 0, red left."""
+    k = min(width, round(abs(x) / scale * width))
+    return ("🟩" * k if x >= 0 else "🟥" * k) or "·"
+
+
+def _group(units: list[dict], key) -> list[tuple[str, int, float, float]]:
+    """(label, contracts, profit, per contract) per group, groups in first-seen order."""
+    acc: dict = {}
+    for u in units:
+        g = key(u)
+        if g is None:
+            continue
+        a = acc.setdefault(g, [0.0, 0.0])
+        a[0] += u["n"]
+        a[1] += u["pnl"]
+    return [(g, a[0], a[1], a[1] / a[0] if a[0] else 0.0) for g, a in acc.items()]
+
+
+def _et(u):
+    try:
+        return datetime.fromisoformat(u["at"]).astimezone(ET)
+    except (ValueError, TypeError):
+        return None
+
+
+def extras(units: list[dict]) -> dict:
+    """The colour: trend, breakdowns, streaks."""
+    wins = sum(1 for u in units if u["pnl"] > 0)
+    # trend in five equal stretches
+    k = max(1, len(units) // 5)
+    trend = []
+    for i in range(0, len(units), k):
+        ch = units[i:i + k]
+        n = sum(u["n"] for u in ch)
+        trend.append((f"#{i + 1}-{i + len(ch)}", n, sum(u["pnl"] for u in ch) / n if n else 0.0))
+    trend = trend[:5] if len(trend) <= 5 else trend[:4] + [(
+        f"#{4 * k + 1}-{len(units)}", sum(u["n"] for u in units[4 * k:]),
+        sum(u["pnl"] for u in units[4 * k:]) / max(1e-9, sum(u["n"] for u in units[4 * k:])))]
+
+    def band(u):
+        p = u["cost"] / u["n"] if u["n"] else 0
+        return ("71-74c" if p < 0.75 else "75-79c" if p < 0.80 else "80-87c" if p < 0.88 else "88-95c")
+
+    def tod(u):
+        d = _et(u)
+        if not d:
+            return None
+        h = d.hour
+        return ("Overnight (12-6 AM ET)" if h < 6 else "Morning (6 AM-12 PM)" if h < 12
+                else "Afternoon (12-6 PM)" if h < 18 else "Evening (6 PM-12 AM)")
+
+    bands = sorted(_group(units, band))
+    size = _group(units, lambda u: "Double-ups (2 contracts)" if u["n"] >= 1.99 else "Singles")
+    order = ["Overnight", "Morning", "Afternoon", "Evening"]
+    times = sorted(_group(units, tod), key=lambda g: next(i for i, o in enumerate(order) if g[0].startswith(o)))
+    timing = _group(units, lambda u: None if u.get("late") is None else
+                    ("Filled in last 5 min" if u["late"] else "Filled with 5+ min left"))
+    days = _group(units, lambda u: (_et(u) or datetime.min).strftime("%a %b %d") if _et(u) else None)
+    # streaks and drawdown
+    worst_streak = cur = 0
+    peak = run = dd = 0.0
+    for u in units:
+        cur = cur + 1 if u["pnl"] < 0 else 0
+        worst_streak = max(worst_streak, cur)
+        run += u["pnl"]
+        peak = max(peak, run)
+        dd = max(dd, peak - run)
+    best = max(days, key=lambda d: d[2]) if days else None
+    worst = min(days, key=lambda d: d[2]) if days else None
+    return {"wins": wins, "losses": len(units) - wins, "trend": trend, "bands": bands,
+            "size": size, "times": times, "timing": timing, "best_day": best, "worst_day": worst,
+            "worst_streak": worst_streak, "drawdown": dd,
+            "big_win": max((u["pnl"] for u in units), default=0.0),
+            "big_loss": min((u["pnl"] for u in units), default=0.0)}
+
+
+def _table(title: str, rows) -> list[str]:
+    rows = [r for r in rows if r[1] > 0]
+    if len(rows) < 2:
+        return []
+    L = [f"**{title}**", "", "| | Contracts | Profit | Per contract | |", "|---|---|---|---|---|"]
+    for g, n, p, c in rows:
+        L.append(f"| {g} | {n:,.0f} | ${p:+.2f} | {_c(c)} | {_bar(c)} |")
+    return L + [""]
+
+
 def render(r: dict, now: datetime) -> str:
-    ci = "not enough results" if not r["ci"] else (
-        f"{_c(r['ci'][0])} to {_c(r['ci'][1])} per contract ({r['ci'][2]:.0%} of resamples above zero)")
-    L = [f"# Performance review: {r['name']} ({r['bot']}), {r['label']}", "",
-         f"_{now:%b %d %Y %H:%M} UTC. Rules: wxbot/review.py (fixed in advance)._", "",
-         f"## Recommendation: **{r['action']}**", "", f"- Why: {r['why']}.",
-         f"- Contracts per order: **{r['rec']}** (now {r['cur']:g}). Quarter-Kelly on the cautious "
-         f"end of the range says {r['kelly']:.1f}; a raise is capped at {MAX_MULT}x per review.",
-         f"- Money that size needs: about ${r['need_money']:.0f} of bankroll.",
-         f"- Profit pace: ${r['month_now']:+.2f}/month now, ${r['month_rec']:+.2f}/month at the recommended size "
-         f"(at today's {_c(r['per_c'])} per contract)."]
+    x, (g, gline) = r["x"], r["grade"]
+    ci = "not enough results yet" if not r["ci"] else (
+        f"{_c(r['ci'][0])} to {_c(r['ci'][1])} per contract")
+    sure = f"{r['ci'][2]:.0%}" if r["ci"] else "?"
+    be = r["price"]                                   # break-even win rate = average price paid
+    wr = x["wins"] / max(1, r["results"])
+    L = [f"# {r['name']} performance review: {r['label']}", "",
+         f"_{r['bot']} · {now.astimezone(ET):%a %b %d, %I:%M %p} ET · rules fixed in advance (wxbot/review.py)_", "",
+         f"## Grade: {g}", "", f"> {gline}", "",
+         f"**Bottom line:** {r['action']}. {r['why'].capitalize()}.", "",
+         "## Scorecard", "",
+         "| | |", "|---|---|",
+         f"| Contracts | {r['n']:,.0f} ({r['per_day']:.0f} a day) |",
+         f"| Record | {x['wins']}-{x['losses']} ({wr:.0%} won; break-even is {be:.0%}) |",
+         f"| Profit | **${r['pnl']:+.2f}** |",
+         f"| Per contract | **{_c(r['per_c'])}** at an average {r['price'] * 100:.0f}c |"]
+    if r.get("exp") is not None:
+        L.append(f"| Backtest said | {_c(r['exp'])} per contract "
+                 f"({'beating' if r['per_c'] >= r['exp'] else 'behind'} it) |")
+    L += [f"| 90% range | {ci} |",
+          f"| Chance the edge is real | {sure} |",
+          f"| Biggest win / loss | ${x['big_win']:+.2f} / ${x['big_loss']:+.2f} |",
+          f"| Worst losing streak | {x['worst_streak']} in a row |",
+          f"| Deepest dip from a high | ${x['drawdown']:.2f} |"]
+    if x["best_day"]:
+        L.append(f"| Best / worst day | {x['best_day'][0]} ${x['best_day'][2]:+.2f} / "
+                 f"{x['worst_day'][0]} ${x['worst_day'][2]:+.2f} |")
+    L += ["", "## Is it holding up?", "", "Results in five equal stretches, oldest first:", "",
+          "| Stretch | Contracts | Per contract | |", "|---|---|---|---|"]
+    for lab, n, c in x["trend"]:
+        L.append(f"| {lab} | {n:,.0f} | {_c(c)} | {_bar(c)} |")
+    L += ["", ("⚠️ **Fading:** the latest third lost money while the total is up." if r["fading"]
+               else f"Latest third: {_c(r['recent_c'])} per contract."), "", "## Where the money comes from", ""]
+    L += _table("By entry price", x["bands"])
+    L += _table("Singles vs double-ups", x["size"])
+    L += _table("By bid timing", x["timing"])
+    L += _table("By time of day", x["times"])
+    L += ["## Recommendation", "",
+          f"- **Action: {r['action']}.**",
+          f"- **Contracts per order: {r['rec']}** (now {r['cur']:g}). "
+          + (f"Quarter-Kelly on the cautious end of the range says {r['kelly']:.1f}; raises are capped "
+             f"at {MAX_MULT}x per review." if r["kelly"] > 0 else
+             "No raise until the cautious end of the range is above zero."),
+          f"- **Profit pace:** ${r['month_now']:+.2f}/month now, ${r['month_rec']:+.2f}/month at the "
+          f"recommended size.",
+          f"- **Money that size needs:** about ${r['need_money']:.0f} of bankroll."]
     if r["grow"]:
-        L.append("- Bankroll growth: " + ", ".join(
-            f"{c} contracts per order needs ~${v:,.0f}" for c, v in r["grow"].items()) + ".")
+        L.append("- **Bankroll growth:** " + ", ".join(
+            f"{c} contracts per order wants ~${v:,.0f}" for c, v in r["grow"].items())
+            + ". Add money only if this grade holds at the next review.")
     else:
-        L.append("- Bankroll growth: don't add money for this one until its range is above zero.")
-    L += ["", "## Record", "",
-          f"- Real contracts: {r['n']:,.0f} over {r['results']:,} results, {r['per_day']:.0f}/day",
-          f"- Profit: ${r['pnl']:+.2f}, {_c(r['per_c'])} per contract at an average {r['price'] * 100:.0f}c",
-          f"- 90% range: {ci}",
-          f"- Latest third of results: {_c(r['recent_c'])} per contract"
-          + (" (FADING: losing lately while the total is positive)" if r["fading"] else ""), ""]
-    return "\n".join(L)
+        L.append("- **Bankroll growth:** don't add money on this one's account until its range clears zero.")
+    nxt = next((m for m in FIRST if m > r["n"]), (int(r["n"] // EVERY) + 1) * EVERY)
+    L += ["", "## What would change my mind", "",
+          "- Falls under -5c per contract, or the whole range drops below zero: back to paper.",
+          "- Whole range climbs above zero (and the latest stretch isn't losing): scale up.",
+          f"- Next review at {nxt:,} contracts, or in 30 days, whichever comes first."]
+    if r.get("freeze_at"):
+        L.append(f"- Rule freeze: {'lifted' if r['n'] >= r['freeze_at'] else 'on'} "
+                 f"(rules stay fixed until {r['freeze_at']:,} contracts; Alex, Nov 9).")
+    return "\n".join(L) + "\n"
 
 
 def push_line(r: dict) -> str:
-    return (f"{r['name']} @ {r['mark']:,}: {r['action']}." if r["mark"] else f"{r['name']} (monthly): {r['action']}.") + (f" {_c(r['per_c'])}/ct, ${r['pnl']:+.2f}. "
+    return (f"[{r['grade'][0]}] " + (f"{r['name']} @ {r['mark']:,}: {r['action']}." if r["mark"] else f"{r['name']} (monthly): {r['action']}.")) + (f" {_c(r['per_c'])}/ct, ${r['pnl']:+.2f}. "
             f"Contracts {r['cur']:g} -> {r['rec']}. Pace ${r['month_rec']:+.0f}/mo.")
 
 
@@ -207,7 +357,7 @@ def push_line(r: dict) -> str:
 def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[str]:
     """Review every bot that crossed a new milestone since the last run."""
     from . import notify, trader
-    from .checkpoint import m15_rows
+    from .checkpoint import EXPECTED, M15_EXPECTED, m15_rows
     from .m15 import settings as m15_settings
     state_path = trader.STATE
     state = read_json(state_path, {}) or {}
@@ -251,6 +401,7 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
             except ValueError:
                 days = 1
             ctx = {"bot": "15-min bot", "contracts": s15.get("contracts", 1), "days": days,
+                   "exp": M15_EXPECTED.get(series), "freeze_at": 500,
                    "money": bankroll * float(s15.get("pool_pct", 0.25)), "concurrent": len(live15),
                    "per_market_max": 1 + (1 if s15.get("extra_contracts") else 0),
                    "share": float(s15.get("pool_pct", 0.25))}
@@ -262,7 +413,9 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
     for strat, units in main_units(rows, live_main).items():
         mark = due(strat, sum(u["n"] for u in units), len(units))
         if mark is not None:
+            e = EXPECTED.get(strat) or {}
             ctx = {"bot": "main bot", "contracts": (tcfg.get(strat) or {}).get("contracts", 1),
+                   "exp": e["per_dollar"] * e["price"] if e else None, "freeze_at": 500,
                    "days": max(1, (now - datetime.fromisoformat("2026-11-05T23:03:00+00:00")).days),
                    "money": bankroll * float((tcfg.get(strat) or {}).get("word_pct")
                                                or (tcfg.get(strat) or {}).get("max_event_pct", 0.15)),
