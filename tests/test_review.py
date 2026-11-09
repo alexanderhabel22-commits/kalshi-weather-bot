@@ -39,3 +39,27 @@ def test_unclear_bot_keeps_its_size():
     units = [{"n": 1, "cost": 0.85, "pnl": 0.15 if i % 6 else -0.85, "at": ""} for i in range(300)]
     r = review.review("KXSILVER15M", units, 300, CTX)
     assert r["action"].startswith("KEEP") and r["rec"] == 1
+
+
+def test_run_milestones_then_monthly_backstop(tmp_path, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    from wxbot import trader, checkpoint
+    from wxbot.util import Config, read_json
+    monkeypatch.setattr(trader, "STATE", tmp_path / "state.json")
+    monkeypatch.setattr(review, "REVIEW_DIR", tmp_path / "reviews")
+    monkeypatch.setattr(trader, "load_all", lambda: [])
+    rows = [{"mode": "live", "series": "KXBTC15M", "filled": "1", "cost": "0.85", "fee": "0",
+             "pnl": "0.15" if i % 6 else "-0.85", "close": f"2026-11-09T00:{i % 60:02d}:00+00:00"}
+            for i in range(120)]
+    monkeypatch.setattr(checkpoint, "m15_rows", lambda: rows)
+    cfg = Config()
+    t0 = datetime(2026, 11, 9, 18, tzinfo=timezone.utc)
+    assert review.run(cfg, t0, dry_run=False) == []          # already past 100 on day one: skipped
+    st = read_json(trader.STATE)
+    assert st["reviews"]["KXBTC15M"] == 100 and "KXBTC15M" in st["reviews_at"]
+    rows += [dict(rows[1]) for _ in range(200)]              # reaches 320 -> the 300 review
+    out = review.run(cfg, t0 + timedelta(hours=2))
+    assert len(out) == 1 and out[0].endswith("KXBTC15M-300.md")
+    assert review.run(cfg, t0 + timedelta(days=10)) == []    # nothing new, under a month
+    out = review.run(cfg, t0 + timedelta(days=31))
+    assert len(out) == 1 and out[0].endswith("KXBTC15M-monthly.md")

@@ -34,6 +34,7 @@ NAMES = {"KXBTC15M": "BTC", "KXSILVER15M": "Silver", "KXCOPPER15M": "Copper",
 KELLY = 0.25          # quarter Kelly
 MAX_MULT = 3          # never recommend more than 3x the current size in one step
 CUT_BELOW = -0.05     # under -5c per contract -> back to paper
+MONTHLY_DAYS = 30     # a bot with no review for 30 days gets one anyway (Alex, Nov 9)
 
 
 def milestone(n: float) -> int:
@@ -159,7 +160,8 @@ def review(key: str, units: list[dict], mark: int, ctx: dict) -> dict:
     if edge > 0:
         for c in (5, 10):
             grow[c] = c * price / (KELLY * edge / (1 - price)) * ctx.get("concurrent", 1) / max(1e-9, ctx.get("share", 1))
-    return {"key": key, "name": NAMES.get(key, key), "mark": mark, "n": n, "results": len(units),
+    return {"key": key, "name": NAMES.get(key, key), "mark": mark,
+            "label": f"{mark:,} contracts" if mark else f"monthly review ({n:,.0f} contracts)", "n": n, "results": len(units),
             "pnl": pnl, "per_c": per_c, "price": price, "ci": ci, "recent_c": recent_c,
             "fading": fading, "per_day": per_day, "action": action, "why": why,
             "cur": cur, "rec": rec, "kelly": k, "need_money": need_money,
@@ -173,7 +175,7 @@ def _c(x) -> str:
 def render(r: dict, now: datetime) -> str:
     ci = "not enough results" if not r["ci"] else (
         f"{_c(r['ci'][0])} to {_c(r['ci'][1])} per contract ({r['ci'][2]:.0%} of resamples above zero)")
-    L = [f"# Performance review: {r['name']} ({r['bot']}) at {r['mark']:,} contracts", "",
+    L = [f"# Performance review: {r['name']} ({r['bot']}), {r['label']}", "",
          f"_{now:%b %d %Y %H:%M} UTC. Rules: wxbot/review.py (fixed in advance)._", "",
          f"## Recommendation: **{r['action']}**", "", f"- Why: {r['why']}.",
          f"- Contracts per order: **{r['rec']}** (now {r['cur']:g}). Quarter-Kelly on the cautious "
@@ -196,7 +198,7 @@ def render(r: dict, now: datetime) -> str:
 
 
 def push_line(r: dict) -> str:
-    return (f"{r['name']} @ {r['mark']:,}: {r['action']}. {_c(r['per_c'])}/ct, ${r['pnl']:+.2f}. "
+    return (f"{r['name']} @ {r['mark']:,}: {r['action']}." if r["mark"] else f"{r['name']} (monthly): {r['action']}.") + (f" {_c(r['per_c'])}/ct, ${r['pnl']:+.2f}. "
             f"Contracts {r['cur']:g} -> {r['rec']}. Pace ${r['month_rec']:+.0f}/mo.")
 
 
@@ -218,17 +220,31 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
     except ValueError:
         pass
     bankroll = float(trader.settings(cfg)["bankroll"])
+    at = state.get("reviews_at") or {}          # last review (or first seen) per bot
+
+    def due(key: str, n: float, results: int) -> int | None:
+        """Milestone to review now, 0 for the monthly backstop, None for nothing."""
+        mark = milestone(n)
+        if seed and mark == 100:
+            done.setdefault(key, 100)
+        if mark and mark > int(done.get(key, 0)):
+            return mark
+        if key not in at:
+            at[key] = now.isoformat(timespec="seconds")   # the monthly clock starts now
+            return None
+        try:
+            since = (now - datetime.fromisoformat(at[key])).total_seconds() / 86400
+        except ValueError:
+            since = 0
+        return 0 if since >= MONTHLY_DAYS and results >= 10 else None
 
     s15 = m15_settings(cfg)
     live15 = list(s15.get("live_series") or [])
     todo: list[dict] = []
     for series, units in m15_units(m15_rows(), live15).items():
         units.sort(key=lambda u: u["at"])
-        n = sum(u["n"] for u in units)
-        mark = milestone(n)
-        if seed and mark == 100:
-            done.setdefault(series, 100)
-        if mark and mark > int(done.get(series, 0)):
+        mark = due(series, sum(u["n"] for u in units), len(units))
+        if mark is not None:
             first = units[0]["at"]
             try:
                 days = (now - datetime.fromisoformat(first)).total_seconds() / 86400
@@ -244,11 +260,8 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
     live_main = [k for k, v in tcfg.items() if isinstance(v, dict) and v.get("live")]
     rows = trader.load_all()
     for strat, units in main_units(rows, live_main).items():
-        n = sum(u["n"] for u in units)
-        mark = milestone(n)
-        if seed and mark == 100:
-            done.setdefault(strat, 100)
-        if mark and mark > int(done.get(strat, 0)):
+        mark = due(strat, sum(u["n"] for u in units), len(units))
+        if mark is not None:
             ctx = {"bot": "main bot", "contracts": (tcfg.get(strat) or {}).get("contracts", 1),
                    "days": max(1, (now - datetime.fromisoformat("2026-11-05T23:03:00+00:00")).days),
                    "money": bankroll * float((tcfg.get(strat) or {}).get("word_pct")
@@ -259,14 +272,17 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
     written = []
     for r in todo:
         REVIEW_DIR.mkdir(parents=True, exist_ok=True)
-        path = REVIEW_DIR / f"{now:%Y-%m-%d}-{r['key']}-{r['mark']}.md"
+        path = REVIEW_DIR / f"{now:%Y-%m-%d}-{r['key']}-{r['mark'] or 'monthly'}.md"
         path.write_text(render(r, now), encoding="utf-8")
         written.append(str(path))
-        done[r["key"]] = r["mark"]
+        if r["mark"]:
+            done[r["key"]] = r["mark"]
+        at[r["key"]] = now.isoformat(timespec="seconds")
     if not dry_run:
         state = read_json(state_path, {}) or {}
         state["reviews"] = done
         state["reviews_seeded_100"] = True
+        state["reviews_at"] = at
         state["reviews_checked_at"] = now.isoformat(timespec="seconds")
         write_json(state_path, state)
     if todo:
