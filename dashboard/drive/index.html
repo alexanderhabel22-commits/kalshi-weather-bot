@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalshi Night Drive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Monoton&family=Orbitron:wght@500;800&display=swap" rel="stylesheet">
+<style>
+  :root { --pink:#ff3df2; --cyan:#3ff6ff; --green:#4dff9a; --red:#ff4d6d; --ink:#0b0420; }
+  html, body { margin:0; height:100%; background:var(--ink); overflow:hidden; color:#fff; font-family:Orbitron, sans-serif; }
+  canvas { display:block; }
+  .hud { position:fixed; pointer-events:none; text-align:center; }
+  #pnl { top:5vh; left:0; right:0; }
+  #pnl .lbl { font-size:clamp(10px,1.1vw,15px); letter-spacing:.45em; color:#ffd6ff; opacity:.8; }
+  #pnl .num { font-family:Monoton, Orbitron, sans-serif; font-size:clamp(40px,7vw,110px); line-height:1.05; margin-top:.15em; transition:color .6s; }
+  .up { color:var(--green); text-shadow:0 0 8px var(--green),0 0 24px var(--green),0 0 60px #00ff88; }
+  .down { color:var(--pink); text-shadow:0 0 8px var(--pink),0 0 24px var(--pink),0 0 60px #ff00cc; }
+  #odo { bottom:3vh; left:2.5vw; text-align:left; }
+  #odo .lbl { font-size:clamp(9px,.9vw,13px); letter-spacing:.4em; color:var(--cyan); text-shadow:0 0 6px var(--cyan); margin-bottom:6px; }
+  #odo .wheels { display:inline-flex; gap:3px; padding:6px 8px; background:rgba(10,0,30,.75); border:2px solid var(--cyan);
+    border-radius:8px; box-shadow:0 0 14px var(--cyan), inset 0 0 12px rgba(63,246,255,.35); }
+  .dg { width:clamp(20px,2.2vw,34px); height:clamp(32px,3.4vw,52px); overflow:hidden; background:linear-gradient(#05010f,#1d0b3a 50%,#05010f);
+    border-radius:3px; font-size:clamp(22px,2.6vw,40px); font-weight:800; color:#fff; }
+  .dg .strip { transition:transform 1.4s cubic-bezier(.3,1.3,.5,1); }
+  .dg .strip div { height:clamp(32px,3.4vw,52px); display:flex; align-items:center; justify-content:center; text-shadow:0 0 6px #fff; }
+  .dg.sep { width:auto; background:none; display:flex; align-items:center; padding:0 2px; color:var(--cyan); }
+  #sign { top:3vh; left:2.5vw; text-align:left; }
+  #sign .box { display:inline-block; font-family:Monoton, sans-serif; font-size:clamp(16px,1.9vw,30px); padding:.25em .6em; border-radius:10px; border:3px solid currentColor; }
+  #sign .box.run { color:var(--green); box-shadow:0 0 12px var(--green), inset 0 0 12px var(--green); text-shadow:0 0 10px var(--green); animation:buzz 7s infinite; }
+  #sign .box.pause { color:#ffc94d; box-shadow:0 0 12px #ffc94d, inset 0 0 12px #ffc94d; text-shadow:0 0 10px #ffc94d; animation:blink 1.6s infinite; }
+  #sign .box.stop { color:var(--red); box-shadow:0 0 12px var(--red), inset 0 0 12px var(--red); text-shadow:0 0 10px var(--red); }
+  #sign .sub { font-size:clamp(8px,.75vw,11px); letter-spacing:.2em; margin-top:8px; color:#e9c8ff; opacity:.75; }
+  @keyframes buzz { 0%,91%,93%,100%{opacity:1} 92%{opacity:.35} }
+  @keyframes blink { 50%{opacity:.35} }
+  #tip { position:fixed; display:none; pointer-events:none; background:rgba(12,2,34,.92); border:1px solid var(--pink); box-shadow:0 0 14px rgba(255,61,242,.6);
+    border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.55; max-width:300px; z-index:5; font-family:system-ui, sans-serif; }
+  #tip b { font-family:Orbitron, sans-serif; }
+  #help { position:fixed; right:2vw; bottom:2.6vh; font-size:10px; letter-spacing:.15em; color:#c9a8ff; opacity:.55; text-align:right; }
+  #help a { color:inherit; }
+</style>
+</head>
+<body>
+<div id="pnl" class="hud"><div class="lbl">TODAY · REAL MONEY</div><div class="num up" id="pnlNum">$0.00</div></div>
+<div id="sign" class="hud"><div class="box run" id="signBox">LOADING</div><div class="sub" id="signSub">connecting…</div></div>
+<div id="odo" class="hud"><div class="lbl">BANKROLL</div><div class="wheels" id="odoWheels"></div></div>
+<div id="tip"></div>
+<div id="help">HOVER A ROADSIDE LIGHT FOR THE TRADE · DRAG TO LOOK<br>
+  <span id="upd">—</span> · car: <a href="https://kenney.nl/assets/car-kit" target="_blank" style="pointer-events:auto">Kenney Car Kit (CC0)</a></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
+
+/* ------------------------------------------------------------ scene */
+const SPEED = 14;                       // world units per second: the car never stops
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.body.prepend(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0b0420);
+scene.fog = new THREE.Fog(0x12042a, 70, 260);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 600);
+const camBase = new THREE.Vector3(0, 2.0, 7.2);
+camera.position.copy(camBase);
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.6, 0.4, 0.72);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+// sky gradient dome
+scene.add(new THREE.Mesh(new THREE.SphereGeometry(400, 32, 16), new THREE.ShaderMaterial({
+  side:THREE.BackSide, fog:false, depthWrite:false,
+  vertexShader:`varying vec3 p; void main(){ p = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
+  fragmentShader:`varying vec3 p; void main(){ float h = clamp(normalize(p).y, 0., 1.);
+    vec3 c = mix(vec3(.55,.08,.55), vec3(.13,.03,.32), smoothstep(0., .18, h)); c = mix(c, vec3(.03,.01,.09), smoothstep(.18, .7, h));
+    gl_FragColor = vec4(c, 1.); }`
+})));
+
+// stars
+{ const n = 1400, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++){ const th = Math.random() * Math.PI * 2, ph = Math.random() * 1.25 + 0.06, r = 380;
+    pos.set([Math.cos(th) * Math.cos(ph) * r, Math.sin(ph) * r * 0.9 + 10, Math.sin(th) * Math.cos(ph) * r], i * 3); }
+  const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color:0xffe6ff, size:1.3, sizeAttenuation:false, fog:false }))); }
+
+// striped sun
+const sun = new THREE.Mesh(new THREE.PlaneGeometry(150, 150), new THREE.ShaderMaterial({
+  transparent:true, fog:false, depthWrite:false, uniforms:{ t:{ value:0 } },
+  vertexShader:`varying vec2 v; void main(){ v = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.); }`,
+  fragmentShader:`uniform float t; varying vec2 v; void main(){
+    vec2 p = v - .5; float d = length(p); if (d > .5) discard;
+    vec3 c = mix(vec3(1.,.15,.65), vec3(1.,.88,.35), smoothstep(-.35, .45, p.y));
+    float y = p.y + .5;                                    // stripes only in the lower part
+    if (y < .62){ float k = fract(y * 11. + t * .25); if (k < mix(.06, .5, (.62 - y) / .62)) discard; }
+    gl_FragColor = vec4(c * .82, 1.); }`
+}));
+sun.position.set(0, 30, -330); scene.add(sun);
+
+// ground: scrolling neon grid, flat road in the middle, wireframe mountains on the sides
+const groundMat = new THREE.ShaderMaterial({
+  fog:true, uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { off:{ value:0 } }]),
+  vertexShader:`uniform float off; varying vec3 w; varying float h;
+    #include <fog_pars_vertex>
+    float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
+    float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.-2.*f);
+      return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y); }
+    void main(){ vec3 p = position; float z = p.z - off;
+      float side = smoothstep(9., 22., abs(p.x));
+      float hgt = (noise(vec2(p.x, z) * .09) * 1. + noise(vec2(p.x, z) * .23) * .45) * side * (4. + abs(p.x) * .22);
+      p.y += hgt; h = hgt; w = vec3(p.x, p.y, z);
+      vec4 mvPosition = modelViewMatrix * vec4(p, 1.); gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+    }`,
+  fragmentShader:`varying vec3 w; varying float h;
+    #include <fog_pars_fragment>
+    float line(float x, float s, float wd){ float f = abs(fract(x / s - .5) - .5) * s; return 1. - smoothstep(0., wd * fwidth(x) * 1.5 + .001, f); }
+    void main(){
+      float ax = abs(w.x);
+      vec3 base = vec3(.035,.008,.08);
+      float g = max(line(w.x, 2., 1.), line(w.z, 2., 1.));
+      vec3 gc = mix(vec3(.75,.1,1.), vec3(1.,.2,.75), smoothstep(0., 8., h));
+      vec3 c = base + gc * g * .85 * (ax > 6.5 ? 1. : 0.);
+      if (ax < 6.5){                                   // the road
+        c = vec3(.025,.008,.05);
+        float edge = 1. - smoothstep(.08, .16, abs(ax - 6.));
+        float dash = step(.5, fract(w.z / 8.)) * (1. - smoothstep(.07, .12, ax));
+        c += vec3(1.,.25,.9) * (edge * 1.2 + dash * .9);
+        c += vec3(.25,.05,.35) * (1. - smoothstep(0., 6., ax)) * .35;   // sun reflection on the asphalt
+      }
+      gl_FragColor = vec4(c, 1.);
+      #include <fog_fragment>
+    }`
+});
+groundMat.extensions = { derivatives:true };
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(260, 420, 260, 420).rotateX(-Math.PI / 2), groundMat);
+ground.position.z = -170; scene.add(ground);
+
+// distant mountain range on the horizon
+{ const g = new THREE.PlaneGeometry(700, 60, 140, 12); const p = g.attributes.position;
+  for (let i = 0; i < p.count; i++){ const x = p.getX(i), y = p.getY(i), k = (y + 30) / 60;
+    const r = Math.abs(Math.sin(x * .031) * 16 + Math.sin(x * .087 + 1) * 8 + Math.sin(x * .19) * 3) * (1 - Math.max(0, 1 - Math.abs(x) / 60) * .85);
+    p.setY(i, k * r); }
+  const fill = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:0x12042a, fog:false }));
+  const wire = new THREE.Mesh(g, new THREE.MeshBasicMaterial({ color:0xc23cff, wireframe:true, fog:false, transparent:true, opacity:.55 }));
+  for (const m of [fill, wire]) { m.position.set(0, -1, -300); scene.add(m); }
+  wire.position.z += .5; }
+
+/* ------------------------------------------------------------ car (real asset, Kenney CC0) */
+const car = new THREE.Group(); scene.add(car);
+const wheels = [];
+new GLTFLoader().load("race-future.glb", gltf => {
+  const m = gltf.scene; m.scale.setScalar(1.25); m.rotation.y = Math.PI;
+  m.traverse(o => { if (o.isMesh){ o.material.metalness = .4; o.material.roughness = .35; o.material.envMapIntensity = 1; }
+    if (/wheel/.test(o.name)) wheels.push(o); });
+  car.add(m);
+}, undefined, () => {   // fallback: coded wedge if the model fails
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.8, .6, 4), new THREE.MeshStandardMaterial({ color:0x8b8fa8, metalness:.6, roughness:.3 }));
+  body.position.y = .5; car.add(body); });
+// taillights, underglow, headlight glow
+const tl = new THREE.MeshBasicMaterial({ color:new THREE.Color(2.2, .12, .35) });
+for (const x of [-.62, .62]){ const b = new THREE.Mesh(new THREE.BoxGeometry(.42, .08, .05), tl); b.position.set(x * .8, .5, 1.68); car.add(b); }
+const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 3.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color:0xff2bd6, transparent:true, opacity:.1, depthWrite:false }));
+glow.position.y = .03; car.add(glow);
+scene.add(new THREE.HemisphereLight(0xff7af0, 0x220044, .7));
+const key = new THREE.DirectionalLight(0xffb0ff, 1.0); key.position.set(0, 10, -40); scene.add(key);
+
+
+/* ------------------------------------------------------------ roadside trade lights */
+const POSTS = 14, GAP = 12, posts = [];
+const postGeo = new THREE.CylinderGeometry(.05, .05, 2.2, 6), bulbGeo = new THREE.SphereGeometry(.2, 16, 12);
+const postMat = new THREE.MeshBasicMaterial({ color:0x2a1450 });
+for (let i = 0; i < POSTS * 2; i++){
+  const side = i % 2 ? 1 : -1, g = new THREE.Group();
+  const p = new THREE.Mesh(postGeo, postMat); p.position.y = 1.1; g.add(p);
+  const b = new THREE.Mesh(bulbGeo, new THREE.MeshBasicMaterial({ color:0x555577 })); b.position.y = 2.3; g.add(b);
+  g.position.set(side * 7.4, 0, -Math.floor(i / 2) * GAP - (side > 0 ? GAP / 2 : 0));
+  g.userData = { bulb:b, trade:null }; posts.push(g); scene.add(g);
+}
+let trades = [], nextTrade = 0;
+function assignTrade(post){
+  if (!trades.length){ post.userData.trade = null; post.userData.bulb.material.color.set(0x444466); return; }
+  const t = trades[nextTrade++ % trades.length]; post.userData.trade = t;
+  post.userData.bulb.material.color.copy(t.pnl >= 0 ? new THREE.Color(.25, 1.6, .7) : new THREE.Color(1.7, .15, .3));
+}
+
+/* ------------------------------------------------------------ interaction */
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2(-9, -9), tip = document.getElementById("tip");
+let look = { x:0, y:0 }, drag = null;
+addEventListener("pointermove", e => {
+  mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  if (drag){ look.x = Math.max(-1, Math.min(1, drag.x + (e.clientX - drag.cx) / 300)); look.y = Math.max(-.4, Math.min(.6, drag.y - (e.clientY - drag.cy) / 400)); }
+  tip.style.left = Math.min(e.clientX + 16, innerWidth - 320) + "px"; tip.style.top = (e.clientY + 16) + "px";
+});
+addEventListener("pointerdown", e => { drag = { cx:e.clientX, cy:e.clientY, x:look.x, y:look.y }; });
+addEventListener("pointerup", () => { drag = null; });
+addEventListener("dblclick", () => { look = { x:0, y:0 }; });
+function hover(){
+  ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(posts.map(p => p.userData.bulb))[0];
+  const t = hit && posts.find(p => p.userData.bulb === hit.object).userData.trade;
+  if (!t){ tip.style.display = "none"; document.body.style.cursor = drag ? "grabbing" : "default"; return; }
+  document.body.style.cursor = "pointer"; tip.style.display = "block";
+  tip.innerHTML = `<b style="color:${t.pnl >= 0 ? "var(--green)" : "var(--red)"}">${t.pnl >= 0 ? "+" : "−"}$${Math.abs(t.pnl).toFixed(2)}</b> · ${esc(t.bot)}<br>${esc(t.title)}<br><span style="opacity:.7">${esc(t.when)}</span>`;
+}
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c]));
+
+/* ------------------------------------------------------------ data (real money only) */
+const REPO = "alexanderhabel22-commits/kalshi-weather-bot", TZ = "America/New_York";
+const raw = async (ref, path, json) => { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/${ref}/${path}?t=${Date.now()}`, { cache:"no-store" }); if (!r.ok) return null; return json ? r.json() : r.text(); };
+const etDay = d => new Date(d).toLocaleDateString("en-CA", { timeZone:TZ });
+const etTime = d => new Date(d).toLocaleString("en-US", { timeZone:TZ, month:"short", day:"numeric", hour:"numeric", minute:"2-digit" }) + " ET";
+function csv(text){ if (!text) return []; const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++){ const c = text[i];
+    if (q){ if (c === '"'){ if (text[i + 1] === '"'){ f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true; else if (c === ","){ row.push(f); f = ""; }
+    else if (c === "\n"){ row.push(f); rows.push(row); row = []; f = ""; } else if (c !== "\r") f += c; }
+  if (f || row.length){ row.push(f); rows.push(row); }
+  const h = rows.shift() || []; return rows.filter(r => r.length > 1).map(r => Object.fromEntries(h.map((k, i) => [k, r[i]]))); }
+const pretty = s => String(s || "").replace(/^KX/, "").replace(/15M$/, "");
+
+async function load(){
+  const today = etDay(Date.now()), yday = etDay(Date.now() - 864e5);
+  const [broll, tstate, orders, m15s, mT, mY] = await Promise.all([
+    raw("main", "data/bankroll.json", true), raw("main", "data/trader_state.json", true), raw("main", "data/trade_orders.csv"),
+    raw("m15-data", "m15/status.json", true), raw("m15-data", `m15/markets-${today}.csv`), raw("m15-data", `m15/markets-${yday}.csv`)]);
+  // main bot: settled real-money orders
+  const main = csv(orders).filter(r => r.mode === "live" && r.settled_at && r.pnl !== "").map(r => ({
+    at:Date.parse(r.settled_at), pnl:+r.pnl, bot:"Main bot · " + r.strategy, title:r.title || r.ticker }));
+  // 15-min bot: graded real-money markets
+  const m15 = csv((mY || "") + "\n" + (mT || "").split("\n").slice(1).join("\n")).filter(r => r.mode === "live" && +r.filled > 0 && r.result)
+    .map(r => ({ at:Date.parse(r.close), pnl:+r.pnl, bot:"15-min bot", title:`${pretty(r.series)} · ${(+r.filled).toFixed(+r.filled % 1 ? 2 : 0)} ct ${r.fav_side}` }));
+  trades = main.concat(m15).filter(t => isFinite(t.at)).sort((a, b) => b.at - a.at).slice(0, 40).map(t => ({ ...t, when:etTime(t.at) }));
+  const mainToday = main.filter(t => etDay(t.at) === today).reduce((s, t) => s + t.pnl, 0);
+  const m15Today = +((m15s && m15s.pnl && m15s.pnl.live_days || {})[today] || 0);
+  setPnl(mainToday + m15Today);
+  if (broll && broll.total != null) setOdo(+broll.total);
+  // status sign
+  const halted = (tstate && tstate.halted && Object.keys(tstate.halted).length) || (m15s && m15s.halted);
+  const paused = m15s && m15s.day_stop === today;
+  const quiet = m15s && Date.now() - Date.parse(m15s.at) > 2 * 3600e3;
+  const off = (tstate && tstate.mode === "off") || (m15s && m15s.control === "off");
+  const st = halted || off ? ["STOPPED", "stop"] : paused || quiet ? ["PAUSED", "pause"] : ["RUNNING", "run"];
+  const box = document.getElementById("signBox"); box.textContent = st[0]; box.className = "box " + st[1];
+  document.getElementById("signSub").textContent = halted ? "loss stop hit" : off ? "kill switch on" : paused ? "15-min bot: daily stop" : quiet ? "15-min server quiet" : "both bots trading";
+  document.getElementById("upd").textContent = "updated " + new Date().toLocaleTimeString("en-US", { timeZone:TZ, hour:"numeric", minute:"2-digit" }) + " ET";
+}
+function setPnl(v){ const el = document.getElementById("pnlNum");
+  el.textContent = (v >= 0 ? "+" : "−") + "$" + Math.abs(v).toFixed(2); el.className = "num " + (v >= 0 ? "up" : "down"); }
+function setOdo(v){
+  const s = v.toFixed(2).padStart(7, "0"), box = document.getElementById("odoWheels");
+  if (box.childElementCount !== s.length + 1){ box.innerHTML = "<div class='dg sep'>$</div>" + [...s].map(c => c === "." ? "<div class='dg sep'>.</div>"
+      : `<div class='dg'><div class='strip'>${[...Array(10).keys()].map(n => `<div>${n}</div>`).join("")}</div></div>`).join(""); }
+  const cells = [...box.children].slice(1);
+  [...s].forEach((c, i) => { const strip = cells[i].querySelector(".strip"); if (strip) strip.style.transform = `translateY(${-10 * +c}%)`; });
+}
+setOdo(0);
+load().catch(e => console.warn(e)).finally(() => posts.forEach(assignTrade));
+setInterval(() => load().catch(e => console.warn(e)), 60e3);
+
+/* ------------------------------------------------------------ loop */
+const clock = new THREE.Clock(); let dist = 0;
+function frame(){
+  const dt = Math.min(clock.getDelta(), .1), t = clock.elapsedTime; dist += SPEED * dt;
+  groundMat.uniforms.off.value = -(dist % 400);                   // grid + mountains roll toward us (period 400 = multiple of grid/dash spacing)
+  sun.material.uniforms.t.value = t;
+  for (const p of posts){ p.position.z += SPEED * dt; if (p.position.z > 8){ p.position.z -= POSTS * GAP; assignTrade(p); } }
+  for (const w of wheels) w.rotation.x += SPEED * dt / .45;
+  car.position.y = Math.sin(t * 9) * .012; car.rotation.z = Math.sin(t * .7) * .01;
+  glow.material.opacity = .09 + Math.sin(t * 3) * .02;
+  camera.position.set(camBase.x + look.x * 3 + Math.sin(t * .4) * .08, camBase.y + look.y * 2, camBase.z);
+  camera.lookAt(look.x * 6, 1.2 + look.y * 3, -40);
+  hover();
+  composer.render(); requestAnimationFrame(frame);
+}
+frame();
+addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); composer.setSize(innerWidth, innerHeight); });
+</script>
+</body>
+</html>
