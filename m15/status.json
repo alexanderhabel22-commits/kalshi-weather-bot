@@ -1,5 +1,5 @@
 {
- "at": "2026-11-09T13:02:00+00:00",
+ "at": "2026-11-09T13:17:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,38 +7,38 @@
  "fund_error": null,
  "halted": null,
  "last_reject": {
-  "at": 1794228933,
+  "at": 1794229805,
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXCOPPER15M-26NOV090800-00"
+  "ticker": "KXSILVER15M-26NOV090815-15"
  },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV090815-15": {
+  "KXBTC15M-26NOV090830-30": {
    "bid_ask": [
-    0.57,
-    0.58
+    0.36,
+    0.37
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXCOPPER15M-26NOV090815-15": {
+  "KXCOPPER15M-26NOV090830-30": {
    "bid_ask": [
-    0.31,
-    0.35
+    0.8,
+    0.83
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   },
-  "KXSILVER15M-26NOV090815-15": {
+  "KXSILVER15M-26NOV090830-30": {
    "bid_ask": [
-    0.34,
-    0.35
+    0.73,
+    0.74
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   }
  },
  "mode": "live",
@@ -47,20 +47,20 @@
   "live_days": {
    "2026-11-07": 0.17,
    "2026-11-08": 2.35,
-   "2026-11-09": 7.83
+   "2026-11-09": 8.51
   },
-  "live_total": 10.35,
+  "live_total": 11.03,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
-   "2026-11-09": 2.13
+   "2026-11-09": 0.56
   },
-  "paper_total": -54.39
+  "paper_total": -55.96
  },
  "series": {
   "KXBTC15M": {
-   "fills": 176,
-   "pnl": 2.73,
+   "fills": 178,
+   "pnl": 3.12,
    "recent": [
     [
      2,
@@ -217,12 +217,16 @@
     [
      2,
      0.19
+    ],
+    [
+     2,
+     0.39
     ]
    ]
   },
   "KXCOPPER15M": {
-   "fills": 68,
-   "pnl": 3.42,
+   "fills": 70,
+   "pnl": 3.67,
    "recent": [
     [
      2,
@@ -335,12 +339,16 @@
     [
      2,
      -1.6
+    ],
+    [
+     2,
+     0.25
     ]
    ]
   },
   "KXSILVER15M": {
-   "fills": 72,
-   "pnl": 4.2,
+   "fills": 73,
+   "pnl": 4.24,
    "recent": [
     [
      2,
@@ -461,6 +469,10 @@
     [
      2,
      -1.59
+    ],
+    [
+     1,
+     0.04
     ]
    ]
   }
@@ -468,7 +480,7 @@
  "shards": {
   "0": 0.0742,
   "1": 0.0,
-  "2": 24.6168,
+  "2": 22.3368,
   "3": 0.0
  },
  "spot_ok": true,
