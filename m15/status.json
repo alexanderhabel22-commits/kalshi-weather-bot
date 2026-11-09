@@ -1,36 +1,40 @@
 {
- "at": "2026-11-09T03:02:00+00:00",
+ "at": "2026-11-09T03:17:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
  "errors": 0,
  "fund_error": null,
  "halted": null,
- "last_reject": null,
+ "last_reject": {
+  "at": 1794193554,
+  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
+  "ticker": "KXBTC15M-26NOV082215-15"
+ },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV082215-15": {
+  "KXBTC15M-26NOV082230-30": {
    "bid_ask": [
-    0.45,
-    0.46
+    0.4,
+    0.41
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXCOPPER15M-26NOV082215-15": {
+  "KXCOPPER15M-26NOV082230-30": {
    "bid_ask": [
-    0.52,
-    0.56
+    0.48,
+    0.52
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXSILVER15M-26NOV082215-15": {
+  "KXSILVER15M-26NOV082230-30": {
    "bid_ask": [
-    0.6,
-    0.61
+    0.43,
+    0.45
    ],
    "mode": "live",
    "order": false,
@@ -42,45 +46,59 @@
  "pnl": {
   "live_days": {
    "2026-11-07": 0.17,
-   "2026-11-08": 7.72
+   "2026-11-08": 6.85
   },
-  "live_total": 7.89,
+  "live_total": 7.02,
   "paper_days": {
    "2026-11-07": -5.8,
-   "2026-11-08": -47.26
+   "2026-11-08": -46.74
   },
-  "paper_total": -53.06
+  "paper_total": -52.54
  },
  "series": {
   "KXBTC15M": {
-   "fills": 104,
-   "pnl": 3.6,
+   "fills": 106,
+   "pnl": 3.91,
    "recent": [
     [
      2,
      0.25
+    ],
+    [
+     2,
+     0.31
     ]
    ]
   },
   "KXCOPPER15M": {
-   "fills": 24,
-   "pnl": 4.03,
+   "fills": 26,
+   "pnl": 2.46,
    "recent": [
     [
      2,
      0.45
+    ],
+    [
+     2,
+     -1.57
     ]
    ]
   },
   "KXSILVER15M": {
-   "fills": 18,
-   "pnl": 0.26
+   "fills": 20,
+   "pnl": 0.65,
+   "recent": [
+    [
+     2,
+     0.39
+    ]
+   ]
   }
  },
  "shards": {
   "0": 11.177,
   "1": 0.0,
-  "2": 18.38,
+  "2": 18.39,
   "3": 0.0
  },
  "spot_ok": true,
