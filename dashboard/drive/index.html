@@ -39,6 +39,8 @@
   #btns { position:fixed; right:2vw; bottom:7vh; display:flex; gap:8px; z-index:4; }
   #btns button { font-family:Orbitron, sans-serif; font-size:12px; letter-spacing:.2em; color:var(--pink);
     background:rgba(12,2,34,.7); border:2px solid var(--pink); border-radius:8px; padding:8px 14px; cursor:pointer; box-shadow:0 0 10px rgba(255,61,242,.6); }
+  #vol { display:flex; align-items:center; gap:6px; color:var(--cyan); background:rgba(12,2,34,.7); border:2px solid var(--cyan); border-radius:8px; padding:0 10px; box-shadow:0 0 10px rgba(63,246,255,.4); font-size:13px; }
+  #vol input { width:90px; accent-color:#ff3df2; cursor:pointer; }
   #btns button.on { color:var(--cyan); border-color:var(--cyan); box-shadow:0 0 12px var(--cyan); }
   #fillpop { position:fixed; top:24vh; left:50%; transform:translate(-50%,-20px); opacity:0; pointer-events:none; text-align:center;
     font-family:Orbitron, sans-serif; color:var(--cyan); text-shadow:0 0 10px var(--cyan), 0 0 30px var(--cyan); transition:opacity .5s, transform .5s; }
@@ -55,7 +57,7 @@
 <div id="odo" class="hud"><div class="lbl" id="odoLbl">BANKROLL</div><div class="wheels" id="odoWheels"></div></div>
 <div id="tip"></div>
 <div id="fillpop"></div>
-<div id="btns"><button id="recenter">⌖ CENTER (M)</button><button id="mine">♫ MY MUSIC</button><button id="music">♪ MUSIC: OFF</button></div>
+<div id="btns"><button id="recenter">⌖ CENTER (M)</button><button id="mine">♫ MY MUSIC</button><button id="music">♪ MUSIC: OFF</button><label id="vol" title="Volume">🔊<input type="range" id="volR" min="0" max="100" value="70"></label></div>
 <input type="file" id="files" accept="audio/*,video/mp4,.mp3,.mp4,.m4a" multiple hidden>
 <div id="help">HOVER A ROADSIDE LIGHT FOR THE TRADE · DRAG TO LOOK · M TO RECENTER<br>
   <span id="upd">—</span> · car: <a href="https://kenney.nl/assets/car-kit" target="_blank" style="pointer-events:auto">Kenney Car Kit (CC0)</a></div>
@@ -308,6 +310,8 @@ load().catch(e => console.warn(e)).finally(() => posts.forEach(assignTrade));
 setInterval(() => load().catch(e => console.warn(e)), 60e3);
 
 /* ------------------------------------------------------------ music: an original synthwave loop made live in the browser */
+const VOL = { v:.7 };
+try { const sv = localStorage.getItem("driveVol"); if (sv != null) VOL.v = +sv; } catch(e){}
 const Music = (() => {
   let ac = null, out = null, timer = null, step = 0, next = 0;
   const BPM = 96, S16 = 60 / BPM / 4;
@@ -345,7 +349,8 @@ const Music = (() => {
   return {
     on: false,
     start(){ if (!ac) init(); ac.resume(); next = ac.currentTime + .05; out.gain.cancelScheduledValues(ac.currentTime);
-      out.gain.setTargetAtTime(.5, ac.currentTime, .5); timer = setInterval(tick, 50); this.on = true; },
+      out.gain.setTargetAtTime(.5 * VOL.v, ac.currentTime, .5); timer = setInterval(tick, 50); this.on = true; },
+    setVol(){ if (ac && this.on) out.gain.setTargetAtTime(Math.max(.0001, .5 * VOL.v), ac.currentTime, .05); },
     stop(){ if (!ac) return; out.gain.setTargetAtTime(.0001, ac.currentTime, .2); clearInterval(timer); this.on = false; }
   };
 })();
@@ -373,6 +378,11 @@ async function saveSongs(files){ try { const d = await db(), tx = d.transaction(
   // browsers only allow sound after a click: start your songs on the first click anywhere
   addEventListener("pointerdown", () => { if (player.paused && !Music.on) playSong(); }, { once:true });
 } catch(e){ console.warn("could not load saved songs", e); } })();
+player.volume = VOL.v;
+const volR = document.getElementById("volR"); volR.value = Math.round(VOL.v * 100);
+volR.addEventListener("pointerdown", e => e.stopPropagation());
+volR.addEventListener("input", () => { VOL.v = volR.value / 100; player.volume = VOL.v; Music.setVol();
+  try { localStorage.setItem("driveVol", VOL.v); } catch(e){} });
 const recenter = () => { look = { x:0, y:0 }; };
 document.getElementById("recenter").addEventListener("click", recenter);
 addEventListener("keydown", e => { if (e.key === "m" || e.key === "M") recenter(); });
