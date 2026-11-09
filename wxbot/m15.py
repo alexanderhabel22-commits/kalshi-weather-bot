@@ -101,6 +101,7 @@ DEFAULTS = {
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
+    "window_pct": 0.07,              # max live $ at risk across markets closing at the same time
     "shard": 2,                     # Kalshi exchange shard of crypto + commodities markets
     "fund_s": 300,                  # top the shard up to the pool this often (live only)
     "cut_after_fills": 100,         # a live series below cut_below_ct per contract after this
