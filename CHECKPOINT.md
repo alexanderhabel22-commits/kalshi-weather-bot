@@ -98,3 +98,13 @@ the scorecard once fills arrive.
 
 They live in `wxbot/checkpoint.py` (`EXPECTED`). Changing them after Nov 8
 needs a note here saying why, so the goalposts don't move quietly.
+
+## Milestone performance reviews (Alex, Nov 9 2026)
+
+Separate from the Nov 17 checkpoint and the daily/weekly reports. Every live bot (each
+15-minute market, each main-bot strategy, and any added later) is reviewed automatically
+when its real contracts first pass 300, 500, 750, 1,000, 2,000, 5,000, then every 5,000.
+Code: wxbot/review.py (checked hourly from the trade run). Output: reports/reviews/ plus
+an ntfy push. Rules: whole 90% range below 0 or under -5c/contract -> back to paper;
+whole range above 0 (and the latest third not losing) -> scale up to quarter-Kelly on the
+low end of the range, at most 3x per review; otherwise keep the size.
