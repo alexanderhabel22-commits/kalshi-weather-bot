@@ -36,6 +36,10 @@
   #tip { position:fixed; display:none; pointer-events:none; background:rgba(12,2,34,.92); border:1px solid var(--pink); box-shadow:0 0 14px rgba(255,61,242,.6);
     border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.55; max-width:300px; z-index:5; font-family:system-ui, sans-serif; }
   #tip b { font-family:Orbitron, sans-serif; }
+  #btns { position:fixed; right:2vw; bottom:7vh; display:flex; gap:8px; z-index:4; }
+  #btns button { font-family:Orbitron, sans-serif; font-size:12px; letter-spacing:.2em; color:var(--pink);
+    background:rgba(12,2,34,.7); border:2px solid var(--pink); border-radius:8px; padding:8px 14px; cursor:pointer; box-shadow:0 0 10px rgba(255,61,242,.6); }
+  #btns button.on { color:var(--cyan); border-color:var(--cyan); box-shadow:0 0 12px var(--cyan); }
   #help { position:fixed; right:2vw; bottom:2.6vh; font-size:10px; letter-spacing:.15em; color:#c9a8ff; opacity:.55; text-align:right; }
   #help a { color:inherit; }
 </style>
@@ -45,7 +49,9 @@
 <div id="sign" class="hud"><div class="box run" id="signBox">LOADING</div><div class="sub" id="signSub">connecting…</div></div>
 <div id="odo" class="hud"><div class="lbl">BANKROLL</div><div class="wheels" id="odoWheels"></div></div>
 <div id="tip"></div>
-<div id="help">HOVER A ROADSIDE LIGHT FOR THE TRADE · DRAG TO LOOK<br>
+<div id="btns"><button id="recenter">⌖ CENTER (M)</button><button id="mine">♫ MY MUSIC</button><button id="music">♪ MUSIC: OFF</button></div>
+<input type="file" id="files" accept="audio/*,video/mp4,.mp3,.mp4,.m4a" multiple hidden>
+<div id="help">HOVER A ROADSIDE LIGHT FOR THE TRADE · DRAG TO LOOK · M TO RECENTER<br>
   <span id="upd">—</span> · car: <a href="https://kenney.nl/assets/car-kit" target="_blank" style="pointer-events:auto">Kenney Car Kit (CC0)</a></div>
 
 <script type="importmap">
@@ -180,14 +186,14 @@ const key = new THREE.DirectionalLight(0xffb0ff, 1.0); key.position.set(0, 10, -
 
 
 /* ------------------------------------------------------------ roadside trade lights */
-const POSTS = 14, GAP = 12, posts = [];
-const postGeo = new THREE.CylinderGeometry(.05, .05, 2.2, 6), bulbGeo = new THREE.SphereGeometry(.2, 16, 12);
+const POSTS = 8, GAP = 34, posts = [];          // spaced out and set back so they drift by calmly
+const postGeo = new THREE.CylinderGeometry(.06, .06, 3.2, 6), bulbGeo = new THREE.SphereGeometry(.3, 16, 12);
 const postMat = new THREE.MeshBasicMaterial({ color:0x2a1450 });
 for (let i = 0; i < POSTS * 2; i++){
   const side = i % 2 ? 1 : -1, g = new THREE.Group();
-  const p = new THREE.Mesh(postGeo, postMat); p.position.y = 1.1; g.add(p);
-  const b = new THREE.Mesh(bulbGeo, new THREE.MeshBasicMaterial({ color:0x555577 })); b.position.y = 2.3; g.add(b);
-  g.position.set(side * 7.4, 0, -Math.floor(i / 2) * GAP - (side > 0 ? GAP / 2 : 0));
+  const p = new THREE.Mesh(postGeo, postMat); p.position.y = 1.6; g.add(p);
+  const b = new THREE.Mesh(bulbGeo, new THREE.MeshBasicMaterial({ color:0x555577 })); b.position.y = 3.35; g.add(b);
+  g.position.set(side * 10.5, 0, -Math.floor(i / 2) * GAP - (side > 0 ? GAP / 2 : 0));
   g.userData = { bulb:b, trade:null }; posts.push(g); scene.add(g);
 }
 let trades = [], nextTrade = 0;
@@ -271,13 +277,74 @@ setOdo(0);
 load().catch(e => console.warn(e)).finally(() => posts.forEach(assignTrade));
 setInterval(() => load().catch(e => console.warn(e)), 60e3);
 
+/* ------------------------------------------------------------ music: an original synthwave loop made live in the browser */
+const Music = (() => {
+  let ac = null, out = null, timer = null, step = 0, next = 0;
+  const BPM = 96, S16 = 60 / BPM / 4;
+  const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+  const CH = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]];   // Am  F  C  G, 1 bar each
+  function init(){
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    out = ac.createGain(); out.gain.value = .0001; out.connect(ac.destination);
+    const dl = ac.createDelay(1), fb = ac.createGain(), wet = ac.createGain();
+    dl.delayTime.value = S16 * 3; fb.gain.value = .35; wet.gain.value = .3;
+    dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(out); Music.fx = dl;
+    Music.noise = ac.createBuffer(1, ac.sampleRate, ac.sampleRate); const d = Music.noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  function voice(type, f, t, dur, vol, cut, send, att = .005){
+    const o = ac.createOscillator(), g = ac.createGain(), lp = ac.createBiquadFilter();
+    o.type = type; o.frequency.value = f; lp.type = "lowpass"; lp.frequency.value = cut;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    o.connect(lp); lp.connect(g); g.connect(out); if (send) g.connect(Music.fx); o.start(t); o.stop(t + dur + .05);
+  }
+  function noise(t, dur, vol, hp){ const s = ac.createBufferSource(), g = ac.createGain(), f = ac.createBiquadFilter();
+    s.buffer = Music.noise; f.type = "highpass"; f.frequency.value = hp; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(out); s.start(t); s.stop(t + dur + .02); }
+  function kick(t){ const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + .12);
+    g.gain.setValueAtTime(.9, t); g.gain.exponentialRampToValueAtTime(.0001, t + .35); o.connect(g); g.connect(out); o.start(t); o.stop(t + .4); }
+  function play(i, t){
+    const bar = Math.floor(i / 16) % 4, s = i % 16, ch = CH[bar];
+    if (s % 4 === 0) kick(t);
+    if (s === 4 || s === 12) noise(t, .22, .35, 1200);
+    if (s % 2 === 1) noise(t, .04, .08, 7000);
+    if (s % 2 === 0) voice("sawtooth", hz(ch[0] - 24), t, S16 * 1.8, .22, 420);
+    voice("square", hz(ch[[0, 1, 2, 1][s % 4]] + 12), t, S16 * .9, .045, 2600, true);
+    if (s === 0) for (const n of ch) for (const det of [-6, 6]){ const f = hz(n) * Math.pow(2, det / 1200); voice("sawtooth", f, t, S16 * 16, .03, 1400, true, .6); }
+  }
+  function tick(){ while (next < ac.currentTime + .2){ play(step++, next); next += S16; } }
+  return {
+    on: false,
+    start(){ if (!ac) init(); ac.resume(); next = ac.currentTime + .05; out.gain.cancelScheduledValues(ac.currentTime);
+      out.gain.setTargetAtTime(.5, ac.currentTime, .5); timer = setInterval(tick, 50); this.on = true; },
+    stop(){ if (!ac) return; out.gain.setTargetAtTime(.0001, ac.currentTime, .2); clearInterval(timer); this.on = false; }
+  };
+})();
+const mBtn = document.getElementById("music");
+const mShow = () => { mBtn.textContent = "♪ MUSIC: " + (Music.on ? "ON" : "OFF"); mBtn.className = Music.on ? "on" : ""; };
+document.querySelectorAll("#btns button").forEach(b => b.addEventListener("pointerdown", e => e.stopPropagation()));
+// your own songs: picked from your computer, played locally in a loop, never uploaded anywhere
+const player = new Audio(), fileIn = document.getElementById("files"), myBtn = document.getElementById("mine"); let songs = [], si = 0;
+const playSong = () => { if (!songs.length) return; player.src = songs[si % songs.length].url; player.play(); myBtn.textContent = "♫ " + songs[si % songs.length].name.replace(/\.[^.]+$/, "").slice(0, 22).toUpperCase(); myBtn.className = "on"; };
+player.addEventListener("ended", () => { si++; playSong(); });
+myBtn.addEventListener("click", () => { if (songs.length && !player.paused){ player.pause(); myBtn.className = ""; } else if (songs.length) playSong(); else fileIn.click(); });
+myBtn.addEventListener("contextmenu", e => { e.preventDefault(); fileIn.click(); });
+fileIn.addEventListener("change", () => { songs.forEach(x => URL.revokeObjectURL(x.url)); songs = [...fileIn.files].map(f => ({ name:f.name, url:URL.createObjectURL(f) })); si = 0;
+  if (Music.on){ Music.stop(); mShow(); } playSong(); });
+const recenter = () => { look = { x:0, y:0 }; };
+document.getElementById("recenter").addEventListener("click", recenter);
+addEventListener("keydown", e => { if (e.key === "m" || e.key === "M") recenter(); });
+mBtn.addEventListener("click", () => { if (!Music.on && !player.paused){ player.pause(); myBtn.className = ""; } Music.on ? Music.stop() : Music.start(); mShow();
+  try { localStorage.setItem("driveMusic", Music.on ? "1" : "0"); } catch(e){} });
+// browsers only allow sound after a click: if it was on last time, start on the first click anywhere
+try { if (localStorage.getItem("driveMusic") === "1") addEventListener("pointerdown", () => { if (!Music.on){ Music.start(); mShow(); } }, { once:true }); } catch(e){}
+
 /* ------------------------------------------------------------ loop */
 const clock = new THREE.Clock(); let dist = 0;
 function frame(){
   const dt = Math.min(clock.getDelta(), .1), t = clock.elapsedTime; dist += SPEED * dt;
   groundMat.uniforms.off.value = -(dist % 400);                   // grid + mountains roll toward us (period 400 = multiple of grid/dash spacing)
   sun.material.uniforms.t.value = t;
-  for (const p of posts){ p.position.z += SPEED * dt; if (p.position.z > 8){ p.position.z -= POSTS * GAP; assignTrade(p); } }
+  for (const p of posts){ p.position.z += SPEED * dt; if (p.position.z > 12){ p.position.z -= POSTS * GAP; assignTrade(p); } }
   for (const w of wheels) w.rotation.x += SPEED * dt / .45;
   car.position.y = Math.sin(t * 9) * .012; car.rotation.z = Math.sin(t * .7) * .01;
   glow.material.opacity = .09 + Math.sin(t * 3) * .02;
