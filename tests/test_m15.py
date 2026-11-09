@@ -551,3 +551,23 @@ def test_partial_contract_fill_is_kept_and_not_rebought(monkeypatch):
     assert m["filled"] == 0.5                                  # kept, not truncated to 0
     assert len(cl.placed) == 1                                 # 0.5 left: no whole contract to add
     assert m15.qty_str(0.5) == 0.5 and m15.qty_str(2.0) == 2
+
+
+def test_window_cap_limits_one_close_time(monkeypatch):
+    """Markets closing together can all lose together, so one window's total is capped
+    below the daily stop (Nov 9, Alex: one bad window shouldn't pause the day)."""
+    World(monkeypatch, yb=0.73, ya=0.75)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", pool_pct=1.0, window_pct=0.07), clk, cl)
+    b.refresh_switch(clk.t)
+    b.paper_bankroll = 10.0                    # 7% = 70c < one 73c contract
+    b.step()
+    assert cl.placed == [] and "window cap" in b.state["markets"][TK]["why"]
+    b.paper_bankroll = 20.0                    # $1.40: room for one
+    clk.t += 10
+    b.step()
+    assert cl.placed == [(TK, "yes", 0.73, 1)]
+    other = dict(b.state["markets"][TK], close=b.state["markets"][TK]["close"] + 900, ticker="X")
+    b.state["markets"]["X"] = other            # a different close time doesn't count
+    assert abs(b.exposure("live", close=b.state["markets"][TK]["close"]) - 0.73) < 1e-9
