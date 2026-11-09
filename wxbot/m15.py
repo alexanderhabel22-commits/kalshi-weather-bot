@@ -484,20 +484,19 @@ class Bot:
             try:
                 r = self.client.place_limit(m["ticker"], side, q, n, cid)
             except (HttpError, OrderRejected) as exc:
-                log.warning("place %s %s %.2f: %s", m["ticker"], side, q, exc)
-                m["retry_at"] = now + 3
-                m["why"] = f"order rejected: {str(exc)[:200]}"
-                self.state["last_reject"] = {"at": int(now), "ticker": m["ticker"], "error": str(exc)[:300]}
-                if "post only cross" in str(exc):
-                    # benign race: the ask moved onto our price before the order landed. The next
-                    # step re-reads the book and requotes; don't count it toward the alert
-                    # (Nov 8: 5 of these in one fast window pushed a false "rejected" alert).
+                # A retried POST can be refused ("post only cross", 5xx ...) after the first try
+                # already placed the order. Look before calling it a reject, or that order rests
+                # untracked and fills on top of the next one (Nov 9: WTI held 4, max is 2).
+                try:
+                    found = self.client.find_order(m["ticker"], cid) or {}
+                except Exception:
+                    found = {}
+                if found.get("order_id"):
+                    log.warning("place %s: %s, but the order exists: adopting it", m["ticker"], exc)
+                    r = found
+                else:
+                    self._rejected(m, exc, now)
                     return False
-                self.rejects = getattr(self, "rejects", 0) + 1
-                if self.rejects == 5:
-                    self.alert("15-min bot: live orders rejected",
-                               f"Kalshi rejected 5 orders in a row: {str(exc)[:300]}", 4)
-                return False
             self.rejects = 0
             o["id"] = r.get("order_id")
             if not o["id"]:
@@ -509,20 +508,48 @@ class Bot:
         m["fav_side"] = side
         return True
 
-    def _end_order(self, m: dict) -> None:
-        """Cancel the current order and book whatever filled."""
+    def _rejected(self, m: dict, exc: Exception, now: float) -> None:
+        log.warning("place %s: %s", m["ticker"], exc)
+        m["retry_at"] = now + 3
+        m["why"] = f"order rejected: {str(exc)[:200]}"
+        self.state["last_reject"] = {"at": int(now), "ticker": m["ticker"], "error": str(exc)[:300]}
+        if "post only cross" in str(exc):
+            # benign race: the ask moved onto our price before the order landed. The next
+            # step re-reads the book and requotes; don't count it toward the alert
+            # (Nov 8: 5 of these in one fast window pushed a false "rejected" alert).
+            return
+        self.rejects = getattr(self, "rejects", 0) + 1
+        if self.rejects == 5:
+            self.alert("15-min bot: live orders rejected",
+                       f"Kalshi rejected 5 orders in a row: {str(exc)[:300]}", 4)
+
+    def _end_order(self, m: dict) -> bool:
+        """Cancel the current order and book whatever filled. False if the cancel failed:
+        the order is then kept (still tracked) so nothing new is placed on top of it."""
         o = m.get("order")
         if not o:
-            return
+            return True
         if m["mode"] == "live" and o.get("id"):
             try:
                 self.client.cancel(o["id"], m["ticker"])
+            except HttpError as exc:
+                log.warning("cancel %s: %s", o["id"], exc)
+                try:
+                    ko = self.client.get_order(o["id"])
+                except HttpError:
+                    return False
+                if (ko.get("status") or "") == "resting":
+                    o["filled"] = max(o["filled"], fill_qty(ko, o["n"]))
+                    self._book(m, o, None)
+                    return False                      # still live: keep tracking it
+            try:
                 ko = self.client.get_order(o["id"])
                 o["filled"] = max(o["filled"], fill_qty(ko, o["n"]))
             except HttpError as exc:
-                log.warning("cancel %s: %s", o["id"], exc)
+                log.warning("order %s: %s", o["id"], exc)
         self._book(m, o, None)
         m["order"] = None
+        return True
 
     def _book(self, m: dict, o: dict, ts: float | None) -> None:
         """Move newly filled contracts of order `o` into the position."""
@@ -577,7 +604,7 @@ class Bot:
     def sync_live(self, force: bool = False) -> None:
         mine = [m for m in self.state["markets"].values()
                 if m.get("mode") == "live" and m.get("order") and m["order"].get("id")]
-        if not mine:
+        if self.client is None:
             return
         if self.kfeed is not None:
             for m in mine:
@@ -590,7 +617,7 @@ class Bot:
                     m["order"] = None
             mine = [m for m in mine if m.get("order")]
         now = self.clock()
-        if not mine or (not force and now - self.last["sync"] < self.s["sync_s"]):
+        if not force and now - self.last["sync"] < self.s["sync_s"]:
             return
         self.last["sync"] = now
         try:
@@ -598,6 +625,7 @@ class Bot:
         except Exception as exc:
             log.warning("resting listing: %s", exc)
             return
+        self.sweep_orphans(resting)
         for m in mine:
             o = m["order"]
             ko = resting.get(o["id"])
@@ -612,6 +640,35 @@ class Bot:
             self._book(m, o, self.clock())
             if gone or o["filled"] >= o["n"]:
                 m["order"] = None
+
+    def sweep_orphans(self, resting: dict) -> None:
+        """Cancel any resting order on our series that the bot isn't tracking, and book what
+        it filled into its market so caps and P&L stay true. Belt and braces for any path
+        that loses track of an order (retried POSTs, failed cancels)."""
+        tracked = {m["order"]["id"] for m in self.state["markets"].values()
+                   if m.get("order") and m["order"].get("id")}
+        series = tuple(self.s["series"])
+        for oid, ko in resting.items():
+            tk = ko.get("ticker") or ""
+            if oid in tracked or not tk.startswith(series):
+                continue
+            try:
+                self.client.cancel(oid, tk)
+                ko = self.client.get_order(oid)
+            except HttpError as exc:
+                log.warning("orphan %s: %s", oid, exc)
+                continue
+            m = self.state["markets"].get(tk)
+            got = fill_qty(ko, 0)
+            log.warning("cancelled untracked order %s on %s (%.2f filled)", oid, tk, got)
+            self.state["orphans"] = int(self.state.get("orphans", 0)) + 1
+            if m is not None and got > 0:
+                q = m.get("last_q") or 0.85
+                self._book(m, {"q": q, "n": got, "filled": got}, None)
+            if self.state["orphans"] in (1, 5, 25):
+                self.alert("15-min bot: untracked order cancelled",
+                           f"{tk}: an order the bot wasn't tracking was cancelled "
+                           f"({got:.2f} had filled). Total so far: {self.state['orphans']}.", 3)
 
     # ------------------------------------------------------------ one market
 
@@ -700,7 +757,8 @@ class Bot:
                 return                                   # keep resting (still in band)
             side, q = want
             if side != o["side"] or (q > o["q"] + 1e-9 and now - o["t0"] >= s["requote_gap_s"]):
-                self._end_order(m)
+                if not self._end_order(m):
+                    return                               # cancel failed: never stack a 2nd order
                 o = None
                 room = target - m["filled"]
             else:
