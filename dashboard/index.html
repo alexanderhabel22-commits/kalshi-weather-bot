@@ -423,18 +423,21 @@ function m15ChartsHTML(fs){
   let cur = 0, curW = null, bestW = 0, worstL = 0, run = 0, runW = null;
   for (const f of fs){ if (f.won === runW) run++; else { runW = f.won; run = 1; } if (runW) bestW = Math.max(bestW, run); else worstL = Math.max(worstL, run); }
   cur = run; curW = runW;
-  const days = Math.max(1, (fs.at(-1).t - fs[0].t) / 864e5);
+  const dayOf = f => etDay(new Date(f.t - 60e3)), today = etDay(new Date()), byD = {}; fs.forEach(f => { const d = dayOf(f); byD[d] = (byD[d] || 0) + 1; });
+  const full = Object.keys(byD).filter(d => d !== today), avgD = full.length ? full.reduce((a, d) => a + byD[d], 0) / full.length : null;
+  const thru = fmt(new Date(fs.at(-1).t), {hour:"numeric", minute:"2-digit"}), up = S.m15.status && pdate(S.m15.status.at);
   let h = `<h2>How it's doing <span class="sub">real money · ${fs.length} graded fills</span></h2><div class="card">
     <div class="grid g3">
-      <div><div class="lbl">Win rate</div><div class="val ${win >= be ? "pos" : "neg"}">${pct(win)}</div><small class="mute">need ${pct(be)} to break even</small></div>
+      <div><div class="lbl">Win rate</div><div class="val ${win >= be ? "pos" : "neg"}">${pct(win)}</div><small class="mute">${wins}-${fs.length - wins} · need ${pct(be)}</small></div>
       <div><div class="lbl">Per contract</div><div class="val ${cls(pnl)}">${cents(100 * pnl / n)}</div><small class="mute">after fees · ${n} contracts</small></div>
-      <div><div class="lbl">Fills / day</div><div class="val">${(fs.length / days).toFixed(days < 1.5 ? 0 : 1)}</div><small class="mute">${wins} won · ${fs.length - wins} lost</small></div>
+      <div><div class="lbl">Fills today</div><div class="val">${byD[today] || 0}</div><small class="mute">since midnight ET${avgD != null && full.length >= 2 ? ` · avg ${Math.round(avgD)}/day` : ""}</small></div>
       <div><div class="lbl">Streak now</div><div class="val ${curW ? "pos" : "neg"}">${cur} ${curW ? "W" : "L"}</div></div>
       <div><div class="lbl">Best run</div><div class="val pos">${bestW} W</div></div>
       <div><div class="lbl">Worst run</div><div class="val ${worstL ? "neg" : ""}">${worstL} L</div></div>
     </div>
     <div class="lbl" style="margin-top:14px">Last ${Math.min(60, fs.length)} fills <span class="mute" style="text-transform:none;letter-spacing:0">· oldest → newest</span></div>
     <div class="wl">${fs.slice(-60).map(f => `<i class="${f.won ? "w" : "l"}" title="${esc(f.name)} ${f.won ? "won" : "lost"} ${money(f.pnl)}"></i>`).join("")}</div>
+    <div class="mute" style="font-size:11px;margin-top:6px">Includes every market that closed through ${esc(thru)} ET${up ? ` (server upload ${esc(ago(up))})` : ""}. The server uploads every 15 minutes, so the newest 1-2 closes in the Kalshi app can take up to ~20 minutes to show here.</div>
     <div class="mute" style="font-size:11px;margin-top:6px">A win pays about 25¢, a loss costs about 75¢, so it needs roughly 3 wins per loss. The win rate has to stay above the break-even line.</div></div>`;
   h += `<h2>Profit over time <span class="sub">real money · tap a name to hide</span></h2><div class="card"><div class="chead" id="m15Head"></div><div class="legend" id="m15Leg"></div><div class="chart" id="m15Cum"></div></div>`;
   h += `<h2>Win rate vs break-even <span class="sub">by market</span></h2><div class="card" id="m15Be"></div>`;
