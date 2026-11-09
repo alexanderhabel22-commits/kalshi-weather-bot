@@ -103,7 +103,12 @@ DEFAULTS = {
     "shard": 2,                     # Kalshi exchange shard of crypto + commodities markets
     "fund_s": 300,                  # top the shard up to the pool this often (live only)
     "cut_after_fills": 100,         # a live series below cut_below_ct per contract after this
-    "cut_below_ct": -0.05,          # many real fills goes back to paper by itself
+    "cut_below_ct": -0.05,
+    # edge-decay watch (Nov 8, Alex: "let's put safeguards in place"): over the most recent
+    # decay_window contracts per series, below decay_alert_ct -> push an alert (still trades);
+    # below cut_below_ct -> cut to paper, even if the all-time record is still positive.
+    "decay_window": 300,
+    "decay_alert_ct": 0.01,          # many real fills goes back to paper by itself
     "total_loss_pct": 0.125,
     "poll_s": 3.0,
     "discover_s": 60,
@@ -756,14 +761,34 @@ class Bot:
         st = self.state.setdefault("series", {}).setdefault(m["series"], {"fills": 0, "pnl": 0.0})
         st["fills"] += m["filled"]
         st["pnl"] = round(st["pnl"] + pnl, 4)
+        # rolling window of the most recent ~decay_window contracts, as [contracts, pnl] per market
+        rec = st.setdefault("recent", [])
+        rec.append([m["filled"], round(pnl, 4)])
+        win = int(self.s.get("decay_window", 300))
+        while len(rec) > 1 and sum(r[0] for r in rec) - rec[0][0] >= win:
+            rec.pop(0)
         cut = self.state.setdefault("cut", {})
         if m["series"] in cut or st["fills"] < int(self.s["cut_after_fills"]):
             return
         per = st["pnl"] / st["fills"]
-        if per < float(self.s["cut_below_ct"]):
+        rn = sum(r[0] for r in rec)
+        rper = sum(r[1] for r in rec) / rn if rn else 0.0
+        if rn >= win and rper < float(self.s["cut_below_ct"]):
+            # edge died after a good start: the recent window alone is below the cut line
+            per, why = rper, f"the last {rn} contracts"
+        else:
+            why = None
+        if rn >= win and why is None and rper < float(self.s.get("decay_alert_ct", 0.01)):
+            day = self.day(m["close"])
+            if st.get("decay_alerted") != day:
+                st["decay_alerted"] = day
+                self.alert(f"15-min bot: {m['series']} edge fading",
+                           f"last {rn} contracts {rper * 100:+.1f}c per contract (all-time "
+                           f"{per * 100:+.1f}c over {st['fills']}). Still trading; Claude reviews.", 3)
+        if why or per < float(self.s["cut_below_ct"]):
             cut[m["series"]] = {"at": self.day(m["close"]), "fills": st["fills"], "per_ct": round(per, 4)}
             self.alert(f"15-min bot: {m['series']} cut",
-                       f"{per * 100:+.1f}c per contract over {st['fills']} real fills (rule: below "
+                       f"{per * 100:+.1f}c per contract over {why or str(st['fills']) + ' real fills'} (rule: below "
                        f"{float(self.s['cut_below_ct']) * 100:+.0f}c after {self.s['cut_after_fills']}). "
                        "It runs on paper from now on.", 4)
 

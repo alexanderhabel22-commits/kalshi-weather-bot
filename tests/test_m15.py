@@ -517,3 +517,18 @@ def test_second_contract_when_favourite_reaches_extra_band(monkeypatch):
     clk.t += 10
     b.step()
     assert b.state["markets"][TK]["filled"] == 2 and len(cl.placed) == 2
+
+
+def test_edge_decay_alert_then_rolling_cut(monkeypatch):
+    alerts = []
+    monkeypatch.setattr(m15.Bot, "alert", lambda self, t, body, p=3: alerts.append(t))
+    b = m15.Bot(cfg(mode="live"), http=None, clock=Clock(), fetch_json=lambda url: {})
+    b.state["series"] = {"KXBTC15M": {"fills": 1000, "pnl": 60.0}}     # great all-time record
+    for _ in range(300):                                               # then flat: ~0c/contract
+        b.series_check({"series": "KXBTC15M", "filled": 1, "close": T0}, 0.0)
+    assert any("edge fading" in a for a in alerts) and b.state["cut"] == {}
+    assert sum(r[0] for r in b.state["series"]["KXBTC15M"]["recent"]) == 300
+    for _ in range(300):                                               # then losing -10c
+        b.series_check({"series": "KXBTC15M", "filled": 1, "close": T0}, -0.10)
+    assert "KXBTC15M" in b.state["cut"]                                 # all-time still +
+    assert b.state["series"]["KXBTC15M"]["pnl"] > 0
