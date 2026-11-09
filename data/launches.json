@@ -3723,6 +3723,7 @@
   "KXAFRMCC",
   "KXAFTERPAYCC",
   "KXAGANNOUNCE",
+  "KXAGCOMMRACE",
   "KXAGCONF",
   "KXAGENCIES",
   "KXAGENCYCUTS",
@@ -4340,6 +4341,7 @@
   "KXAUCTIONPIKACHU",
   "KXAUCTIONPRICETRY",
   "KXAUCTIONRECORD",
+  "KXAUDITORRACE",
   "KXAUDUSD15M",
   "KXAUDUSDAD",
   "KXAUDUSDAH",
@@ -6330,6 +6332,7 @@
   "KXDEMSENATEPRIMARYCOMBO",
   "KXDEMSOLIDR",
   "KXDEMSTATESUPERMAJ",
+  "KXDEMSTATESWEEP",
   "KXDEMSWEEP",
   "KXDEMSWINGSTATEGOVSWEEP",
   "KXDEMTRIFECTA",
@@ -8238,6 +8241,7 @@
   "KXGOPSIXSENATE",
   "KXGOPSOLIDD",
   "KXGOPSTATESUPERMAJ",
+  "KXGOPSTATESWEEP",
   "KXGOPTRIFECTA",
   "KXGOPWHIP120",
   "KXGOPYOUTHVOTE",
@@ -9049,6 +9053,7 @@
   "KXINJLAW",
   "KXINJS",
   "KXINPRIMARY",
+  "KXINSCOMMRACE",
   "KXINSCOMOKNOMR",
   "KXINSOSNOMR",
   "KXINSTAGRAMAPP",
@@ -11255,6 +11260,7 @@
   "KXNASDAQ100Z",
   "KXNASDAQDUD",
   "KXNASDAQWUD",
+  "KXNASHVILLEMAYOR",
   "KXNATBOOKAWARDS",
   "KXNATFRIEDMANMETA",
   "KXNATGAS15M",
@@ -13153,6 +13159,7 @@
   "KXPALANTIR",
   "KXPALERMOMAYOR",
   "KXPALESTINE",
+  "KXPALISADESHOME",
   "KXPALLADIUM15M",
   "KXPALLADIUMH",
   "KXPALNYT",
@@ -15402,6 +15409,7 @@
   "KXSTATEMENTCOUNTSWEENEY",
   "KXSTATEMENTCOUNTSWIFTTRUMP",
   "KXSTATEMENTCOUNTTRUMPPUTIN",
+  "KXSTATEOFFICERACE",
   "KXSTATERENAME",
   "KXSTATESCOTUS",
   "KXSTATESHIFTRIGHT",
@@ -16212,6 +16220,7 @@
   "KXTREASBLOCKCHAIN",
   "KXTREASBUYBTC",
   "KXTREASBUYCRYPTO",
+  "KXTREASRACE",
   "KXTREASURYMAX",
   "KXTREASURYMAX5",
   "KXTRIFOLD",
@@ -17217,6 +17226,7 @@
   "KXVENICEFILMFESTIVALSCREENPLAY",
   "KXVENICEFILMFESTIVALSILVERLION",
   "KXVENICEFILMFESTIVALSPECIALJURY",
+  "KXVENICEHOME",
   "KXVENTRURAVOTE",
   "KXVENUEPERFORM",
   "KXVENUEPERFORMANCEDRAKE",
@@ -18728,7 +18738,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-09T20:00:32+00:00",
+ "last_check": "2026-11-09T20:30:27+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -18820,6 +18830,16 @@
    "series": "KXAFCCL2TOTAL",
    "title": "Total"
   },
+  "KXAGCOMMRACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXAGCOMMRACE",
+   "title": "Agriculture Commissioner race winner?"
+  },
   "KXAGRACE": {
    "category": "Elections",
    "checked": "2026-11-09T20:00:32+00:00",
@@ -18842,13 +18862,23 @@
   },
   "KXARTNETSALE": {
    "category": "Entertainment",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T22:30:25+00:00",
    "frequency": "custom",
    "new_category": false,
    "series": "KXARTNETSALE",
    "title": "New York art auction sales"
+  },
+  "KXAUDITORRACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXAUDITORRACE",
+   "title": "Auditor race winner?"
   },
   "KXBCEA": {
    "category": "Financials",
@@ -19002,7 +19032,7 @@
   },
   "KXCHIPEXPORTLAW": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "one_off",
@@ -19032,7 +19062,7 @@
   },
   "KXDEMCAUCUSCHAIR120": {
    "category": "Elections",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "one_off",
@@ -19040,9 +19070,19 @@
    "series": "KXDEMCAUCUSCHAIR120",
    "title": "House Democratic Caucus Chair"
   },
+  "KXDEMSTATESWEEP": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXDEMSTATESWEEP",
+   "title": "Democratic statewide sweeps"
+  },
   "KXDEMWHIP120": {
    "category": "Elections",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "one_off",
@@ -19062,7 +19102,7 @@
   },
   "KXDREAMERHOUSE": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "one_off",
@@ -19072,7 +19112,7 @@
   },
   "KXDREAMERLAW": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "one_off",
@@ -19132,7 +19172,7 @@
   },
   "KXENTITYLIST": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "one_off",
@@ -19172,7 +19212,7 @@
   },
   "KXEVERIFYLAW": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "one_off",
@@ -19190,6 +19230,16 @@
    "series": "KXFRPRESCANDCOUNT",
    "title": "How many candidates will be on the French presidential first-round ballot?"
   },
+  "KXGOPSTATESWEEP": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXGOPSTATESWEEP",
+   "title": "Republican statewide sweeps"
+  },
   "KXGOVNOM": {
    "category": "Elections",
    "checked": "2026-11-09T20:00:32+00:00",
@@ -19202,7 +19252,7 @@
   },
   "KXH200REVOKE": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "custom",
@@ -19212,7 +19262,7 @@
   },
   "KXHARMEDSERVICESCHAIR": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:30:22+00:00",
    "frequency": "custom",
@@ -19222,7 +19272,7 @@
   },
   "KXHEGSETHCONVICT": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T23:30:23+00:00",
    "frequency": "custom",
@@ -19262,7 +19312,7 @@
   },
   "KXIMMLEGALSTATUS": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "one_off",
@@ -19289,6 +19339,16 @@
    "new_category": false,
    "series": "KXINDIANAPOLISMAYORNOMD",
    "title": "Indianapolis Democratic mayoral primary winner?"
+  },
+  "KXINSCOMMRACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXINSCOMMRACE",
+   "title": "Insurance Commissioner race winner?"
   },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
@@ -19372,7 +19432,7 @@
   },
   "KXLBPRCGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T18:00:33+00:00",
    "frequency": "custom",
@@ -19422,7 +19482,7 @@
   },
   "KXMAJLEAD120": {
    "category": "Elections",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:00:26+00:00",
    "frequency": "one_off",
@@ -19439,6 +19499,16 @@
    "new_category": false,
    "series": "KXMANDERSSONOUT",
    "title": "Magdalena Andersson out as Social Democrats leader"
+  },
+  "KXNASHVILLEMAYOR": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXNASHVILLEMAYOR",
+   "title": "Who will win the Nashville Mayoral Election?"
   },
   "KXNBAH2HPTSMARGIN": {
    "category": "Sports",
@@ -19509,6 +19579,16 @@
    "new_category": false,
    "series": "KXOVERSIGHTCHAIR",
    "title": "House Oversight chair"
+  },
+  "KXPALISADESHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXPALISADESHOME",
+   "title": "Pacific Palisades home values"
   },
   "KXPARAGUAYIMPEACH": {
    "category": "Politics",
@@ -19670,6 +19750,16 @@
    "series": "KXSPRLVLDATE",
    "title": "When will the US SPR level be above a threshold?"
   },
+  "KXSTATEOFFICERACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSTATEOFFICERACE",
+   "title": "Statewide office race winner?"
+  },
   "KXSUPERETTANADVANCE": {
    "category": "Sports",
    "checked": "2026-11-09T19:30:24+00:00",
@@ -19780,6 +19870,16 @@
    "series": "KXTHUNELEADER",
    "title": "Will John Thune be elected Senate Republican leader on Nov 10?"
   },
+  "KXTREASRACE": {
+   "category": "Elections",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXTREASRACE",
+   "title": "Treasurer race winner?"
+  },
   "KXTRUMPMEETDEMS": {
    "category": "Politics",
    "checked": "2026-11-09T19:30:24+00:00",
@@ -19822,7 +19922,7 @@
   },
   "KXTXLTGOVPOWERS": {
    "category": "Politics",
-   "checked": "2026-11-09T18:00:33+00:00",
+   "checked": "2026-11-09T20:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T16:00:33+00:00",
    "frequency": "custom",
@@ -19859,6 +19959,16 @@
    "new_category": false,
    "series": "KXULCCA",
    "title": "Frontier Group Holdings Annual KPI"
+  },
+  "KXVENICEHOME": {
+   "category": "Economics",
+   "checked": "2026-11-09T20:30:27+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T20:30:27+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXVENICEHOME",
+   "title": "Venice home values"
   },
   "KXVETO120": {
    "category": "Politics",
