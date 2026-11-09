@@ -661,7 +661,28 @@ function botMoneyHTML(risk, B){
     <div><div class="lbl">Bot total</div><div class="val">${cash == null ? "—" : "$" + (cash + risk).toFixed(2)}</div></div></div>
     <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Cap: $${cap.toFixed(2)} at risk (${pct(num(tradingCfg().max_open_pct, .75))} of the account). Whole account $${B.toFixed(2)}, both bots: the 15-min bot keeps its ${pct(num(mc.pool_pct, .25))} pool on Exchange 2.</div></div>`;
 }
+// Live account feed (read-only Cloudflare worker, tools/kalshi-account-worker.js, READ-ONLY Kalshi key): every 5 s
+const ACCOUNT = "https://snowy-rain-7e20.alexanderhabel22.workers.dev/account";
+async function pollLive(){
+  if (document.hidden) return;
+  try {
+    const r = await fetch(ACCOUNT, {cache:"no-store"}); if (!r.ok) return;
+    const a = await r.json(); if (!(num(a.total, 0) > 0)) return;
+    const prev = S.live; S.live = {total:num(a.total), cash:num(a.cash), positions:num(a.positions), at:Date.now()};
+    if (S.lastData && S.view === "overview" && (!prev || prev.total !== S.live.total) && !document.querySelector(".item.tap.open, .xmodal")) renderAll();
+  } catch(e){}
+}
+const liveOK = () => S.live && Date.now() - S.live.at < 60e3;
+function liveAcctHTML(){
+  if (!liveOK()) return "";
+  const L = S.live;
+  return `<div class="card" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:12px">
+    <div><div class="lbl">Kalshi account · <span class="pos">● live</span></div><div class="big" style="font-size:30px">$${L.total.toFixed(2)}</div></div>
+    <div class="mute" style="text-align:right;font-size:12px;line-height:1.6">cash $${L.cash.toFixed(2)}<br>positions $${L.positions.toFixed(2)}<br>updates every 5 s</div></div>`;
+}
+setInterval(pollLive, 5000); pollLive();
 function bankroll(){
+  if (liveOK()) return S.live.total;
   // live Kalshi balance (cash + positions) saved by each trade run; fresh = under 6h
   const b = S.data.broll || {};
   if (num(b.total, 0) > 0 && Date.now() - +new Date(b.at) < 6 * 3600e3) return num(b.total, 0);
@@ -1126,6 +1147,7 @@ function renderOverview(){
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
     ${sx.summary}${winsHTML(sx.tr, strats)}${moreBtn("all", "More all-time stats")}</div>`;
+  h = liveAcctHTML() + h;
   if (isOpen("all")) h += sx.h;
   h += botMoneyHTML(capExp, B);
   h += `<h2>Right now <span class="sub">open bets</span></h2>`;
