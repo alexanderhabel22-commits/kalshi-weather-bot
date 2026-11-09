@@ -1,5 +1,5 @@
 {
- "at": "2026-11-09T17:32:00+00:00",
+ "at": "2026-11-09T17:47:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,40 +7,40 @@
  "fund_error": null,
  "halted": null,
  "last_reject": {
-  "at": 1794244806,
+  "at": 1794246000,
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXBTC15M-26NOV091230-30"
+  "ticker": "KXSILVER15M-26NOV091245-45"
  },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV091245-45": {
-   "bid_ask": [
-    0.39,
-    0.4
-   ],
-   "mode": "live",
-   "order": false,
-   "why": "out of band"
-  },
-  "KXCOPPER15M-26NOV091245-45": {
+  "KXBTC15M-26NOV091300-00": {
    "bid_ask": [
     0.65,
-    0.69
+    0.66
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXPALLADIUM15M-26NOV091245-45": {
+  "KXCOPPER15M-26NOV091300-00": {
    "bid_ask": [
-    0.46,
-    0.48
+    0.62,
+    0.64
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXSILVER15M-26NOV091245-45": {
+  "KXPALLADIUM15M-26NOV091300-00": {
+   "bid_ask": [
+    0.59,
+    0.63
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXSILVER15M-26NOV091300-00": {
    "bid_ask": [
     0.43,
     0.44
@@ -56,20 +56,20 @@
   "live_days": {
    "2026-11-07": 0.17,
    "2026-11-08": 2.35,
-   "2026-11-09": 10.04
+   "2026-11-09": 9.17
   },
-  "live_total": 12.56,
+  "live_total": 11.69,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
-   "2026-11-09": -0.32
+   "2026-11-09": -0.04
   },
-  "paper_total": -56.84
+  "paper_total": -56.56
  },
  "series": {
   "KXBTC15M": {
-   "fills": 211.0,
-   "pnl": 6.72,
+   "fills": 213.0,
+   "pnl": 7.15,
    "recent": [
     [
      2,
@@ -298,12 +298,16 @@
     [
      2,
      0.4
+    ],
+    [
+     2,
+     0.43
     ]
    ]
   },
   "KXCOPPER15M": {
-   "fills": 92,
-   "pnl": -0.65,
+   "fills": 94.0,
+   "pnl": -0.26,
    "recent": [
     [
      2,
@@ -472,12 +476,16 @@
     [
      2,
      0.29
+    ],
+    [
+     2.0,
+     0.39
     ]
    ]
   },
   "KXPALLADIUM15M": {
-   "fills": 22,
-   "pnl": -0.9,
+   "fills": 24,
+   "pnl": -2.59,
    "recent": [
     [
      2,
@@ -526,6 +534,10 @@
     [
      2,
      0.41
+    ],
+    [
+     2,
+     -1.69
     ]
    ]
   },
@@ -719,7 +731,7 @@
  "shards": {
   "0": 23.4442,
   "1": 0.0,
-  "2": 23.4968,
+  "2": 25.0768,
   "3": 0.0
  },
  "spot_ok": true,
