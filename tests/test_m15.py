@@ -384,6 +384,31 @@ def test_rejected_live_order_is_reported(monkeypatch):
     assert b.state["last_reject"]["ticker"] == TK
 
 
+def test_post_only_cross_does_not_trigger_reject_alert(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    alerts = []
+    monkeypatch.setattr(m15.Bot, "alert", lambda self, t, body, p=3: alerts.append(t))
+
+    class Racy(Client):
+        def place_limit(self, *a):
+            raise OrderRejected("invalid order: post only cross")
+    b = bot(cfg(mode="live"), clk, Racy())
+    for _ in range(8):
+        b.step()
+        clk.t += 4
+    assert not [a for a in alerts if "rejected" in a]
+
+    class Bad(Client):
+        def place_limit(self, *a):
+            raise OrderRejected("insufficient_shard_balance")
+    b.client = Bad()
+    for _ in range(8):
+        b.step()
+        clk.t += 4
+    assert [a for a in alerts if "rejected" in a]
+
+
 def test_funds_crypto_shard_up_to_pool(monkeypatch):
     World(monkeypatch)
     clk = Clock()
