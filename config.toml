@@ -222,7 +222,7 @@ mode = "live"                    # off | paper | live. LIVE from the start (Alex
 live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M", "KXPALLADIUM15M",
                "KXPLATINUM15M", "KXWTI15M"]   # real money only on these
                                  # platinum + WTI live Nov 9 ~1:30 PM ET (Alex OK), 1 contract, last 5 min,
-                                 # no double-ups (single_series) until they show a real-money edge.
+                                 # double-ups on like the others (Alex, Nov 9: judge them the same way).
                                  # palladium live Nov 9 (Alex OK). Timing test: last 5 min 10:30 AM-1 PM ET
                                  # (-$2.81, 10 windows), whole window again from ~2 PM ET; Claude picks
                                  # the better one at 7:30 PM ET (Alex, Nov 9).
@@ -230,7 +230,7 @@ contracts = 1                    # per market
 extra_contracts = 1              # ON Nov 8 5:15 PM ET (Alex OK'd): +1 contract while the
 extra_min = 0.80                 # favourite is 80-87c (backtest +11c/ct; live the bot buys at ~73c
 extra_max = 0.87                 # then sits out this stretch). Max 2 per market.
-single_series = ["KXPLATINUM15M", "KXWTI15M"]   # never take the extra contract
+single_series = []               # series listed here never take the extra contract
 min_fav = 0.71                   # join the favourite's best bid while it's 71-95c (candidate: 0.65)
 max_fav = 0.95
 pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
