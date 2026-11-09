@@ -440,7 +440,7 @@ function m15ChartsHTML(fs){
     <div class="mute" style="font-size:11px;margin-top:6px">Includes every market that closed through ${esc(thru)} ET${up ? ` (server upload ${esc(ago(up))})` : ""}. The server uploads every 15 minutes, so the newest 1-2 closes in the Kalshi app can take up to ~20 minutes to show here.</div>
     <div class="mute" style="font-size:11px;margin-top:6px">A win pays about 25¢, a loss costs about 75¢, so it needs roughly 3 wins per loss. The win rate has to stay above the break-even line.</div></div>`;
   const xm = ls.get("m15X") || "n";
-  h += `<h2>Profit over time <span class="sub">real money · tap a name to hide</span></h2><div class="card"><div class="rng" id="m15X" style="--rc:#f5b335;margin:0 0 10px">${[["n","By trade"],["t","By time"]].map(([k, l]) => `<button data-x="${k}" class="${xm === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="chead" id="m15Head"></div><div class="legend" id="m15Leg"></div><div class="chart" id="m15Cum"></div>
+  h += `<h2>Profit over time <span class="sub">real money · tap a name to hide</span></h2><div class="card"><div class="rng" id="m15X" style="--rc:#f5b335;margin:0 0 10px">${[["n","By trade"],["t","By time"]].map(([k, l]) => `<button data-x="${k}" class="${xm === k ? "on" : ""}">${l}</button>`).join("")}</div><div class="chead" id="m15Head"></div><div class="rng" id="m15R" style="--rc:#f5b335;margin:2px 0 8px">${Object.keys(M15R).map(r => `<button data-r="${r}" class="${(ls.get("m15R") || "ALL") === r ? "on" : ""}">${r}</button>`).join("")}</div><div class="legend" id="m15Leg"></div><div class="chart" id="m15Cum"></div>
     <div class="mute" style="font-size:11px;margin-top:4px">"By trade" spaces every contract evenly, so quiet hours and closed weekends don't squash the picture. The dashed line is the pace of a +3¢/contract edge (my realistic target); staying above it is good. The yellow line marks the rule change on Nov 8 (BTC last 10 min only, 2nd contract at 80-87¢).</div></div>`;
   h += `<h2>Win rate vs break-even <span class="sub">by market</span></h2><div class="card" id="m15Be"></div>`;
   h += `<h2>Daily profit</h2><div class="card"><div class="chart" id="m15Day"></div></div>`;
@@ -449,28 +449,37 @@ function m15ChartsHTML(fs){
   h += `<h2>By hour of day <span class="sub">ET · 3-hour blocks · ¢ per contract</span></h2><div class="card"><div class="chart" id="m15Hr"></div><div class="mute" style="font-size:11px;margin-top:4px">Each bar is the 3 hours starting at its label. Small samples swing a lot, so read this as a hint, not a rule.</div></div>`;
   return h;
 }
+const M15R = {"1H":3600e3, "12H":432e5, "1D":864e5, "1W":7 * 864e5, "1M":30 * 864e5, "ALL":Infinity};
 function drawM15(){
   const fs = m15Fills(); if (!fs.length || !$("#m15Cum")) return;
   const names = [...new Set(fs.map(f => f.name))], col = (n, i) => M15C[n] || EXTRA[i % EXTRA.length];
-  const now = Date.now(), t0 = fs[0].t - 1, PACE = 0.03, RULES = Date.parse("2026-11-08T22:50:00Z");
-  let k = 0; fs.forEach(f => { f.k = (k += f.n); });             // running contract count across all coins
+  const now = Date.now(), PACE = 0.03, RULES = Date.parse("2026-11-08T22:50:00Z");
   const byN = () => (ls.get("m15X") || "n") === "n";
+  const rng = () => M15R[ls.get("m15R")] ? ls.get("m15R") : "ALL";
+  // the range restarts profit, contract count and pace at zero from its start
+  let sel, k, t0;
+  const pick = () => { const r = rng(), from = r === "ALL" ? -Infinity : now - M15R[r];
+    sel = fs.filter(f => f.t >= from); k = 0; sel.forEach(f => { f.k = (k += f.n); });
+    t0 = r === "ALL" ? fs[0].t - 1 : from; };
   const cum = (list, name, c) => { let a = 0; const n = byN();
     const pts = [{x:n ? 0 : t0, y:0}, ...list.map(f => ({x:n ? f.k : f.t, y:(a += f.pnl), t:f.t, label:`${f.name} ${f.won ? "won" : "lost"} ${money(f.pnl)}`}))];
     if (!n && now > pts.at(-1).x) pts.push({x:now, y:a}); return {name, c, pts, tot:a}; };
-  const build = () => { const n = byN(), s = [cum(fs, "Total", "#e6ecff"), ...names.map((nm, i) => cum(fs.filter(f => f.name === nm), nm, col(nm, i)))]; s[0].w = 2.5;
-    s.push({name:"+3¢ pace", c:"#6b7699", dash:true, w:1.5, pace:true, tot:PACE * k, pts:[{x:n ? 0 : t0, y:0}, ...fs.map(f => ({x:n ? f.k : f.t, y:PACE * f.k}))]}); return s; };
-  let ser = build();
+  const build = () => { pick(); const n = byN(), s = [cum(sel, "Total", "#e6ecff"), ...names.map((nm, i) => cum(sel.filter(f => f.name === nm), nm, col(nm, i)))]; s[0].w = 2.5;
+    s.push({name:"+3¢ pace", c:"#6b7699", dash:true, w:1.5, pace:true, tot:PACE * k, pts:[{x:n ? 0 : t0, y:0}, ...sel.map(f => ({x:n ? f.k : f.t, y:PACE * f.k}))]}); return s; };
+  let ser;
   const hidden = new Set(JSON.parse(ls.get("m15Hidden") || "[]"));
-  $("#m15Head").innerHTML = `<b class="${cls(ser[0].tot)}">${money(ser[0].tot)}</b><span>${k} contracts · ${fs.length} fills since ${esc(fday(new Date(fs[0].t)))} · ${cents(100 * ser[0].tot / k)}/ct</span>`;
-  const rf = fs.find(f => f.t >= RULES);
-  const draw = () => { const n = byN();
+  const RL = {"1H":"past hour", "12H":"past 12 hours", "1D":"past day", "1W":"past week", "1M":"past month"};
+  const draw = () => { const n = byN(), r = rng();
+    $("#m15Head").innerHTML = `<b class="${cls(ser[0].tot)}">${money(ser[0].tot)}</b><span>${k} contracts · ${sel.length} fills ${r === "ALL" ? "since " + esc(fday(new Date(fs[0].t))) : RL[r]}${k ? ` · ${cents(100 * ser[0].tot / k)}/ct` : ""}</span>`;
+    $("#m15Leg").innerHTML = ser.map(x => `<span data-n="${esc(x.name)}" class="${hidden.has(x.name) ? "off" : ""}"><i style="background:${x.c}"></i>${esc(x.name)} <b class="${x.pace ? "mute" : cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
+    if (!sel.length) { $("#m15Cum").innerHTML = `<div class="mute" style="padding:40px 0;text-align:center">No fills in the ${RL[r]}</div>`; return; }
+    const rf = sel.find(f => f.t >= RULES), rv = rf && rf !== sel[0] ? [{x:n ? rf.k - rf.n : RULES, label:"new rules"}] : [];
     lineChart($("#m15Cum"), ser.filter(x => !hidden.has(x.name)), {step:!n, h:210, xnum:n, xlab:t => Math.round(t) + " ct",
-      xtip:(x, p) => `contract ${Math.round(x)}${p && p.t ? " · " + fdt(new Date(p.t)) : ""}`,
-      vlines:rf ? [{x:n ? rf.k - rf.n : RULES, label:"new rules"}] : []}); };
-  $("#m15Leg").innerHTML = ser.map(x => `<span data-n="${esc(x.name)}" class="${hidden.has(x.name) ? "off" : ""}"><i style="background:${x.c}"></i>${esc(x.name)} <b class="${x.pace ? "mute" : cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
+      xtip:(x, p) => `contract ${Math.round(x)}${p && p.t ? " · " + fdt(new Date(p.t)) : ""}`, vlines:rv}); };
+  ser = build();
   $("#m15X").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15X", b.dataset.x); $("#m15X").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); ser = build(); draw(); };
-  $("#m15Leg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("m15Hidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); draw(); };
+  $("#m15R").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15R", b.dataset.r); $("#m15R").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); ser = build(); draw(); };
+  $("#m15Leg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("m15Hidden", JSON.stringify([...hidden])); draw(); };
   draw();
   // win rate vs break-even per market: a bar to the win rate with a tick at break-even
   const bm = m15Group(fs, f => f.name).sort((a, b) => b.fills - a.fills), all = m15Group(fs, () => "All markets")[0];
