@@ -448,8 +448,8 @@ function m15Fills(){
     .filter(f => f.t).sort((a, b) => a.t - b.t);
 }
 function m15Group(fs, key, order){
-  const g = {}; for (const f of fs){ const k = key(f); if (k == null) continue; const b = g[k] = g[k] || {k, n:0, fills:0, wins:0, pnl:0, be:0}; b.fills++; b.n += f.n; b.wins += f.won ? 1 : 0; b.pnl += f.pnl; b.be += f.be; }
-  const out = Object.values(g).map(b => ({...b, win:b.wins / b.fills, beR:b.be / b.fills, c:100 * b.pnl / b.n}));
+  const g = {}; for (const f of fs){ const k = key(f); if (k == null) continue; const b = g[k] = g[k] || {k, n:0, fills:0, wins:0, pnl:0, be:0}; b.fills++; b.n += f.n; b.wins += f.won ? 1 : 0; b.wn = (b.wn || 0) + (f.won ? f.n : 0); b.pnl += f.pnl; b.be += f.be; b.cf = (b.cf || 0) + f.be * f.n; }
+  const out = Object.values(g).map(b => ({...b, win:b.n ? b.wn / b.n : 0, beR:b.n ? b.cf / b.n : 0, c:100 * b.pnl / b.n}));
   return order ? order.filter(k => g[k]).map(k => out.find(b => b.k === k)) : out;
 }
 function m15ChartsHTML(fs){
@@ -544,7 +544,7 @@ function drawM15(){
     return `<div class="berow"><div class="row"><span>${esc(b.k)} <span class="mute">· ${b.fills} fills</span></span><b class="${ok ? "pos" : "neg"}">${pct(b.win)} <span class="mute" style="font-weight:400">vs ${pct(b.beR)}</span></b></div>
       <div class="bebar"><i style="width:${(b.win * 100).toFixed(1)}%;background:${c}"></i><u style="left:${(b.beR * 100).toFixed(1)}%"></u></div>
       <div class="s mute" style="font-size:11px">${ok ? "above" : "below"} break-even by ${Math.abs((b.win - b.beR) * 100).toFixed(1)} pts · ${cents(b.c)}/ct · ${money(b.pnl)}</div></div>`; }).join("")
-    + `<div class="mute" style="font-size:11px;margin-top:6px">The white tick is the win rate needed to break even at the prices paid (fees included). With under ~100 fills a market's rate is still mostly luck.</div>`;
+    + `<div class="mute" style="font-size:11px;margin-top:6px">Counted by contract (a doubled-up market counts twice), so the gap between the bar and the white tick is exactly the profit per contract. The white tick is the win rate needed to break even at the prices paid (fees included). With under ~100 fills a market's rate is still mostly luck.</div>`;
   const byDay = {}; fs.forEach(f => { const d = etDay(new Date(f.t)); byDay[d] = (byDay[d] || 0) + f.pnl; });
   const dd = Object.keys(byDay).sort().slice(-14);
   barChart($("#m15Day"), dd.map(d => { const l = fs.filter(f => etDay(new Date(f.t)) === d), w = l.filter(f => f.won).length;
