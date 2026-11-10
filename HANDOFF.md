@@ -285,6 +285,20 @@ IP without a token). It never places, changes or cancels anything and needs no s
   un-pauses, never changes caps/stops/sizes/code. Results: `m15/watch.json` on branch m15-data;
   the scheduled Claude check-ins read it and turn proposed fixes into PRs.
 
+## Source shadow logger (built Nov 10, 2026, logging only)
+
+- `wxbot/srclog.py`, `python bot.py srclog`. Separate systemd service `kalshi-srclog` on the 15-min
+  server (installed by the hourly update via `deploy/m15/install-srclog.sh`; CPU 20%, 300 MB cap).
+  Never loads the Kalshi key, never orders. Off: `sudo systemctl disable --now kalshi-srclog` and
+  `sudo touch /var/lib/kalshi-srclog.disabled`.
+- Polls the settlement pages of data-settled markets (RCP Trump approval, Arena no-style-control
+  leaderboard, Netflix Top 10 TSVs, TSA volumes, HF Arena dataset, each listed Rotten Tomatoes title),
+  logs every change with the raw page, and snapshots the linked Kalshi series at +0/10/30/60/300 s.
+  Hourly files on branch `srclog-data` (srclog/srclog-YYYY-MM-DD-HH.jsonl.gz).
+- Why: research_src/race.py (Mar-Nov 2026 tapes) shows the first ~3 s of each repricing is swept by a
+  faster bot, but stale prices keep trading for 3 s-5 min (Trump approval ~+20-39c/ct). Judge after
+  1-2 weeks: our detect time vs the first Kalshi move. Write-up: Library analysis/source-lag/RESULTS.md.
+
 ## Scale-up kit (built Nov 10, 2026, switched OFF)
 `wxbot/scaleup.py` + `[scaleup]` in `config.toml` (`enabled = false`). Turn it on (with
 Alex's OK) after the 500-contract reviews and the Nov 17 checkpoint pass, before adding bankroll.
