@@ -233,6 +233,9 @@ extra_max = 0.87                 # then sits out this stretch). Max 2 per market
 single_series = []               # series listed here never take the extra contract
 # correlated group: once group_cap of these filled in a window, the others stop bidding there.
 # 0 = off. Built Nov 10 for Alex's 3:30 PM ET review (12:15 AM ET window: 5 of 6 lost together).
+# Alex (Nov 10 ~1 AM ET): turn the window guard OFF. It shrank to ~$2.60 of room after the
+# 12:15 AM loss and held back most bets overnight. The -10%/day pause and -12.5% halt stay.
+stop_guard = false
 group = ["KXCOPPER15M", "KXPALLADIUM15M", "KXPLATINUM15M", "KXGOLD15M", "KXWTI15M"]
 group_cap = 2                    # Nov 10 ~1 AM ET: max 2 of the weaker metals/oil per window; silver (proven) is exempt so palladium's whole-window bids can't crowd it out
 min_fav = 0.71                   # join the favourite's best bid while it's 71-95c (candidate: 0.65)
