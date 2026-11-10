@@ -1,22 +1,18 @@
 {
- "at": "2026-11-10T06:17:00+00:00",
+ "at": "2026-11-10T06:30:03+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
  "errors": 0,
  "fund_error": null,
  "halted": null,
- "last_reject": {
-  "at": 1794291065,
-  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXSILVER15M-26NOV100115-15"
- },
- "live_exposure": 0.0,
+ "last_reject": null,
+ "live_exposure": 5.57,
  "live_now": {
   "KXBTC15M-26NOV100130-30": {
    "bid_ask": [
-    0.29,
-    0.3
+    0.999,
+    1.0
    ],
    "mode": "live",
    "order": false,
@@ -24,17 +20,17 @@
   },
   "KXCOPPER15M-26NOV100130-30": {
    "bid_ask": [
-    0.11,
-    0.16
+    0.0,
+    0.01
    ],
    "mode": "live",
    "order": false,
-   "why": "ok"
+   "why": "group cap"
   },
   "KXPALLADIUM15M-26NOV100130-30": {
    "bid_ask": [
-    0.28,
-    0.3
+    0.0,
+    0.01
    ],
    "mode": "live",
    "order": false,
@@ -42,26 +38,17 @@
   },
   "KXPLATINUM15M-26NOV100130-30": {
    "bid_ask": [
-    0.24,
-    0.29
-   ],
-   "mode": "live",
-   "order": false,
-   "why": "ok"
-  },
-  "KXSILVER15M-26NOV100130-30": {
-   "bid_ask": [
-    0.3,
-    0.31
+    0.0,
+    0.01
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXWTI15M-26NOV100130-30": {
+  "KXSILVER15M-26NOV100130-30": {
    "bid_ask": [
-    0.66,
-    0.67
+    0.0,
+    0.001
    ],
    "mode": "live",
    "order": false,
@@ -69,7 +56,7 @@
   }
  },
  "mode": "live",
- "open_markets": 17,
+ "open_markets": 15,
  "pnl": {
   "live_days": {
    "2026-11-07": 0.17,
@@ -77,6 +64,12 @@
    "2026-11-09": 3.4728,
    "2026-11-10": -2.4
   },
+  "live_log": [
+   [
+    1794292203.3771954,
+    -2.4
+   ]
+  ],
   "live_total": 3.5928,
   "paper_days": {
    "2026-11-07": -5.8,
@@ -86,6 +79,8 @@
   },
   "paper_total": -98.15
  },
+ "pnl_24h": -2.4,
+ "roll_stop": null,
  "series": {
   "KXBTC15M": {
    "fills": 295.0,
@@ -1551,7 +1546,7 @@
  "shards": {
   "0": 28.4632,
   "1": 0.0,
-  "2": 19.4065,
+  "2": 20.8365,
   "3": 0.0
  },
  "spot_ok": true,
