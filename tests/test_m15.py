@@ -675,9 +675,9 @@ def test_group_cap_stops_later_metals_in_the_same_window(monkeypatch):
     assert b.group_full(b.state["markets"]["c"])           # silver filled first: copper sits out
     assert not b.group_full(b.state["markets"]["s"])       # the filled one keeps its position
     assert not b.group_full(b.state["markets"]["b"])       # BTC isn't in the group
-    off = bot(cfg(mode="live"), clk, Client())
+    off = bot(cfg(mode="live", group_cap=0), clk, Client())
     off.state["markets"] = b.state["markets"]
-    assert not off.group_full(off.state["markets"]["c"])   # off by default
+    assert not off.group_full(off.state["markets"]["c"])   # cap 0 = off
 
 
 def test_oanda_prices_feed_the_jump_guard_and_links_trip_together():
