@@ -49,7 +49,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import kalshi, notify, scaleup
+from . import kalshi, kalshi_api, notify, scaleup
 from .m15_fillq import FillQuality
 from .kalshi_api import KalshiClient, OrderRejected, fill_qty
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
@@ -130,7 +130,7 @@ DEFAULTS = {
     "switch_stale_s": 1800,
     "summary_hour": 21,
     "upload_s": 900,
-    "maker_fee_rate": 0.0175,
+    "maker_fee_rate": 0.0,          # Kalshi charged $0 on every 15-min fill (ledger, Nov 10)
     "rest_quote_s": 5,          # REST best-bid refresh (the websocket fills in between)
     "rest_tape_s": 15,          # REST trade tape per market (truth for paper fills)
     "sync_s": 5,                # REST order sync (websocket fills arrive in between)
@@ -624,6 +624,9 @@ class Bot(FillQuality):
         self._book(m, o, None)
         self._remember(m, o)
         m["order"] = None
+        if m["mode"] == "live":
+            # give Kalshi's records a moment to settle before the next order on this market
+            m["retry_at"] = max(m.get("retry_at", 0), self.clock() + 2)
         return True
 
     @staticmethod
@@ -905,6 +908,23 @@ class Bot(FillQuality):
             if s.get("stop_guard", True) and self.exposure("live") + q * n_new > room_to_stop - 0.01:
                 m["why"] = f"daily-stop guard (room ${room_to_stop:.2f})"
                 return
+        if m["mode"] == "live" and self.client is not None and hasattr(self.client, "position"):
+            # Kalshi's own position is the truth (Nov 10: fills the bot never saw left 3-4
+            # contracts where it booked 2). Book anything unseen and re-check room next step.
+            try:
+                held = self.client.position(m["ticker"])
+            except Exception as exc:
+                log.warning("position %s: %s", m["ticker"], exc)
+                m["why"] = "position check failed"
+                return
+            if held > m["filled"] + 0.01:
+                extra = round(held - m["filled"], 2)
+                log.warning("%s: Kalshi shows %.2f held, bot booked %.2f; booking the rest",
+                            m["ticker"], held, m["filled"])
+                self._book(m, {"q": m.get("last_q") or q, "n": extra, "filled": extra}, now)
+                m["why"] = "caught unbooked fill"
+                self.state["caught"] = round(float(self.state.get("caught", 0)) + extra, 2)
+                return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, n_new, now)
 
@@ -949,6 +969,8 @@ class Bot(FillQuality):
                     r = "void"
                 else:
                     continue
+            if m["mode"] == "live" and m["quotes"]:
+                self.true_up(m)
             won = None
             pnl = 0.0
             if m["filled"] and r in ("yes", "no"):
@@ -972,6 +994,91 @@ class Bot(FillQuality):
         # forget graded markets after a day
         self.state["markets"] = {k: v for k, v in self.state["markets"].items()
                                  if not (v.get("graded") and now - v["close"] > 86400)}
+
+    def true_up(self, m: dict) -> None:
+        """Replace the booked contracts/cost/fee with Kalshi's own fills for this market."""
+        if self.client is None or not hasattr(self.client, "fills"):
+            return
+        try:
+            t = kalshi_api.fill_totals(self.client.fills(ticker=m["ticker"])).get(m["ticker"])
+        except Exception as exc:
+            log.warning("true-up %s: %s", m["ticker"], exc)
+            m["unverified"] = True
+            return
+        n, cost, fee = t or (0.0, 0.0, 0.0)
+        if abs(n - m["filled"]) > 0.01 or abs(cost - m["cost"]) > 0.01 or abs(fee - m["fee"]) > 0.005:
+            log.warning("%s true-up: bot %.2f ct $%.2f fee %.2f -> Kalshi %.2f ct $%.2f fee %.2f",
+                        m["ticker"], m["filled"], m["cost"], m["fee"], n, cost, fee)
+            self.state["trued"] = int(self.state.get("trued", 0)) + 1
+        m.update({"filled": n, "cost": round(cost, 4), "fee": round(fee, 4)})
+
+    def retrue_history(self, version: int = 1) -> None:
+        """One-time rewrite of every local markets CSV (live rows) and the P&L state from
+        Kalshi's fills, then a full upload. Nov 10: the bot had booked a 1.75% fee Kalshi
+        never charged and miscounted 29 of 683 markets (about -$7 logged vs +$8 real)."""
+        if self.client is None or not hasattr(self.client, "fills") or self.state.get("retrued") == version:
+            return
+        try:
+            tot = kalshi_api.fill_totals(self.client.fills(min_ts=1794000000, max_pages=200))
+        except Exception as exc:
+            log.warning("history true-up: %s", exc)
+            return
+        series = tuple(self.s["series"])
+        p = self.state["pnl"]
+        live_total, days, log24, ser = 0.0, {}, [], {}
+        files = sorted(M15_DIR.glob("markets-*.csv"))
+        for path in files:
+            with open(path, newline="", encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            for r in rows:
+                if r.get("mode") != "live" or not r.get("ticker", "").startswith(series):
+                    continue
+                n, cost, fee = tot.get(r["ticker"], (0.0, 0.0, 0.0))
+                r["filled"], r["cost"], r["fee"] = qty_str(n), round(cost, 2), round(fee, 2)
+                res, side = r.get("result"), r.get("fav_side")
+                if n and res in ("yes", "no"):
+                    won = res == side
+                    pnl = round(n * (1.0 if won else 0.0) - cost - fee, 4)
+                    r["won"], r["pnl"] = int(won), round(pnl, 2)
+                    close = datetime.fromisoformat(r["close"]).timestamp()
+                    live_total += pnl
+                    d = self.day(close)
+                    days[d] = round(days.get(d, 0.0) + pnl, 4)
+                    log24.append([close, pnl])
+                    st = ser.setdefault(r["series"], {"fills": 0.0, "pnl": 0.0, "recent": []})
+                    st["fills"] += n
+                    st["pnl"] = round(st["pnl"] + pnl, 4)
+                    st["recent"].append([n, round(pnl, 4)])
+                elif not n:
+                    r["won"], r["pnl"] = "", 0.0
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=COLS, extrasaction="ignore")
+                w.writeheader()
+                w.writerows([{k: r.get(k, "") if r.get(k) is not None else "" for k in COLS} for r in rows])
+        old = p.get("live_total", 0.0)
+        p["live_total"] = round(live_total, 4)
+        p["live_days"] = days
+        p["live_log"] = [e for e in log24 if e[0] > self.clock() - 86400]
+        p["halt_base"] = round(p.get("halt_base", 0.0) + (live_total - old), 4) if p.get("halt_base") else p.get("halt_base", 0.0)
+        win = int(self.s.get("decay_window", 300))
+        for k, v in ser.items():
+            st = self.state.setdefault("series", {}).setdefault(k, {})
+            rec = v["recent"]
+            while len(rec) > 1 and sum(x[0] for x in rec) - rec[0][0] >= win:
+                rec.pop(0)
+            st.update({"fills": round(v["fills"], 2), "pnl": v["pnl"], "recent": rec})
+        self.state["retrued"] = version
+        self.state["roll_stop"] = None                 # re-judged on the corrected numbers
+        log.warning("history true-up: live P&L $%.2f -> $%.2f over %d files", old, live_total, len(files))
+        self.alert("15-min bot books corrected",
+                   f"Re-read every real fill from Kalshi: all-time live P&L ${old:+.2f} -> ${live_total:+.2f} "
+                   "(the bot had assumed a fee Kalshi doesn't charge and miscounted some fills).", 3)
+        if self.uploader is not None:
+            up = {path.name: path.read_text(encoding="utf-8") for path in files}
+            try:
+                self.uploader(up)
+            except Exception as exc:
+                log.warning("history upload failed: %s", exc)
 
     def series_check(self, m: dict, pnl: float) -> None:
         """Pre-registered cut rule: below cut_below_ct per contract after cut_after_fills real fills."""
@@ -1197,6 +1304,7 @@ class Bot(FillQuality):
 
     def run_forever(self) -> None:
         self.startup_cleanup()
+        self.retrue_history()
         self.startup_notice()
         while True:
             t0 = self.clock()
