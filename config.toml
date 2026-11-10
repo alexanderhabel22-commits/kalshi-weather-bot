@@ -263,3 +263,53 @@ max_haiku_per_day = 120
 max_opus_per_day = 6
 realert_hours = 6
 auto_pause = true
+
+[scaleup]
+# SCALE-UP KIT (wxbot/scaleup.py, built Nov 10). OFF until the 500-contract reviews and the
+# Nov 17 checkpoint pass AND Alex OKs adding bankroll. Switch on = enabled = true (Alex's OK).
+# While off, nothing above changes; the 15-min bot only keeps each coin's step record.
+# Tiers can only TIGHTEN limits (min of the value above and the tier's), never loosen them.
+enabled = false
+steps = [1, 2, 4]                # 15-min contracts per market, one step at a time
+step_min_bankroll = [0, 150, 400]  # bankroll needed to sit at each step
+step_min_review = 500            # the coin passed its 500-contract review count
+step_min_contracts = 300         # real contracts at the current step before the next one...
+step_min_ct = 0.01               # ...earning +1c per contract or better there...
+step_min_days = 3                # ...and at least 3 days at the step
+step_down_ct = -0.02             # last 300 contracts at a step below -2c -> back one step
+step_scales_extra = true         # the 80-87c extra contract scales too (1+1, 2+2, 4+4)
+max_trade_pushes_per_day = 40    # >300 orders/day: routine fill pushes stop after 40; stops still push
+
+[[scaleup.tiers]]
+name = "test money"              # today's settings, unchanged
+min_bankroll = 0
+
+[[scaleup.tiers]]
+name = "small real"
+min_bankroll = 300
+max_open_pct = 0.50              # main bot live cap 75% -> 50%
+daily_loss_pct = 0.08            # main bot daily stop 10% -> 8%
+total_loss_pct = 0.20            # main bot halt 25% -> 20%
+m15_daily_loss_pct = 0.15        # 15-min 24h stop 35% -> 15%
+m15_total_loss_pct = 0.25        # 15-min halt 50% -> 25%
+m15_stop_guard = true            # window guard back on
+
+[[scaleup.tiers]]
+name = "real"
+min_bankroll = 1000
+max_open_pct = 0.50
+daily_loss_pct = 0.06
+total_loss_pct = 0.15
+m15_daily_loss_pct = 0.10
+m15_total_loss_pct = 0.15
+m15_stop_guard = true
+
+[[scaleup.tiers]]
+name = "large"
+min_bankroll = 5000
+max_open_pct = 0.50
+daily_loss_pct = 0.04
+total_loss_pct = 0.10
+m15_daily_loss_pct = 0.06
+m15_total_loss_pct = 0.10
+m15_stop_guard = true

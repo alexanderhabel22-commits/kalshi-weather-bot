@@ -42,7 +42,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import allocator, kalshi, notify
+from . import allocator, kalshi, notify, scaleup
 from .daybefore import fill_flags, load_orders as weather_paper_orders, trade_prints
 from .kalshi_api import KalshiClient, OrderRejected, check_order, order_fill_count
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
@@ -300,6 +300,9 @@ def settings(cfg: Config) -> dict:
     if t["mode"] not in ("off", "paper", "live"):
         t["mode"] = "off"
     b = t["bankroll"] = float(cfg.bankroll)
+    # scale-up kit (OFF until the reviews pass): tighter caps/stops as the bankroll grows
+    t, tr = scaleup.main_limits(t, scaleup.params(cfg), b)
+    t["scaleup_tier"] = (tr or {}).get("name")
     t["max_open_dollars"] = round(float(t["max_open_pct"]) * b, 2)
     t["paper_max_open_dollars"] = round(float(t["paper_max_open_pct"]) * b, 2)
     t["max_event_dollars"] = round(float(t["max_event_pct"]) * b, 2)
@@ -469,16 +472,33 @@ def flush_alerts(http, cfg, dry_run) -> int:
     of pings)."""
     global _BUNDLE
     items, _BUNDLE = _BUNDLE or [], None
+    if not items:
+        return 0
     if len(items) <= BUNDLE_MAX:
-        for title, body, pr, tags in items:
+        pushes = [(title, body, pr, tags) for title, body, pr, tags in items]
+    else:
+        lines = [f"- {title}" for title, *_ in items[:12]]
+        if len(items) > 12:
+            lines.append(f"...and {len(items) - 12} more (dashboard has all of them)")
+        pushes = [(f"{len(items)} trade updates", "\n".join(lines),
+                   max(pr for _, _, pr, _ in items), ["moneybag"])]
+    p = scaleup.params(cfg)
+    st = (read_json(STATE, {}) or {}) if p["enabled"] and not dry_run else {}
+    sent = 0
+    for title, body, pr, tags in pushes:
+        # scale-up kit: a daily budget of routine trade pushes (>300 orders a day)
+        ok, note = scaleup.push_allowed(p, st, datetime.now(ZoneInfo(cfg.tz)), pr)
+        if note:
+            _alert(http, cfg, "Trade pushes paused for today",
+                   f"{p['max_trade_pushes_per_day']} trade pushes sent today. More fills and sales "
+                   "still happen and show on the dashboard; stops and warnings still push.",
+                   dry_run, 3, ["moneybag"])
+        if ok:
             _alert(http, cfg, title, body, dry_run, pr, tags)
-        return len(items)
-    lines = [f"- {title}" for title, *_ in items[:12]]
-    if len(items) > 12:
-        lines.append(f"...and {len(items) - 12} more (dashboard has all of them)")
-    _alert(http, cfg, f"{len(items)} trade updates", "\n".join(lines), dry_run,
-           max(pr for _, _, pr, _ in items), ["moneybag"])
-    return 1
+            sent += 1
+    if p["enabled"] and not dry_run and st:
+        write_json(STATE, st)
+    return sent
 
 
 def sync_live(client: KalshiClient, rows: list[dict], cfg, http, dry_run,
@@ -1155,7 +1175,8 @@ def report_section(rows: list[dict], cfg: Config) -> list[str]:
              f"{t['max_contracts_per_order']} contracts/order, ${t['max_open_dollars']:.2f} open "
              f"({t['max_open_pct']:.0%}), daily stop ${t['daily_loss_stop']:.2f} "
              f"({t['daily_loss_pct']:.0%}), total stop ${t['total_loss_stop']:.2f} ({t['total_loss_pct']:.0%})"
-             + (f" · **HALTED: {', '.join(state['halted'])}**" if state.get("halted") else ""), ""]
+             + (f" · **HALTED: {', '.join(state['halted'])}**" if state.get("halted") else ""), "",
+             scaleup.describe(scaleup.params(cfg), t["bankroll"]), ""]
     if not rows:
         return lines + ["No orders yet.", ""]
     lines += ["| Strategy | Mode | Orders | Open | Filled | Settled | P&L |", "|---|---|---|---|---|---|---|"]
