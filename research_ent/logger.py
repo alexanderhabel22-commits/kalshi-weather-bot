@@ -270,7 +270,8 @@ def rt_find(title: str, tv: bool = False, year: int | None = None) -> tuple[str 
         return None, None
     year = year or NOW.year
     base = f"{RT}/{'tv' if tv else 'm'}/{slug(title)}"
-    cands = [base] + ([] if tv else [f"{base}_{year}", f"{base}_{year - 1}", f"{base}_{year + 1}"])
+    # a year-suffixed slug first: the bare slug is often an older film with the same name
+    cands = ([] if tv else [f"{base}_{year}"]) + [base] + ([] if tv else [f"{base}_{year - 1}", f"{base}_{year + 1}"])
     search = get(f"{RT}/search", {"search": title}, js=False, source="rt_search") or ""
     for href, name in re.findall(r'href="(https://www\.rottentomatoes\.com/(?:m|tv)/[\w\-/]+)"[^>]*>\s*([^<]+?)\s*<',
                                  search):

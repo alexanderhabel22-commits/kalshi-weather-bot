@@ -69,4 +69,5 @@ def test_rt_find_rejects_wrong_film(monkeypatch):
         return pages.get(url)
     monkeypatch.setattr(L, "get", fake)
     url, html = L.rt_find("Dune: Part Three", year=2026)
+    assert url == "https://www.rottentomatoes.com/m/dune_part_three_2026"
     assert url.endswith("dune_part_three_2026")
