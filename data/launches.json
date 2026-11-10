@@ -5468,6 +5468,7 @@
   "KXARENASCORE",
   "KXAREQUIPAGOV",
   "KXARGCBI",
+  "KXARGCBIOPEN",
   "KXARGCENTRALBANK",
   "KXARGDOLLAR",
   "KXARGENTINAHOUSETHIRD",
@@ -6924,6 +6925,7 @@
   "KXCHINAUSGDP",
   "KXCHIPBURRITO",
   "KXCHIPEXPORTLAW",
+  "KXCHIPREMOTE",
   "KXCHIPSREPEAL",
   "KXCHIPYOY",
   "KXCHISNOWM",
@@ -7290,6 +7292,7 @@
   "KXCOPPER15M",
   "KXCOPPERCABLE",
   "KXCOPPERD",
+  "KXCOPPEREVENT",
   "KXCOPPERMON",
   "KXCOPPEROPEN",
   "KXCOPPERTARIFF",
@@ -7938,6 +7941,7 @@
   "KXDOTMINY",
   "KXDOTPLOT",
   "KXDOTPLOTPUB",
+  "KXDPCCCHAIR120",
   "KXDPRESFRACTURED",
   "KXDPRESPRIMARY",
   "KXDPRESPRIMWIN",
@@ -10020,6 +10024,7 @@
   "KXHERMESBIRKIN",
   "KXHERMESKELLY",
   "KXHERSHEYSPOS",
+  "KXHFCCHAIR",
   "KXHFHOUSING",
   "KXHFINSERVICECHAIR",
   "KXHHSYOUTHCARE",
@@ -10298,6 +10303,8 @@
   "KXIAEAIRANAGREEMENT",
   "KXIAETHANOL",
   "KXIAFARMLAND",
+  "KXIAMEDICAID",
+  "KXIAMEDICAIDEND",
   "KXIAN",
   "KXIAPRIMARY",
   "KXIASANDTUREK",
@@ -12352,6 +12359,7 @@
   "KXMOPRIMARY",
   "KXMOPROPA",
   "KXMORAESLEAVE",
+  "KXMORATHANNOUNCEOUT",
   "KXMORATORIUMCOUNT",
   "KXMORECHAOS",
   "KXMOREDISTREF",
@@ -12683,6 +12691,7 @@
   "KXNBA3QTOTAL",
   "KXNBA3QWINNER",
   "KXNBA3RDTEAM",
+  "KXNBA4D",
   "KXNBA4Q",
   "KXNBA4QSPREAD",
   "KXNBA4QTEAMTOTAL",
@@ -12857,6 +12866,7 @@
   "KXNBARULE",
   "KXNBASEATTLE",
   "KXNBASEED",
+  "KXNBASEEDCHAMP",
   "KXNBASEEDOU",
   "KXNBASERIES",
   "KXNBASERIES3PMLEADER",
@@ -15673,6 +15683,7 @@
   "KXRUBIORUN",
   "KXRUBLE",
   "KXRUCRUDEX",
+  "KXRUDOFSKYCONF",
   "KXRUGBYESLMATCH",
   "KXRUGBYFRA14MATCH",
   "KXRUGBYGPREMMATCH",
@@ -16214,6 +16225,7 @@
   "KXSILVERAPPROVE",
   "KXSILVERCALL",
   "KXSILVERD",
+  "KXSILVEREVENT",
   "KXSILVERH",
   "KXSILVERMON",
   "KXSILVERSTATES",
@@ -17695,6 +17707,7 @@
   "KXTRUMPGOPCONVICT",
   "KXTRUMPIMPEACHARTICLES",
   "KXTRUMPIMPEACHCOUNT",
+  "KXTRUMPIMPEACHINTRO",
   "KXTRUMPIRAN",
   "KXTRUMPKENNEDYFACADE",
   "KXTRUMPKENNEDYNAME",
@@ -17938,6 +17951,7 @@
   "KXTXLTGOVPOWERS",
   "KXTXMEDICAIDEXP",
   "KXTXOIL",
+  "KXTXPOWERFREEZE",
   "KXTXPRIMARY",
   "KXTXRAILROAD",
   "KXTXRAILROADCOMBO",
@@ -18302,6 +18316,7 @@
   "KXUSAMEASLESELIMINATE",
   "KXUSCANADATARIFFDOWN",
   "KXUSCANADATARIFFUP",
+  "KXUSCHINAAI",
   "KXUSCHINAAIHOTLINE",
   "KXUSCHINAAISAFETY",
   "KXUSCLIMATE",
@@ -20120,7 +20135,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-10T17:30:25+00:00",
+ "last_check": "2026-11-10T18:00:28+00:00",
  "pending": {
   "KXAFCCL2ADVANCE": {
    "category": "Sports",
@@ -20202,9 +20217,19 @@
    "series": "KXARGCBI",
    "title": "Argentina citizenship by investment program launch"
   },
+  "KXARGCBIOPEN": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXARGCBIOPEN",
+   "title": "Will Argentina launch its citizenship-by-investment program?"
+  },
   "KXARTNETSALE": {
    "category": "Entertainment",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T22:30:25+00:00",
    "frequency": "custom",
@@ -20372,6 +20397,26 @@
    "series": "KXCHINACOMMITTEE",
    "title": "House China select committee"
   },
+  "KXCHIPREMOTE": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXCHIPREMOTE",
+   "title": "Will Commerce restrict China's remote access to U.S. AI chips?"
+  },
+  "KXCOPPEREVENT": {
+   "category": "Commodities",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXCOPPEREVENT",
+   "title": "Copper after economic events"
+  },
   "KXDEMCAUCUSCHAIR120": {
    "category": "Elections",
    "checked": "2026-11-10T16:00:32+00:00",
@@ -20401,6 +20446,16 @@
    "new_category": false,
    "series": "KXDEMWHIP120",
    "title": "House Democratic Whip (120th Congress)"
+  },
+  "KXDPCCCHAIR120": {
+   "category": "Elections",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXDPCCCHAIR120",
+   "title": "House Democratic Policy and Communications Committee Chair"
   },
   "KXEFLL2ADVANCE": {
    "category": "Sports",
@@ -20504,7 +20559,7 @@
   },
   "KXF1FPFASTLAP": {
    "category": "Sports",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T23:30:24+00:00",
    "frequency": "custom",
@@ -20514,7 +20569,7 @@
   },
   "KXFENTYTTS": {
    "category": "Financials",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T23:30:24+00:00",
    "frequency": "monthly",
@@ -20554,7 +20609,7 @@
   },
   "KXHAUSTTS": {
    "category": "Financials",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T23:30:24+00:00",
    "frequency": "monthly",
@@ -20564,7 +20619,7 @@
   },
   "KXHEGSETHCONVICT": {
    "category": "Politics",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T23:30:23+00:00",
    "frequency": "custom",
@@ -20581,6 +20636,16 @@
    "new_category": false,
    "series": "KXHEGSETHTRIAL",
    "title": "Pete Hegseth Senate impeachment trial"
+  },
+  "KXHFCCHAIR": {
+   "category": "Elections",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXHFCCHAIR",
+   "title": "House Freedom Caucus Chair (120th Congress)"
   },
   "KXHINTELCHAIR": {
    "category": "Politics",
@@ -20611,6 +20676,26 @@
    "new_category": false,
    "series": "KXHWAYSMEANSCHAIR",
    "title": "House Ways and Means chair"
+  },
+  "KXIAMEDICAID": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXIAMEDICAID",
+   "title": "Iowa Medicaid privatization"
+  },
+  "KXIAMEDICAIDEND": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXIAMEDICAIDEND",
+   "title": "Will Iowa end privatized Medicaid?"
   },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
@@ -20674,7 +20759,7 @@
   },
   "KXJUDGEFIRST": {
    "category": "Politics",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T01:00:26+00:00",
    "frequency": "monthly",
@@ -20724,7 +20809,7 @@
   },
   "KXMAJLEAD120": {
    "category": "Elections",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-08T08:00:26+00:00",
    "frequency": "one_off",
@@ -20742,6 +20827,16 @@
    "series": "KXMEDICAIDWORKDELAY",
    "title": "Law delaying Medicaid work requirements"
   },
+  "KXMORATHANNOUNCEOUT": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMORATHANNOUNCEOUT",
+   "title": "Mike Morath out as Texas Education Commissioner?"
+  },
   "KXNBA30PTSTREAK": {
    "category": "Sports",
    "checked": "2026-11-10T16:00:32+00:00",
@@ -20752,6 +20847,16 @@
    "series": "KXNBA30PTSTREAK",
    "title": "NBA 30 Point Streak"
   },
+  "KXNBA4D": {
+   "category": "Sports",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXNBA4D",
+   "title": "Any Player to Record a Quadruple Double"
+  },
   "KXNBAPTSPRECISE": {
    "category": "Sports",
    "checked": "2026-11-10T16:30:24+00:00",
@@ -20761,6 +20866,16 @@
    "new_category": false,
    "series": "KXNBAPTSPRECISE",
    "title": "NBA Player Points Range"
+  },
+  "KXNBASEEDCHAMP": {
+   "category": "Sports",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXNBASEEDCHAMP",
+   "title": "NBA Seed of Champion"
   },
   "KXNBATOTALPRECISE": {
    "category": "Sports",
@@ -20854,7 +20969,7 @@
   },
   "KXRARETTS": {
    "category": "Financials",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-09T23:30:24+00:00",
    "frequency": "monthly",
@@ -20881,6 +20996,16 @@
    "new_category": false,
    "series": "KXRHODETTS",
    "title": "Rhode TikTok Shop revenue"
+  },
+  "KXRUDOFSKYCONF": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXRUDOFSKYCONF",
+   "title": "Lee Rudofsky confirmation"
   },
   "KXSAFFADVANCE": {
    "category": "Sports",
@@ -20931,6 +21056,16 @@
    "new_category": false,
    "series": "KXSFINANCECHAIR",
    "title": "Senate Finance chair"
+  },
+  "KXSILVEREVENT": {
+   "category": "Commodities",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXSILVEREVENT",
+   "title": "Silver after economic events"
   },
   "KXSINTELCHAIR": {
    "category": "Politics",
@@ -21054,13 +21189,23 @@
   },
   "KXTHUNELEADER": {
    "category": "Elections",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T18:00:32+00:00",
    "frequency": "one_off",
    "new_category": false,
    "series": "KXTHUNELEADER",
    "title": "Will John Thune be elected Senate Republican leader on Nov 10?"
+  },
+  "KXTRUMPIMPEACHINTRO": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTRUMPIMPEACHINTRO",
+   "title": "Trump impeachment resolution sponsor"
   },
   "KXTRUMPMEETDEMS": {
    "category": "Politics",
@@ -21082,6 +21227,16 @@
    "series": "KXTXMEDICAIDEXP",
    "title": "Will Texas expand Medicaid?"
   },
+  "KXTXPOWERFREEZE": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXTXPOWERFREEZE",
+   "title": "Will Hinojosa freeze Texas electricity rates?"
+  },
   "KXUKRPLADVANCE": {
    "category": "Sports",
    "checked": "2026-11-10T16:30:24+00:00",
@@ -21102,9 +21257,19 @@
    "series": "KXULCCA",
    "title": "Frontier Group Holdings Annual KPI"
   },
+  "KXUSCHINAAI": {
+   "category": "Politics",
+   "checked": "2026-11-10T18:00:28+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T18:00:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXUSCHINAAI",
+   "title": "U.S.-China AI agreement"
+  },
   "KXVETO120": {
    "category": "Politics",
-   "checked": "2026-11-10T15:30:26+00:00",
+   "checked": "2026-11-10T18:00:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T00:30:23+00:00",
    "frequency": "annual",
