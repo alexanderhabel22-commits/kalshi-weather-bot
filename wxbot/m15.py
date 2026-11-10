@@ -50,6 +50,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import kalshi, kalshi_api, notify, scaleup
+from .m15_fillq import FillQuality
 from .kalshi_api import KalshiClient, OrderRejected, fill_qty
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
 
@@ -65,7 +66,7 @@ CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/m15_control.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
 COLS = ["ticker", "series", "mode", "close", "fav_side", "first_q", "last_q", "quotes",
         "contracts", "filled", "cost", "fee", "fill_at", "fill_ttc_s", "model_filled",
-        "touched", "pulls", "spot_bps", "result", "won", "pnl", "fills"]
+        "touched", "pulls", "spot_bps", "result", "won", "pnl", "fills", "fv_fill"]
 # "fills" (Nov 10): each fill as contracts@price, ';'-separated (e.g. "1@0.77;1@0.85"), so a
 # double's 1st and 2nd contract can be judged apart (the cost column only gives the blend).
 
@@ -150,6 +151,11 @@ DEFAULTS = {
              "KXBRENT15M": "BCO_USD", "KXNATGAS15M": "NATGAS_USD"},
     # products that trip together: a jump in one pulls the bids on all (metals move as one)
     "guard_links": [["XAG_USD", "XAU_USD", "XCU_USD", "XPT_USD", "XPD_USD"]],
+    # SHADOW fair value (wxbot/m15_fv.py, Nov 10): logs only, never trades. Rebuilds the
+    # settlement index from free exchange feeds and logs fair value vs Kalshi's quotes.
+    "fv": True,
+    "fv_coins": {"KXBTC15M": "BTC", "KXETH15M": "ETH", "KXSOL15M": "SOL"},
+    "fv_every_s": 5,
 }
 
 
@@ -246,11 +252,12 @@ def through(trades: list, side: str, q: float, after: float) -> tuple[float | No
     return None, touched
 
 
-class Bot:
+class Bot(FillQuality):
     def __init__(self, cfg: Config, http: Http, client: KalshiClient | None = None,
                  clock=time.time, fetch_json=None, uploader=None, kfeed=None, spot=None,
-                 wake=None):
+                 wake=None, fv=None):
         self.cfg = cfg
+        self.fv = fv                    # shadow fair value (logs only), m15_fv.FairShadow
         self.kfeed = kfeed
         self.spot = spot
         self.wake = wake
@@ -267,9 +274,10 @@ class Bot:
                       "summary_day": st.get("summary_day"), "started": st.get("started"),
                       "cut": st.get("cut", {}), "series": st.get("series", {}),
                       "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted"),
-                      "code_version": st.get("code_version"), "saved_at": st.get("saved_at")}
+                      "code_version": st.get("code_version"), "saved_at": st.get("saved_at"),
+                      "fillq": st.get("fillq", [])}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
-                     "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0}
+                     "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0, "queue": 0.0}
         self.switch = {"mode": None, "halted": False}
         self.control = None
         self.balance = None
@@ -329,6 +337,10 @@ class Bot:
             log.info("restarted for a code update %s -> %s (no push): %s", prev[:7], ver[:7], body)
             return
         self.alert("15-min bot started", body, 2)
+
+    @staticmethod
+    def fillq_dir() -> Path:
+        return M15_DIR
 
     def day(self, ts: float) -> str:
         return datetime.fromtimestamp(ts, self.tz).date().isoformat()
@@ -513,7 +525,8 @@ class Bot:
                                              "order": None, "quotes": 0, "filled": 0,
                                              "cost": 0.0, "fee": 0.0, "trade_ts": 0,
                                              "model_filled": None, "touched": False,
-                                             "pulls": 0, "tape_at": 0}
+                                             "pulls": 0, "tape_at": 0,
+                                             "strike": mk.get("floor_strike")}
         if self.kfeed is not None:
             self.kfeed.watch([k for k, m in self.state["markets"].items() if m["close"] > now])
 
@@ -657,6 +670,7 @@ class Bot:
                 if mv is not None:
                     # signed so that + = spot moved toward our side's win (assumes YES = up)
                     m["spot_bps"] = round(mv if m.get("fav_side") == "yes" else -mv, 1)
+        self.fillq_open(m, o, new, ts)           # shadow fill-quality log (never trades)
 
     def cancel_all(self, why: str) -> None:
         for m in self.state["markets"].values():
@@ -1127,7 +1141,8 @@ class Bot:
             "touched": 1 if m.get("touched") else 0, "pulls": m.get("pulls", 0),
             "spot_bps": m.get("spot_bps", ""),
             "result": m.get("result", ""), "won": "" if m.get("won") is None else int(m["won"]),
-            "pnl": round(m.get("pnl", 0.0), 2), "fills": ";".join(m.get("fills") or [])}
+            "pnl": round(m.get("pnl", 0.0), 2), "fills": ";".join(m.get("fills") or []),
+            "fv_fill": m.get("fv_fill", "")}
         if not new:
             with open(path, newline="", encoding="utf-8") as f:
                 rd = csv.DictReader(f)
@@ -1209,11 +1224,21 @@ class Bot:
                   "live_exposure": round(self.exposure("live"), 2), "errors": self.errors}
         files = {"status.json": json.dumps(status, indent=1, sort_keys=True)}
         for d in {self.day(now), self.day(now - 86400)}:
-            p = M15_DIR / f"markets-{d}.csv"
-            if p.exists():
-                files[p.name] = p.read_text(encoding="utf-8")
+            for kind in ("markets", "fills"):
+                p = M15_DIR / f"{kind}-{d}.csv"
+                if p.exists():
+                    files[p.name] = p.read_text(encoding="utf-8")
+        fv_files = {}
+        if self.fv is not None:
+            try:
+                fv_files = self.fv.files(now)
+            except Exception as exc:
+                log.warning("fair-value files: %s", exc)
+        files.update(fv_files)
         try:
             self.uploader(files)
+            if fv_files:
+                self.fv.mark_uploaded(fv_files)
         except Exception as exc:
             log.warning("upload failed: %s", exc)
 
@@ -1265,7 +1290,14 @@ class Bot:
                 self.manage(m, self.quote(m["ticker"], now), mode, now)
             except Exception as exc:
                 log.warning("manage %s: %s", m["ticker"], exc)
+        if self.fv is not None:
+            try:
+                self.fv.step(self, now)          # shadow only: logs, never trades
+            except Exception as exc:
+                log.warning("fair-value shadow: %s", exc)
+        self.queue_check(now)                    # shadow fill-quality log (never trades)
         self.grade(now)
+        self.fillq_step(now)
         self.daily(now)
         self.upload(now)
         self.save()
@@ -1369,8 +1401,17 @@ def main(cfg: Config, once: bool = False) -> int:
                 spot = Spots(feeds, s.get("guard_links") or [])
         except ImportError as exc:
             log.warning("websockets not installed, polling only: %s", exc)
+    fv = None
+    coins = {k: v for k, v in (s.get("fv_coins") or {}).items() if k in s["series"]}
+    if not once and s.get("fv") and coins:
+        try:
+            from .m15_fv import Composite, FairShadow
+            fv = FairShadow(Composite(coins.values()).start(), coins, M15_DIR,
+                            every_s=float(s.get("fv_every_s", 5)))
+        except Exception as exc:               # shadow only: never stop the bot over it
+            log.warning("fair-value shadow off: %s", exc)
     bot = Bot(cfg, http, client, uploader=github_uploader(http, token) if token else None,
-              kfeed=kfeed, spot=spot, wake=wake)
+              kfeed=kfeed, spot=spot, wake=wake, fv=fv)
     if once:
         bot.step()
         bot.upload(time.time(), force=True)
