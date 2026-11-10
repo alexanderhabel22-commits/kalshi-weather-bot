@@ -41,7 +41,9 @@ def log(*a):
 def get(url, params=None, tries=5):
     for i in range(tries):
         try:
-            r = S.get(url, params=params, timeout=30)
+            r = S.get(url, params=params, timeout=15)
+            if PROBE[0] < 6 and r.status_code != 200:
+                log("http", r.status_code, url, str(r.text)[:200])
             if r.status_code == 429:
                 time.sleep(2 + 3 * i)
                 continue

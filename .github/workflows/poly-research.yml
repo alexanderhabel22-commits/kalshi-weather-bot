@@ -25,7 +25,10 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python research_poly/fetch.py out 150 ${{ github.event.head_commit.message == 'probe' && 3 || 95 }}
+      - name: Replay
+        env:
+          BUDGET: ${{ github.event.head_commit.message == 'probe' && 3 || 95 }}
+        run: timeout $(( BUDGET * 60 + 180 )) python -u research_poly/fetch.py out 150 $BUDGET || echo "stopped by timeout"
       - name: Save to poly-research-data branch
         if: always() && hashFiles('out/log.txt') != ''
         run: |
