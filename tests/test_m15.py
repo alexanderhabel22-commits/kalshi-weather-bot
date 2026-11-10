@@ -194,7 +194,7 @@ def test_daily_stop(monkeypatch):
     World(monkeypatch)
     clk = Clock()
     cl = Client()
-    b = bot(cfg(mode="live", daily_loss_pct=0.10, total_loss_pct=0.125), clk, cl)
+    b = bot(cfg(mode="live", daily_loss_pct=0.10, total_loss_pct=0.125, rolling_stop=False), clk, cl)
     b.state["pnl"] = {"live_total": -5.5, "live_days": {b.day(clk.t): -5.5}}
     b.step()
     assert b.state["day_stop"] == b.day(clk.t)
@@ -562,7 +562,7 @@ def test_daily_stop_guard_uses_room_left_today(monkeypatch):
     World(monkeypatch, yb=0.73, ya=0.75)
     clk = Clock()
     cl = Client()
-    b = bot(cfg(mode="live", pool_pct=1.0, stop_guard=True, daily_loss_pct=0.10), clk, cl)
+    b = bot(cfg(mode="live", pool_pct=1.0, stop_guard=True, rolling_stop=False, daily_loss_pct=0.10), clk, cl)
     b.refresh_switch(clk.t)
     b.paper_bankroll = 10.0                    # stop = $1.00 of room on a flat day
     b.state["pnl"]["live_days"] = {b.day(clk.t): -0.40}   # down 40c: 60c left < 73c order
@@ -714,3 +714,20 @@ def test_oanda_with_no_instruments_never_blocks_trading(monkeypatch):
     assert f.stop and f.products == []
     sp = Spots([f])
     assert sp.healthy("XAG_USD") and not sp.blocked("XAG_USD")
+
+
+def test_rolling_24h_stop(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", daily_loss_pct=0.10, total_loss_pct=0.9, rolling_stop=True), clk, cl)
+    # a big loss 20h ago (yesterday by the ET clock) still counts
+    b.state["pnl"] = {"live_total": -5.5, "live_days": {}, "live_log": [[clk.t - 20 * 3600, -5.5]]}
+    b.step()
+    assert b.state["roll_stop"] and cl.placed == []
+    assert b.effective_mode(clk.t) == "paper"
+    # 5 hours later the loss is older than 24h -> resumes by itself
+    clk.t += 5 * 3600
+    b.check_stops(clk.t)
+    assert not b.state["roll_stop"]
+    assert b.state["pnl"]["live_log"] == []
