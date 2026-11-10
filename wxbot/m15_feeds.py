@@ -283,3 +283,105 @@ class SpotFeed(_Thread):
         now = now if now is not None else time.time()
         with self.lock:
             return now - self.tripped.get(prod, 0) < self.cooldown_s
+
+
+OANDA_API = "https://api-fxpractice.oanda.com"
+OANDA_STREAM = "https://stream-fxpractice.oanda.com"
+
+
+class OandaFeed(SpotFeed):
+    """Metals/oil prices from OANDA's free practice-account pricing stream (Nov 10, Alex):
+    Coinbase only covers crypto, so this gives silver/copper/... the same jump guard.
+    Only instruments the account can see are subscribed; the rest are logged and skipped."""
+
+    def __init__(self, token: str, products, *args, **kw):
+        super().__init__(products, *args, **kw)
+        self.thread.name = "oanda"
+        self.token = token
+        self.live_products: list[str] = []
+
+    def _session(self):
+        import requests
+        h = {"Authorization": f"Bearer {self.token}"}
+        accts = requests.get(f"{OANDA_API}/v3/accounts", headers=h, timeout=15)
+        accts.raise_for_status()
+        aid = accts.json()["accounts"][0]["id"]
+        ins = requests.get(f"{OANDA_API}/v3/accounts/{aid}/instruments", headers=h, timeout=15)
+        ins.raise_for_status()
+        have = {i.get("name") for i in ins.json().get("instruments", [])}
+        self.live_products = [p for p in self.products if p in have]
+        missing = [p for p in self.products if p not in have]
+        if missing:
+            log.warning("oanda: not available on this account: %s", ", ".join(missing))
+        if not self.live_products:
+            raise RuntimeError("oanda: none of the instruments are available")
+        with requests.get(f"{OANDA_STREAM}/v3/accounts/{aid}/pricing/stream", headers=h,
+                          params={"instruments": ",".join(self.live_products)},
+                          stream=True, timeout=(15, 30)) as r:
+            r.raise_for_status()
+            log.warning("oanda feed connected (%s)", ", ".join(self.live_products))
+            for line in r.iter_lines():
+                if self.stop:
+                    return
+                if line:
+                    self.handle(line)
+
+    def handle(self, raw, now: float | None = None) -> None:
+        try:
+            js = json.loads(raw)
+        except (TypeError, ValueError):
+            return
+        if js.get("type") == "HEARTBEAT":
+            self.last_msg = time.time()
+            return
+        if js.get("type") != "PRICE":
+            return
+        prod = js.get("instrument")
+        try:
+            p = (float(js["bids"][0]["price"]) + float(js["asks"][0]["price"])) / 2
+        except (KeyError, IndexError, TypeError, ValueError):
+            return
+        if prod not in self.products or p <= 0:
+            return
+        self.on_price(prod, p, now if now is not None else time.time())
+
+
+class Spots:
+    """One face for several price feeds. A product with no feed is treated as unguarded
+    (healthy, never blocked), so a missing OANDA token never stops BTC or the metals.
+    `links`: groups of products that trip together (silver jumps -> copper bids pulled too)."""
+
+    def __init__(self, feeds, links=()):
+        self.feeds = [f for f in feeds if f is not None]
+        self.links = [set(g) for g in links]
+
+    def _feed(self, prod):
+        for f in self.feeds:
+            if prod in f.products:
+                return f
+        return None
+
+    def healthy(self, prod: str | None = None) -> bool:
+        if prod is None:
+            return all(f.healthy() for f in self.feeds)
+        f = self._feed(prod)
+        return f is None or f.healthy()
+
+    def move_bps(self, prod: str, now: float | None = None):
+        f = self._feed(prod)
+        return f.move_bps(prod, now) if f else None
+
+    def blocked(self, prod: str, now: float | None = None) -> bool:
+        group = {prod}
+        for g in self.links:
+            if prod in g:
+                group |= g
+        for p in group:
+            f = self._feed(p)
+            if f is not None and f.blocked(p, now):
+                return True
+        return False
+
+    @property
+    def trips(self) -> int:
+        return sum(f.trips for f in self.feeds)

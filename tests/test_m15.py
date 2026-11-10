@@ -223,7 +223,7 @@ def test_guard_pulls_orders(monkeypatch):
         def blocked(self, prod, now=None):
             return self.blocked_now
 
-        def healthy(self):
+        def healthy(self, prod=None):
             return True
 
         def move_bps(self, prod, now=None):
@@ -307,7 +307,7 @@ def test_fast_pull_cancels_live_bid_on_jump(monkeypatch):
         def blocked(self, prod, now=None):
             return self.blocked_now
 
-        def healthy(self):
+        def healthy(self, prod=None):
             return True
 
         def move_bps(self, prod, now=None):
@@ -678,3 +678,22 @@ def test_group_cap_stops_later_metals_in_the_same_window(monkeypatch):
     off = bot(cfg(mode="live"), clk, Client())
     off.state["markets"] = b.state["markets"]
     assert not off.group_full(off.state["markets"]["c"])   # off by default
+
+
+def test_oanda_prices_feed_the_jump_guard_and_links_trip_together():
+    from wxbot.m15_feeds import OandaFeed, Spots
+    f = OandaFeed("tok", ["XAG_USD", "XCU_USD"], None, 10, 4.0, 4.0, 20)
+    t = 1000.0
+    f.handle(json.dumps({"type": "HEARTBEAT"}))
+    for i in range(80):                                   # quiet market builds the baseline
+        px = 30.0 + (0.0003 if i % 2 else 0)
+        f.handle(json.dumps({"type": "PRICE", "instrument": "XAG_USD",
+                             "bids": [{"price": str(px)}], "asks": [{"price": str(px + 0.01)}]}),
+                 now=t + i)
+    assert not f.blocked("XAG_USD", t + 80)
+    f.handle(json.dumps({"type": "PRICE", "instrument": "XAG_USD", "bids": [{"price": "30.3"}],
+                         "asks": [{"price": "30.31"}]}), now=t + 81)   # +1% jump
+    assert f.blocked("XAG_USD", t + 81)
+    sp = Spots([f], [["XAG_USD", "XCU_USD"]])
+    assert sp.blocked("XCU_USD", t + 81)                   # copper pulled with silver
+    assert not sp.blocked("BTC-USD", t + 81) and sp.healthy("BTC-USD")   # no feed: unguarded

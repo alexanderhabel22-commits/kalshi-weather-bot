@@ -140,7 +140,13 @@ DEFAULTS = {
     "guard_cooldown_s": 20,
     "spot": {"KXBTC15M": "BTC-USD", "KXETH15M": "ETH-USD", "KXSOL15M": "SOL-USD",
              "KXXRP15M": "XRP-USD", "KXDOGE15M": "DOGE-USD", "KXNEAR15M": "NEAR-USD",
-             "KXZEC15M": "ZEC-USD"},
+             "KXZEC15M": "ZEC-USD",
+             # metals/oil via OANDA's practice stream (only when OANDA_TOKEN is set; Nov 10)
+             "KXSILVER15M": "XAG_USD", "KXGOLD15M": "XAU_USD", "KXCOPPER15M": "XCU_USD",
+             "KXPLATINUM15M": "XPT_USD", "KXPALLADIUM15M": "XPD_USD", "KXWTI15M": "WTICO_USD",
+             "KXBRENT15M": "BCO_USD", "KXNATGAS15M": "NATGAS_USD"},
+    # products that trip together: a jump in one pulls the bids on all (metals move as one)
+    "guard_links": [["XAG_USD", "XAU_USD", "XCU_USD", "XPT_USD", "XPD_USD"]],
 }
 
 
@@ -776,7 +782,7 @@ class Bot:
                 m["pulls"] += 1
             return
         if (prod and m["mode"] == "live" and s["require_guard_live"]
-                and (self.spot is None or not self.spot.healthy())):
+                and (self.spot is None or not self.spot.healthy(prod))):
             m["why"] = "spot feed down"
             if o:
                 self._end_order(m)
@@ -1143,13 +1149,19 @@ def main(cfg: Config, once: bool = False) -> int:
     kfeed = spot = None
     if not once:
         try:
-            from .m15_feeds import KalshiFeed, SpotFeed
+            from .m15_feeds import KalshiFeed, OandaFeed, SpotFeed, Spots
             if client is not None:
                 kfeed = KalshiFeed(client, wake).start()
-            prods = [s["spot"][x] for x in s["series"] if x in s["spot"]]
-            if s["guard"] and prods:
-                spot = SpotFeed(prods, wake, s["guard_window_s"], s["guard_z"],
-                                s["guard_min_bps"], s["guard_cooldown_s"]).start()
+            prods = sorted({s["spot"][x] for x in s["series"] if x in s["spot"]})
+            coin = [p for p in prods if "_" not in p]          # Coinbase: BTC-USD ...
+            oanda = [p for p in prods if "_" in p]             # OANDA: XAG_USD ...
+            otoken = os.environ.get("OANDA_TOKEN", "").strip()
+            if s["guard"] and (coin or (oanda and otoken)):
+                args = (wake, s["guard_window_s"], s["guard_z"], s["guard_min_bps"],
+                        s["guard_cooldown_s"])
+                feeds = [SpotFeed(coin, *args).start() if coin else None,
+                         OandaFeed(otoken, oanda, *args).start() if oanda and otoken else None]
+                spot = Spots(feeds, s.get("guard_links") or [])
         except ImportError as exc:
             log.warning("websockets not installed, polling only: %s", exc)
     bot = Bot(cfg, http, client, uploader=github_uploader(http, token) if token else None,
