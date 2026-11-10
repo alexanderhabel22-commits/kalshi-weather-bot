@@ -219,8 +219,9 @@ paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for n
 mode = "live"                    # off | paper | live. LIVE from the start (Alex, Nov 8: "this is the
                                  # test", no paper run). Without a Kalshi key on the server it stays
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
-live_series = ["KXBTC15M", "KXSILVER15M", "KXCOPPER15M", "KXPALLADIUM15M",
-               "KXPLATINUM15M", "KXWTI15M"]   # real money only on these
+live_series = ["KXBTC15M", "KXSILVER15M"]   # real money only on these. Nov 10 12:15 PM ET (Alex, trim
+                                 # decision): copper, palladium, platinum, WTI back to PAPER, all red
+                                 # all-time (-$18.59 on 469 ct) vs BTC+silver +$14.23. They keep logging.
                                  # platinum + WTI live Nov 9 ~1:30 PM ET (Alex OK), 1 contract, last 5 min,
                                  # double-ups on like the others (Alex, Nov 9: judge them the same way).
                                  # palladium live Nov 9 (Alex OK). Timing test: last 5 min 10:30 AM-1 PM ET
