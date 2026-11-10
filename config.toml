@@ -242,7 +242,8 @@ min_fav = 0.71                   # join the favourite's best bid while it's 71-9
 max_fav = 0.95
 pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
                                  # Actions strategies' 75% cap leaves free; Alex, Nov 8)
-daily_loss_pct = 0.25            # Alex (Nov 10 ~1 AM ET): data > a few dollars; -25% of bankroll today -> stop until tomorrow
+daily_loss_pct = 0.25            # Alex (Nov 10 ~1 AM ET): data > a few dollars; -25% of bankroll ...
+rolling_stop = true              # ... over the LAST 24 HOURS (Alex, Nov 10 1:15 AM ET), not the ET day; resumes as losses age out
                                  # Guard (Nov 9, Alex): no new order if everything open losing at once
                                  # would reach this stop (room = 10% of bankroll + today's live P&L).
 total_loss_pct = 0.50            # Alex (Nov 10 1 AM ET): test money, halt at -50% since start (was -25%)

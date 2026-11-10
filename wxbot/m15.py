@@ -109,6 +109,7 @@ DEFAULTS = {
     "requote_gap_s": 5,
     "pool_pct": 0.25,
     "daily_loss_pct": 0.10,
+    "rolling_stop": False,          # True: the daily stop counts the last 24 hours, not the ET day
     "window_pct": 0.07,              # max live $ at risk across markets closing at the same time
     "shard": 2,                     # Kalshi exchange shard of crypto + commodities markets
     "fund_s": 300,                  # top the shard up to the pool this often (live only)
@@ -356,6 +357,8 @@ class Bot:
                 return "paper"
             if self.state.get("day_stop") == self.day(now):
                 return "paper"
+            if self.state.get("roll_stop"):
+                return "paper"
         return mode
 
     # ------------------------------------------------------------ money
@@ -423,6 +426,17 @@ class Bot:
                 tot += o["q"] * (o["n"] - o.get("filled", 0))
         return tot
 
+    def stop_pnl(self, now: float) -> float:
+        """Live P&L the daily stop counts: the last 24 hours (rolling_stop) or the ET day."""
+        pnl = self.state["pnl"]
+        if self.s.get("rolling_stop"):
+            if "live_log" not in pnl:      # first run: seed with today's ET P&L
+                pnl["live_log"] = [[now, pnl.get("live_days", {}).get(self.day(now), 0.0)]]
+            log24 = [e for e in pnl.get("live_log", []) if e[0] > now - 86400]
+            pnl["live_log"] = log24
+            return round(sum(e[1] for e in log24), 4)
+        return pnl.get("live_days", {}).get(self.day(now), 0.0)
+
     def check_stops(self, now: float) -> None:
         s = self.s
         b = self.bankroll(now)
@@ -430,7 +444,7 @@ class Bot:
             return
         today = self.day(now)
         pnl = self.state["pnl"]
-        day_pnl = pnl.get("live_days", {}).get(today, 0.0)
+        day_pnl = self.stop_pnl(now)
         total = pnl.get("live_total", 0.0) - pnl.get("halt_base", 0.0)
         if total <= -s["total_loss_pct"] * b and not self.state.get("halted"):
             self.state["halted"] = {"at": int(now), "pnl": round(total, 2)}
@@ -438,6 +452,17 @@ class Bot:
             self.alert("15-min bot HALTED (total loss stop)",
                        f"Live P&L ${total:+.2f} hit -{s['total_loss_pct']:.0%} of ${b:.2f}. "
                        "No real orders until Claude/Alex clears it.", 4)
+        elif s.get("rolling_stop"):
+            hit = day_pnl <= -s["daily_loss_pct"] * b
+            if hit and not self.state.get("roll_stop"):
+                self.state["roll_stop"] = {"at": int(now), "pnl": round(day_pnl, 2)}
+                self.cancel_all("24h loss stop")
+                self.alert("15-min bot paused (24h loss stop)",
+                           f"Live P&L over the last 24h ${day_pnl:+.2f} hit -{s['daily_loss_pct']:.0%} of ${b:.2f}. "
+                           "Resumes by itself once older losses roll out of the 24h window.", 4)
+            elif not hit and self.state.get("roll_stop"):
+                self.state["roll_stop"] = None
+                self.alert("15-min bot resumed", f"Last-24h live P&L back to ${day_pnl:+.2f}.", 3)
         elif day_pnl <= -s["daily_loss_pct"] * b and self.state.get("day_stop") != today:
             self.state["day_stop"] = today
             self.cancel_all("daily loss stop")
@@ -815,7 +840,7 @@ class Bot:
             # copper all flipped). Never let everything open losing at once reach the daily stop:
             # open live $ + this order must fit in what's left before the stop. Up on the day =
             # more room; already down = less (Alex, Nov 9).
-            day_pnl = self.state["pnl"].get("live_days", {}).get(self.day(now), 0.0)
+            day_pnl = self.stop_pnl(now)
             room_to_stop = s["daily_loss_pct"] * b + day_pnl
             if s.get("stop_guard", True) and self.exposure("live") + q * n_new > room_to_stop - 0.01:
                 m["why"] = f"daily-stop guard (room ${room_to_stop:.2f})"
@@ -880,6 +905,8 @@ class Bot:
                 days = p.setdefault(f"{m['mode']}_days", {})
                 d = self.day(m["close"])
                 days[d] = round(days.get(d, 0.0) + pnl, 4)
+                if m["mode"] == "live":
+                    p.setdefault("live_log", []).append([m["close"], pnl])
                 if m["mode"] == "live":
                     self.series_check(m, pnl)
         # forget graded markets after a day
@@ -993,7 +1020,9 @@ class Bot:
         self.last["upload"] = now
         status = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
                   "mode": self.effective_mode(now), "switch": self.switch, "control": self.control,
-                  "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"), "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
+                  "halted": self.state.get("halted"), "day_stop": self.state.get("day_stop"),
+                  "roll_stop": self.state.get("roll_stop"),
+                  "pnl_24h": self.stop_pnl(now) if self.s.get("rolling_stop") else None, "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
                   "last_reject": self.state.get("last_reject"),
                   "shards": self.state.get("shards"), "fund_error": self.state.get("fund_error"),
                   "spot_ok": bool(self.spot is not None and self.spot.healthy()),
