@@ -139,6 +139,12 @@ class KalshiClient:
                 return out
         raise HttpError(0, BASE + "/portfolio/orders", "resting order listing did not finish")
 
+    def queue_positions(self, tickers: list) -> dict:
+        """Contracts ahead of each of our resting orders on these markets (read-only).
+        Kalshi: GET /portfolio/orders/queue_positions?market_tickers=A,B."""
+        return self._get("/portfolio/orders/queue_positions",
+                         {"market_tickers": ",".join(tickers)})
+
     def cancel(self, order_id: str, ticker: str = "") -> None:
         path = f"/portfolio/events/orders/{order_id}"
         if ticker:
