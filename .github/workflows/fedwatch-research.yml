@@ -1,0 +1,46 @@
+name: fedwatch-research
+
+# Research only (fed funds futures vs Kalshi Fed markets). Read-only public
+# data; never trades, never alerts. Runs on push to this research branch only.
+# Output goes to the fedwatch-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-5u9j7c"]
+    paths: ["research_fedwatch/**", ".github/workflows/fedwatch-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fedwatch-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        run: python research_fedwatch/fetch.py out
+      - name: Save to fedwatch-research-data branch
+        if: always()
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp=$(date -u +%Y%m%dT%H%MZ)
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          if git fetch origin fedwatch-research-data 2>/dev/null; then
+            git checkout -q -B data origin/fedwatch-research-data
+          else
+            git checkout -q --orphan data && git rm -rq --cached . || true
+          fi
+          git clean -fdxq
+          mkdir -p runs && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+          git add runs
+          git commit -qm "fedwatch research output $stamp" || exit 0
+          git push origin HEAD:fedwatch-research-data
