@@ -130,7 +130,7 @@ def up_view(t, up_name):
     return u, push, float(t["size"])
 
 
-def simulate(trades, up_name, end, lookback):
+def simulate(trades, up_name, end, lookback, dog=False):
     """Rejoin rule: after each trade, bid 1c under the favourite's last price if it is in
     band; a later taker selling that side below the bid fills it (back of queue)."""
     res = {"strict": None, "touch": None, "taker": None}
@@ -152,9 +152,12 @@ def simulate(trades, up_name, end, lookback):
             if res["strict"] is not None:
                 break
         fav, fp = ("up", u) if u >= 0.5 else ("down", 1 - u)
-        if MIN_FAV <= fp <= MAX_FAV:
+        if dog:  # mirror test: bid the cheap side (5-29c) instead
+            fav, fp = ("down", 1 - u) if u >= 0.5 else ("up", u)
+        lo, hi = (0.05, 0.29) if dog else (MIN_FAV, MAX_FAV)
+        if lo <= fp <= hi:
             b = round(int(fp * 100 + 1e-6) / 100 - 0.01, 2)
-            bid = (fav, max(b, MIN_FAV))
+            bid = (fav, max(b, lo))
             if res["taker"] is None:
                 res["taker"] = (fav, round(min(0.99, int(fp * 100 + 1e-6) / 100 + 0.01), 2), ts)
         else:
@@ -181,6 +184,8 @@ def main():
     for lb in LOOKBACKS:
         for k in ("strict", "touch", "taker"):
             hdr += [f"{k}{lb}_side", f"{k}{lb}_px", f"{k}{lb}_ts"]
+    for k in ("dogstrict", "dogtouch", "dogtaker"):
+        hdr += [f"{k}600_side", f"{k}600_px", f"{k}600_ts"]
     w.writerow(hdr)
     done = 0
     for i in range(0, len(starts), 10):
@@ -220,6 +225,9 @@ def main():
                 r = simulate(tr, up_name, end, lb)
                 for k in ("strict", "touch", "taker"):
                     row += list(r[k]) if r[k] else ["", "", ""]
+            r = simulate(tr, up_name, end, 600, dog=True)
+            for k in ("strict", "touch", "taker"):
+                row += list(r[k]) if r[k] else ["", "", ""]
             w.writerow(row)
             done += 1
         f.flush()

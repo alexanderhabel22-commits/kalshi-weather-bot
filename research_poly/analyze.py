@@ -23,18 +23,19 @@ def main(paths):
     for p in paths:
         rows += list(csv.DictReader(open(p)))
     print(f"{len(rows)} windows")
-    for lb in ("600", "300"):
-        for kind in ("strict", "touch", "taker"):
+    for lb, kinds in (("600", ("strict", "touch", "taker", "dogstrict", "dogtouch", "dogtaker")),
+                      ("300", ("strict", "touch", "taker"))):
+        for kind in kinds:
             by = defaultdict(list)
             band = defaultdict(list)
             month = defaultdict(list)
             for r in rows:
-                side = r[f"{kind}{lb}_side"]
+                side = r.get(f"{kind}{lb}_side")
                 if not side:
                     continue
                 px = float(r[f"{kind}{lb}_px"])
                 pnl = (1.0 if side == r["winner"] else 0.0) - px
-                if kind == "taker":
+                if kind.endswith("taker"):
                     pnl -= 0.07 * px * (1 - px)
                 by[r["coin"]].append(pnl)
                 by["ALL"].append(pnl)
@@ -46,7 +47,7 @@ def main(paths):
             for k in sorted(by):
                 n_win = sum(1 for r in rows if r["coin"] == k) if k != "ALL" else len(rows)
                 print(f"  {k:5s} {stats(by[k])}  fill rate {len(by[k]) / max(1, n_win):.0%}")
-            if kind == "strict":
+            if kind in ("strict", "dogstrict"):
                 for k in sorted(band):
                     print(f"    band {k}: {stats(band[k])}")
                 for k in sorted(month):
