@@ -121,6 +121,7 @@ def test_paper_fill_and_grade(monkeypatch):
     rows = list(csv.DictReader(open(path)))
     assert len(rows) == 1 and rows[0]["won"] == "1" and rows[0]["mode"] == "paper"
     assert float(rows[0]["pnl"]) == pytest.approx(0.20 - 0.01)    # maker fee rounds up to 1c
+    assert rows[0]["fills"] == "1@0.80"                           # each fill's own price
     assert b.state["pnl"]["paper_total"] == pytest.approx(0.19)
 
 
@@ -766,3 +767,24 @@ def test_socket_double_count_does_not_drop_or_overbook(monkeypatch):
     b.sync_live(force=True)
     assert m["order"] is None and m["filled"] == 1
     assert abs(m["cost"] - 0.8) < 1e-9
+
+
+def test_record_upgrades_an_old_header(monkeypatch):
+    """A day file written before the "fills" column keeps its rows and gains the column."""
+    World(monkeypatch)
+    clk = Clock()
+    b = bot(cfg(mode="paper"), clk)
+    path = m15.M15_DIR / f"markets-{b.day(CLOSE)}.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    old = [c for c in m15.COLS if c != "fills"]
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=old)
+        w.writeheader()
+        w.writerow({c: ("OLD-1" if c == "ticker" else "") for c in old})
+    m = {"ticker": TK, "series": "KXBTC15M", "mode": "paper", "close": CLOSE, "quotes": 1,
+         "filled": 2, "cost": 1.62, "fee": 0.02, "fills": ["1@0.77", "1@0.85"]}
+    b.record(m)
+    rows = list(csv.DictReader(open(path)))
+    assert list(rows[0].keys()) == m15.COLS
+    assert rows[0]["ticker"] == "OLD-1" and rows[0]["fills"] == ""
+    assert rows[1]["ticker"] == TK and rows[1]["fills"] == "1@0.77;1@0.85"

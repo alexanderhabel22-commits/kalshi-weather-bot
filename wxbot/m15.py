@@ -65,7 +65,9 @@ CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/m15_control.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
 COLS = ["ticker", "series", "mode", "close", "fav_side", "first_q", "last_q", "quotes",
         "contracts", "filled", "cost", "fee", "fill_at", "fill_ttc_s", "model_filled",
-        "touched", "pulls", "spot_bps", "result", "won", "pnl"]
+        "touched", "pulls", "spot_bps", "result", "won", "pnl", "fills"]
+# "fills" (Nov 10): each fill as contracts@price, ';'-separated (e.g. "1@0.77;1@0.85"), so a
+# double's 1st and 2nd contract can be judged apart (the cost column only gives the blend).
 
 DEFAULTS = {
     "mode": "paper",
@@ -642,6 +644,7 @@ class Bot:
         o["booked"] = o.get("booked", 0) + new
         m["filled"] += new
         m["cost"] = round(m["cost"] + new * o["q"], 4)
+        m.setdefault("fills", []).append(f"{qty_str(new)}@{o['q']:.2f}")
         m["fee"] = round(m["fee"] + maker_fee(o["q"], new, self.s["maker_fee_rate"]), 4)
         if not m.get("fill_at"):
             m["fill_at"] = int(ts or self.clock())
@@ -1017,7 +1020,19 @@ class Bot:
             "touched": 1 if m.get("touched") else 0, "pulls": m.get("pulls", 0),
             "spot_bps": m.get("spot_bps", ""),
             "result": m.get("result", ""), "won": "" if m.get("won") is None else int(m["won"]),
-            "pnl": round(m.get("pnl", 0.0), 2)}
+            "pnl": round(m.get("pnl", 0.0), 2), "fills": ";".join(m.get("fills") or [])}
+        if not new:
+            with open(path, newline="", encoding="utf-8") as f:
+                rd = csv.DictReader(f)
+                if rd.fieldnames != COLS:          # older header (e.g. before "fills"): upgrade in place
+                    old = list(rd)
+                else:
+                    old = None
+            if old is not None:
+                with open(path, "w", newline="", encoding="utf-8") as f:
+                    w = csv.DictWriter(f, fieldnames=COLS, extrasaction="ignore")
+                    w.writeheader()
+                    w.writerows([{k: r.get(k) or "" for k in COLS} for r in old])
         with open(path, "a", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=COLS)
             if new:
