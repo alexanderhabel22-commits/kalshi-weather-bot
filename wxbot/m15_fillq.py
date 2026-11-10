@@ -32,7 +32,7 @@ LATE_S = 20            # a mark taken more than this long after its horizon is l
 KEEP_S = 2 * 86400     # pending rows older than this are dropped (market never graded)
 COLS = ["ticker", "series", "mode", "side", "fill_ts", "fill_at", "ttc_s", "rest_s", "nth",
         "contracts", "price", "bid", "ask", "spread", "queue_first", "queue_last",
-        "queue_last_age_s", "spot_bps", "move_10s", "move_60s", "move_300s", "settled_h",
+        "queue_last_age_s", "spot_bps", "fv_yes", "index_px", "move_10s", "move_60s", "move_300s", "settled_h",
         "result", "won", "pnl_ct"]
 
 
@@ -120,13 +120,22 @@ class FillQuality:
             qa = o.get("queue_at")
             mv = m.get("spot_bps", "") if not m.get("fillq_n") else ""
             m["fillq_n"] = int(m.get("fillq_n", 0)) + 1
+            fv = None
+            shadow = getattr(self, "fv", None)       # fair-value shadow (PR #145), if present
+            if shadow is not None:
+                try:
+                    fv = shadow.fair_value(m, now)
+                except Exception:
+                    fv = None
             self.state.setdefault("fillq", []).append({
                 "ticker": m["ticker"], "series": m["series"], "mode": m["mode"], "side": side,
                 "t": round(t, 1), "close": m["close"],
                 "rest_s": round(t - o["t0"], 1) if o.get("t0") else "",
                 "nth": m["fillq_n"], "n": new, "q": o["q"], "bid": b, "ask": a,
                 "queue_first": o.get("queue_first", ""), "queue_last": o.get("queue_last", ""),
-                "queue_age": round(t - qa, 1) if qa else "", "spot_bps": mv, "marks": {}})
+                "queue_age": round(t - qa, 1) if qa else "", "spot_bps": mv,
+                "fv_yes": (fv or {}).get("fv_yes", ""), "index_px": (fv or {}).get("index", ""),
+                "marks": {}})
         except Exception as exc:
             log.warning("fill log %s: %s", m.get("ticker"), exc)
 
@@ -186,6 +195,7 @@ class FillQuality:
                "spread": "" if (a is None or b is None) else round((a - b) * 100),
                "queue_first": p.get("queue_first", ""), "queue_last": p.get("queue_last", ""),
                "queue_last_age_s": p.get("queue_age", ""), "spot_bps": p.get("spot_bps", ""),
+               "fv_yes": p.get("fv_yes", ""), "index_px": p.get("index_px", ""),
                "move_10s": p["marks"].get("10", ""), "move_60s": p["marks"].get("60", ""),
                "move_300s": p["marks"].get("300", ""), "settled_h": ";".join(settled),
                "result": res or "", "won": "" if won is None else int(won),

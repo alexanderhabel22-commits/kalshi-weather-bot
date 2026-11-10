@@ -873,3 +873,25 @@ def test_fill_quality_skips_paper(monkeypatch):
     w.tape = [(clk.t - 5, 0.78, 10, "no")]
     b.step()
     assert b.state["markets"][TK]["filled"] == 1 and b.state["fillq"] == []
+
+
+def test_fill_quality_logs_fair_value_when_shadow_present(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live"), clk, cl)
+
+    class FV:
+        def fair_value(self, m, now):
+            return {"fv_yes": 0.83, "index": 101234.5, "venues": 3, "sigma": 0.001}
+    b.fv = FV()
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 6
+    b.step()
+    fill_t = clk.t
+    w.result = "yes"
+    clk.t = CLOSE + 30
+    b.step()
+    r = fill_rows(b, fill_t)[0]
+    assert r["fv_yes"] == "0.83" and r["index_px"] == "101234.5"
