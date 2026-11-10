@@ -3154,6 +3154,60 @@
    "status": "live",
    "title": "EUR/USD after economic events",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Economics",
+   "checked": "2026-11-10T01:00:30+00:00",
+   "example": "KXCORRPAPERPPI-31MAR27-T60",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T19:00:29+00:00",
+   "frequency": "quarterly",
+   "markets_seen": "2026-11-10T01:00:30+00:00",
+   "median_spread": 0.98,
+   "n_open": 1,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (98c), so makers haven't arrived yet.",
+   "series": "KXCORRPAPERPPI",
+   "status": "live",
+   "title": "Corrugated paper PPI average",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Financials",
+   "checked": "2026-11-10T01:00:30+00:00",
+   "example": "KXAUDUSDEVENT-10DEC260930-T07120",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T22:00:26+00:00",
+   "frequency": "custom",
+   "markets_seen": "2026-11-10T01:00:30+00:00",
+   "median_spread": 0.99,
+   "n_open": 100,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (99c), so makers haven't arrived yet.",
+   "series": "KXAUDUSDEVENT",
+   "status": "live",
+   "title": "AUD/USD after economic events",
+   "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Financials",
+   "checked": "2026-11-10T01:00:30+00:00",
+   "example": "KXUSDCADEVENT-30NOV260930-T14375",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-09T22:00:26+00:00",
+   "frequency": "custom",
+   "markets_seen": "2026-11-10T01:00:30+00:00",
+   "median_spread": 0.99,
+   "n_open": 100,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (99c), so makers haven't arrived yet.",
+   "series": "KXUSDCADEVENT",
+   "status": "live",
+   "title": "USD/CAD after economic events",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -12679,6 +12733,7 @@
   "KXNFLCAREERRSHTDS",
   "KXNFLCAREERRSHYDS",
   "KXNFLCELEBRITYGAME",
+  "KXNFLCHAMPDIVISION",
   "KXNFLCOACH",
   "KXNFLCOACHOUT",
   "KXNFLCOACHOUTFIRST",
@@ -19181,7 +19236,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-10T00:30:28+00:00",
+ "last_check": "2026-11-10T01:00:30+00:00",
  "pending": {
   "KXAAAGASCDCA": {
    "category": "Economics",
@@ -19255,7 +19310,7 @@
   },
   "KXAFCCL2SPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19265,7 +19320,7 @@
   },
   "KXAFCCL2TOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19323,16 +19378,6 @@
    "series": "KXAUDITORRACE",
    "title": "Auditor race winner?"
   },
-  "KXAUDUSDEVENT": {
-   "category": "Financials",
-   "checked": "2026-11-09T22:00:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T22:00:26+00:00",
-   "frequency": "custom",
-   "new_category": false,
-   "series": "KXAUDUSDEVENT",
-   "title": "AUD/USD after economic events"
-  },
   "KXAUSHOME": {
    "category": "Economics",
    "checked": "2026-11-10T00:30:28+00:00",
@@ -19375,7 +19420,7 @@
   },
   "KXBELCHALLGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T22:30:29+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19385,7 +19430,7 @@
   },
   "KXBELCHALLSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19395,7 +19440,7 @@
   },
   "KXBELCHALLTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19405,7 +19450,7 @@
   },
   "KXBIGGESTQUAKEMONTH": {
    "category": "Climate and Weather",
-   "checked": "2026-11-10T00:30:28+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-10T00:00:30+00:00",
    "frequency": "one_off",
@@ -19415,7 +19460,7 @@
   },
   "KXBOTOLAADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T22:30:29+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19425,7 +19470,7 @@
   },
   "KXBOTOLABTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T22:30:29+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19435,7 +19480,7 @@
   },
   "KXBOTOLAGAME": {
    "category": "Sports",
-   "checked": "2026-11-09T22:30:29+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -19445,7 +19490,7 @@
   },
   "KXBOTOLASPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19455,7 +19500,7 @@
   },
   "KXBOTOLATOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19512,16 +19557,6 @@
    "new_category": false,
    "series": "KXCOLORADOSPRINGSMAYOR",
    "title": "Who will win the Colorado Springs, Colorado mayoral election?"
-  },
-  "KXCORRPAPERPPI": {
-   "category": "Economics",
-   "checked": "2026-11-09T22:00:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T19:00:29+00:00",
-   "frequency": "quarterly",
-   "new_category": false,
-   "series": "KXCORRPAPERPPI",
-   "title": "Corrugated paper PPI average"
   },
   "KXDALHOME": {
    "category": "Economics",
@@ -19835,7 +19870,7 @@
   },
   "KXJ3LEAGUESPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19845,7 +19880,7 @@
   },
   "KXJ3LEAGUETOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -19885,7 +19920,7 @@
   },
   "KXJUDGEFIRST": {
    "category": "Politics",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T01:00:26+00:00",
    "frequency": "monthly",
@@ -20003,6 +20038,16 @@
    "series": "KXNBATOTALPRECISE",
    "title": "NBA Total Points Precise"
   },
+  "KXNFLCHAMPDIVISION": {
+   "category": "Sports",
+   "checked": "2026-11-10T01:00:30+00:00",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-10T01:00:30+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXNFLCHAMPDIVISION",
+   "title": "Super Bowl Champion Division"
+  },
   "KXNOR1DIVADVANCE": {
    "category": "Sports",
    "checked": "2026-11-10T00:30:28+00:00",
@@ -20035,7 +20080,7 @@
   },
   "KXNOR1DIVSPREAD": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -20045,7 +20090,7 @@
   },
   "KXNOR1DIVTOTAL": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:30:24+00:00",
    "frequency": "custom",
@@ -20275,7 +20320,7 @@
   },
   "KXSUPERETTANBTTS": {
    "category": "Sports",
-   "checked": "2026-11-09T22:30:29+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -20365,7 +20410,7 @@
   },
   "KXTHUNELEADER": {
    "category": "Elections",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T18:00:32+00:00",
    "frequency": "one_off",
@@ -20435,7 +20480,7 @@
   },
   "KXUKRPLADVANCE": {
    "category": "Sports",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-05T19:00:30+00:00",
    "frequency": "custom",
@@ -20445,23 +20490,13 @@
   },
   "KXULCCA": {
    "category": "Financials",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-06T17:30:28+00:00",
    "frequency": "one_off",
    "new_category": false,
    "series": "KXULCCA",
    "title": "Frontier Group Holdings Annual KPI"
-  },
-  "KXUSDCADEVENT": {
-   "category": "Financials",
-   "checked": "2026-11-09T22:00:26+00:00",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-09T22:00:26+00:00",
-   "frequency": "custom",
-   "new_category": false,
-   "series": "KXUSDCADEVENT",
-   "title": "USD/CAD after economic events"
   },
   "KXVENICEHOME": {
    "category": "Economics",
@@ -20475,7 +20510,7 @@
   },
   "KXVETO120": {
    "category": "Politics",
-   "checked": "2026-11-09T22:00:26+00:00",
+   "checked": "2026-11-10T01:00:30+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-07T00:30:23+00:00",
    "frequency": "annual",
