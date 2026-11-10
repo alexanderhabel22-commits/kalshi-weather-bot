@@ -1,5 +1,5 @@
 {
- "at": "2026-11-10T19:32:00+00:00",
+ "at": "2026-11-10T19:47:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,25 +7,25 @@
  "fund_error": null,
  "halted": null,
  "last_reject": {
-  "at": 1794338424,
+  "at": 1794339608,
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXBTC15M-26NOV101430-30"
+  "ticker": "KXSILVER15M-26NOV101445-45"
  },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV101445-45": {
+  "KXBTC15M-26NOV101500-00": {
    "bid_ask": [
-    0.64,
-    0.65
+    0.71,
+    0.72
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   },
-  "KXSILVER15M-26NOV101445-45": {
+  "KXSILVER15M-26NOV101500-00": {
    "bid_ask": [
-    0.6,
-    0.61
+    0.69,
+    0.7
    ],
    "mode": "live",
    "order": false,
@@ -39,7 +39,7 @@
    "2026-11-07": 0.17,
    "2026-11-08": 2.35,
    "2026-11-09": 3.4728,
-   "2026-11-10": -8.0152
+   "2026-11-10": -10.4952
   },
   "live_log": [
    [
@@ -833,23 +833,31 @@
    [
     1794339000,
     0.25
+   ],
+   [
+    1794339900,
+    -0.72
+   ],
+   [
+    1794339900,
+    -1.76
    ]
   ],
-  "live_total": -2.0224,
+  "live_total": -4.5024,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
    "2026-11-09": -33.24,
-   "2026-11-10": -29.08
+   "2026-11-10": -27.62
   },
-  "paper_total": -118.84
+  "paper_total": -117.38
  },
- "pnl_24h": -8.0152,
+ "pnl_24h": -10.4952,
  "roll_stop": null,
  "series": {
   "KXBTC15M": {
-   "fills": 394.0,
-   "pnl": 6.81,
+   "fills": 395.0,
+   "pnl": 6.09,
    "recent": [
     [
      2,
@@ -1470,6 +1478,10 @@
     [
      2,
      0.39
+    ],
+    [
+     1,
+     -0.72
     ]
    ]
   },
@@ -2388,8 +2400,8 @@
    ]
   },
   "KXSILVER15M": {
-   "fills": 220.09,
-   "pnl": 11.819,
+   "fills": 222.09,
+   "pnl": 10.059,
    "recent": [
     [
      2,
@@ -2858,6 +2870,10 @@
     [
      2,
      0.25
+    ],
+    [
+     2,
+     -1.76
     ]
    ]
   },
@@ -3099,7 +3115,7 @@
  "shards": {
   "0": 17.3235,
   "1": 0.0,
-  "2": 21.5513,
+  "2": 23.1013,
   "3": 0.0
  },
  "spot_ok": true,
