@@ -13,9 +13,6 @@ on:
     - cron: "37 13 * * 1"   # Mondays ~8:37 AM ET
     - cron: "37 13 2 1 *"   # Jan 2: the finished year, for tax time
   workflow_dispatch:
-  push:
-    branches: [claude/project-thread-g94bxf]   # one test run only; removed before merge
-    paths: [.github/workflows/tax-ledger.yml]
 
 permissions:
   contents: write
