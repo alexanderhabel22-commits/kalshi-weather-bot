@@ -44,9 +44,12 @@ def get(url, params=None, tries=5):
             r = S.get(url, params=params, timeout=15)
             if PROBE[0] < 6 and r.status_code != 200:
                 log("http", r.status_code, url, str(r.text)[:200])
-            if r.status_code == 429:
-                time.sleep(2 + 3 * i)
+            if r.status_code in (429, 503):
+                time.sleep(min(30, float(r.headers.get("Retry-After") or 2 + 3 * i)))
                 continue
+            if 400 <= r.status_code < 500:
+                log("ERR", r.status_code, url, params, str(r.text)[:200])
+                return None
             r.raise_for_status()
             return r.json()
         except Exception as e:  # noqa: BLE001 - research script, retry anything
@@ -91,22 +94,27 @@ def discover():
 
 
 def tape(cond, since):
-    """Taker trades for a market, oldest first, from `since` (unix) on."""
-    rows, off = [], 0
-    while off <= 3000:
-        js = get(DATA + "/trades", params={"market": cond, "limit": 500, "offset": off,
-                                            "takerOnly": "true"})
+    """Taker trades for a market (Data API v2), oldest first, from `since` (unix) on."""
+    rows, cursor = [], None
+    for _ in range(10):
+        params = {"condition": cond, "limit": 1000, "taker_only": "true"}
+        if cursor:
+            params["cursor"] = cursor
+        js = get(DATA + "/v2/trades", params=params)
         if not js:
             break
+        data = js.get("data") if isinstance(js, dict) else js
+        data = data or []
         if PROBE[0] < 6:
             PROBE[0] += 1
-            ts = [int(t["timestamp"]) for t in js]
-            log("probe trades", cond[:12], "off", off, "n", len(js), "ts", min(ts), max(ts),
-                "since", since, "cond_match", sum(t.get("conditionId") == cond for t in js))
-        rows.extend(js)
-        if len(js) < 500 or min(int(t["timestamp"]) for t in js) < since:
+            ts = [int(t["timestamp"]) for t in data] or [0]
+            log("probe trades", cond[:12], "n", len(data), "ts", min(ts), max(ts), "since", since,
+                "keys", sorted(data[0]) if data else None,
+                {k: data[0].get(k) for k in ("side", "outcome", "price", "size")} if data else None)
+        rows.extend(data)
+        cursor = (js.get("pagination") or {}).get("next_cursor") if isinstance(js, dict) else None
+        if not cursor or not data or min(int(t["timestamp"]) for t in data) < since:
             break
-        off += 500
     rows = [t for t in rows if int(t["timestamp"]) >= since]
     rows.sort(key=lambda t: int(t["timestamp"]))
     return rows
