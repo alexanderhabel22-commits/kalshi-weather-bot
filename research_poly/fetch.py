@@ -56,7 +56,8 @@ def get(url, params=None, tries=5):
 
 def markets_for(slugs):
     out = {}
-    js = get(GAMMA + "/markets", params=[("slug", s) for s in slugs] + [("limit", len(slugs))])
+    js = get(GAMMA + "/markets", params=[("slug", s) for s in slugs]
+             + [("closed", "true"), ("limit", len(slugs))])
     for m in js or []:
         out[m.get("slug")] = m
     return out
@@ -69,6 +70,21 @@ def parse_list(v):
         except ValueError:
             return []
     return v or []
+
+
+def discover():
+    """Coin prefixes of the 15-min up/down markets that exist right now."""
+    found = set()
+    for off in (0, 100, 200):
+        js = get(GAMMA + "/markets", params={"tag_id": 102467, "closed": "true", "limit": 100,
+                                             "offset": off, "order": "endDate",
+                                             "ascending": "false"})
+        for m in js or []:
+            sl = m.get("slug") or ""
+            if "-updown-15m-" in sl:
+                found.add(sl.split("-updown-15m-")[0])
+    log("15-min coins found:", sorted(found))
+    return sorted(found) or COINS
 
 
 def tape(cond, since):
@@ -140,6 +156,7 @@ def main():
     t0 = time.time()
     now = int(time.time()) // 900 * 900 - 1800
     starts = [now - 900 * k for k in range(days * 96)]
+    coins = discover()
     random.seed(17)
     random.shuffle(starts)  # random sample across the whole period, so a cut-off run is unbiased
     f = open(os.path.join(out, "rows.csv"), "w", newline="")
@@ -155,7 +172,7 @@ def main():
             log("budget reached")
             break
         chunk = starts[i:i + 10]
-        slugs = [f"{c}-updown-15m-{s}" for s in chunk for c in COINS]
+        slugs = [f"{c}-updown-15m-{s}" for s in chunk for c in coins]
         ms = markets_for(slugs)
         for slug in slugs:
             m = ms.get(slug)
@@ -174,9 +191,13 @@ def main():
             start = int(slug.rsplit("-", 1)[1])
             end = start + 900
             tr = tape(m["conditionId"], end - max(LOOKBACKS))
+            if done < 3:
+                log("sample", slug, "trades", len(tr), "keys", sorted(tr[0]) if tr else None,
+                    {k: tr[0].get(k) for k in ("side", "outcome", "price", "size", "timestamp")}
+                    if tr else None)
             sh = sum(float(t["size"]) for t in tr)
             usd = sum(float(t["size"]) * float(t["price"]) for t in tr)
-            row = [slug.split("-")[0], start, end, winner, len(tr), round(sh, 1), round(usd, 2)]
+            row = [slug.split("-updown")[0], start, end, winner, len(tr), round(sh, 1), round(usd, 2)]
             for lb in LOOKBACKS:
                 r = simulate(tr, up_name, end, lb)
                 for k in ("strict", "touch", "taker"):
@@ -184,7 +205,7 @@ def main():
             w.writerow(row)
             done += 1
         f.flush()
-        if done and done % 200 < 40:
+        if done and (done % 200 < 40 or done < 50):
             log(f"{done} markets, {(time.time() - t0) / 60:.1f} min")
     log(f"finished {done} markets in {(time.time() - t0) / 60:.1f} min")
 

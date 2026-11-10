@@ -25,7 +25,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python research_poly/fetch.py out 150 95
+      - run: python research_poly/fetch.py out 150 ${{ github.event.head_commit.message == 'probe' && 3 || 95 }}
       - name: Save to poly-research-data branch
         if: always() && hashFiles('out/log.txt') != ''
         run: |
