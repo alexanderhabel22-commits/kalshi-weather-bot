@@ -1,5 +1,5 @@
 {
- "at": "2026-11-10T05:45:01+00:00",
+ "at": "2026-11-10T05:46:52+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,12 +7,57 @@
  "fund_error": null,
  "halted": null,
  "last_reject": null,
- "live_exposure": 1.52,
+ "live_exposure": 0.0,
  "live_now": {
-  "KXPALLADIUM15M-26NOV100045-45": {
+  "KXBTC15M-26NOV100100-00": {
    "bid_ask": [
-    0.99,
-    1.0
+    0.65,
+    0.66
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXCOPPER15M-26NOV100100-00": {
+   "bid_ask": [
+    0.36,
+    0.38
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXPALLADIUM15M-26NOV100100-00": {
+   "bid_ask": [
+    0.28,
+    0.3
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXPLATINUM15M-26NOV100100-00": {
+   "bid_ask": [
+    0.3,
+    0.31
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXSILVER15M-26NOV100100-00": {
+   "bid_ask": [
+    0.26,
+    0.27
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "ok"
+  },
+  "KXWTI15M-26NOV100100-00": {
+   "bid_ask": [
+    0.43,
+    0.44
    ],
    "mode": "live",
    "order": false,
@@ -20,22 +65,22 @@
   }
  },
  "mode": "live",
- "open_markets": 4,
+ "open_markets": 17,
  "pnl": {
   "live_days": {
    "2026-11-07": 0.17,
    "2026-11-08": 2.35,
    "2026-11-09": 3.4728,
-   "2026-11-10": -4.47
+   "2026-11-10": -4.01
   },
-  "live_total": 1.5228,
+  "live_total": 1.9828,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
    "2026-11-09": -33.24,
-   "2026-11-10": 0.6
+   "2026-11-10": -1.07
   },
-  "paper_total": -89.16
+  "paper_total": -90.83
  },
  "series": {
   "KXBTC15M": {
@@ -751,8 +796,8 @@
    ]
   },
   "KXPALLADIUM15M": {
-   "fills": 99.49,
-   "pnl": 0.9531,
+   "fills": 101.49,
+   "pnl": 1.4131,
    "recent": [
     [
      2,
@@ -969,6 +1014,10 @@
     [
      1,
      0.28
+    ],
+    [
+     2.0,
+     0.46
     ]
    ]
   },
@@ -1478,7 +1527,7 @@
  "shards": {
   "0": 28.4632,
   "1": 0.0,
-  "2": 23.6965,
+  "2": 24.6965,
   "3": 0.0
  },
  "spot_ok": true,
