@@ -242,10 +242,10 @@ min_fav = 0.71                   # join the favourite's best bid while it's 71-9
 max_fav = 0.95
 pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
                                  # Actions strategies' 75% cap leaves free; Alex, Nov 8)
-daily_loss_pct = 0.10            # live P&L today <= -10% of bankroll -> stop until tomorrow
+daily_loss_pct = 0.25            # Alex (Nov 10 ~1 AM ET): data > a few dollars; -25% of bankroll today -> stop until tomorrow
                                  # Guard (Nov 9, Alex): no new order if everything open losing at once
                                  # would reach this stop (room = 10% of bankroll + today's live P&L).
-total_loss_pct = 0.125           # live P&L since start <= -12.5% (~half the pool) -> halt
+total_loss_pct = 0.25            # Alex (Nov 10 ~1 AM ET): halt at -25% since start (was -12.5%)
 cut_after_fills = 100            # a live market below -5c/contract after 100 real fills goes
 cut_below_ct = -0.05             # back to paper by itself (pre-registered, Nov 8)
 guard = true                     # pull bids when BTC/ETH/... spot jumps (Coinbase feed)
