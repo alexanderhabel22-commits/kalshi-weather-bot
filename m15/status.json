@@ -1,22 +1,18 @@
 {
- "at": "2026-11-10T01:17:00+00:00",
+ "at": "2026-11-10T01:22:55+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
  "errors": 0,
  "fund_error": null,
  "halted": null,
- "last_reject": {
-  "at": 1794272486,
-  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXPALLADIUM15M-26NOV092015-15"
- },
- "live_exposure": 0.0,
+ "last_reject": null,
+ "live_exposure": 1.62,
  "live_now": {
   "KXBTC15M-26NOV092030-30": {
    "bid_ask": [
-    0.23,
-    0.24
+    0.15,
+    0.16
    ],
    "mode": "live",
    "order": false,
@@ -24,8 +20,8 @@
   },
   "KXCOPPER15M-26NOV092030-30": {
    "bid_ask": [
-    0.57,
-    0.61
+    0.36,
+    0.4
    ],
    "mode": "live",
    "order": false,
@@ -33,8 +29,8 @@
   },
   "KXPALLADIUM15M-26NOV092030-30": {
    "bid_ask": [
-    0.48,
-    0.53
+    0.52,
+    0.57
    ],
    "mode": "live",
    "order": false,
@@ -42,8 +38,8 @@
   },
   "KXPLATINUM15M-26NOV092030-30": {
    "bid_ask": [
-    0.55,
-    0.58
+    0.44,
+    0.47
    ],
    "mode": "live",
    "order": false,
@@ -51,21 +47,21 @@
   },
   "KXSILVER15M-26NOV092030-30": {
    "bid_ask": [
-    0.39,
-    0.4
+    0.16,
+    0.17
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   },
   "KXWTI15M-26NOV092030-30": {
    "bid_ask": [
-    0.47,
-    0.48
+    0.25,
+    0.27
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   }
  },
  "mode": "live",
@@ -1237,7 +1233,7 @@
  "shards": {
   "0": 22.4632,
   "1": 0.0,
-  "2": 21.8875,
+  "2": 20.2675,
   "3": 0.0
  },
  "spot_ok": true,
