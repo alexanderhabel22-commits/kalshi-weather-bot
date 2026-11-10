@@ -3,7 +3,7 @@
 Paper/replay only. Data: branch `spot-research-data` (runs/<date>-<series>/: markets, sample,
 trades = Kalshi tapes of each market's last 11 min, spot = 1-min Coinbase or Yahoo futures).
 
-- `fetch.py` / `pyth.py`: history pulls (GitHub Actions, push-triggered on the research branch).
+- `fetch.py` / `pyth.py`: history pulls (ran once from GitHub Actions on the research branch; the workflow files were removed afterwards so nothing re-runs).
 - `agree.py MARKETS SPOT`: how often the spot feed's open->close move matches Kalshi's result.
 - `replay.py SAMPLE TRADES SPOT PRODUCT MAXLEFT rel`: resting favourite bids (back-of-queue
   "paper" and touch "pessimistic" fills) split by spot-implied fair value and recent drift.
