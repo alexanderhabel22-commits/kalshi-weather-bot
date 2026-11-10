@@ -285,6 +285,19 @@ IP without a token). It never places, changes or cancels anything and needs no s
   un-pauses, never changes caps/stops/sizes/code. Results: `m15/watch.json` on branch m15-data;
   the scheduled Claude check-ins read it and turn proposed fixes into PRs.
 
+## Scale-up kit (built Nov 10, 2026, switched OFF)
+`wxbot/scaleup.py` + `[scaleup]` in `config.toml` (`enabled = false`). Turn it on (with
+Alex's OK) after the 500-contract reviews and the Nov 17 checkpoint pass, before adding bankroll.
+While off, nothing changes; the 15-min server only keeps each coin's step record.
+- Bankroll tiers tighten limits, never loosen them (min of config and tier): $300+ main live cap
+  50%, daily 8%, halt 20%, 15-min 24h stop 15%, halt 25%, window guard on; $1k+ 6%/15% and
+  10%/15%; $5k+ 4%/10% and 6%/10%.
+- 15-min contracts step 1 -> 2 -> 4 per coin, one step at a time: needs the 500 review count,
+  300 real contracts at the current step at +1c or better, 3 days there, and bankroll $150 / $400.
+  Last 300 at a step below -2c -> back one step. The 80-87c extra contract scales with the step.
+- Push budget: after 40 routine trade pushes in an ET day the main bot stops pushing fills/sales
+  (one note says so); stops and warnings still push.
+
 ## Expectations to keep honest
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong
 lock costs ~$3. Order books are thin (some ~5 contracts at the alert price),

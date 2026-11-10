@@ -49,7 +49,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import kalshi, notify
+from . import kalshi, notify, scaleup
 from .kalshi_api import KalshiClient, OrderRejected, fill_qty
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
 
@@ -213,12 +213,16 @@ def qty_str(x) -> int | float:
 def target_contracts(q: float | None, s: dict, series: str | None = None) -> int:
     """Contracts wanted in a market while the favourite's bid is at q. Series in
     single_series never take the extra contract (new live tests, Nov 9)."""
-    n = int(s["contracts"])
+    base = int(s["contracts"])
+    n = int((s.get("series_contracts") or {}).get(series, base)) if series is not None else base
     if series is not None and series in (s.get("single_series") or []):
         return n
     if q is not None and s.get("extra_contracts") and \
             s["extra_min"] - 1e-9 <= q <= s["extra_max"] + 1e-9:
-        n += int(s["extra_contracts"])
+        extra = int(s["extra_contracts"])
+        if n != base and s.get("step_scales_extra", True) and base > 0:
+            extra = extra * n // base              # scale-up steps: 1+1 -> 2+2 -> 4+4
+        n += extra
     return n
 
 
@@ -276,6 +280,22 @@ class Bot:
     @property
     def s(self) -> dict:
         return settings(self.cfg)
+
+    def limits(self, now: float) -> dict:
+        """Settings with the scale-up kit applied (wxbot/scaleup.py): tighter stops by bankroll
+        tier and each live coin's contract step. While the kit is off this is just self.s."""
+        s = self.s
+        p = scaleup.params(self.cfg)
+        if not p["enabled"]:
+            return s
+        b = self.bankroll(now)
+        s, tr = scaleup.m15_limits(s, p, b)
+        s["scaleup_tier"] = (tr or {}).get("name")
+        s["series_contracts"] = {ser: scaleup.step_contracts(p, self.state.get("series", {}).get(ser), b,
+                                                             int(s["contracts"]))
+                                 for ser in s["live_series"]}
+        s["step_scales_extra"] = p["step_scales_extra"]
+        return s
 
     def alert(self, title: str, body: str, priority: int = 3) -> None:
         try:
@@ -438,7 +458,7 @@ class Bot:
         return pnl.get("live_days", {}).get(self.day(now), 0.0)
 
     def check_stops(self, now: float) -> None:
-        s = self.s
+        s = self.limits(now)
         b = self.bankroll(now)
         if not b:
             return
@@ -791,7 +811,7 @@ class Bot:
         return n
 
     def manage(self, m: dict, quote: dict | None, mode: str, now: float) -> None:
-        s = self.s
+        s = self.limits(now)
         left = m["close"] - now
         eligible = (mode == "live" and m["series"] in s["live_series"]
                     and m["series"] not in self.state.get("cut", {}))
@@ -810,6 +830,8 @@ class Bot:
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
         target = target_contracts(want[1] if want else None, s, m["series"])
+        if m["mode"] == "live":
+            m["base"] = int((s.get("series_contracts") or {}).get(m["series"], s["contracts"]))
         room = target - m["filled"] - (o["n"] - o["filled"] if o else 0)
         if left <= s["stop_quote_s"] or left > float((s.get("max_left_s") or {}).get(m["series"], 1e9)):
             if o:
@@ -946,6 +968,15 @@ class Bot:
         while len(rec) > 1 and sum(r[0] for r in rec) - rec[0][0] >= win:
             rec.pop(0)
         cut = self.state.setdefault("cut", {})
+        # scale-up kit: the coin's record at its contract step (kept even while the kit is off)
+        p = scaleup.params(self.cfg)
+        now = self.clock()
+        moved = scaleup.record_step(p, st, m["filled"], pnl, now, self.bankroll(now), m["series"] in cut)
+        if moved:
+            n = scaleup.step_contracts(p, st, self.bankroll(now), int(self.s["contracts"]))
+            self.alert(f"15-min bot: {m['series']} steps {moved} to {n} contracts",
+                       f"Scale-up kit: {'passed' if moved == 'up' else 'failed'} its step test "
+                       f"({st['fills']:.0f} real contracts all-time). Pool and stops unchanged.", 4)
         if m["series"] in cut or st["fills"] < int(self.s["cut_after_fills"]):
             return
         per = st["pnl"] / st["fills"]
@@ -978,7 +1009,7 @@ class Bot:
             "ticker": m["ticker"], "series": m["series"], "mode": m["mode"],
             "close": datetime.fromtimestamp(m["close"], timezone.utc).isoformat(timespec="seconds"),
             "fav_side": m.get("fav_side", ""), "first_q": m.get("first_q", ""),
-            "last_q": m.get("last_q", ""), "quotes": m["quotes"], "contracts": self.s["contracts"],
+            "last_q": m.get("last_q", ""), "quotes": m["quotes"], "contracts": m.get("base", self.s["contracts"]),
             "filled": qty_str(m["filled"]), "cost": round(m["cost"], 2), "fee": round(m["fee"], 2),
             "fill_at": m.get("fill_at") or "",
             "fill_ttc_s": (m["close"] - m["fill_at"]) if m.get("fill_at") else "",
