@@ -788,3 +788,110 @@ def test_record_upgrades_an_old_header(monkeypatch):
     assert list(rows[0].keys()) == m15.COLS
     assert rows[0]["ticker"] == "OLD-1" and rows[0]["fills"] == ""
     assert rows[1]["ticker"] == TK and rows[1]["fills"] == "1@0.77;1@0.85"
+
+
+class QClient(Client):
+    """Fake Kalshi that also answers queue-position requests."""
+
+    def __init__(self):
+        super().__init__()
+        self.queue = {}
+
+    def queue_positions(self, tickers):
+        return {"queue_positions": [{"order_id": k, "market_ticker": TK, "queue_position": v}
+                                    for k, v in self.queue.items()]}
+
+
+def fill_rows(b, ts):
+    path = m15.M15_DIR / f"fills-{b.day(ts)}.csv"
+    return list(csv.DictReader(open(path))) if path.exists() else []
+
+
+def test_fill_quality_log_moves_and_queue(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    cl = QClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    cl.queue = {"o0": 7}
+    b.step()                                            # place at 80c, 7 contracts ahead
+    assert cl.placed == [(TK, "yes", 0.80, 1)]
+    clk.t += 6
+    cl.queue = {"o0": 2}
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    w.book = {"yes_bid": 0.78, "yes_ask": 0.80}         # filled as the bid dropped
+    clk.t += 6
+    b.step()
+    fill_t = clk.t
+    assert len(b.state["fillq"]) == 1
+    for dt, book in ((10, (0.76, 0.78)), (60, (0.83, 0.85)), (300, (0.90, 0.92))):
+        w.book = {"yes_bid": book[0], "yes_ask": book[1]}
+        clk.t = fill_t + dt
+        b.step()
+    assert fill_rows(b, fill_t) == []                    # waits for the settlement
+    w.result = "yes"
+    clk.t = CLOSE + 30
+    b.step()
+    rows = fill_rows(b, fill_t)
+    assert len(rows) == 1 and b.state["fillq"] == []
+    r = rows[0]
+    assert r["price"] == "0.8" and r["nth"] == "1" and r["bid"] == "0.8" and r["spread"] == "2"  # last book seen at the fill
+    assert r["queue_first"] == "7.0" and r["queue_last"] == "2.0"
+    assert float(r["move_10s"]) == pytest.approx(-3.0)   # mid 77c vs our 80c
+    assert float(r["move_60s"]) == pytest.approx(4.0)
+    assert float(r["move_300s"]) == pytest.approx(11.0)
+    assert r["settled_h"] == "" and r["won"] == "1" and float(r["pnl_ct"]) == pytest.approx(20.0)
+    assert r["rest_s"] == "12.0" and int(r["ttc_s"]) == int(CLOSE - fill_t)
+
+
+def test_fill_quality_late_fill_uses_settlement_and_no_queue_endpoint(monkeypatch):
+    w = World(monkeypatch, yb=0.88, ya=0.90)
+    clk = Clock(CLOSE - 100)
+    cl = Client()                                       # no queue endpoint: logging still works
+    b = bot(cfg(mode="live"), clk, cl)
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 5
+    b.step()
+    fill_t = clk.t
+    clk.t = fill_t + 10
+    b.step()
+    w.result = "no"
+    clk.t = CLOSE + 30
+    b.step()
+    r = fill_rows(b, fill_t)[0]
+    assert r["settled_h"] == "300" and r["queue_first"] == "" and r["move_60s"] == ""  # 60s mark missed
+    assert float(r["move_300s"]) == pytest.approx(-88.0) and r["won"] == "0"
+
+
+def test_fill_quality_skips_paper(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    b = bot(cfg(mode="paper"), clk)
+    b.step()
+    clk.t += 30
+    w.tape = [(clk.t - 5, 0.78, 10, "no")]
+    b.step()
+    assert b.state["markets"][TK]["filled"] == 1 and b.state["fillq"] == []
+
+
+def test_fill_quality_logs_fair_value_when_shadow_present(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live"), clk, cl)
+
+    class FV:
+        def fair_value(self, m, now):
+            return {"fv_yes": 0.83, "index": 101234.5, "venues": 3, "sigma": 0.001}
+    b.fv = FV()
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 6
+    b.step()
+    fill_t = clk.t
+    w.result = "yes"
+    clk.t = CLOSE + 30
+    b.step()
+    r = fill_rows(b, fill_t)[0]
+    assert r["fv_yes"] == "0.83" and r["index_px"] == "101234.5"

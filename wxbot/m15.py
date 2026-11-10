@@ -50,6 +50,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import kalshi, notify, scaleup
+from .m15_fillq import FillQuality
 from .kalshi_api import KalshiClient, OrderRejected, fill_qty
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
 
@@ -251,7 +252,7 @@ def through(trades: list, side: str, q: float, after: float) -> tuple[float | No
     return None, touched
 
 
-class Bot:
+class Bot(FillQuality):
     def __init__(self, cfg: Config, http: Http, client: KalshiClient | None = None,
                  clock=time.time, fetch_json=None, uploader=None, kfeed=None, spot=None,
                  wake=None, fv=None):
@@ -273,9 +274,10 @@ class Bot:
                       "summary_day": st.get("summary_day"), "started": st.get("started"),
                       "cut": st.get("cut", {}), "series": st.get("series", {}),
                       "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted"),
-                      "code_version": st.get("code_version"), "saved_at": st.get("saved_at")}
+                      "code_version": st.get("code_version"), "saved_at": st.get("saved_at"),
+                      "fillq": st.get("fillq", [])}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
-                     "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0}
+                     "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0, "queue": 0.0}
         self.switch = {"mode": None, "halted": False}
         self.control = None
         self.balance = None
@@ -335,6 +337,10 @@ class Bot:
             log.info("restarted for a code update %s -> %s (no push): %s", prev[:7], ver[:7], body)
             return
         self.alert("15-min bot started", body, 2)
+
+    @staticmethod
+    def fillq_dir() -> Path:
+        return M15_DIR
 
     def day(self, ts: float) -> str:
         return datetime.fromtimestamp(ts, self.tz).date().isoformat()
@@ -661,6 +667,7 @@ class Bot:
                 if mv is not None:
                     # signed so that + = spot moved toward our side's win (assumes YES = up)
                     m["spot_bps"] = round(mv if m.get("fav_side") == "yes" else -mv, 1)
+        self.fillq_open(m, o, new, ts)           # shadow fill-quality log (never trades)
 
     def cancel_all(self, why: str) -> None:
         for m in self.state["markets"].values():
@@ -1110,9 +1117,10 @@ class Bot:
                   "live_exposure": round(self.exposure("live"), 2), "errors": self.errors}
         files = {"status.json": json.dumps(status, indent=1, sort_keys=True)}
         for d in {self.day(now), self.day(now - 86400)}:
-            p = M15_DIR / f"markets-{d}.csv"
-            if p.exists():
-                files[p.name] = p.read_text(encoding="utf-8")
+            for kind in ("markets", "fills"):
+                p = M15_DIR / f"{kind}-{d}.csv"
+                if p.exists():
+                    files[p.name] = p.read_text(encoding="utf-8")
         fv_files = {}
         if self.fv is not None:
             try:
@@ -1180,7 +1188,9 @@ class Bot:
                 self.fv.step(self, now)          # shadow only: logs, never trades
             except Exception as exc:
                 log.warning("fair-value shadow: %s", exc)
+        self.queue_check(now)                    # shadow fill-quality log (never trades)
         self.grade(now)
+        self.fillq_step(now)
         self.daily(now)
         self.upload(now)
         self.save()
