@@ -598,6 +598,22 @@ class Bot:
         if o.get("id"):
             m.setdefault("ended", {})[o["id"]] = o.get("booked", 0)
 
+    @staticmethod
+    def _has_fill_count(ko: dict) -> bool:
+        return any(ko.get(k) not in (None, "") for k in ("fill_count_fp", "fill_count"))
+
+    def _unbook(self, m: dict, o: dict, truth: float) -> None:
+        """Take back contracts booked from the socket that Kalshi's order record doesn't show."""
+        extra = round(o.get("booked", 0) - truth, 4)
+        log.warning("%s: booked %.2f but Kalshi shows %.2f filled; correcting", m["ticker"],
+                    o.get("booked", 0), truth)
+        o["booked"] = truth
+        o["filled"] = truth
+        m["filled"] = round(max(0.0, m["filled"] - extra), 4)
+        m["cost"] = round(max(0.0, m["cost"] - extra * o["q"]), 4)
+        m["fee"] = round(max(0.0, m["fee"] - maker_fee(o["q"], extra, self.s["maker_fee_rate"])), 4)
+        self.state["unbooked"] = round(float(self.state.get("unbooked", 0)) + extra, 2)
+
     def _book(self, m: dict, o: dict, ts: float | None) -> None:
         """Move newly filled contracts of order `o` into the position."""
         new = o["filled"] - o.get("booked", 0)
@@ -661,9 +677,8 @@ class Bot:
                 if got > o["filled"]:
                     o["filled"] = min(o["n"], got)
                     self._book(m, o, self.clock())
-                if o["filled"] >= o["n"]:
-                    m["order"] = None
-            mine = [m for m in mine if m.get("order")]
+                # a full fill seen on the socket is confirmed by the REST check below before
+                # the order is dropped (Nov 10: palladium booked 3 of max 2 twice overnight)
         now = self.clock()
         if not force and now - self.last["sync"] < self.s["sync_s"]:
             return
@@ -684,9 +699,15 @@ class Bot:
                 except HttpError as exc:
                     log.warning("order %s: %s", o["id"], exc)
                     continue
-            o["filled"] = max(o["filled"], fill_qty(ko, o["n"]))
+            truth = fill_qty(ko, o["n"])
+            if gone and self._has_fill_count(ko) and truth < o.get("booked", 0) - 1e-9:
+                self._unbook(m, o, truth)                # final record shows fewer than we booked
+            o["filled"] = max(o["filled"], truth)
             self._book(m, o, self.clock())
-            if gone or o["filled"] >= o["n"]:
+            # drop the order only when Kalshi's own record says it's done, not on a socket
+            # count alone (a double-counted fill would leave the rest of it resting, untracked)
+            if gone or truth >= o["n"]:
+                self._remember(m, o)
                 m["order"] = None
 
     def sweep_orphans(self, resting: dict) -> None:
