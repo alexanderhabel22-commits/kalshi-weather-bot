@@ -1160,7 +1160,8 @@ def main(cfg: Config, once: bool = False) -> int:
                 args = (wake, s["guard_window_s"], s["guard_z"], s["guard_min_bps"],
                         s["guard_cooldown_s"])
                 feeds = [SpotFeed(coin, *args).start() if coin else None,
-                         OandaFeed(otoken, oanda, *args).start() if oanda and otoken else None]
+                         OandaFeed(otoken, oanda, *args,
+                                   env=os.environ.get("OANDA_ENV", "practice")).start() if oanda and otoken else None]
                 spot = Spots(feeds, s.get("guard_links") or [])
         except ImportError as exc:
             log.warning("websockets not installed, polling only: %s", exc)

@@ -285,8 +285,8 @@ class SpotFeed(_Thread):
             return now - self.tripped.get(prod, 0) < self.cooldown_s
 
 
-OANDA_API = "https://api-fxpractice.oanda.com"
-OANDA_STREAM = "https://stream-fxpractice.oanda.com"
+OANDA_HOSTS = {"practice": ("https://api-fxpractice.oanda.com", "https://stream-fxpractice.oanda.com"),
+               "live": ("https://api-fxtrade.oanda.com", "https://stream-fxtrade.oanda.com")}
 
 
 class OandaFeed(SpotFeed):
@@ -294,19 +294,20 @@ class OandaFeed(SpotFeed):
     Coinbase only covers crypto, so this gives silver/copper/... the same jump guard.
     Only instruments the account can see are subscribed; the rest are logged and skipped."""
 
-    def __init__(self, token: str, products, *args, **kw):
+    def __init__(self, token: str, products, *args, env: str = "practice", **kw):
         super().__init__(products, *args, **kw)
         self.thread.name = "oanda"
         self.token = token
+        self.api, self.stream = OANDA_HOSTS.get(env, OANDA_HOSTS["practice"])
         self.live_products: list[str] = []
 
     def _session(self):
         import requests
         h = {"Authorization": f"Bearer {self.token}"}
-        accts = requests.get(f"{OANDA_API}/v3/accounts", headers=h, timeout=15)
+        accts = requests.get(f"{self.api}/v3/accounts", headers=h, timeout=15)
         accts.raise_for_status()
         aid = accts.json()["accounts"][0]["id"]
-        ins = requests.get(f"{OANDA_API}/v3/accounts/{aid}/instruments", headers=h, timeout=15)
+        ins = requests.get(f"{self.api}/v3/accounts/{aid}/instruments", headers=h, timeout=15)
         ins.raise_for_status()
         have = {i.get("name") for i in ins.json().get("instruments", [])}
         self.live_products = [p for p in self.products if p in have]
@@ -315,7 +316,7 @@ class OandaFeed(SpotFeed):
             log.warning("oanda: not available on this account: %s", ", ".join(missing))
         if not self.live_products:
             raise RuntimeError("oanda: none of the instruments are available")
-        with requests.get(f"{OANDA_STREAM}/v3/accounts/{aid}/pricing/stream", headers=h,
+        with requests.get(f"{self.stream}/v3/accounts/{aid}/pricing/stream", headers=h,
                           params={"instruments": ",".join(self.live_products)},
                           stream=True, timeout=(15, 30)) as r:
             r.raise_for_status()
