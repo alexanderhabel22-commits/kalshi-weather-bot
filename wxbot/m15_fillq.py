@@ -33,7 +33,7 @@ KEEP_S = 2 * 86400     # pending rows older than this are dropped (market never 
 COLS = ["ticker", "series", "mode", "side", "fill_ts", "fill_at", "ttc_s", "rest_s", "nth",
         "contracts", "price", "bid", "ask", "spread", "queue_first", "queue_last",
         "queue_last_age_s", "spot_bps", "fv_yes", "index_px", "move_10s", "move_60s", "move_300s", "settled_h",
-        "result", "won", "pnl_ct"]
+        "result", "won", "pnl_ct", "src"]
 
 
 def fav_book(quote: dict | None, side: str) -> tuple[float | None, float | None]:
@@ -134,6 +134,9 @@ class FillQuality:
                 "nth": m["fillq_n"], "n": new, "q": o["q"], "bid": b, "ask": a,
                 "queue_first": o.get("queue_first", ""), "queue_last": o.get("queue_last", ""),
                 "queue_age": round(t - qa, 1) if qa else "", "spot_bps": mv,
+                # src "recovered": booked by the orphan sweep or the position check (PR #146) at
+                # last_q, so the price and time are estimates, not a real fill
+                "src": "order" if o.get("t0") else "recovered",
                 "fv_yes": (fv or {}).get("fv_yes", ""), "index_px": (fv or {}).get("index", ""),
                 "marks": {}})
         except Exception as exc:
@@ -199,7 +202,8 @@ class FillQuality:
                "move_10s": p["marks"].get("10", ""), "move_60s": p["marks"].get("60", ""),
                "move_300s": p["marks"].get("300", ""), "settled_h": ";".join(settled),
                "result": res or "", "won": "" if won is None else int(won),
-               "pnl_ct": "" if won is None else round(((1.0 if won else 0.0) - p["q"]) * 100, 1)}
+               "pnl_ct": "" if won is None else round(((1.0 if won else 0.0) - p["q"]) * 100, 1),
+               "src": p.get("src", "order")}
         new = not path.exists()
         with open(path, "a", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=COLS)
