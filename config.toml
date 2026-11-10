@@ -120,6 +120,9 @@ min_volume = 1000                # contracts traded so far (Nov 5 walk-forward: 
                                  # paid more in 10 of 14 months; see research_mn/)
 max_open_pct = 0.50              # at most 50% of the bankroll in Mentions
 max_event_pct = 0.20             # at most 20% of the bankroll on one event (one speech)
+# SHADOW AI score (Nov 10, wxbot/mentions_ai.py): Haiku 5.5 + web search guesses how likely each word is
+# said and logs it (note column + data/mentions_ai.csv). Changes NO bets. Needs the ANTHROPIC_API_KEY
+# secret. Judge at the Dec 3 Mentions review: python bot.py mentions-ai
 
 [trading.macro_fade]
 # Fade longshots in Fed and CPI/PCE markets: resting NO at 71-95c (YES 5-29c).
