@@ -1,27 +1,31 @@
 {
- "at": "2026-11-10T23:17:00+00:00",
+ "at": "2026-11-10T23:32:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
  "errors": 0,
  "fund_error": null,
  "halted": null,
- "last_reject": null,
+ "last_reject": {
+  "at": 1794352800,
+  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
+  "ticker": "KXBTC15M-26NOV101830-30"
+ },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV101830-30": {
+  "KXBTC15M-26NOV101845-45": {
    "bid_ask": [
-    0.8,
-    0.81
+    0.62,
+    0.63
    ],
    "mode": "live",
    "order": false,
-   "why": "ok"
+   "why": "out of band"
   },
-  "KXSILVER15M-26NOV101830-30": {
+  "KXSILVER15M-26NOV101845-45": {
    "bid_ask": [
-    0.68,
-    0.69
+    0.39,
+    0.4
    ],
    "mode": "live",
    "order": false,
@@ -35,7 +39,7 @@
    "2026-11-07": 0.17,
    "2026-11-08": 2.35,
    "2026-11-09": 3.4728,
-   "2026-11-10": -14.2152
+   "2026-11-10": -15.8252
   },
   "live_log": [
    [
@@ -909,33 +913,33 @@
    [
     1794352500,
     0.35
+   ],
+   [
+    1794353400,
+    -1.61
    ]
   ],
-  "live_total": -8.2224,
+  "live_total": -9.8324,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
    "2026-11-09": -33.24,
-   "2026-11-10": -33.57
+   "2026-11-10": -33.2
   },
-  "paper_total": -123.33
+  "paper_total": -122.96
  },
- "pnl_24h": -14.2152,
+ "pnl_24h": -15.8252,
  "roll_stop": null,
  "series": {
   "KXBTC15M": {
    "at_step": [
-    6.0,
-    -0.8
+    8.0,
+    -2.41
    ],
    "decay_alerted": "2026-11-10",
-   "fills": 416.0,
-   "pnl": 2.41,
+   "fills": 418.0,
+   "pnl": 0.8,
    "recent": [
-    [
-     2,
-     -1.54
-    ],
     [
      2,
      0.41
@@ -1575,6 +1579,10 @@
     [
      2,
      0.35
+    ],
+    [
+     2,
+     -1.61
     ]
    ],
    "step": 0,
@@ -1590,6 +1598,10 @@
     [
      2,
      0.35
+    ],
+    [
+     2,
+     -1.61
     ]
    ],
    "step_since": 1794350721.9947114
@@ -3248,7 +3260,7 @@
  "shards": {
   "0": 17.1835,
   "1": 0.0,
-  "2": 18.1513,
+  "2": 18.5513,
   "3": 0.0
  },
  "spot_ok": true,
