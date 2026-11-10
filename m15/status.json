@@ -1,22 +1,18 @@
 {
- "at": "2026-11-10T21:32:00+00:00",
+ "at": "2026-11-10T21:41:34+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
  "errors": 0,
  "fund_error": null,
  "halted": null,
- "last_reject": {
-  "at": 1794344108,
-  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXSILVER15M-26NOV101600-00"
- },
+ "last_reject": null,
  "live_exposure": 0.0,
  "live_now": {
   "KXBTC15M-26NOV101645-45": {
    "bid_ask": [
-    0.46,
-    0.47
+    0.027,
+    0.028
    ],
    "mode": "paper",
    "order": false,
@@ -24,15 +20,15 @@
   },
   "KXSILVER15M-26NOV101645-45": {
    "bid_ask": [
-    0.31,
-    0.32
+    0.922,
+    0.926
    ],
    "mode": "paper",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   }
  },
- "mode": "paper",
+ "mode": "live",
  "open_markets": 17,
  "pnl": {
   "live_days": {
@@ -897,10 +893,7 @@
   "paper_total": -125.8
  },
  "pnl_24h": -13.7552,
- "roll_stop": {
-  "at": 1794345517,
-  "pnl": -13.76
- },
+ "roll_stop": null,
  "series": {
   "KXBTC15M": {
    "decay_alerted": "2026-11-10",
