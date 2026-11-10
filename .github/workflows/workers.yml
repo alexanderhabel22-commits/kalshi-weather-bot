@@ -1,0 +1,96 @@
+name: deploy cloudflare workers
+
+# Deploys the two Cloudflare Workers the dashboard reads from, so nobody has to
+# paste code into the Cloudflare editor again:
+#   kalshi-relay     tools/kalshi-relay-worker.js    public market prices
+#   snowy-rain-7e20  tools/kalshi-account-worker.js  read-only live account feed
+# Runs on its own when either worker file changes on main, or by hand from
+# Actions -> "deploy cloudflare workers" -> Run workflow.
+#
+# One-time setup: a Cloudflare API token ("Edit Cloudflare Workers" template)
+# saved as the repo secret CLOUDFLARE_API_TOKEN. The account worker's Kalshi key
+# stays in Cloudflare's own secrets: a deploy keeps them, and nothing secret is
+# ever in this repo or this file.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/kalshi-relay-worker.js"
+      - "tools/kalshi-account-worker.js"
+      - ".github/workflows/workers.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-workers
+  cancel-in-progress: false
+
+env:
+  WRANGLER: wrangler@4.140.0
+  COMPAT_DATE: "2025-01-01"
+  WRANGLER_SEND_METRICS: "false"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Check the Cloudflare token is set up
+        id: token
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::warning::No CLOUDFLARE_API_TOKEN repo secret yet, so nothing was deployed. See the setup note at the top of .github/workflows/workers.yml."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+        if: steps.token.outputs.ok == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.token.outputs.ok == 'true'
+        with:
+          node-version: "22"
+
+      - name: Find the Cloudflare account
+        if: steps.token.outputs.ok == 'true'
+        run: |
+          if [ -n "$CLOUDFLARE_ACCOUNT_ID" ]; then exit 0; fi
+          resp=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts?per_page=5")
+          id=$(echo "$resp" | jq -r '.result[0].id // empty')
+          n=$(echo "$resp" | jq -r '.result | length')
+          if [ -z "$id" ]; then echo "::error::The token can't see any Cloudflare account. Re-create it from the 'Edit Cloudflare Workers' template."; exit 1; fi
+          if [ "$n" != "1" ]; then echo "::warning::The token sees $n accounts; using the first. Add a CLOUDFLARE_ACCOUNT_ID secret to pick one."; fi
+          echo "CLOUDFLARE_ACCOUNT_ID=$id" >> "$GITHUB_ENV"
+
+      - name: Deploy kalshi-relay (market prices)
+        if: steps.token.outputs.ok == 'true'
+        run: npx -y "$WRANGLER" deploy tools/kalshi-relay-worker.js --name kalshi-relay --compatibility-date "$COMPAT_DATE" --keep-vars
+
+      - name: Deploy snowy-rain-7e20 (live account feed)
+        if: steps.token.outputs.ok == 'true'
+        run: npx -y "$WRANGLER" deploy tools/kalshi-account-worker.js --name snowy-rain-7e20 --compatibility-date "$COMPAT_DATE" --keep-vars
+
+      - name: Check both workers answer
+        if: steps.token.outputs.ok == 'true'
+        run: |
+          sleep 10
+          fail=0
+          check() {
+            code=$(curl -s -o /tmp/body -w '%{http_code}' -H "Origin: https://alexanderhabel22-commits.github.io" "$1")
+            echo "$1 -> HTTP $code: $(head -c 160 /tmp/body)"
+            [ "$code" = "200" ] || fail=1
+          }
+          check "https://kalshi-relay.alexanderhabel22.workers.dev/markets?limit=1"
+          check "https://snowy-rain-7e20.alexanderhabel22.workers.dev/account"
+          if [ "$fail" = "1" ]; then
+            echo "::error::A worker deployed but didn't answer 200. If the account feed says the key is missing, its KALSHI_KEY_ID / KALSHI_PRIVATE_KEY secrets need re-adding in Cloudflare (Workers -> snowy-rain-7e20 -> Settings -> Variables and Secrets)."
+            exit 1
+          fi

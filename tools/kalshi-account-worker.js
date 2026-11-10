@@ -2,7 +2,8 @@
 // It signs requests with a READ-ONLY Kalshi API key (it can't place or cancel orders) and only
 // answers GET /account: balance, open positions and the latest fills. Nothing else is forwarded.
 //
-// Setup (Cloudflare dashboard > Workers > Create > paste this file > Deploy), then
+// Deploys itself: .github/workflows/workers.yml pushes this file to the "snowy-rain-7e20" worker
+// whenever it changes on main. First-time setup only (already done): in Cloudflare,
 // Settings > Variables and Secrets > add two SECRETS:
 //   KALSHI_KEY_ID       the key id Kalshi shows next to the read-only key
 //   KALSHI_PRIVATE_KEY  the whole private key file text, BEGIN/END lines included
