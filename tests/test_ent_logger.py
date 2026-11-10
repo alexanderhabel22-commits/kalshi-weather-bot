@@ -50,3 +50,23 @@ def test_rt_title():
     assert L.rt_title("Rotten Tomatoes score for Wicked: For Good?") == "Wicked: For Good"
     assert L.rt_title("Will Zootopia 2's Rotten Tomatoes score be above 90%?") == "Zootopia 2"
     assert L.rt_title("Zootopia 2 Rotten Tomatoes score") == "Zootopia 2"
+
+
+def test_norm_and_slug():
+    assert L.norm("Dune: Part Two | Rotten Tomatoes") != L.norm("Dune: Part Three")
+    assert L.norm("Ebenezer (2026) | Rotten Tomatoes") == L.norm("Ebenezer")
+    assert L.slug("The Fantastic Four: First Steps") == "the_fantastic_four_first_steps"
+    assert L.slug("Wicked: For Good") == "wicked_for_good"
+
+
+def test_rt_find_rejects_wrong_film(monkeypatch):
+    pages = {"https://www.rottentomatoes.com/m/dune_part_three": None,
+             "https://www.rottentomatoes.com/m/dune_part_three_2026": "<title>Dune: Part Three | Rotten Tomatoes</title>"}
+
+    def fake(url, params=None, js=True, **k):
+        if "search" in url:
+            return '<a href="https://www.rottentomatoes.com/m/dune_part_two">Dune: Part Two</a>'
+        return pages.get(url)
+    monkeypatch.setattr(L, "get", fake)
+    url, html = L.rt_find("Dune: Part Three", year=2026)
+    assert url.endswith("dune_part_three_2026")

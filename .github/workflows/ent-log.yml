@@ -12,6 +12,9 @@ on:
       backfill:
         description: "1 = also pull settled markets + daily box office history"
         default: "0"
+      wayback:
+        description: "1 = also pull RT score history from the Internet Archive (resumable)"
+        default: "0"
   push:
     branches: ["claude/project-thread-ws8233"]
     paths: ["research_ent/logger.py", ".github/workflows/ent-log.yml"]
@@ -42,8 +45,9 @@ jobs:
           fi
       - name: Snapshot
         env:
-          # the first probe from the research branch also does the one-off backfill
-          BACKFILL: ${{ github.event.inputs.backfill || (github.event_name == 'push' && '1') || '0' }}
+          BACKFILL: ${{ github.event.inputs.backfill || '0' }}
+          # pushes to the research branch continue the one-off RT score history pull
+          WAYBACK: ${{ github.event.inputs.wayback || (github.event_name == 'push' && '1') || '0' }}
           BACKFILL_FROM: "2025-01-01"
         run: python research_ent/logger.py /tmp/data/log
       - name: Save to ent-log-data branch

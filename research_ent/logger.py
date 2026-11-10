@@ -239,18 +239,50 @@ def rt_parse(html: str) -> dict:
                 d.update(critics=ar.get("ratingValue"), critics_n=ar.get("reviewCount") or ar.get("ratingCount"),
                          src="ldjson")
                 break
+    if d.get("critics") in (None, ""):
+        sb = re.search(r'tomatometerscore="(\d+)"', html, re.I)
+        if sb:
+            n = re.search(r'tomatometercount="(\d+)"', html, re.I)
+            d.update(critics=sb.group(1), critics_n=n.group(1) if n else "", src="scoreboard")
     t = re.search(r"<title>(.*?)</title>", html, re.S)
     d["page_title"] = unescape(t.group(1)).strip()[:120] if t else ""
     return d
 
 
-def rt_find(title: str) -> str | None:
-    html = get(f"{RT}/search", {"search": title}, js=False, source="rt_search")
-    if not html:
-        return None
-    for path in re.findall(r'href="(https://www\.rottentomatoes\.com/(?:m|tv)/[\w\-/]+)"', html):
-        return path
-    return None
+def norm(t: str) -> str:
+    t = unescape(t or "").lower().replace("&", "and")
+    t = re.sub(r"\s*\|\s*rotten tomatoes.*$", "", t)
+    t = re.sub(r"\(\d{4}\)|\bseason \d+\b", "", t)
+    return re.sub(r"[^a-z0-9]+", "", t)
+
+
+def slug(t: str) -> str:
+    t = unescape(t).lower().replace("&", "and")
+    t = re.sub(r"['’.]", "", t)
+    return re.sub(r"[^a-z0-9]+", "_", t).strip("_")
+
+
+def rt_find(title: str, tv: bool = False, year: int | None = None) -> tuple[str | None, str | None]:
+    """(url, html) of the RT page whose title matches `title`; slug guesses first, then search.
+    A page only counts when its own title matches, so a sequel never borrows the old film's score."""
+    want = norm(title)
+    if not want:
+        return None, None
+    year = year or NOW.year
+    base = f"{RT}/{'tv' if tv else 'm'}/{slug(title)}"
+    cands = [base] + ([] if tv else [f"{base}_{year}", f"{base}_{year - 1}", f"{base}_{year + 1}"])
+    search = get(f"{RT}/search", {"search": title}, js=False, source="rt_search") or ""
+    for href, name in re.findall(r'href="(https://www\.rottentomatoes\.com/(?:m|tv)/[\w\-/]+)"[^>]*>\s*([^<]+?)\s*<',
+                                 search):
+        if norm(name) == want and href not in cands:
+            cands.append(href.rstrip("/"))
+    for url in cands:
+        html = get(url, js=False, source="rt_page", tries=2)
+        if html:
+            t = re.search(r"<title>(.*?)</title>", html, re.S)
+            if t and norm(t.group(1)) == want:
+                return url, html
+    return None, None
 
 
 RT_COLS = ["ts", "event", "query", "url", "critics", "critics_n", "audience", "audience_n", "src", "page_title"]
@@ -259,13 +291,12 @@ RT_COLS = ["ts", "event", "query", "url", "critics", "critics_n", "audience", "a
 def rt_snapshot(out: Path, markets: list[dict]):
     rows = []
     for i, (ev, q) in enumerate(rt_targets(markets).items()):
-        url = q if q.startswith("http") else rt_find(q)
-        if not url:
-            rows.append([STAMP, ev, q, "", "", "", "", "", "notfound", ""])
-            continue
-        html = get(url, js=False, source="rt_page")
+        if q.startswith("http"):
+            url, html = q, get(q, js=False, source="rt_page")
+        else:
+            url, html = rt_find(q, tv=ev.startswith("KXRTTV"))
         if not html:
-            rows.append([STAMP, ev, q, url, "", "", "", "", "blocked", ""])
+            rows.append([STAMP, ev, q, url or "", "", "", "", "", "notfound", ""])
             continue
         if i < 2 and NOW.hour % 6 == 0:
             save_raw(out, "rt-" + re.sub(r"\W", "", ev)[:40], html)
@@ -462,18 +493,74 @@ def backfill(out: Path, series: list[dict]):
     log("backfill box office days", (d - d0).days, "rows", len(rows))
 
 
+WB_COLS = ["event", "close", "url", "snap_ts", "critics", "critics_n", "src"]
+
+
+def wayback(out: Path, per_event: int = 14, budget_min: float = 65):
+    """Tomatometer history for settled RT markets from Internet Archive snapshots (free).
+    Resumable: events already in rt_wayback.csv are skipped, so a re-run continues."""
+    bdir = out / "backfill"
+    src = bdir / "settled_markets.csv.gz"
+    if not src.exists():
+        log("wayback: no settled markets file")
+        return
+    dest = bdir / "rt_wayback.csv"
+    done = set()
+    if dest.exists():
+        with dest.open(encoding="utf-8") as fh:
+            done = {r["event"] for r in csv.DictReader(fh)}
+    events = {}
+    with gzip.open(src, "rt", encoding="utf-8") as fh:
+        for r in csv.DictReader(fh):
+            if r["kind"] == "rt" and r["event"] not in done and not r["series"].startswith("KXRTCOMPARE"):
+                events.setdefault(r["event"], r)
+    log("wayback events to do", len(events), "done", len(done))
+    n_ev = 0
+    for ev, r in sorted(events.items(), key=lambda kv: kv[1]["close"], reverse=True):
+        if time.time() - T0 > budget_min * 60:
+            break
+        close = datetime.fromisoformat(r["close"].replace("Z", "+00:00"))
+        url, _ = rt_find(rt_title(r["title"]), tv=r["series"].startswith("KXRTTV"), year=close.year)
+        rows = []
+        if url:
+            cdx = get("https://web.archive.org/cdx/search/cdx",
+                      {"url": url.replace("https://www.", ""), "output": "json", "filter": "statuscode:200",
+                       "from": (close - timedelta(days=21)).strftime("%Y%m%d"),
+                       "to": (close + timedelta(days=1)).strftime("%Y%m%d%H%M"), "collapse": "timestamp:10"},
+                      source="wb_cdx") or []
+            snaps = [c[1] for c in cdx[1:]]
+            if len(snaps) > per_event:  # keep the last few before close, spread the rest
+                tail = snaps[-4:]
+                step = (len(snaps) - 4) / (per_event - 4)
+                snaps = [snaps[int(i * step)] for i in range(per_event - 4)] + tail
+            for t in snaps:
+                html = get(f"https://web.archive.org/web/{t}id_/{url}", js=False, source="wb_page", tries=2)
+                d = rt_parse(html) if html else {}
+                rows.append([ev, r["close"], url, t, d.get("critics"), d.get("critics_n"), d.get("src", "fail")])
+        if not rows:
+            rows = [[ev, r["close"], url or "", "", "", "", "notfound" if not url else "nosnap"]]
+        append(dest, WB_COLS, rows)
+        n_ev += 1
+    log("wayback events this run", n_ev)
+
+
 def main():
     out = Path(sys.argv[1] if len(sys.argv) > 1 else "out")
     out.mkdir(parents=True, exist_ok=True)
     series = find_series()
     live = kalshi_snapshot(out, series)
-    for step in (lambda: rt_snapshot(out, live), lambda: box_snapshot(out)):
+    steps = [lambda: rt_snapshot(out, live)]
+    if NOW.hour in (14, 15) or os.environ.get("BACKFILL") == "1":   # once a day; BOM posts ~9 AM ET
+        steps.append(lambda: box_snapshot(out))
+    for step in steps:
         try:
             step()
         except Exception as e:  # one broken source must not lose the others
             log("step failed", type(e).__name__, e)
     if os.environ.get("BACKFILL") == "1":
         backfill(out, series)
+    if os.environ.get("WAYBACK") == "1":
+        wayback(out)
     append(out / "probe.csv", ["ts", "source", "url", "status", "bytes"], PROBE)
     with (out / "log.txt").open("a", encoding="utf-8") as fh:
         fh.write(f"--- run {STAMP}\n" + "\n".join(LOG) + "\n")
