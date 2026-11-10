@@ -251,3 +251,15 @@ total_loss_pct = 0.50            # Alex (Nov 10 1 AM ET): test money, halt at -5
 cut_after_fills = 100            # a live market below -5c/contract after 100 real fills goes
 cut_below_ct = -0.05             # back to paper by itself (pre-registered, Nov 8)
 guard = true                     # pull bids when BTC/ETH/... spot jumps (Coinbase feed)
+
+[watch]
+# AI ops watcher (wxbot/watch.py), every 15 min on the 15-min bot's server (Nov 10, Alex has
+# ~$100 of Claude API credit). Haiku reads a health digest each run (~$1-2/month); Opus only on
+# escalations (max per day below, ~$0.05-0.10 each). It may pause the 15-min bot to paper on a
+# clear malfunction only; it never changes caps, stops, sizes or code, and never un-pauses.
+haiku_model = "claude-haiku-5-5"
+opus_model = "claude-opus-5-5"
+max_haiku_per_day = 120
+max_opus_per_day = 6
+realert_hours = 6
+auto_pause = true

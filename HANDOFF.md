@@ -270,6 +270,21 @@ IP without a token). It never places, changes or cancels anything and needs no s
 - Plan: LIVE from the start (Alex, Nov 8: no paper run) on BTC/silver/copper at 1 contract. Cut a market below
   -5c/contract after 100 fills. Expect +2-4c live (stale-quote risk vs fast pros), not +7c.
 
+## AI ops watcher (built Nov 10, 2026)
+
+- `wxbot/watch.py`, `python bot.py watch`, settings in config.toml `[watch]`. Runs every 15 min on the
+  15-min bot's server (systemd `kalshi-watch.timer`, installed by the hourly update via
+  `deploy/m15/install-watch.sh`). Needs `ANTHROPIC_API_KEY` in /etc/kalshi-m15/env
+  (`sudo bash /opt/kalshi-m15/app/deploy/m15/set-anthropic-key.sh`); without it, it does nothing.
+- Each run: fixed rules over both bots (15-min status/service/log, overfills, mode vs control,
+  exposure vs pool, scan gaps, failed scan/trade runs, stale balance) -> Claude Haiku verdict
+  (ok/watch/escalate) -> on escalate/critical, Claude Opus writes the ntfy push and a proposed fix
+  (max 6/day, same problem re-alerts after 6h). Cost ~$1-3/month on Alex's API credit.
+- Rails: may set `m15_control.json` mode to paper ONLY on a malfunction flag (overfill, mode
+  mismatch, exposure above pool) when Opus agrees or is unreachable. Never for losses, never
+  un-pauses, never changes caps/stops/sizes/code. Results: `m15/watch.json` on branch m15-data;
+  the scheduled Claude check-ins read it and turn proposed fixes into PRs.
+
 ## Expectations to keep honest
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong
 lock costs ~$3. Order books are thin (some ~5 contracts at the alert price),
