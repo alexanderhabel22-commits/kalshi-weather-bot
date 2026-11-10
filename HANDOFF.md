@@ -158,7 +158,7 @@ record earns it. Be candid about odds and risk; no hype.
   paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
   orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
-  GitHub variable TRADING_MODE=off.
+  GitHub variable TRADING_MODE=off. Since Nov 10 "off" also cancels the main bot's resting real-money orders (held positions stay).
 - **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
   and `[trading.locks] live = true`; every other strategy stays paper. The scan
   writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert

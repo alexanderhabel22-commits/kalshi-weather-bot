@@ -938,6 +938,31 @@ def _stops(mode: str, rows, state, t, now, midnight, today, client, cfg, http, d
     return False
 
 
+def _off_cancel(client, cfg, http, now, out) -> None:
+    """Kill switch: "off" must mean nothing more can fill. Book any fills Kalshi already
+    made on our resting real-money orders, then cancel what is still resting. Positions
+    already held are left alone (they settle on their own). Paper orders are untouched."""
+    rows = load()
+    if not any(r.get("mode") == "live" and r.get("status") == "resting" and r.get("order_id")
+               for r in rows):
+        return
+    client = client or KalshiClient.from_env(http)
+    if client is None:
+        log.warning("kill switch: resting live orders but no API key to cancel them")
+        return
+    try:
+        sync_live(client, rows, cfg, http, False, now)
+    except Exception as exc:
+        log.warning("kill switch: fill sync failed: %s", exc)
+    n = cancel_all(client, rows, "live")
+    save(rows)
+    if n:
+        out["stops"].append(f"KILL SWITCH: cancelled {n} resting live orders")
+        _alert(http, cfg, "Kill switch: resting orders cancelled",
+               f"Trading is off. Cancelled {n} resting real-money orders so nothing more can "
+               "fill. Positions already held stay until they settle.", False, 4, ["warning"])
+
+
 def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None = None,
         dry_run: bool = False) -> dict:
     global _BUNDLE
@@ -961,6 +986,7 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
             if st.get("mode") != "off":
                 st["mode"] = "off"
                 write_json(STATE, st)
+            _off_cancel(client, cfg, http, now, out)
         return out
     specs = {name: strategy_settings(cfg, name, t) for name in strategies()}
     modes = {n: m for n, sp in specs.items() if (m := strategy_mode(gmode, sp))}
