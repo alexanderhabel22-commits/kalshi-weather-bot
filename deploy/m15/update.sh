@@ -16,3 +16,5 @@ if [ "$before" != "$after" ] && sudo -u kalshi git -C "$APP" diff --name-only "$
   systemctl restart kalshi-m15
   echo "updated $before -> $after, restarted"
 fi
+# AI ops watcher timer (no-op when already installed; it does nothing without ANTHROPIC_API_KEY)
+bash "$APP/deploy/m15/install-watch.sh" || echo "watch install failed"

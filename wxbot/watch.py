@@ -1,0 +1,458 @@
+"""Always-on AI ops watcher ("operations guys", Alex Nov 8/10).
+
+Runs every 15 minutes on the 15-minute bot's server (systemd timer kalshi-watch).
+
+  1. Plain code gathers health facts about BOTH bots (15-min status on m15-data, the server's
+     own service + log, the Actions scan/trade runs, trader_state, bankroll) and applies fixed
+     rules (stale status, service down, overfills, mode mismatch, scan gaps, failures...).
+  2. Claude Haiku reads a short digest every run and says ok / watch / escalate (~$1-2/month).
+  3. On escalate (or a critical rule), Claude Opus diagnoses it and writes a plain message for
+     Alex (ntfy push) plus a proposed fix. Capped per day.
+  4. It may PAUSE the 15-minute bot (m15_control.json -> "paper") only on a clear malfunction
+     (a rule flagged as malfunction AND Opus agrees, or Opus unreachable). Never on mere losses:
+     the bot's own stops handle those.
+
+It never changes caps, stops, sizes or trading code, and never un-pauses. The scheduled Claude
+check-ins read m15/watch.json and turn proposed fixes into PRs.
+
+Without ANTHROPIC_API_KEY it does nothing (exits quietly).
+"""
+from __future__ import annotations
+
+import base64
+import csv
+import io
+import json
+import logging
+import os
+import subprocess
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from . import notify
+from .util import Config, Http, HttpError, read_json, write_json
+
+log = logging.getLogger("wxbot")
+
+ET = ZoneInfo("America/New_York")
+REPO = os.environ.get("GITHUB_REPO", "alexanderhabel22-commits/kalshi-weather-bot")
+API = f"https://api.github.com/repos/{REPO}"
+STATE = Path(os.environ.get("M15_DATA_DIR") or "data/m15") / "watch_state.json"
+
+DEFAULTS = {
+    "haiku_model": "claude-haiku-5-5",
+    "opus_model": "claude-opus-5-5",
+    "max_haiku_per_day": 120,
+    "max_opus_per_day": 6,
+    "realert_hours": 6,
+    "status_stale_min": 35,        # m15 uploads every 15 min
+    "scan_gap_min": 25,            # cron-job.org dispatches a scan every 5 min
+    "bankroll_stale_min": 40,
+    "fail_runs_1h": 2,
+    "max_filled_per_market": 2,    # contracts + extra_contracts (Nov 8 rule)
+    "exposure_slack": 1.15,        # live_exposure above pool_pct * bankroll * this = malfunction
+    "auto_pause": True,
+}
+
+HAIKU_SYSTEM = """You watch two small automated Kalshi trading bots for their owner, Alex.
+- MAIN BOT: GitHub Actions. A weather scan is dispatched every 5 minutes, then a trade run.
+  Strategies: Mentions NO, big-event favorites, Fed/CPI fade, weather day-before. Halts itself
+  at its stops (-10%/day pause, -25% total halt).
+- 15-MIN BOT: always-on server, bids the 71-95c favourite in 15-minute BTC and silver markets,
+  1 contract (2 at 80-87c). Paper markets also run for data. Its own stops: rolling 24h -35%,
+  total -50%. A losing window costs ~$0.75-1.60; a winning one makes ~$0.05-0.45. Losing days
+  happen and are NOT a malfunction while within the stops.
+You get a digest with health facts and rule flags. Decide:
+- ok: healthy (losses inside the stops are fine).
+- watch: something odd but not urgent; note it.
+- escalate: a likely malfunction or something Alex or an engineer must look at now (bot down or
+  stuck, orders bigger than allowed, mode not matching its control, scans stopped, repeated
+  failures/rejects, money moving in ways the rules don't explain).
+Be calm and conservative: do not escalate on ordinary P&L swings. One or two short sentences."""
+
+OPUS_SYSTEM = """You are the on-call engineer for two small automated Kalshi trading bots owned by
+Alex (not a coder; reads on his iPhone; wants plain words and Eastern times). A cheaper watcher
+escalated the digest below. Rails you must respect: you may recommend pausing the 15-minute bot
+(it switches to paper, logging continues) ONLY for a clear malfunction (wrong order sizes, mode
+not matching its control, stuck/hung bot that still holds orders, exposure above its pool,
+runaway errors). Never pause for ordinary losses: the bots' own stops handle those. You cannot
+change caps, stops, sizes or code; propose fixes for an engineer instead.
+Return: severity ok (false alarm, no push), alert (push Alex), or pause_m15; a short title; a
+message for Alex (max 60 words, plain English, ET times, say what he should do, or that nothing
+is needed from him); your diagnosis; a concrete proposed fix (files/functions if you can tell);
+needs_alex true only if he personally must act (deposit, key, server console, approval)."""
+
+HAIKU_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "level": {"type": "string", "enum": ["ok", "watch", "escalate"]},
+        "summary": {"type": "string"},
+    },
+    "required": ["level", "summary"],
+    "additionalProperties": False,
+}
+OPUS_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "severity": {"type": "string", "enum": ["ok", "alert", "pause_m15"]},
+        "title": {"type": "string"},
+        "message": {"type": "string"},
+        "diagnosis": {"type": "string"},
+        "proposed_fix": {"type": "string"},
+        "needs_alex": {"type": "boolean"},
+    },
+    "required": ["severity", "title", "message", "diagnosis", "proposed_fix", "needs_alex"],
+    "additionalProperties": False,
+}
+
+
+def settings(cfg: Config) -> dict:
+    s = dict(DEFAULTS)
+    s.update(cfg.raw.get("watch", {}) if hasattr(cfg, "raw") else {})
+    return s
+
+
+def et(ts: float) -> str:
+    d = datetime.fromtimestamp(ts, ET)
+    return f"{(d.hour % 12) or 12}:{d:%M} {'AM' if d.hour < 12 else 'PM'} ET"
+
+
+def _ts(iso: str | None) -> float | None:
+    if not iso:
+        return None
+    try:
+        return datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp()
+    except ValueError:
+        return None
+
+
+# ---------------------------------------------------------------- gathering
+
+class GitHub:
+    def __init__(self, http: Http, token: str = ""):
+        self.http = http
+        self.hdr = {"Accept": "application/vnd.github+json"}
+        if token:
+            self.hdr["Authorization"] = f"Bearer {token}"
+
+    def text(self, path: str, ref: str = "main") -> str | None:
+        try:
+            js = self.http.get_json(f"{API}/contents/{path}", params={"ref": ref}, headers=self.hdr)
+        except HttpError as exc:
+            if exc.status == 404:
+                return None
+            raise
+        return base64.b64decode(js.get("content", "")).decode()
+
+    def json(self, path: str, ref: str = "main"):
+        t = self.text(path, ref)
+        return json.loads(t) if t else None
+
+    def runs(self) -> list:
+        js = self.http.get_json(f"{API}/actions/runs", params={"per_page": 40}, headers=self.hdr)
+        return js.get("workflow_runs", [])
+
+    def put(self, path: str, text: str, message: str, branch: str = "main") -> None:
+        url = f"{API}/contents/{path}"
+        sha = None
+        try:
+            sha = self.http.get_json(url, params={"ref": branch}, headers=self.hdr).get("sha")
+        except HttpError as exc:
+            if exc.status != 404:
+                raise
+        body = {"message": message, "branch": branch,
+                "content": base64.b64encode(text.encode()).decode()}
+        if sha:
+            body["sha"] = sha
+        self.http._request("PUT", url, json=body, headers=self.hdr)
+
+
+def _sh(cmd: list, runner=subprocess.run) -> str:
+    try:
+        return runner(cmd, capture_output=True, text=True, timeout=20).stdout.strip()
+    except Exception as exc:          # not on the server (tests, laptop)
+        return f"unavailable: {exc}"
+
+
+def gather(gh: GitHub, now: float, runner=subprocess.run) -> dict:
+    f: dict = {"now": now, "errors": []}
+
+    def grab(key, fn):
+        try:
+            f[key] = fn()
+        except Exception as exc:
+            f[key] = None
+            f["errors"].append(f"{key}: {exc}")
+
+    grab("status", lambda: gh.json("m15/status.json", "m15-data"))
+    day = datetime.fromtimestamp(now, ET).date().isoformat()
+    grab("markets", lambda: list(csv.DictReader(io.StringIO(
+        gh.text(f"m15/markets-{day}.csv", "m15-data") or ""))))
+    grab("control", lambda: gh.json("m15_control.json"))
+    grab("trader", lambda: gh.json("data/trader_state.json"))
+    grab("bankroll", lambda: gh.json("data/bankroll.json"))
+    grab("runs", gh.runs)
+    f["service"] = _sh(["systemctl", "is-active", "kalshi-m15"], runner)
+    f["journal"] = _sh(["journalctl", "-u", "kalshi-m15", "--since", "-20 min", "-p", "warning",
+                        "--no-pager", "-o", "cat", "-n", "40"], runner)
+    return f
+
+
+# ---------------------------------------------------------------- rules
+
+def rules(f: dict, s: dict, m15cfg: dict | None = None) -> list[dict]:
+    """Fixed checks. Each flag: code, sev (info|warn|critical), malfunction (may justify a pause)."""
+    out = []
+    now = f["now"]
+
+    def flag(code, sev, text, malfunction=False):
+        out.append({"code": code, "sev": sev, "text": text, "malfunction": malfunction})
+
+    st = f.get("status") or {}
+    ctl = ((f.get("control") or {}).get("mode") or "").lower()
+    svc = str(f.get("service") or "")
+    if svc and svc != "active" and not svc.startswith("unavailable"):
+        flag("M15_SERVICE_DOWN", "critical", f"kalshi-m15 service is '{f['service']}'")
+    at = _ts(st.get("at"))
+    if at is None:
+        flag("M15_STATUS_MISSING", "critical", "no 15-min status.json")
+    elif now - at > s["status_stale_min"] * 60:
+        flag("M15_STATUS_STALE", "critical", f"15-min status last updated {int((now - at) / 60)} min ago")
+    if st.get("errors"):
+        flag("M15_ERRORS", "warn", f"15-min bot error count {st['errors']}")
+    if st.get("halted"):
+        flag("M15_HALTED", "info", f"15-min bot halted (total-loss stop): {st['halted']}")
+    if st.get("roll_stop") or st.get("day_stop"):
+        flag("M15_STOPPED", "info", f"15-min loss stop active: {st.get('roll_stop') or st.get('day_stop')}")
+    if st.get("fund_error"):
+        flag("M15_FUND", "warn", f"15-min funding error: {st['fund_error']}")
+    rej = st.get("last_reject") or {}
+    rej_at = rej.get("at") if isinstance(rej, dict) else None
+    if (rej and "post only cross" not in str(rej)
+            and (not isinstance(rej_at, (int, float)) or now - rej_at < 3600)):
+        flag("M15_REJECT", "warn", f"15-min order reject: {str(rej)[:160]}")
+    seen = (st.get("control") or "").lower()
+    if seen in ("paper", "off") and st.get("mode") == "live":
+        flag("M15_MODE_MISMATCH", "critical",
+             f"the bot read control={seen} but still reports live", malfunction=True)
+    elif ctl and seen and ctl != seen:
+        flag("M15_CONTROL_LAG", "info", f"control file says {ctl}, bot last read {seen} (normal for ~20 min after a change)")
+    cap = s["max_filled_per_market"]
+    for r in f.get("markets") or []:
+        try:
+            filled = float(r.get("filled") or 0)
+        except ValueError:
+            continue
+        close = _ts(r.get("close"))
+        if close is not None and now - close > 3600:      # only fresh windows (old ones were already seen)
+            continue
+        if r.get("mode") == "live" and filled > cap:
+            flag("M15_OVERFILL", "critical",
+                 f"{r.get('ticker')} filled {filled:g} contracts (max {cap})", malfunction=True)
+    br = (f.get("bankroll") or {}).get("total")
+    pool = (m15cfg or {}).get("pool_pct", 0.25)
+    exp = st.get("live_exposure") or 0
+    if br and exp > pool * br * s["exposure_slack"]:
+        flag("M15_EXPOSURE", "critical",
+             f"15-min live exposure ${exp:.2f} above its pool (${pool * br:.2f})", malfunction=True)
+    if st.get("spot_ok") is False:
+        flag("M15_SPOT", "warn", "Coinbase spot feed down (jump guard blind)")
+
+    # main bot
+    runs = f.get("runs") or []
+    scans = [r for r in runs if r.get("name") == "weather-scan"]
+    if runs:
+        last = _ts(scans[0]["created_at"]) if scans else None
+        if last is None or now - last > s["scan_gap_min"] * 60:
+            mins = "never" if last is None else f"{int((now - last) / 60)} min ago"
+            flag("SCAN_GAP", "critical", f"last weather scan {mins} (cron-job.org timer?)")
+        bad = [r for r in runs if r.get("name") in ("weather-scan", "trade")
+               and r.get("conclusion") in ("failure", "timed_out")
+               and (_ts(r.get("created_at")) or 0) > now - 3600]
+        if len(bad) >= s["fail_runs_1h"]:
+            flag("ACTIONS_FAIL", "warn", f"{len(bad)} failed runs in the last hour: "
+                 + ", ".join(sorted({r.get('name', '?') for r in bad})))
+    tr = f.get("trader") or {}
+    if tr.get("halted"):
+        flag("MAIN_HALTED", "info", f"main bot halted: {str(tr['halted'])[:120]}")
+    bat = _ts((f.get("bankroll") or {}).get("at"))
+    if bat and now - bat > s["bankroll_stale_min"] * 60:
+        flag("BANKROLL_STALE", "warn", f"balance last read {int((now - bat) / 60)} min ago")
+    j = f.get("journal") or ""
+    if "Traceback" in j or j.count("ERROR") >= 3:
+        flag("M15_LOG_ERRORS", "warn", "errors in the 15-min bot log (last 20 min)")
+    for e in f.get("errors") or []:
+        flag("WATCH_FETCH", "warn", f"watcher could not read {e[:120]}")
+    return out
+
+
+# ---------------------------------------------------------------- digest
+
+def digest(f: dict, flags: list[dict]) -> str:
+    now = f["now"]
+    st = f.get("status") or {}
+    pnl = st.get("pnl") or {}
+    lines = [f"Time: {et(now)} {datetime.fromtimestamp(now, ET):%a %b %d}"]
+    lines.append(f"15-MIN: service={f.get('service')} mode={st.get('mode')} control="
+                 f"{(f.get('control') or {}).get('mode')} status_at={st.get('at')} "
+                 f"errors={st.get('errors')} halted={st.get('halted')} stop="
+                 f"{st.get('roll_stop') or st.get('day_stop')} exposure=${st.get('live_exposure')} "
+                 f"pnl_24h=${st.get('pnl_24h')} live_total=${pnl.get('live_total')}")
+    days = pnl.get("live_days") or {}
+    if days:
+        lines.append("15-MIN live P&L by day: " + ", ".join(f"{k} ${v:.2f}" for k, v in list(days.items())[-4:]))
+    for name, ser in (st.get("series") or {}).items():
+        lines.append(f"  {name}: fills={ser.get('fills')} pnl=${ser.get('pnl')}"
+                     + (f" decay_alert={ser.get('decay_alerted')}" if ser.get("decay_alerted") else ""))
+    live = [r for r in (f.get("markets") or []) if r.get("mode") == "live" and r.get("filled") not in ("", "0", "0.0", None)]
+    if live:
+        lines.append("Last live fills today (ticker filled cost pnl):")
+        for r in live[-8:]:
+            lines.append(f"  {r.get('ticker')} {r.get('filled')} {r.get('cost')} {r.get('pnl')}")
+    tr = f.get("trader") or {}
+    br = f.get("bankroll") or {}
+    lines.append(f"MAIN: mode={tr.get('mode')} halted={bool(tr.get('halted'))} bankroll=${br.get('total')} "
+                 f"cash=${br.get('cash')} at={br.get('at')}")
+    runs = f.get("runs") or []
+    if runs:
+        lines.append("Recent Actions runs: " + "; ".join(
+            f"{r.get('name')} {r.get('conclusion') or r.get('status')} {r.get('created_at', '')[11:16]}Z"
+            for r in runs[:8]))
+    j = (f.get("journal") or "").strip()
+    if j:
+        lines.append("15-min log warnings (last 20 min):\n" + "\n".join(j.splitlines()[-12:]))
+    lines.append("RULE FLAGS: " + ("none" if not flags else "; ".join(
+        f"[{x['sev']}{', malfunction' if x['malfunction'] else ''}] {x['code']}: {x['text']}" for x in flags)))
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------- Claude
+
+def _ask(client, model: str, system: str, text: str, schema: dict, effort: str, max_tokens: int) -> tuple[dict, dict]:
+    r = client.messages.create(
+        model=model, max_tokens=max_tokens, system=system,
+        messages=[{"role": "user", "content": text}],
+        output_config={"effort": effort, "format": {"type": "json_schema", "schema": schema}},
+    )
+    usage = {"in": getattr(r.usage, "input_tokens", 0), "out": getattr(r.usage, "output_tokens", 0)}
+    if r.stop_reason == "refusal":
+        raise RuntimeError("model refused")
+    body = next(b.text for b in r.content if b.type == "text")
+    return json.loads(body), usage
+
+
+def make_client():
+    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if not key:
+        return None
+    import anthropic
+    return anthropic.Anthropic(api_key=key, max_retries=3, timeout=120)
+
+
+# ---------------------------------------------------------------- actions
+
+def pause_m15(gh: GitHub, reason: str, now: float) -> bool:
+    try:
+        cur = gh.json("m15_control.json") or {}
+        if (cur.get("mode") or "").lower() in ("paper", "off"):
+            return True
+        cur["mode"] = "paper"
+        cur["paused_by"] = f"watcher {datetime.fromtimestamp(now, timezone.utc):%Y-%m-%dT%H:%MZ}: {reason[:200]}"
+        gh.put("m15_control.json", json.dumps(cur, indent=1) + "\n",
+               "watch: pause 15-min bot to paper (malfunction) [skip ci]")
+        return True
+    except Exception as exc:
+        log.error("pause failed: %s", exc)
+        return False
+
+
+def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = None,
+        now: float | None = None, runner=subprocess.run, state_path: Path = STATE) -> dict:
+    s = settings(cfg)
+    client = client if client is not None else make_client()
+    if client is None:
+        print("watch: no ANTHROPIC_API_KEY, nothing to do")
+        return {"skipped": "no key"}
+    http = http or Http(cfg.user_agent)
+    gh = gh or GitHub(http, os.environ.get("GITHUB_TOKEN", "").strip())
+    now = now or time.time()
+    state = read_json(state_path, {}) or {}
+    day = datetime.fromtimestamp(now, ET).date().isoformat()
+    if state.get("day") != day:
+        state.update({"day": day, "haiku": 0, "opus": 0, "tokens": {"haiku_in": 0, "haiku_out": 0,
+                                                                     "opus_in": 0, "opus_out": 0}})
+    f = gather(gh, now, runner)
+    flags = rules(f, s, cfg.raw.get("m15", {}) if hasattr(cfg, "raw") else {})
+    text = digest(f, flags)
+    rec = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
+           "flags": flags, "haiku": None, "opus": None, "action": None}
+
+    level = "ok"
+    if state["haiku"] < s["max_haiku_per_day"]:
+        try:
+            h, u = _ask(client, s["haiku_model"], HAIKU_SYSTEM, text, HAIKU_SCHEMA, "low", 2000)
+            state["haiku"] += 1
+            state["tokens"]["haiku_in"] += u["in"]
+            state["tokens"]["haiku_out"] += u["out"]
+            rec["haiku"] = h
+            level = h.get("level", "ok")
+        except Exception as exc:
+            rec["haiku"] = {"error": str(exc)[:200]}
+            level = "escalate" if any(x["sev"] == "critical" for x in flags) else "watch"
+    critical = [x for x in flags if x["sev"] == "critical"]
+    malfunction = [x for x in flags if x["malfunction"]]
+    key = ",".join(sorted({x["code"] for x in critical})) or (level if level == "escalate" else "")
+
+    if (level == "escalate" or critical) and key:
+        last = (state.get("alerted") or {}).get(key, 0)
+        fresh = now - last > s["realert_hours"] * 3600
+        o = None
+        if fresh and state["opus"] < s["max_opus_per_day"]:
+            try:
+                o, u = _ask(client, s["opus_model"], OPUS_SYSTEM,
+                            text + f"\n\nWatcher's note: {(rec['haiku'] or {}).get('summary', '')}",
+                            OPUS_SCHEMA, "medium", 8000)
+                state["opus"] += 1
+                state["tokens"]["opus_in"] += u["in"]
+                state["tokens"]["opus_out"] += u["out"]
+                rec["opus"] = o
+            except Exception as exc:
+                rec["opus"] = {"error": str(exc)[:200]}
+        if fresh:
+            sev = (o or {}).get("severity", "alert" if critical else "ok")
+            paused = False
+            if malfunction and s["auto_pause"] and (o is None or sev == "pause_m15"):
+                paused = pause_m15(gh, "; ".join(x["text"] for x in malfunction), now)
+                rec["action"] = "paused_m15" if paused else "pause_failed"
+            if sev != "ok" or paused:
+                title = "🤖 Ops: " + ((o or {}).get("title") or ", ".join(x["code"] for x in critical) or "check")
+                body = (o or {}).get("message") or "\n".join(x["text"] for x in critical)
+                if paused:
+                    body = "PAUSED the 15-min bot to paper (logging continues). " + body
+                elif rec["action"] == "pause_failed":
+                    body = "Tried to pause the 15-min bot and FAILED. " + body
+                notify.send(http, cfg, title, body + f"\n({et(now)})", priority=5 if paused else 4,
+                            tags=["robot"])
+            state.setdefault("alerted", {})[key] = now
+    state["last"] = rec
+    log_ = state.setdefault("log", [])
+    if rec["opus"] or rec["action"] or (rec["haiku"] or {}).get("level") in ("watch", "escalate"):
+        log_.append(rec)
+        state["log"] = log_[-40:]
+    write_json(state_path, state)
+    try:
+        out = {"last": rec, "today": {k: state.get(k) for k in ("day", "haiku", "opus", "tokens")},
+               "log": state["log"], "digest": text}
+        gh.put("m15/watch.json", json.dumps(out, indent=1, default=str),
+               "m15: watch.json [skip ci]", branch="m15-data")
+    except Exception as exc:
+        log.warning("watch upload failed: %s", exc)
+    print(f"watch {rec['at']}: level={level} flags={[x['code'] for x in flags]} action={rec['action']}")
+    return rec
+
+
+def main(cfg: Config) -> int:
+    run(cfg)
+    return 0
