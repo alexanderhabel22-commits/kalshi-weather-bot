@@ -399,9 +399,9 @@ function m15HTML(full){
   const tbl = rows => { const by = {}; for (const r of rows){ const k = String(r.series || "").replace(/^KX|15M$/g, ""), b = by[k] = by[k] || {q:0, f:0, n:0, pnl:0}; b.q++; if (num(r.filled)){ b.f++; b.n += num(r.filled); b.pnl += num(r.pnl); } }
     const ks = Object.keys(by).sort((x, y) => by[y].n - by[x].n);
     return ks.length ? `<div class="list">` + ks.map(k => { const b = by[k], c = b.n ? 100 * b.pnl / b.n : 0;
-      return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:13px">${esc(k)}</div><div class="s">${b.f}/${b.q} markets filled · ${b.n} contracts</div></div>
+      return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:13px">${esc(k)}</div><div class="s">${b.f}/${b.q} markets filled · ${+b.n.toFixed(2)} contracts</div></div>
         <div class="r"><span class="${cls(c)}">${b.n ? cents(c) + "/ct" : "—"}</span><small class="${cls(b.pnl)}">${money(b.pnl)}</small></div></div>`; }).join("") + `</div>` : `<div class="mute" style="font-size:12px">No graded markets yet.</div>`; };
-  const lr = M.rows.filter(r => r.mode === "live");   // real money only (Alex, Nov 8)
+  const lr = M.rows.filter(r => r.mode === "live" && m15Keep(r));   // real money only (Alex, Nov 8)
   h += `<div class="lbl" style="margin-top:12px">By market · last 7 days</div>` + tbl(lr)
     + `<div class="mute" style="font-size:11px;margin-top:6px">Backtest: BTC +7¢, silver/copper +5¢ per contract; expect less live. A market is cut if it's below −5¢/ct after 100 fills.</div>`;
   return h + `</div>`;
@@ -439,10 +439,21 @@ function m15IconInline(n){ return `<i style="width:14px;height:14px;border-radiu
 function m15Icon(n){ return `<svg viewBox="0 0 12 12" aria-hidden="true">${M15I[n] || `<text x="6" y="9.4" font-size="9" font-weight="800" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" fill="#fff">${esc(String(n || "?")[0])}</text>`}</svg>`; }
 const M15C = {BTC:"#f7931a", SILVER:"#a8b2bd", COPPER:"#b4532a", GOLD:"#ffd700", PALLADIUM:"#a78bfa", PLATINUM:"#7dd3fc", WTI:"#14b8a6", BRENT:"#8b5a2b", NATGAS:"#3b82f6"};   // match the metal/coin (Alex, Nov 9); palladium/platinum are silver-white metals, so violet/ice blue; oil = petrol teal (WTI) and crude brown (Brent)
 const darkC = c => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m) return false; const v = parseInt(m[1], 16); return (0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255)) < 70; };   // too dark to see on the dark page: draw a light outline under it
+// "Live only" switch (Alex, Nov 10): hide markets that are on paper now. The live list comes from
+// [m15] live_series in config.toml, minus any market the server auto-cut (status.json "cut"). Default on.
+function m15LiveSeries(){ const ls_ = ((S.data.config || {}).m15 || {}).live_series, cut = ((S.m15 || {}).status || {}).cut || {};
+  return Array.isArray(ls_) ? new Set(ls_.filter(x => !(x in cut))) : null; }
+const m15OnlyLive = () => ls.get("m15Only") !== "0" && !!m15LiveSeries();
+const m15Keep = r => !m15OnlyLive() || m15LiveSeries().has(String(r.series || r.ticker || "").split("-")[0]);
+function m15OnlyHTML(){ const L = m15LiveSeries(); if (!L) return "";
+  const names = [...L].map(x => x.replace(/^KX|15M$/g, "")).map(n => n.length <= 3 ? n : n.charAt(0) + n.slice(1).toLowerCase());
+  return `<label id="m15Only" style="display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:13px;cursor:pointer">
+    <input type="checkbox" ${m15OnlyLive() ? "checked" : ""} style="width:18px;height:18px;accent-color:#f5b335;margin:0">
+    <span><b>Live markets only</b> <span class="mute">· ${esc(names.join(", ") || "none")} on real money now</span></span></label>`; }
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
 function m15Fills(){
   const M = S.m15; if (!M) return [];
-  return M.rows.filter(r => r.mode === "live" && num(r.filled) > 0 && (r.won === "1" || r.won === "0"))
+  return M.rows.filter(r => r.mode === "live" && m15Keep(r) && num(r.filled) > 0 && (r.won === "1" || r.won === "0"))
     .map(r => { const n = num(r.filled), cost = num(r.cost), fee = num(r.fee);
       return {r, name:m15Name(r), n, px:cost / n, be:(cost + fee) / n, pnl:num(r.pnl), won:r.won === "1", t:+pdate(r.close) || 0, ttc:num(r.fill_ttc_s, null), ct:num(r.contracts, 1)}; })
     .filter(f => f.t).sort((a, b) => a.t - b.t);
@@ -465,7 +476,7 @@ function m15ChartsHTML(fs){
   let h = `<h2>How it's doing <span class="sub">real money · ${fs.length} graded fills</span></h2><div class="card">
     <div class="grid g3">
       <div><div class="lbl">Win rate</div><div class="val ${win >= be ? "pos" : "neg"}">${pct(win)}</div><small class="mute">${wins}-${fs.length - wins} · need ${pct(be)}</small></div>
-      <div><div class="lbl">Per contract</div><div class="val ${cls(pnl)}">${cents(100 * pnl / n)}</div><small class="mute">after fees · ${n} contracts</small></div>
+      <div><div class="lbl">Per contract</div><div class="val ${cls(pnl)}">${cents(100 * pnl / n)}</div><small class="mute">after fees · ${+n.toFixed(2)} contracts</small></div>
       <div><div class="lbl">Fills today</div><div class="val">${byD[today] || 0}</div><small class="mute">since midnight ET${avgD != null && full.length >= 2 ? ` · avg ${Math.round(avgD)}/day` : ""}</small></div>
       <div><div class="lbl">Streak now</div><div class="val ${curW ? "pos" : "neg"}">${cur} ${curW ? "W" : "L"}</div></div>
       <div><div class="lbl">Best run</div><div class="val pos">${bestW} W</div></div>
@@ -518,7 +529,7 @@ function drawM15(){
     let d = ""; if (sm && pts.length > 2) d = smoothPath(pts.map(p => [X(p.x), Y(p.y)])); else pts.forEach((p, i) => { d += i ? (step ? `H${X(p.x).toFixed(1)}V${Y(p.y).toFixed(1)}` : `L${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`) : `M${X(p.x).toFixed(1)},${Y(p.y).toFixed(1)}`; });
     return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:${H}px;display:block"><line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3a4466" stroke-dasharray="2 2" vector-effect="non-scaling-stroke"/>${darkC(c) ? `<path d="${d}" fill="none" stroke="#cbd5e1" stroke-width="4.5" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>` : ""}<path d="${d}" fill="none" stroke="${c}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round"/></svg>`; };
   const draw = () => { const n = byN(), r = rng();
-    $("#m15Head").innerHTML = `<b class="${cls(ser[0].tot)}">${money(ser[0].tot)}</b><span>${k} contracts · ${sel.length} fills ${r === "ALL" ? "since " + esc(fday(new Date(fs[0].t))) : RL[r]}${k ? ` · ${cents(100 * ser[0].tot / k)}/ct` : ""}</span>`;
+    $("#m15Head").innerHTML = `<b class="${cls(ser[0].tot)}">${money(ser[0].tot)}</b><span>${+k.toFixed(2)} contracts · ${sel.length} fills ${r === "ALL" ? "since " + esc(fday(new Date(fs[0].t))) : RL[r]}${k ? ` · ${cents(100 * ser[0].tot / k)}/ct` : ""}</span>`;
     $("#m15Leg").innerHTML = ser.map(x => `<span><i style="background:${x.c}"></i>${esc(x.name)} <b class="${x.pace ? "mute" : cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
     if (!sel.length) { $("#m15Cum").innerHTML = `<div class="mute" style="padding:40px 0;text-align:center">No fills in the ${RL[r]}</div>`; $("#m15Mk").innerHTML = ""; return; }
     const rf = sel.find(f => f.t >= RULES), rv = rf && rf !== sel[0] ? [{x:n ? rf.k - rf.n : RULES, label:"new rules"}] : [];
@@ -531,7 +542,7 @@ function drawM15(){
       // pad the market's line to the full x range so every sparkline shares the same time/contract axis
       if (c.pts.at(-1).x < x1) c.pts.push({x:x1, y:c.tot});
       const smk = (ls.get("m15S") || "s") === "s";
-      return `<div class="mkrow"><div><i style="background:${c.c}"></i><b>${esc(nm)}</b><span class="mute">${ct} ct</span></div>${spark(smk ? thinPts(c.pts, 12) : c.pts, c.c, x0, x1, !n && !smk, smk)}<div style="text-align:right"><b class="${cls(c.tot)}">${money(c.tot)}</b><span class="${cls(c.tot)}">${cents(100 * c.tot / ct)}/ct</span></div></div>`; }).join(""); };
+      return `<div class="mkrow"><div><i style="background:${c.c}"></i><b>${esc(nm)}</b><span class="mute">${+ct.toFixed(2)} ct</span></div>${spark(smk ? thinPts(c.pts, 12) : c.pts, c.c, x0, x1, !n && !smk, smk)}<div style="text-align:right"><b class="${cls(c.tot)}">${money(c.tot)}</b><span class="${cls(c.tot)}">${cents(100 * c.tot / ct)}/ct</span></div></div>`; }).join(""); };
   ser = build();
   $("#m15X").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15X", b.dataset.x); $("#m15X").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); ser = build(); draw(); };
   $("#m15L").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("m15L", b.dataset.l); $("#m15L").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); ser = build(); draw(); };
@@ -561,9 +572,9 @@ function drawM15(){
   bars($("#m15Hr"), m15Group(fs, hk, ["00","03","06","09","12","15","18","21"]), k => { const a = +k, f = x => x === 0 ? "12a" : x < 12 ? x + "a" : x === 12 ? "12p" : (x - 12) + "p"; return f(a); });
 }
 function m15Page(){
-  let h = liveAcctHTML() + m15HTML(true);
+  let h = liveAcctHTML() + m15OnlyHTML() + m15HTML(true);
   const M = S.m15;
-  const live = M ? M.rows.filter(r => r.mode === "live") : [];
+  const live = M ? M.rows.filter(r => r.mode === "live" && m15Keep(r)) : [];
   if (!live.length) return h;
   h += m15ChartsHTML(m15Fills());
   const rows = live.slice().sort((a, b) => String(b.close).localeCompare(String(a.close)) || (a.mode === "live" ? -1 : 1));
@@ -693,7 +704,7 @@ async function loadDayOpen(){
 function liveFillsHTML(only15){
   if (!liveOK()) return "";
   const titles = {}; for (const r of (S.data.orders || [])) if (r.ticker && r.title) titles[r.ticker] = r.title;
-  const fs = S.live.fills.filter(f => /15M-/.test(f.ticker || "") === !!only15).slice(0, only15 ? 8 : 5);
+  const fs = S.live.fills.filter(f => /15M-/.test(f.ticker || "") === !!only15 && (!only15 || m15Keep(f))).slice(0, only15 ? 8 : 5);
   const name = t => only15 ? String(t).split("-")[0].replace(/^KX|15M$/g, "") + " · " + String(t).split("-")[1].slice(-4).replace(/(\d\d)(\d\d)/, "$1:$2") + " ET window"
     : (titles[t] || t);
   return `<h2>Latest fills <span class="sub">live from Kalshi</span></h2><div class="card list">` + (fs.length ? fs.map(f => {
@@ -1179,6 +1190,7 @@ function renderOverview(){
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
     drawM15();
+    if ($("#m15Only")) $("#m15Only").querySelector("input").onchange = e => { ls.set("m15Only", e.target.checked ? "1" : "0"); renderOverview(); };
     $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
     return;
   }
