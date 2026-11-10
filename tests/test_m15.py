@@ -120,9 +120,9 @@ def test_paper_fill_and_grade(monkeypatch):
     path = m15.M15_DIR / f"markets-{b.day(CLOSE)}.csv"
     rows = list(csv.DictReader(open(path)))
     assert len(rows) == 1 and rows[0]["won"] == "1" and rows[0]["mode"] == "paper"
-    assert float(rows[0]["pnl"]) == pytest.approx(0.20 - 0.01)    # maker fee rounds up to 1c
+    assert float(rows[0]["pnl"]) == pytest.approx(0.20)    # no fee: Kalshi charges none here
     assert rows[0]["fills"] == "1@0.80"                           # each fill's own price
-    assert b.state["pnl"]["paper_total"] == pytest.approx(0.19)
+    assert b.state["pnl"]["paper_total"] == pytest.approx(0.20)
 
 
 def test_requotes_up_when_favourite_firms(monkeypatch):
@@ -161,8 +161,8 @@ def test_live_order_kill_switch_and_pool(monkeypatch):
     w.result = "no"
     clk.t = CLOSE + 30
     b.step()
-    assert m["graded"] and m["pnl"] == pytest.approx(-0.81)
-    assert b.state["pnl"]["live_total"] == pytest.approx(-0.81)
+    assert m["graded"] and m["pnl"] == pytest.approx(-0.80)
+    assert b.state["pnl"]["live_total"] == pytest.approx(-0.80)
 
 
 def test_live_cancels_on_switch_to_paper(monkeypatch):
@@ -788,3 +788,84 @@ def test_record_upgrades_an_old_header(monkeypatch):
     assert list(rows[0].keys()) == m15.COLS
     assert rows[0]["ticker"] == "OLD-1" and rows[0]["fills"] == ""
     assert rows[1]["ticker"] == TK and rows[1]["fills"] == "1@0.77;1@0.85"
+
+
+
+class FillClient(Client):
+    """Client that also answers Kalshi's fills and positions endpoints."""
+    def __init__(self):
+        super().__init__()
+        self.kfills, self.held = [], 0.0
+
+    def fills(self, ticker=None, min_ts=None, max_pages=50):
+        return [f for f in self.kfills if ticker is None or f["ticker"] == ticker]
+
+    def position(self, ticker):
+        return self.held
+
+
+def test_fill_totals_reads_kalshi_fills():
+    fs = [{"ticker": TK, "side": "no", "count_fp": "2.00", "no_price_dollars": "0.8300", "fee_cost": "0.0000"},
+          {"ticker": TK, "side": "no", "count": 2, "no_price": 82},
+          {"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.9", "fee_cost": "0.01"}]
+    n, cost, fee = m15.kalshi_api.fill_totals(fs)[TK]
+    assert n == 5 and cost == pytest.approx(1.66 + 1.64 + 0.90) and fee == pytest.approx(0.01)
+
+
+def test_grading_uses_kalshi_fills(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    cl = FillClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 10
+    b.step()
+    m = b.state["markets"][TK]
+    assert m["filled"] == 1
+    # Kalshi really filled 2 (a fill the bot never saw)
+    cl.kfills = [{"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.80"},
+                 {"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.81"}]
+    w.result = "yes"
+    clk.t = CLOSE + 30
+    b.step()
+    assert m["filled"] == 2 and m["pnl"] == pytest.approx(2 - 1.61)
+    assert b.state["trued"] == 1
+
+
+def test_position_check_books_unseen_fill(monkeypatch):
+    World(monkeypatch, yb=0.82, ya=0.84)
+    clk = Clock()
+    cl = FillClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    cl.held = 2.0                                  # Kalshi says we already hold 2
+    b.step()
+    m = b.state["markets"][TK]
+    assert cl.placed == [] and m["filled"] == 2 and m["why"] == "caught unbooked fill"
+
+
+def test_history_true_up_rewrites_csv_and_state(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    cl = FillClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    path = m15.M15_DIR / "markets-2026-11-09.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    row = {k: "" for k in m15.COLS}
+    row.update(ticker=TK, series="KXBTC15M", mode="live", close=iso(CLOSE), fav_side="yes",
+               quotes=1, filled=2, cost=1.60, fee=0.03, result="no", won=0, pnl=-1.63)
+    with open(path, "w", newline="") as f:
+        wr = csv.DictWriter(f, fieldnames=m15.COLS)
+        wr.writeheader()
+        wr.writerow(row)
+    b.state["pnl"]["live_total"] = -1.63
+    cl.kfills = [{"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.80"}]
+    sent = {}
+    b.uploader = lambda files: sent.update(files)
+    b.retrue_history()
+    r = list(csv.DictReader(open(path)))[0]
+    assert r["filled"] == "1" and float(r["pnl"]) == pytest.approx(-0.80)
+    assert b.state["pnl"]["live_total"] == pytest.approx(-0.80)
+    assert b.state["series"]["KXBTC15M"]["fills"] == 1
+    assert path.name in sent and b.state["retrued"] == 1
+    b.retrue_history()                              # runs once only

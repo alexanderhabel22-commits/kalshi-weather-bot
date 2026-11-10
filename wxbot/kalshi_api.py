@@ -118,6 +118,35 @@ class KalshiClient:
             "source": "event_contract", "destination": "event_contract", "amount": amt,
             "source_exchange_shard": int(src), "destination_exchange_shard": int(dst)})
 
+    def fills(self, ticker: str | None = None, min_ts: int | None = None,
+              max_pages: int = 50) -> list:
+        """Every fill on the account (optionally one market / since min_ts), all pages."""
+        out, cursor = [], None
+        for _ in range(max_pages):
+            params = {"limit": 200}
+            if ticker:
+                params["ticker"] = ticker
+            if min_ts:
+                params["min_ts"] = int(min_ts)
+            if cursor:
+                params["cursor"] = cursor
+            js = self._get("/portfolio/fills", params)
+            out.extend(js.get("fills") or [])
+            cursor = js.get("cursor")
+            if not cursor:
+                return out
+        raise HttpError(0, BASE + "/portfolio/fills", "fills listing did not finish")
+
+    def position(self, ticker: str) -> float:
+        """Contracts held in one market (either side), from Kalshi's position record."""
+        js = self._get("/portfolio/positions", {"ticker": ticker, "limit": 10})
+        for p in js.get("market_positions") or []:
+            if (p.get("ticker") or p.get("market_ticker")) == ticker:
+                for k in ("position_fp", "position"):
+                    if p.get(k) not in (None, ""):
+                        return abs(round(float(p[k]), 2))
+        return 0.0
+
     def get_order(self, order_id: str) -> dict:
         return self._get(f"/portfolio/orders/{order_id}").get("order") or {}
 
@@ -249,3 +278,41 @@ def order_fill_count(order: dict, placed: int) -> int:
         if order.get(k) not in (None, ""):
             return max(0, placed - int(float(order[k])))
     return 0
+
+
+def _num(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def fill_totals(fills: list) -> dict:
+    """{ticker: [contracts, cost $, fee $]} from Kalshi fill records. Each fill names the side
+    it acquired and that side's price (same reading as wxbot/taxledger.py, which matched all
+    730 settlements on Nov 10). Only for bots that never sell (the 15-min bot)."""
+    out: dict = {}
+    for f in fills:
+        tk = f.get("ticker") or f.get("market_ticker")
+        side = str(f.get("side") or "").lower()
+        n = _num(f.get("count_fp"))
+        if n is None:
+            n = _num(f.get("count"))
+        if not tk or side not in ("yes", "no") or not n:
+            continue
+        price = _num(f.get(f"{side}_price_dollars"))
+        if price is None:
+            c = _num(f.get(f"{side}_price"))
+            other = _num(f.get(f"{'no' if side == 'yes' else 'yes'}_price_dollars"))
+            price = c / 100.0 if c is not None else (1.0 - other if other is not None else None)
+        if price is None:
+            continue
+        fee = _num(f.get("fee_cost"))
+        if fee is None:
+            fc = _num(f.get("fee"))
+            fee = fc / 100.0 if fc is not None else 0.0
+        t = out.setdefault(tk, [0.0, 0.0, 0.0])
+        t[0] += n
+        t[1] += n * price
+        t[2] += fee
+    return {k: [round(v[0], 2), round(v[1], 4), round(v[2], 4)] for k, v in out.items()}
