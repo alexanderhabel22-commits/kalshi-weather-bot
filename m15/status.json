@@ -1,5 +1,5 @@
 {
- "at": "2026-11-10T12:17:00+00:00",
+ "at": "2026-11-10T12:32:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -11,57 +11,57 @@
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
   "ticker": "KXSILVER15M-26NOV100715-15"
  },
- "live_exposure": 0.71,
+ "live_exposure": 1.66,
  "live_now": {
-  "KXBTC15M-26NOV100730-30": {
-   "bid_ask": [
-    0.48,
-    0.49
-   ],
-   "mode": "live",
-   "order": false,
-   "why": "out of band"
-  },
-  "KXCOPPER15M-26NOV100730-30": {
-   "bid_ask": [
-    0.19,
-    0.23
-   ],
-   "mode": "live",
-   "order": false,
-   "why": "ok"
-  },
-  "KXPALLADIUM15M-26NOV100730-30": {
-   "bid_ask": [
-    0.3,
-    0.35
-   ],
-   "mode": "live",
-   "order": false,
-   "why": "out of band"
-  },
-  "KXPLATINUM15M-26NOV100730-30": {
+  "KXBTC15M-26NOV100745-45": {
    "bid_ask": [
     0.24,
-    0.28
+    0.25
    ],
    "mode": "live",
    "order": false,
    "why": "ok"
   },
-  "KXSILVER15M-26NOV100730-30": {
+  "KXCOPPER15M-26NOV100745-45": {
    "bid_ask": [
-    0.41,
-    0.42
+    0.14,
+    0.17
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "ok"
+  },
+  "KXPALLADIUM15M-26NOV100745-45": {
+   "bid_ask": [
+    0.15,
+    0.17
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "ok"
+  },
+  "KXPLATINUM15M-26NOV100745-45": {
+   "bid_ask": [
+    0.08,
+    0.1
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "ok"
+  },
+  "KXSILVER15M-26NOV100745-45": {
+   "bid_ask": [
+    0.3,
+    0.31
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXWTI15M-26NOV100730-30": {
+  "KXWTI15M-26NOV100745-45": {
    "bid_ask": [
-    0.63,
-    0.64
+    0.69,
+    0.7
    ],
    "mode": "live",
    "order": false,
@@ -75,7 +75,7 @@
    "2026-11-07": 0.17,
    "2026-11-08": 2.35,
    "2026-11-09": 3.4728,
-   "2026-11-10": -6.49
+   "2026-11-10": -6.23
   },
   "live_log": [
    [
@@ -441,23 +441,39 @@
    [
     1794312900,
     0.39
+   ],
+   [
+    1794313800,
+    -0.77
+   ],
+   [
+    1794313800,
+    0.37
+   ],
+   [
+    1794313800,
+    0.42
+   ],
+   [
+    1794313800,
+    0.24
    ]
   ],
-  "live_total": -0.4972,
+  "live_total": -0.2372,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
    "2026-11-09": -33.24,
-   "2026-11-10": -30.16
+   "2026-11-10": -32.42
   },
-  "paper_total": -119.92
+  "paper_total": -122.18
  },
- "pnl_24h": -6.49,
+ "pnl_24h": -6.23,
  "roll_stop": null,
  "series": {
   "KXBTC15M": {
-   "fills": 341.0,
-   "pnl": 8.21,
+   "fills": 342.0,
+   "pnl": 7.44,
    "recent": [
     [
      2,
@@ -962,6 +978,10 @@
     [
      2,
      0.41
+    ],
+    [
+     1,
+     -0.77
     ]
    ]
   },
@@ -1300,8 +1320,8 @@
    ]
   },
   "KXPALLADIUM15M": {
-   "fills": 149.49,
-   "pnl": -4.0369,
+   "fills": 151.49,
+   "pnl": -3.6169,
    "recent": [
     [
      2,
@@ -1626,6 +1646,10 @@
     [
      2,
      0.39
+    ],
+    [
+     2,
+     0.42
     ]
    ]
   },
@@ -1724,8 +1748,8 @@
    ]
   },
   "KXSILVER15M": {
-   "fills": 176.09,
-   "pnl": 6.589,
+   "fills": 178.09,
+   "pnl": 6.829,
    "recent": [
     [
      2,
@@ -2098,12 +2122,16 @@
     [
      1,
      0.04
+    ],
+    [
+     2,
+     0.24
     ]
    ]
   },
   "KXWTI15M": {
-   "fills": 66.0,
-   "pnl": -4.48,
+   "fills": 68.0,
+   "pnl": -4.11,
    "recent": [
     [
      1,
@@ -2272,14 +2300,18 @@
     [
      2,
      0.27
+    ],
+    [
+     2,
+     0.37
     ]
    ]
   }
  },
  "shards": {
-  "0": 23.1442,
+  "0": 22.5442,
   "1": 0.0,
-  "2": 23.9165,
+  "2": 24.9465,
   "3": 0.0
  },
  "spot_ok": true,
