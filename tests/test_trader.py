@@ -779,3 +779,22 @@ def test_retried_post_adopts_existing_order():
     c = KalshiClient(H([]), "kid", pem)                       # not found: still a reject
     with pytest.raises(HttpError):
         c.place_limit("T", "no", 0.85, 1, "cid1")
+
+
+def test_kill_switch_cancels_resting_live_orders_and_books_fills(monkeypatch):
+    class Cl(FakeClient):
+        def cancel(self, oid, ticker=""):
+            self.cancelled.append(oid)
+    cl = Cl()
+    http = Http([mkt("a", 0.12, 0.16), mkt("b", 0.12, 0.16)])
+    out = trader.run(cfg(mode="live", live=True), now=NOW, http=http, client=cl)
+    assert len(out["placed"]) == 2
+    cl.orders["o1"] = {"status": "executed", "fill_count": 2}      # filled before the switch was read
+    monkeypatch.setenv("TRADING_MODE", "off")
+    out = trader.run(cfg(mode="live", live=True), now=NOW + timedelta(minutes=5), http=http, client=cl)
+    rows = {r["order_id"]: r["status"] for r in trader.load()}
+    assert rows == {"o1": "filled", "o2": "cancelled"} and cl.cancelled == ["o2"]
+    assert "KILL SWITCH" in out["stops"][0]
+    # next run: nothing left to cancel, no second alert
+    out = trader.run(cfg(mode="live", live=True), now=NOW + timedelta(minutes=10), http=http, client=cl)
+    assert not out["stops"] and cl.cancelled == ["o2"]
