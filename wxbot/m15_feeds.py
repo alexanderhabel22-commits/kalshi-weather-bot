@@ -104,6 +104,8 @@ class KalshiFeed(_Thread):
         self.quotes: dict[str, dict] = {}            # ticker -> {"yes_bid","yes_ask","at"}
         self.trades: dict[str, list] = defaultdict(list)   # ticker -> [(ts, yes$, n, taker)]
         self.fills: dict[str, float] = defaultdict(float)  # order_id -> contracts filled
+        self.seen_fills: set = set()                 # trade ids already counted (no double count
+                                                     # if the socket re-sends a fill after a reconnect)
         self._id = 0
 
     def watch(self, tickers) -> None:
@@ -174,8 +176,13 @@ class KalshiFeed(_Thread):
                 hit = True
         elif typ == "fill":
             oid, n = msg.get("order_id"), _count(msg)
+            tid = msg.get("trade_id") or msg.get("fill_id")
             if oid and n:
                 with self.lock:
+                    if tid and (oid, tid) in self.seen_fills:
+                        return
+                    if tid:
+                        self.seen_fills.add((oid, tid))
                     self.fills[oid] += n
                 hit = True
         elif typ == "error":

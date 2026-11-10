@@ -731,3 +731,38 @@ def test_rolling_24h_stop(monkeypatch):
     b.check_stops(clk.t)
     assert not b.state["roll_stop"]
     assert b.state["pnl"]["live_log"] == []
+
+
+def test_kalshi_feed_ignores_repeated_fill():
+    f = KalshiFeed(client=None)
+    msg = json.dumps({"type": "fill", "msg": {"order_id": "o1", "trade_id": "t1", "count": 1}})
+    f.handle(msg)
+    f.handle(msg)                                 # re-sent after a reconnect
+    assert f.fills["o1"] == 1
+
+
+def test_socket_double_count_does_not_drop_or_overbook(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live"), clk, cl)
+    b.refresh_switch(clk.t)
+    m = {"ticker": TK, "series": "KXBTC15M", "mode": "live", "filled": 0, "cost": 0.0, "fee": 0.0,
+         "order": {"side": "yes", "q": 0.8, "n": 2, "filled": 0, "t0": clk.t, "id": "o1"}}
+    b.state["markets"] = {TK: m}
+
+    class Feed:
+        fills = {"o1": 2}                         # socket says 2 (one fill counted twice)
+        def forget(self, tk):
+            pass
+    b.kfeed = Feed()
+    cl.resting_orders = lambda: {"o1": {"order_id": "o1", "ticker": TK, "status": "resting",
+                                        "fill_count_fp": "1.00", "remaining_count_fp": "1.00"}}
+    b.sync_live(force=True)
+    assert m["order"] is not None                 # Kalshi still shows it resting: keep tracking
+    # later it is cancelled with only 1 really filled
+    cl.resting_orders = lambda: {}
+    cl.get_order = lambda oid: {"order_id": oid, "status": "canceled", "fill_count_fp": "1.00"}
+    b.sync_live(force=True)
+    assert m["order"] is None and m["filled"] == 1
+    assert abs(m["cost"] - 0.8) < 1e-9
