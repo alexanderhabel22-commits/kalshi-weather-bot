@@ -28,6 +28,7 @@ LOOKBACKS = (600, 300)  # bid during the last 10 min (BTC rule) / last 5 min (al
 S = requests.Session()
 S.headers["User-Agent"] = "research-replay/1.0"
 LOG = None
+PROBE = [0]
 
 
 def log(*a):
@@ -90,11 +91,16 @@ def discover():
 def tape(cond, since):
     """Taker trades for a market, oldest first, from `since` (unix) on."""
     rows, off = [], 0
-    while off <= 9500:
+    while off <= 3000:
         js = get(DATA + "/trades", params={"market": cond, "limit": 500, "offset": off,
                                             "takerOnly": "true"})
         if not js:
             break
+        if PROBE[0] < 6:
+            PROBE[0] += 1
+            ts = [int(t["timestamp"]) for t in js]
+            log("probe trades", cond[:12], "off", off, "n", len(js), "ts", min(ts), max(ts),
+                "since", since, "cond_match", sum(t.get("conditionId") == cond for t in js))
         rows.extend(js)
         if len(js) < 500 or min(int(t["timestamp"]) for t in js) < since:
             break
@@ -171,6 +177,8 @@ def main():
         if time.time() - t0 > budget * 60:
             log("budget reached")
             break
+        if i < 30:
+            log("chunk", i, f"{time.time() - t0:.0f}s")
         chunk = starts[i:i + 10]
         slugs = [f"{c}-updown-15m-{s}" for s in chunk for c in coins]
         ms = markets_for(slugs)
