@@ -538,18 +538,28 @@ class Bot:
                     ko = self.client.get_order(o["id"])
                 except HttpError:
                     return False
-                if (ko.get("status") or "") == "resting":
+                if (ko.get("status") or "") not in ("canceled", "cancelled", "executed"):
+                    # resting, pending or anything unknown: it may still fill, so keep
+                    # tracking it rather than letting it rest as an orphan (Nov 9)
                     o["filled"] = max(o["filled"], fill_qty(ko, o["n"]))
                     self._book(m, o, None)
-                    return False                      # still live: keep tracking it
+                    return False
             try:
                 ko = self.client.get_order(o["id"])
                 o["filled"] = max(o["filled"], fill_qty(ko, o["n"]))
             except HttpError as exc:
                 log.warning("order %s: %s", o["id"], exc)
         self._book(m, o, None)
+        self._remember(m, o)
         m["order"] = None
         return True
+
+    @staticmethod
+    def _remember(m: dict, o: dict) -> None:
+        """Note what an ended order already booked. If it later turns up resting (a cancel
+        that didn't take), the orphan sweep books only fills beyond this, never twice."""
+        if o.get("id"):
+            m.setdefault("ended", {})[o["id"]] = o.get("booked", 0)
 
     def _book(self, m: dict, o: dict, ts: float | None) -> None:
         """Move newly filled contracts of order `o` into the position."""
@@ -599,6 +609,7 @@ class Bot:
                 except HttpError:
                     pass
                 self._book(m, o, None)
+                self._remember(m, o)
                 m["order"] = None
 
     def sync_live(self, force: bool = False) -> None:
@@ -662,11 +673,16 @@ class Bot:
             got = fill_qty(ko, 0)
             log.warning("cancelled untracked order %s on %s (%.2f filled)", oid, tk, got)
             self.state["orphans"] = int(self.state.get("orphans", 0)) + 1
-            if m is not None and got > 0:
-                q = m.get("last_q") or 0.85
-                self._book(m, {"q": q, "n": got, "filled": got}, None)
+            prior = (m or {}).get("ended", {}).get(oid, 0)
+            new = round(max(0.0, got - prior), 2)
+            if m is not None:
+                m.setdefault("ended", {})[oid] = max(prior, got)
+                if new > 0:
+                    q = m.get("last_q") or 0.85
+                    self._book(m, {"q": q, "n": new, "filled": new}, None)
             # Alex (Nov 9): no pings for harmless sweeps. Only when a stray actually filled
             # (real extra exposure), or if they pile up enough to mean something is wrong.
+            got = new
             if got > 0 or self.state["orphans"] in (100, 500):
                 self.alert("15-min bot: untracked order cancelled",
                            f"{tk}: an order the bot wasn't tracking was cancelled "

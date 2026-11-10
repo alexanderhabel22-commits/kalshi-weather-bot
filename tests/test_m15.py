@@ -625,3 +625,40 @@ def test_failed_cancel_never_stacks_a_second_order(monkeypatch):
     clk.t += 10
     b.step()
     assert len(cl.placed) == 1 and b.state["markets"][TK]["order"]["id"] == "o0"
+
+
+def test_swept_order_that_was_already_booked_is_not_booked_twice(monkeypatch):
+    # an order the bot ended (and booked 1 of) turns up resting later: only new fills count
+    World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", extra_contracts=0), clk, cl)
+    b.step()
+    m = b.state["markets"][TK]
+    m["filled"], m["cost"] = 1, 0.74
+    m["ended"] = {"old": 1}
+    cl.orders["old"] = {"order_id": "old", "ticker": TK, "status": "resting",
+                        "fill_count": "1", "remaining_count": "1"}
+    b.sync_live(force=True)
+    assert "old" in cl.cancelled and m["filled"] == 1
+
+
+def test_cancel_failure_with_unknown_status_keeps_tracking(monkeypatch):
+    w = World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+
+    class Odd(Client):
+        def cancel(self, oid, ticker=""):
+            raise m15.HttpError(503, "x", "busy")
+
+        def get_order(self, oid):
+            o = dict(super().get_order(oid))
+            o["status"] = "pending"
+            return o
+    cl = Odd()
+    b = bot(cfg(mode="live", extra_contracts=0), clk, cl)
+    b.step()
+    w.book.update(yes_bid=0.75, yes_ask=0.77)
+    clk.t += 10
+    b.step()
+    assert len(cl.placed) == 1 and b.state["markets"][TK]["order"]["id"] == "o0"
