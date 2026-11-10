@@ -105,6 +105,55 @@ def effr():
         save(OUT / "fred_DFEDTARU.csv", r)
 
 
+def _ts(iso):
+    from datetime import datetime
+    try:
+        return int(datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp())
+    except Exception:
+        return None
+
+
+def yahoo_extra():
+    n = 0
+    for sym in ["ZQ=F", "ZQU26.CBT", "ZQV26.CBT", "ZQQ26.CBT", "ZQN26.CBT"]:
+        for host in ("query1", "query2"):
+            r = get(f"https://{host}.finance.yahoo.com/v8/finance/chart/{sym}",
+                    {"period1": 1577836800, "period2": int(time.time()), "interval": "1d"})
+            ok = r is not None and r.ok and b'"timestamp"' in r.content
+            PROBES.append(f"yahoo_extra {sym} {host} {r.status_code if r is not None else 'none'} ok={ok}")
+            if ok:
+                save(OUT / "zq" / f"yahoo_{sym.replace('=', '_').split('.')[0]}.json", r)
+                n += 1
+                break
+    # intraday (1h) for live contracts covering the next meetings
+    for c in ["ZQX26", "ZQZ26", "ZQF27", "ZQG27", "ZQH27"]:
+        r = get(f"https://query1.finance.yahoo.com/v8/finance/chart/{c}.CBT",
+                {"range": "60d", "interval": "60m"})
+        if r is not None and r.ok and b'"timestamp"' in r.content:
+            save(OUT / "zq" / f"yahoo1h_{c}.json", r)
+            n += 1
+    return n
+
+
+def kalshi_live():
+    base = "https://api.elections.kalshi.com/trade-api/v2"
+    out = {}
+    for ser in ["KXFEDDECISION", "KXFED"]:
+        r = get(f"{base}/markets", {"series_ticker": ser, "status": "open", "limit": 200})
+        if r is not None and r.ok:
+            out[ser] = r.json().get("markets") or []
+            for mk in out[ser]:
+                t = mk["ticker"]
+                now = int(time.time())
+                rr = get(f"{base}/series/{ser}/markets/{t}/candlesticks",
+                         {"start_ts": now - 30 * 86400, "end_ts": now, "period_interval": 60})
+                if rr is not None and rr.ok:
+                    (OUT / "kalshi_live").mkdir(exist_ok=True)
+                    (OUT / "kalshi_live" / f"{t}.json").write_text(rr.text)
+    (OUT / "kalshi_live_markets.json").write_text(json.dumps(out))
+    return sum(len(v) for v in out.values())
+
+
 def polymarket():
     found = []
     for q in ["fed decision", "fed interest rates", "fomc"]:
@@ -134,20 +183,28 @@ def polymarket():
                 toks = None
             if not toks:
                 continue
-            r = get("https://clob.polymarket.com/prices-history",
-                    {"market": toks[0], "interval": "max", "fidelity": 60})
-            if r is not None and r.ok:
-                (OUT / "polymarket" / f"{m.get('id')}.json").write_text(
-                    json.dumps({"q": m.get("question"), "end": m.get("endDate"),
-                                "outcome": m.get("outcomePrices"), "hist": r.json()}))
+            hist = []
+            end = _ts(m.get("endDate")) or int(time.time())
+            end = min(end + 86400, int(time.time()))
+            for k in range(6):  # 6 one-week chunks before the end date
+                a, b = end - (k + 1) * 7 * 86400, end - k * 7 * 86400
+                r = get("https://clob.polymarket.com/prices-history",
+                        {"market": toks[0], "startTs": a, "endTs": b, "fidelity": 60})
+                if r is not None and r.ok:
+                    hist += (r.json() or {}).get("history") or []
+                time.sleep(0.15)
+            if hist:
                 n += 1
-            time.sleep(0.2)
+            (OUT / "polymarket" / f"{m.get('id')}.json").write_text(
+                json.dumps({"q": m.get("question"), "end": m.get("endDate"),
+                            "outcome": m.get("outcomePrices"),
+                            "hist": {"history": sorted({h["t"]: h for h in hist}.values(),
+                                                       key=lambda h: h["t"])}}))
     PROBES.append(f"polymarket histories {n}")
 
 
 def main():
-    effr()
-    for name, fn in [("yahoo", yahoo), ("barchart", barchart), ("stooq", stooq), ("poly", polymarket)]:
+    for name, fn in [("yahoo_extra", yahoo_extra), ("kalshi_live", kalshi_live), ("poly", polymarket)]:
         try:
             PROBES.append(f"== {name}: {fn()}")
         except Exception as e:  # keep going, record it
