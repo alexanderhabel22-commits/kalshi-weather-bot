@@ -154,6 +154,8 @@ def propose(ctx) -> list[Intent]:
     markets = [m for m in markets if parse_iso(m.get("close_time"))]
     out = candidates(markets, series, p, getattr(ctx.cfg, "bankroll", None),
                      held_by_event(ctx.orders, NAME, ctx.mode))
+    from .. import mentions_ai          # SHADOW: logs an AI "will it be said" score, changes nothing
+    mentions_ai.annotate(ctx, out, markets)
     band = sum(1 for m in markets if (ya := kalshi.price(m, "yes_ask")) and
                float(p.get("min_price", 0.75)) <= 1 - ya + 0.01 <= float(p.get("max_price", 0.90)))
     log.info("mentions: %d series (%d active), %d markets closing soon, %d near the price band, "
