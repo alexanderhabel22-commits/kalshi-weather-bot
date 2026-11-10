@@ -1,0 +1,49 @@
+name: poly-research
+
+# Research only: replay the 15-min favourite bid on Polymarket's public trade history.
+# Read-only public data; never trades, no secrets. Runs only on push to this research
+# branch. Output goes to the poly-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-32j0yp"]
+    paths: ["research_poly/fetch.py", ".github/workflows/poly-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: poly-research
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: python research_poly/fetch.py out 150 95
+      - name: Save to poly-research-data branch
+        if: always() && hashFiles('out/log.txt') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%dT%H%MZ)"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin poly-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/poly-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "poly replay $stamp" || exit 0
+            git push origin HEAD:poly-research-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
