@@ -920,7 +920,7 @@ def test_fill_quality_log_moves_and_queue(monkeypatch):
     assert float(r["move_60s"]) == pytest.approx(4.0)
     assert float(r["move_300s"]) == pytest.approx(11.0)
     assert r["settled_h"] == "" and r["won"] == "1" and float(r["pnl_ct"]) == pytest.approx(20.0)
-    assert r["rest_s"] == "12.0" and int(r["ttc_s"]) == int(CLOSE - fill_t)
+    assert r["rest_s"] == "12.0" and int(r["ttc_s"]) == int(CLOSE - fill_t) and r["src"] == "order"
 
 
 def test_fill_quality_late_fill_uses_settlement_and_no_queue_endpoint(monkeypatch):
