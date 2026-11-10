@@ -194,7 +194,7 @@ def test_daily_stop(monkeypatch):
     World(monkeypatch)
     clk = Clock()
     cl = Client()
-    b = bot(cfg(mode="live"), clk, cl)
+    b = bot(cfg(mode="live", daily_loss_pct=0.10, total_loss_pct=0.125), clk, cl)
     b.state["pnl"] = {"live_total": -5.5, "live_days": {b.day(clk.t): -5.5}}
     b.step()
     assert b.state["day_stop"] == b.day(clk.t)
@@ -562,7 +562,7 @@ def test_daily_stop_guard_uses_room_left_today(monkeypatch):
     World(monkeypatch, yb=0.73, ya=0.75)
     clk = Clock()
     cl = Client()
-    b = bot(cfg(mode="live", pool_pct=1.0, stop_guard=True), clk, cl)
+    b = bot(cfg(mode="live", pool_pct=1.0, stop_guard=True, daily_loss_pct=0.10), clk, cl)
     b.refresh_switch(clk.t)
     b.paper_bankroll = 10.0                    # stop = $1.00 of room on a flat day
     b.state["pnl"]["live_days"] = {b.day(clk.t): -0.40}   # down 40c: 60c left < 73c order
