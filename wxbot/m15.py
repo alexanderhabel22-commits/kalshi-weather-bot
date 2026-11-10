@@ -817,7 +817,7 @@ class Bot:
             # more room; already down = less (Alex, Nov 9).
             day_pnl = self.state["pnl"].get("live_days", {}).get(self.day(now), 0.0)
             room_to_stop = s["daily_loss_pct"] * b + day_pnl
-            if self.exposure("live") + q * n_new > room_to_stop - 0.01:
+            if s.get("stop_guard", True) and self.exposure("live") + q * n_new > room_to_stop - 0.01:
                 m["why"] = f"daily-stop guard (room ${room_to_stop:.2f})"
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
