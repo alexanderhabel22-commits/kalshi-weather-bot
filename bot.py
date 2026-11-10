@@ -13,6 +13,7 @@
   python bot.py watch           AI ops watcher, one pass (server timer every 15 min; needs ANTHROPIC_API_KEY)
   python bot.py mentions-ai     Mentions AI shadow test: would skipping high "will be said" scores have helped?
   python bot.py checkpoint      real-money scorecard + pass/fail verdicts (rules in CHECKPOINT.md)
+  python bot.py tax             tax-ready ledger of every real fill, fee and settlement (read-only)
 """
 from __future__ import annotations
 
@@ -29,7 +30,8 @@ from wxbot.util import Http, load_config, parse_iso, read_json, utcnow
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify",
-                                            "backtest-fetch", "trade", "m15", "checkpoint", "watch", "mentions-ai"])
+                                            "backtest-fetch", "trade", "m15", "checkpoint", "watch", "mentions-ai",
+                                            "tax"])
     ap.add_argument("--dry-run", action="store_true", help="don't send or save anything")
     ap.add_argument("--every", type=int, default=300, help="loop interval in seconds")
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
@@ -101,6 +103,19 @@ def main(argv=None) -> int:
             logging.exception("reviews failed: %s", exc)
         print(f"trade ({out['mode']}): placed {len(out['placed'])}, skipped {len(out['skipped'])}"
               + (f", stops: {out['stops']}" if out["stops"] else ""))
+        return 0
+
+    if args.command == "tax":           # read-only: Kalshi fills + settlements -> reports/tax/
+        import os
+        from pathlib import Path
+        from wxbot import taxledger
+        from wxbot.kalshi_api import KalshiClient
+        client = KalshiClient.from_env(Http(cfg.user_agent))
+        if client is None:
+            print("tax: needs KALSHI_API_KEY_ID and KALSHI_PRIVATE_KEY")
+            return 1
+        out = Path(os.environ["TAX_OUT"]) if os.environ.get("TAX_OUT") else taxledger.OUT
+        print(f"tax ledger written: {taxledger.run(client, utcnow(), out)}")
         return 0
 
     if args.command == "checkpoint":
