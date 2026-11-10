@@ -314,8 +314,13 @@ class OandaFeed(SpotFeed):
         missing = [p for p in self.products if p not in have]
         if missing:
             log.warning("oanda: not available on this account: %s", ", ".join(missing))
+        # Nov 10: US OANDA accounts list no metals/oil at all. A product we can't get must
+        # count as unguarded (Spots skips it), never as "feed down", which blocks live bets.
+        self.products = list(self.live_products)
         if not self.live_products:
-            raise RuntimeError("oanda: none of the instruments are available")
+            log.warning("oanda: nothing to watch, feed off")
+            self.stop = True
+            return
         with requests.get(f"{self.stream}/v3/accounts/{aid}/pricing/stream", headers=h,
                           params={"instruments": ",".join(self.live_products)},
                           stream=True, timeout=(15, 30)) as r:
@@ -364,7 +369,7 @@ class Spots:
 
     def healthy(self, prod: str | None = None) -> bool:
         if prod is None:
-            return all(f.healthy() for f in self.feeds)
+            return all(f.healthy() for f in self.feeds if f.products)
         f = self._feed(prod)
         return f is None or f.healthy()
 

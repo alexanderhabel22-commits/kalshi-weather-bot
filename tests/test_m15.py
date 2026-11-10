@@ -697,3 +697,20 @@ def test_oanda_prices_feed_the_jump_guard_and_links_trip_together():
     sp = Spots([f], [["XAG_USD", "XCU_USD"]])
     assert sp.blocked("XCU_USD", t + 81)                   # copper pulled with silver
     assert not sp.blocked("BTC-USD", t + 81) and sp.healthy("BTC-USD")   # no feed: unguarded
+
+
+def test_oanda_with_no_instruments_never_blocks_trading(monkeypatch):
+    from wxbot.m15_feeds import OandaFeed, Spots
+    import requests
+
+    class R:
+        def __init__(self, js): self.js = js
+        def raise_for_status(self): pass
+        def json(self): return self.js
+    monkeypatch.setattr(requests, "get", lambda url, **kw: R(
+        {"accounts": [{"id": "a"}]} if url.endswith("/accounts") else {"instruments": []}))
+    f = OandaFeed("tok", ["XAG_USD"], None)
+    f._session()
+    assert f.stop and f.products == []
+    sp = Spots([f])
+    assert sp.healthy("XAG_USD") and not sp.blocked("XAG_USD")
