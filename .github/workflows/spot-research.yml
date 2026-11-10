@@ -11,14 +11,17 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: spot-research
-  cancel-in-progress: false
-
 jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        job: ["KXETH15M:ETH-USD:cb", "KXSOL15M:SOL-USD:cb", "KXXRP15M:XRP-USD:cb",
+              "KXDOGE15M:DOGE-USD:cb", "KXNEAR15M:NEAR-USD:cb", "KXZEC15M:ZEC-USD:cb",
+              "KXSILVER15M:SI=F:yf", "KXCOPPER15M:HG=F:yf", "KXPALLADIUM15M:PA=F:yf",
+              "KXPLATINUM15M:PL=F:yf", "KXWTI15M:CL=F:yf", "KXGOLD15M:GC=F:yf"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -28,13 +31,13 @@ jobs:
       - name: Run
         env:
           BUDGET_H: "3.5"
-        run: python research_spot/fetch.py out
+        run: python research_spot/fetch.py "${{ matrix.job }}" out
       - name: Save to spot-research-data branch
         if: always() && hashFiles('out/spot.csv.gz') != ''
         run: |
           git config user.name "weather-bot"
           git config user.email "weather-bot@users.noreply.github.com"
-          stamp="$(date -u +%Y%m%d-%H%M)"
+          stamp="$(date -u +%Y%m%d)-$(echo "${{ matrix.job }}" | cut -d: -f1)"
           mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
           for i in 1 2 3 4 5 6 7 8; do
             if git fetch origin spot-research-data 2>/dev/null; then

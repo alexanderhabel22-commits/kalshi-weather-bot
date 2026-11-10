@@ -1,7 +1,8 @@
 """BTC 15-minute spot-signal replay: history pull (read-only public data; never trades).
 
-usage: python research_spot/fetch.py OUT_DIR
-  - every settled KXBTC15M market from START to now (strike = floor_strike, result)
+usage: python research_spot/fetch.py SERIES:PRODUCT:SOURCE OUT_DIR
+  SOURCE cb = Coinbase 1-min candles (from Sep 25), yf = Yahoo futures 1-min (last ~29 days)
+  - every settled SERIES market in the span (strike = floor_strike, result)
   - trade tapes of the last LAST_S seconds of each market (shuffled, so a budget cutoff
     still leaves a random sample)
   - Coinbase BTC-USD 1-minute candles over the same span
@@ -23,10 +24,12 @@ from pathlib import Path
 import requests
 
 K = "https://api.elections.kalshi.com/trade-api/v2"
-OUT = Path(sys.argv[1])
+SERIES, PRODUCT, SRC = sys.argv[1].split(":")
+OUT = Path(sys.argv[2])
 OUT.mkdir(parents=True, exist_ok=True)
-START = datetime(2026, 9, 25, tzinfo=timezone.utc)
 END = datetime.now(timezone.utc)
+START = (datetime(2026, 9, 25, tzinfo=timezone.utc) if SRC == "cb"
+         else datetime.fromtimestamp(END.timestamp() - 29 * 86400, timezone.utc))
 LAST_S = 660
 TRADE_PAGES = 40
 BUDGET_S = float(os.environ.get("BUDGET_H", "4.0")) * 3600
@@ -91,7 +94,7 @@ def list_markets(lo, hi):
     for path, extra in (("/markets", {"status": "settled"}), ("/historical/markets", {})):
         cur = None
         for _ in range(3000):
-            p = {"series_ticker": "KXBTC15M", "limit": 1000, "min_close_ts": lo,
+            p = {"series_ticker": SERIES, "limit": 1000, "min_close_ts": lo,
                  "max_close_ts": hi, **extra}
             if cur:
                 p["cursor"] = cur
@@ -165,8 +168,30 @@ def spot(product):
     return rows
 
 
+def spot_yf(sym):
+    rows, t = [], int(START.timestamp())
+    end = int(END.timestamp())
+    while t < end:
+        t2 = min(t + 7 * 86400, end)
+        js = get(f"/v8/finance/chart/{sym}", {"interval": "1m", "period1": t, "period2": t2,
+                                              "includePrePost": "true"},
+                 base="https://query1.finance.yahoo.com", gap=0.5)
+        try:
+            r = js["chart"]["result"][0]
+            for tt, c in zip(r["timestamp"], r["indicators"]["quote"][0]["close"]):
+                if c is not None:
+                    rows.append((sym, int(tt), c))
+        except (TypeError, KeyError, IndexError):
+            log("yahoo empty", sym, t, str(js)[:200])
+        t = t2
+    log("spot", sym, len(rows))
+    return rows
+
+
 def main():
-    rows = spot("BTC-USD")
+    S.headers["User-Agent"] = "Mozilla/5.0 (research script)" if SRC == "yf" else S.headers["User-Agent"]
+    rows = spot(PRODUCT) if SRC == "cb" else spot_yf(PRODUCT)
+    S.headers["User-Agent"] = "kalshi-research/0.1"
     with gzip.open(OUT / "spot.csv.gz", "wt", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["product", "t", "close"])
@@ -177,7 +202,7 @@ def main():
         w = csv.DictWriter(fh, COLS)
         w.writeheader()
         w.writerows(allm)
-    sample = [m for m in allm if m["volume"] >= 1000]
+    sample = [m for m in allm if m["volume"] >= 200]
     random.Random(7).shuffle(sample)
     deadline = T0 + BUDGET_S
     done = [0]
