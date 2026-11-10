@@ -1,0 +1,70 @@
+name: tax-ledger
+
+# Read-only: rebuilds the tax ledger (every real fill, fee and settlement on the
+# Kalshi account, by year) from Kalshi's own records. `python bot.py tax` only calls
+# GET endpoints; it never places, changes or cancels an order.
+#
+# PRIVATE: the repo is public, so the readable ledger is never committed. It is
+# encrypted to deploy/tax-ledger-public.pem and only reports/tax-ledger.tgz.enc +
+# reports/tax-ledger.key.enc are saved. The private key lives only in the project's
+# private Library; tools/tax_decrypt.sh unpacks it there.
+on:
+  schedule:
+    - cron: "37 13 * * 1"   # Mondays ~8:37 AM ET
+    - cron: "37 13 2 1 *"   # Jan 2: the finished year, for tax time
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-g94bxf]   # one test run only; removed before merge
+    paths: [.github/workflows/tax-ledger.yml]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tax-ledger
+  cancel-in-progress: false
+
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Build the ledger (outside the repo)
+        env:
+          KALSHI_API_KEY_ID: ${{ secrets.KALSHI_API_KEY_ID }}
+          KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
+          TAX_OUT: ${{ runner.temp }}/tax
+        run: python bot.py tax -v
+
+      - name: Encrypt
+        run: |
+          set -euo pipefail
+          T="$RUNNER_TEMP"
+          tar -C "$T" -czf "$T/tax.tgz" tax
+          openssl rand -out "$T/k.bin" 32
+          mkdir -p reports
+          openssl enc -aes-256-cbc -pbkdf2 -salt -in "$T/tax.tgz" -out reports/tax-ledger.tgz.enc -pass "file:$T/k.bin"
+          openssl pkeyutl -encrypt -pubin -inkey deploy/tax-ledger-public.pem \
+            -pkeyopt rsa_padding_mode:oaep -in "$T/k.bin" -out reports/tax-ledger.key.enc
+          rm -rf "$T/k.bin" "$T/tax.tgz" "$T/tax"
+          test ! -e reports/tax
+
+      - name: Save
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          git add reports/tax-ledger.tgz.enc reports/tax-ledger.key.enc
+          git commit -m "bot: update encrypted tax ledger [skip ci]" || exit 0
+          for i in 1 2 3 4; do
+            git pull --rebase --autostash -X theirs && git push && break
+            sleep 10
+          done

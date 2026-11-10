@@ -298,6 +298,21 @@ While off, nothing changes; the 15-min server only keeps each coin's step record
 - Push budget: after 40 routine trade pushes in an ET day the main bot stops pushing fills/sales
   (one note says so); stops and warnings still push.
 
+## Tax ledger (built Nov 10, 2026)
+
+- `python bot.py tax` (wxbot/taxledger.py), run by `.github/workflows/tax-ledger.yml` on Mondays,
+  Jan 2 and on demand. READ-ONLY: GET /portfolio/fills + /portfolio/settlements (+ titles).
+- Builds LEDGER.md (by year, bot, month), fills-YYYY.csv, settlements-YYYY.csv,
+  markets-YYYY.csv (cost, proceeds, fees, net per market and bot), open-positions.csv.
+- PRIVATE (repo is public): Actions commits only the ENCRYPTED copy (reports/tax-ledger.tgz.enc +
+  .key.enc, encrypted to deploy/tax-ledger-public.pem). The private key is only in the project
+  Library (tax/keys/). Unpack with `tools/tax_decrypt.sh <private.pem> /mnt/project-files/tax/`.
+  Never commit the readable files (reports/tax/ is gitignored).
+- Kalshi's records are the truth. Fills are tagged main bot (order/client id in trade_orders.csv,
+  "wx-"), 15-min bot ("m15-" or a KX...15M series) or manual. data/my_trades.csv is shown on its
+  own and never added. Each settled market is checked against Kalshi's paid revenue.
+- Not tax advice: Kalshi's own year-end form is what gets filed; this backs it up.
+
 ## Expectations to keep honest
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong
 lock costs ~$3. Order books are thin (some ~5 contracts at the alert price),
