@@ -37,7 +37,13 @@ log = logging.getLogger("wxbot")
 
 AVG_S = 60                  # settlement = average of the index over the last 60 s
 FV_COLS = ["ts", "event", "ticker", "series", "left_s", "strike", "index", "venues", "sigma_bps_s",
-           "fv_yes", "yes_bid", "yes_ask", "our_side", "our_q", "filled", "nth_fill"]
+           "fv_yes", "yes_bid", "yes_ask", "our_side", "our_q", "filled", "nth_fill",
+           "cf_index", "fv_cf"]
+# Kalshi's own websocket streams the official CF Benchmarks real-time indexes (channel
+# cfbenchmarks_value_5hz, up to 5 ticks/s; found by the platform-changes check, Nov 10).
+# Logged side by side with the rebuilt median so we can measure the gap before switching.
+CF_IDS = {"BRTI": "BTC", "ETHUSD_RTI": "ETH", "SOLUSD_RTI": "SOL", "XRPUSD_RTI": "XRP",
+          "DOGEUSD_RTI": "DOGE"}
 
 VENUES = {
     # venue: (url, symbol format per coin)
@@ -115,6 +121,50 @@ class VenueFeed(_Thread):
                         self.sink(self.venue, c, p, time.time())
 
 
+def parse_cf(raw) -> list[tuple[str, float, float | None]]:
+    """(coin, value, source_ts_s) from a Kalshi cfbenchmarks message; [] otherwise."""
+    try:
+        js = json.loads(raw)
+    except (TypeError, ValueError):
+        return []
+    msg = js.get("msg") if isinstance(js, dict) else None
+    if not isinstance(msg, dict) or not str(js.get("type", "")).startswith("cfbenchmarks"):
+        return []
+    coin = CF_IDS.get(msg.get("index_id"))
+    p = _f(msg.get("value_usd"))
+    if not coin or not p:
+        return []
+    ts = _f(msg.get("source_ts_ms"))
+    return [(coin, p, ts / 1000.0 if ts else None)]
+
+
+class KalshiIndexFeed(_Thread):
+    """Official CF Benchmarks ticks through Kalshi's authenticated websocket (read-only)."""
+
+    def __init__(self, client, sink):
+        super().__init__("fv-cf", None)
+        self.client = client
+        self.sink = sink
+
+    def _session(self):
+        from websockets.sync.client import connect
+
+        from .m15_feeds import KALSHI_WS
+        hdr = self.client.headers("GET", KALSHI_WS)
+        with connect(KALSHI_WS, additional_headers=hdr, open_timeout=15,
+                     ping_interval=10, ping_timeout=20) as ws:
+            self.ws = ws
+            self._send({"id": 1, "cmd": "subscribe",
+                        "params": {"channels": ["cfbenchmarks_value_5hz"], "index_ids": ["all"]}})
+            log.warning("fair-value feed cf (Kalshi CF Benchmarks) connected")
+            for raw in ws:
+                for coin, p, _ts in parse_cf(raw):
+                    self.last_msg = time.time()
+                    self.sink(coin, p, time.time())
+                if '"error"' in str(raw)[:200]:
+                    log.warning("cf feed: %s", str(raw)[:300])
+
+
 class Composite:
     """Latest price per (venue, coin) -> a once-a-second median index per coin."""
 
@@ -124,11 +174,20 @@ class Composite:
         self.lock = threading.Lock()
         self.last: dict[tuple[str, str], tuple[float, float]] = {}
         self.series: dict[str, deque] = {c: deque(maxlen=keep_s) for c in self.coins}  # (sec, px, n)
+        self.cf_last: dict[str, tuple[float, float]] = {}
+        self.cf_series: dict[str, deque] = {c: deque(maxlen=keep_s) for c in self.coins}
         self.feeds: list = []
 
-    def start(self, venues=("coinbase", "kraken", "bitstamp")):
+    def start(self, venues=("coinbase", "kraken", "bitstamp"), client=None):
         self.feeds = [VenueFeed(v, self.coins, self.on_price).start() for v in venues]
+        if client is not None:
+            self.feeds.append(KalshiIndexFeed(client, self.on_cf).start())
         return self
+
+    def on_cf(self, coin: str, p: float, now: float) -> None:
+        if coin in self.cf_series:
+            with self.lock:
+                self.cf_last[coin] = (now, p)
 
     def on_price(self, venue: str, coin: str, p: float, now: float) -> None:
         with self.lock:
@@ -151,13 +210,24 @@ class Composite:
             p, n = self.now_px(c, now)
             if p is not None:
                 d.append((sec, p, n))
+            with self.lock:
+                cf = self.cf_last.get(c)
+            if cf and now - cf[0] <= self.fresh_s:
+                self.cf_series[c].append((sec, cf[1], 1))
 
-    def window(self, coin: str, lo: int, hi: int) -> list[float]:
-        return [p for s, p, _ in self.series.get(coin, ()) if lo <= s < hi]
+    def window(self, coin: str, lo: int, hi: int, cf: bool = False) -> list[float]:
+        src = self.cf_series if cf else self.series
+        return [p for s, p, _ in src.get(coin, ()) if lo <= s < hi]
 
-    def sigma(self, coin: str, now: float, look_s: int = 900, floor: float = 2e-5) -> float | None:
+    def cf_px(self, coin: str, now: float) -> float | None:
+        d = self.cf_series.get(coin)
+        return d[-1][1] if d and now - d[-1][0] <= 5 else None
+
+    def sigma(self, coin: str, now: float, look_s: int = 900, floor: float = 2e-5,
+              cf: bool = False) -> float | None:
         """Per-second log volatility over the last look_s seconds (gaps spread evenly)."""
-        pts = [(s, p) for s, p, _ in self.series.get(coin, ()) if s >= now - look_s]
+        src = self.cf_series if cf else self.series
+        pts = [(s, p) for s, p, _ in src.get(coin, ()) if s >= now - look_s]
         if len(pts) < 60:
             return None
         var = sum(math.log(b / a) ** 2 for (_, a), (_, b) in zip(pts, pts[1:]))
@@ -220,7 +290,14 @@ class FairShadow:
             return None
         left = m["close"] - now
         fixed = self.comp.window(coin, int(m["close"]) - AVG_S, int(now) + 1) if left <= AVG_S else []
-        return {"fv_yes": fair_yes(px, k, sig, left, fixed), "index": px, "venues": n, "sigma": sig}
+        out = {"fv_yes": fair_yes(px, k, sig, left, fixed), "index": px, "venues": n, "sigma": sig,
+               "cf_index": None, "fv_cf": None}
+        cpx, csig = self.comp.cf_px(coin, now), self.comp.sigma(coin, now, cf=True)
+        if cpx is not None and csig is not None:
+            cfix = (self.comp.window(coin, int(m["close"]) - AVG_S, int(now) + 1, cf=True)
+                    if left <= AVG_S else [])
+            out["cf_index"], out["fv_cf"] = cpx, fair_yes(cpx, k, csig, left, cfix)
+        return out
 
     def _row(self, m: dict, now: float, event: str, fv: dict, quote: dict | None) -> dict:
         o = m.get("order") or {}
@@ -231,13 +308,19 @@ class FairShadow:
                 "sigma_bps_s": round(fv["sigma"] * 1e4, 3), "fv_yes": round(fv["fv_yes"], 4),
                 "yes_bid": q.get("yes_bid", ""), "yes_ask": q.get("yes_ask", ""),
                 "our_side": o.get("side") or m.get("fav_side") or "", "our_q": o.get("q", ""),
-                "filled": m.get("filled", 0), "nth_fill": m.get("fv_fills", 0)}
+                "filled": m.get("filled", 0), "nth_fill": m.get("fv_fills", 0),
+                "cf_index": "" if fv.get("cf_index") is None else round(fv["cf_index"], 6),
+                "fv_cf": "" if fv.get("fv_cf") is None else round(fv["fv_cf"], 4)}
 
     def _write(self, rows: list, now: float) -> None:
         if not rows:
             return
         path = self.dir / f"fv-{datetime.fromtimestamp(now, timezone.utc):%Y-%m-%d-%H}.csv"
         path.parent.mkdir(parents=True, exist_ok=True)
+        if path.exists():                    # an older header (e.g. before cf columns): new file
+            with open(path, encoding="utf-8") as f:
+                if f.readline().strip().split(",") != FV_COLS:
+                    path = path.with_name(path.stem + "-b.csv")
         new = not path.exists()
         with open(path, "a", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=FV_COLS)
@@ -267,7 +350,8 @@ class FairShadow:
                 m["fv_fills"] = int(m.get("fv_fills", 0)) + 1
                 fav = m.get("fav_side") or (m.get("order") or {}).get("side")
                 if m["fv_fills"] == 1:      # value of our side at the first fill (markets CSV)
-                    m["fv_fill"] = round(fv["fv_yes"] if fav != "no" else 1 - fv["fv_yes"], 4)
+                    y = fv["fv_cf"] if fv.get("fv_cf") is not None else fv["fv_yes"]
+                    m["fv_fill"] = round(y if fav != "no" else 1 - y, 4)
                 rows.append(self._row(m, now, "fill", fv, quote))
             if tick:
                 self.last_tick[m["ticker"]] = now
@@ -291,9 +375,9 @@ class FairShadow:
     def files(self, now: float) -> dict:
         """Hourly files whose hour has ended and that weren't uploaded yet (each goes once)."""
         out = {}
-        cur = f"fv-{datetime.fromtimestamp(now, timezone.utc):%Y-%m-%d-%H}.csv"
+        cur = f"fv-{datetime.fromtimestamp(now, timezone.utc):%Y-%m-%d-%H}"
         for p in sorted(self.dir.glob("fv-*.csv"))[-6:]:
-            if p.name != cur and p.name not in self.uploaded:
+            if not p.name.startswith(cur) and p.name not in self.uploaded:
                 out[p.name] = p.read_text(encoding="utf-8")
         return out
 

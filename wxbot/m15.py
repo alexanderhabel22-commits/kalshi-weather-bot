@@ -1406,7 +1406,7 @@ def main(cfg: Config, once: bool = False) -> int:
     if not once and s.get("fv") and coins:
         try:
             from .m15_fv import Composite, FairShadow
-            fv = FairShadow(Composite(coins.values()).start(), coins, M15_DIR,
+            fv = FairShadow(Composite(coins.values()).start(client=client), coins, M15_DIR,
                             every_s=float(s.get("fv_every_s", 5)))
         except Exception as exc:               # shadow only: never stop the bot over it
             log.warning("fair-value shadow off: %s", exc)

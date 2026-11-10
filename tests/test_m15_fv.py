@@ -92,3 +92,37 @@ def test_shadow_skips_without_strike_or_feed(tmp_path):
     sh.step(FakeBot({"T": m}), 1500.0)
     assert not list(tmp_path.glob("fv-*.csv"))
     assert sh.fair_value({**m, "strike": 100}, 1500.0) is None
+
+
+def test_parse_cf():
+    raw = json.dumps({"type": "cfbenchmarks_value_5hz", "sid": 3,
+                      "msg": {"index_id": "BRTI", "value_usd": "76012.12345678",
+                              "source_ts_ms": 1794300000123, "received_at": 1}})
+    assert fv.parse_cf(raw) == [("BTC", 76012.12345678, 1794300000.123)]
+    assert fv.parse_cf(json.dumps({"type": "ticker", "msg": {"index_id": "BRTI", "value_usd": "1"}})) == []
+    assert fv.parse_cf(json.dumps({"type": "cfbenchmarks_value_5hz", "msg": {"index_id": "XYZ"}})) == []
+    assert fv.parse_cf("nope") == []
+
+
+def test_shadow_logs_cf_side_by_side(tmp_path):
+    c = fv.Composite(["BTC"])
+    for i in range(300):
+        t = 20_000.0 + i
+        c.on_price("coinbase", "BTC", 100.0 + 0.002 * (i % 3), t)
+        c.on_cf("BTC", 100.01 + 0.002 * (i % 3), t)
+        c.on_cf("ZZZ", 5.0, t)                     # coin we don't track: ignored
+        c.sample(t)
+    now = 20_299.5
+    m = {"ticker": "B", "series": "KXBTC15M", "close": int(now) + 30, "strike": 100.0, "filled": 0}
+    got = fv.FairShadow(c, {"KXBTC15M": "BTC"}, tmp_path).fair_value(m, now)
+    assert got["cf_index"] and 0 <= got["fv_cf"] <= 1 and got["fv_cf"] > got["fv_yes"] - 0.5
+    # an hour file with an older header gets a side file instead of mixed columns
+    sh = fv.FairShadow(c, {"KXBTC15M": "BTC"}, tmp_path)
+    from datetime import datetime, timezone
+    old = tmp_path / f"fv-{datetime.fromtimestamp(now, timezone.utc):%Y-%m-%d-%H}.csv"
+    old.write_text("ts,event\n1,tick\n")
+    sh.step(FakeBot({"B": m}), now)
+    side = old.with_name(old.stem + "-b.csv")
+    assert side.exists() and side.read_text().splitlines()[0].split(",") == fv.FV_COLS
+    assert sh.files(now) == {}                     # neither file of the current hour goes yet
+    assert set(sh.files(now + 3600)) == {old.name, side.name}
