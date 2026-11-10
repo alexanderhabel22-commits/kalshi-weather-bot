@@ -82,6 +82,12 @@ DEFAULTS = {
     "extra_min": 0.80,
     "extra_max": 0.87,
     "single_series": [],
+    # Correlated markets (metals + oil move together). Once `group_cap` of them have filled in
+    # the same window, the rest of the group stops bidding there (0 = off). Live replay Nov 10:
+    # in windows where several metals filled, the FIRST to fill made +$7.29 on 162 contracts and
+    # the later ones lost -$16.82 on 247 (they fill as the move spreads).
+    "group": [],
+    "group_cap": 0,
     "min_fav": 0.71,
     "max_fav": 0.95,
     "stop_quote_s": 0,
@@ -757,6 +763,11 @@ class Bot:
             if o:
                 self._end_order(m)
             return
+        if self.group_full(m):
+            m["why"] = "group cap"
+            if o:
+                self._end_order(m)
+            return
         prod = s["spot"].get(m["series"]) if s["guard"] else None
         if prod and self.spot is not None and self.spot.blocked(prod):
             m["why"] = "jump guard"
@@ -805,6 +816,18 @@ class Bot:
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, n_new, now)
+
+    def group_full(self, m: dict) -> bool:
+        """True when this market is in the correlated group, holds nothing yet, and enough
+        other group markets closing at the same time already filled."""
+        cap = int(self.s.get("group_cap") or 0)
+        grp = self.s.get("group") or []
+        if cap <= 0 or m["series"] not in grp or m.get("filled"):
+            return False
+        n = sum(1 for k in self.state["markets"].values()
+                if k is not m and k["close"] == m["close"] and k["series"] in grp
+                and k.get("mode") == m.get("mode") and k.get("filled", 0) > 0)
+        return n >= cap
 
     # ------------------------------------------------------------ grading
 

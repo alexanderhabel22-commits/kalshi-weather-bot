@@ -662,3 +662,19 @@ def test_cancel_failure_with_unknown_status_keeps_tracking(monkeypatch):
     clk.t += 10
     b.step()
     assert len(cl.placed) == 1 and b.state["markets"][TK]["order"]["id"] == "o0"
+
+
+def test_group_cap_stops_later_metals_in_the_same_window(monkeypatch):
+    World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+    b = bot(cfg(mode="live", group=["KXSILVER15M", "KXCOPPER15M", "KXPLATINUM15M"], group_cap=1),
+            clk, Client())
+    mk = lambda tk, se, f: {"ticker": tk, "series": se, "close": 100, "mode": "live", "filled": f}
+    b.state["markets"] = {"s": mk("s", "KXSILVER15M", 1), "c": mk("c", "KXCOPPER15M", 0),
+                          "b": mk("b", "KXBTC15M", 0)}
+    assert b.group_full(b.state["markets"]["c"])           # silver filled first: copper sits out
+    assert not b.group_full(b.state["markets"]["s"])       # the filled one keeps its position
+    assert not b.group_full(b.state["markets"]["b"])       # BTC isn't in the group
+    off = bot(cfg(mode="live"), clk, Client())
+    off.state["markets"] = b.state["markets"]
+    assert not off.group_full(off.state["markets"]["c"])   # off by default

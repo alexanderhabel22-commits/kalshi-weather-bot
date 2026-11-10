@@ -231,6 +231,10 @@ extra_contracts = 1              # ON Nov 8 5:15 PM ET (Alex OK'd): +1 contract 
 extra_min = 0.80                 # favourite is 80-87c (backtest +11c/ct; live the bot buys at ~73c
 extra_max = 0.87                 # then sits out this stretch). Max 2 per market.
 single_series = []               # series listed here never take the extra contract
+# correlated group: once group_cap of these filled in a window, the others stop bidding there.
+# 0 = off. Built Nov 10 for Alex's 3:30 PM ET review (12:15 AM ET window: 5 of 6 lost together).
+group = ["KXSILVER15M", "KXCOPPER15M", "KXPALLADIUM15M", "KXPLATINUM15M", "KXGOLD15M", "KXWTI15M"]
+group_cap = 0
 min_fav = 0.71                   # join the favourite's best bid while it's 71-95c (candidate: 0.65)
 max_fav = 0.95
 pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
