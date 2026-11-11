@@ -79,6 +79,33 @@ class Signed:
         raise AssertionError("order")
 
 
+def test_maker_tags_fills_with_casual_share_and_scores_settlement(tmp_path):
+    http, clock = Http(), [T0]
+    mm = MakerPaper(lab(tmp_path, http, clock))
+    mm.cycle()
+    # one $4 order (two prints of the same order), one $400 order, then a small YES buy that fills our NO bid
+    http.trades = [{"trade_id": "a1", "created_time": iso(T0 + 5), "yes_price_dollars": "0.42",
+                    "taker_side": "yes", "count_fp": "5"},
+                   {"trade_id": "a2", "created_time": iso(T0 + 5), "yes_price_dollars": "0.43",
+                    "taker_side": "yes", "count_fp": "5"},
+                   {"trade_id": "a3", "created_time": iso(T0 + 6), "yes_price_dollars": "0.60",
+                    "taker_side": "no", "count_fp": "1000"},
+                   {"trade_id": "a4", "created_time": iso(T0 + 30), "yes_price_dollars": "0.45",
+                    "taker_side": "yes", "count_fp": "40"}]
+    clock[0] += 60
+    mm.cycle()
+    assert mm.st["flow"]["KXMEN-1-A"] == {"all": 1050.0, "small": 50.0}
+    (h,) = mm.st["held"]
+    assert (h["side"], h["px"], h["casual"]) == ("no", 0.55, round(50 / 1050, 3))
+    assert MakerPaper.flow_key(0.6, "no") == "50plus|no" and MakerPaper.flow_key(None, "yes") == "unknown|yes"
+    mm.settle()                                   # market not settled yet: the fill stays held
+    assert len(mm.st["held"]) == 1
+    http.markets["KXMEN-1-A"] = {"result": "no"}
+    mm.settle()
+    assert mm.st["held"] == []
+    assert mm.status()["by_flow"]["under20|no"]["settled_c"] == 45.0
+
+
 def test_rfq_prices_cross_combos_and_scores(tmp_path):
     http, clock = Http(), [T0]
     http.markets = {"KXA-1": {"ticker": "KXA-1", "yes_bid_dollars": "0.49", "yes_ask_dollars": "0.51"},
