@@ -1,0 +1,69 @@
+name: parlay-research
+
+# Research only (parlay deep pull, Nov 11 2026): months of settled combo (MVE) markets,
+# trade tapes and leg results. Read-only public data; never trades, never alerts.
+# Runs only on push to this research branch.
+# Output goes to the ovn-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-bdmif3"]
+    paths: ["research_parlay/probe.py", ".github/workflows/parlay-research.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: ovn-research
+  cancel-in-progress: false
+
+jobs:
+  # one research job at a time across the repo: wait for any other *research run to finish
+  wait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Wait for other research runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for i in $(seq 1 170); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs?status=in_progress&per_page=100" \
+                  --jq "[.workflow_runs[] | select((.name | endswith(\"research\")) and .id != ${{ github.run_id }})] | length")
+            [ "$n" = "0" ] && exit 0
+            echo "other research runs in progress: $n"; sleep 120
+          done
+          exit 1
+  run:
+    needs: wait
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        run: python research_parlay/probe.py out
+      - name: Save to ovn-research-data branch
+        if: always()
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="parlay-$(date -u +%Y%m%d-%H%M)"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin ovn-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/ovn-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp" || exit 0
+            git push origin HEAD:ovn-research-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
