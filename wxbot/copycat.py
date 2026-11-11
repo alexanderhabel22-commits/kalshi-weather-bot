@@ -164,7 +164,7 @@ def orders(trades: list[dict]) -> list[dict]:
 
 def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict:
     """Paper record of big single bets: per contract, after the taker fee, as if copied at their price."""
-    out = {"new": [], "old": [], "anon": []}
+    out = {"new": [], "old": [], "anon": [], "new_ours": []}
     recent = []
     for r in rows:
         if r.get("kind") != "whale":
@@ -174,8 +174,11 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
         if res in ("yes", "no") and r.get("paid") is not None:
             c = round(100 * ((1.0 if r["side"] == res else 0.0) - r["paid"]) - taker_fee_c(r["paid"]), 1)
             out["anon" if r.get("anon") else "new" if r.get("new") else "old"].append(c)
+            if r.get("new") and r.get("ours") is not None:   # as we'd really have copied it
+                out["new_ours"].append(round(100 * ((1.0 if r["side"] == res else 0.0) - r["ours"])
+                                             - taker_fee_c(r["ours"]), 1))
         recent.append({**{k: r.get(k) for k in ("et", "nick", "ticker", "side", "paid", "count", "usd", "joined",
-                                                    "markets", "new", "anon", "role", "lag_s")}, "result_c": c})
+                                                    "markets", "new", "anon", "role", "lag_s", "ours")}, "result_c": c})
 
     def stats(v):
         m, lo = mean_low(v)
@@ -185,7 +188,8 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
     named = [x for x in recent if not x.get("anon")]
     return {"min_usd": WHALE_USD, "anon_min_usd": WHALE_ANON_USD, "new_days": WHALE_NEW_DAYS,
             "count": len(named), "new_count": len(nw), "anon_count": len(an),
-            "new": stats(out["new"]), "old": stats(out["old"]), "anon": stats(out["anon"]),
+            "new": stats(out["new"]), "new_ours": stats(out["new_ours"]), "old": stats(out["old"]),
+            "anon": stats(out["anon"]),
             "recent_new": list(reversed(nw))[:40], "recent_anon": sorted(an, key=lambda x: -(x["usd"] or 0))[:10],
             "recent": list(reversed(named))[:40]}
 
@@ -943,7 +947,17 @@ class Copycat:
                 lag = round(seen - datetime.fromisoformat(str(t.get("create_date")).replace("Z", "+00:00")).timestamp(), 1)
             except ValueError:
                 lag = None
+            ours = None                         # NEW accounts: the price we could really have bought at
+            if p["new"]:
+                try:
+                    sn = self.snapshot(t.get("ticker") or "")
+                    b, a = sn.get("bid"), sn.get("ask")
+                    ours = a if side == "yes" else (1 - b if b is not None else None)
+                    ours = round(ours, 4) if ours is not None and 0 < ours < 1 else None
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("copycat whale price %s: %s", t.get("ticker"), exc)
             self.write({"kind": "whale", "nick": nick, "trade_id": t.get("trade_id"), "ticker": t.get("ticker"),
+                        "ours": ours, "ours_lag_s": round(self.clock() - seen + (lag or 0), 1) if ours else None,
                         "role": role, "side": side, "paid": round(paid, 4), "count": n, "usd": round(n * paid),
                         "trade_time": t.get("create_date"), "lag_s": lag, "fills": t.get("fills"), "joined": p["joined"],
                         "age_d": p["age_d"], "markets": p["markets"], "their_pnl": p["pnl"], "new": p["new"]})

@@ -386,8 +386,8 @@ def test_big_bets_by_new_accounts_logged_and_scored(tmp_path):
     assert sm["old"]["avg_c"] < -55
     cc.spot_whale(big, 1_780_000_001.0)
     n = len(s.calls)
-    cc.run_whales()                              # profile cached: no new lookups
-    assert len(s.calls) == n
+    cc.run_whales()                              # profile cached: only the market price check for a NEW account
+    assert [c[0].rsplit("/", 1)[-1] for c in s.calls[n:]] == ["KXTEST-1"]
 
 
 
@@ -493,3 +493,10 @@ def test_restart_does_not_relog_known_accounts_history(tmp_path):
     cc.logged_before = {"alice"}
     cc.ingest("alice", [trade("h1", taker="alice")], 1_000_000.0)
     assert not [r for r in rows(tmp_path) if r.get("kind") == "fill"] and "h1" in cc.seen["alice"]
+
+
+def test_new_account_whale_scored_at_our_price():
+    r = [{"kind": "whale", "nick": "x", "ticker": "K", "side": "yes", "paid": 0.50, "ours": 0.60, "new": True,
+          "usd": 600, "count": 1200}]
+    sm = copycat.whale_summary(r, {"K": "yes"}, 1.0)
+    assert sm["new"]["avg_c"] > sm["new_ours"]["avg_c"] and sm["new_ours"]["settled"] == 1
