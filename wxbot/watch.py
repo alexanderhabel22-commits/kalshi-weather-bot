@@ -84,8 +84,9 @@ You get a digest with health facts and rule flags. Decide:
 Be calm and conservative: do not escalate on ordinary P&L swings. One or two short sentences.
 Use YOUR MEMORY (your notes and recent log) to spot repeats: something that keeps coming back
 deserves a mention; something already known and explained does not need re-escalating.
-"remember": usually empty. Fill it (one line) only with a durable fact that will help future
-checks, e.g. a new recurring pattern or a known harmless quirk. Never restate the digest."""
+"remember": usually empty. Fill it (one line) only with a NEW durable fact that will help future
+checks, e.g. a new recurring pattern or a known harmless quirk. Leave it empty if your notes
+already cover it. Never restate the digest."""
 
 OPUS_SYSTEM = PERSONA + """
 Right now you are the on-call engineer for two small automated Kalshi trading bots owned by
@@ -437,11 +438,18 @@ def journal(state: dict, stamp: str, what: str, keep: int) -> None:
     state["journal"] = j[-keep:]
 
 
+def _similarity(a: str, b: str) -> float:
+    wa, wb = (set(w.strip(".,;:()'\"").lower() for w in x.split()) - {""} for x in (a, b))
+    return len(wa & wb) / max(1, len(wa | wb))
+
+
 def remember(state: dict, note: str | None, keep: int) -> None:
     note = (note or "").strip()
     if not note:
         return
-    notes = [n for n in state.get("notes", []) if n.lower() != note.lower()]
+    # a reworded version of a note it already has replaces it (Nov 11: Haiku re-noted the same
+    # BTC decay alert every check and filled all 8 slots with one fact)
+    notes = [n for n in state.get("notes", []) if _similarity(n, note) < 0.5]
     state["notes"] = (notes + [note[:200]])[-keep:]
 
 
