@@ -1,21 +1,21 @@
 {
  "last": {
-  "at": "2026-11-11T06:20:15+00:00",
+  "at": "2026-11-11T06:35:25+00:00",
   "flags": [],
   "haiku": {
    "level": "ok",
-   "summary": "Both bots are running in live mode matching their controls with no errors or halts, and the main bot's scans and trade runs are succeeding on schedule. The 15-min bot's negative 24h P&L of about -$2.94 sits well inside its stops, and no rule flags were raised."
+   "summary": "Both bots are healthy: the 15-min bot is active, live, error-free and within its stops (24h P&L -$2.42), and the main bot is live, not halted, with regular scans and trade runs succeeding. No rule flags; the -$7.61 loss day on Nov 10 is ordinary P&L inside the stops."
   },
   "opus": null,
   "action": null
  },
  "today": {
   "day": "2026-11-11",
-  "haiku": 6,
+  "haiku": 7,
   "opus": 0,
   "tokens": {
-   "haiku_in": 8435,
-   "haiku_out": 914,
+   "haiku_in": 9933,
+   "haiku_out": 1034,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -262,5 +262,5 @@
    "opus": null
   }
  ],
- "digest": "Time: 1:20 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T06:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-2.935 live_total=$10.4715\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $2.35\n  KXBTC15M: fills=476.0 pnl=$9.38 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=4.0 pnl=$0.64\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=276.97 pnl=$12.3592\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV110045-45 2 1.54 0.46\n  KXSILVER15M-26NOV110045-45 2 1.58 0.42\n  KXBTC15M-26NOV110100-00 2 1.75 0.25\n  KXGOLD15M-26NOV110100-00 2 1.72 0.28\n  KXSILVER15M-26NOV110100-00 1 0.72 -0.72\n  KXBTC15M-26NOV110115-15 2 1.55 0.45\n  KXSILVER15M-26NOV110115-15 2 1.64 0.36\n  KXGOLD15M-26NOV110115-15 2 1.64 0.36\nMAIN: mode=live halted=False bankroll=$58.43 cash=$36.93 at=2026-11-11T06:16:12.571968+00:00\nRecent Actions runs: weather-scan in_progress 06:20Z; trade success 06:15Z; weather-scan success 06:15Z; trade success 06:10Z; weather-scan success 06:10Z; trade success 06:05Z; weather-scan success 06:05Z; trade success 06:02Z\nRULE FLAGS: none"
+ "digest": "Time: 1:35 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T06:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-2.415 live_total=$10.4215\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $2.30\n  KXBTC15M: fills=477.0 pnl=$8.6 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=6.0 pnl=$1.11\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=278.97 pnl=$12.6192\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXGOLD15M-26NOV110100-00 2 1.72 0.28\n  KXSILVER15M-26NOV110100-00 1 0.72 -0.72\n  KXBTC15M-26NOV110115-15 2 1.55 0.45\n  KXSILVER15M-26NOV110115-15 2 1.64 0.36\n  KXGOLD15M-26NOV110115-15 2 1.64 0.36\n  KXBTC15M-26NOV110130-30 1 0.78 -0.78\n  KXSILVER15M-26NOV110130-30 2 1.74 0.26\n  KXGOLD15M-26NOV110130-30 2 1.53 0.47\nMAIN: mode=live halted=False bankroll=$58.35 cash=$36.88 at=2026-11-11T06:32:07.118811+00:00\nRecent Actions runs: weather-scan in_progress 06:35Z; trade success 06:31Z; weather-scan success 06:30Z; trade success 06:25Z; weather-scan success 06:25Z; trade success 06:20Z; weather-scan success 06:20Z; trade success 06:15Z\nRULE FLAGS: none"
 }
