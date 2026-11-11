@@ -285,29 +285,40 @@ IP without a token). It never places, changes or cancels anything and needs no s
   un-pauses, never changes caps/stops/sizes/code. Results: `m15/watch.json` on branch m15-data;
   the scheduled Claude check-ins read it and turn proposed fixes into PRs.
 
-## Copycat (built Nov 10, 2026; watch-only for now)
+## Copycat (built Nov 10, 2026; real money per account once its paper test passes)
 
 - Alex's idea and name: copy proven Kalshi winners' trades. `wxbot/copycat.py`, `python bot.py copycat`,
   separate systemd service `kalshi-copycat` on the 15-min server (installed by the hourly update via
-  `deploy/m15/install-copycat.sh`; CPU 10%, 200 MB cap). Never loads the Kalshi key, never orders.
-  Off: `sudo systemctl disable --now kalshi-copycat` and `sudo touch /var/lib/kalshi-copycat.disabled`.
+  `deploy/m15/install-copycat.sh`; CPU 10%, 200 MB cap). Off: set `"mode": "off"` in
+  `copycat_control.json` on main (read every minute; also off if the file can't be read for 10 min,
+  if TRADING_MODE is off/paper or the main bot is halted). Whole service: `sudo systemctl disable --now
+  kalshi-copycat` and `sudo touch /var/lib/kalshi-copycat.disabled`.
 - Uses Kalshi's public social API (`api.elections.kalshi.com/v1/social`): every 12 h it rebuilds the
-  watch list (accounts on the all-time and category profit boards with public trades and >= $10K
-  lifetime profit, max 100); every 10 min it also scouts the global public trade feed and adds any
-  new name with >= $10K profit. It polls each account's public trades round-robin (passing accounts
-  3x as often), logs every new fill (side, price, size, maker/taker, detection lag) and snapshots the
-  market at +0/60/300/1800 s. `copycat/status.json` (every 5 min) holds each account's score and
-  verdict; the dashboard's COPYCAT tab shows it. Feed delay measured Nov 10: median ~10 s.
-- Verdict per account: judged at 100 copied fills or 7 days, then on its last 50 settled copies:
-  passes while the pessimistic copy-to-settlement estimate is >= 0 (min 20 settled), fails when it
-  isn't, and can pass again later (Alex: copy them while they make us money, drop them, rinse, repeat).
-  Hourly files on branch `copycat-data` (copycat/copycat-YYYY-MM-DD-HH.jsonl.gz).
-- Score: `python tools/grade_copycat.py <dir>` (per account: price move after their fill, what a
-  copier paying the ask at detection would make at +1/5/30 min and at settlement).
-- Plan: about a week of data, then a real-money copy mode (1 contract per trade, own loss stop) only
-  for accounts whose pessimistic copy-to-settlement estimate is >= 0; confirm with Alex before enabling.
-  Don't copy market makers (their fills are flow, not views). The top ~50 accounts hide their trades.
-  Background: Library analysis/leaderboard/RESULTS.md.
+  watch list (profit boards, public trades, >= $10K lifetime profit, max 100); every 10 min it scouts
+  the global public trade feed for new profitable names. Polls accounts round-robin (passing ones 3x
+  as often). Feed delay measured Nov 10: median ~10 s.
+- PAPER record (every account): each of their fills is scored as if copied at the price ~10 s later,
+  after Kalshi's taker fee. Score 0-100 = 80 + 2.5 x the pessimistic (95% lower bound) cents per
+  contract, +/-3 for a hot/cold last 50; letters A+ 97 ... B- 80 ... F < 60. Judged at 100 copies or
+  7 days (Alex, Nov 10). 80+ = copied, while its last 50 average better than -leeway (5c, +1c per $1
+  it has made us, up to +5c for a high score); "slump" below that, back when it recovers. Size 1,
+  90+ = 2, 95+ with 300 settled = 3.
+- REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
+  account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
+  their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
+  bot's live series. Rails in `copycat_control.json`: open copies <= 15% of bankroll, an account is
+  benched after losing 10% of bankroll on real copies, Copycat halts at -25% total (reset: edit
+  live_state.json "halted" to null). Alex approved real money at the 100-copy threshold on Nov 10.
+- The boss (`wxbot/copycat_boss.py`): Claude Haiku triage every 15 min; Claude Opus full review every
+  2 h when something changed or when Haiku asks (max 16/day). Writes a plain-English note per
+  account and a summary (dashboard), can bench an account 24 h for a reason the numbers can't see
+  (style change, market maker, broken bot) and lift its own benches. Can't promote or raise sizes.
+  ~$0.20-0.70/day. Needs ANTHROPIC_API_KEY in /etc/kalshi-m15/env (already there for the watcher).
+- Dashboard COPYCAT tab: real P&L, at-risk vs pool, boss summary, per-account PAPER and REAL lines,
+  progress bar to the 100-copy test, list of real copies. Data: `copycat/status.json` on branch
+  `copycat-data` (every 5 min) plus hourly logs (fills, snaps, copy decisions, orders, settlements).
+- Don't copy market makers (their fills are flow, not views); the score fails them on its own. The top
+  ~50 accounts hide their trades. Background: Library analysis/leaderboard/RESULTS.md.
 
 ## Source shadow logger (built Nov 10, 2026, logging only)
 

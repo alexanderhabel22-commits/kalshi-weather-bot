@@ -1,9 +1,10 @@
-"""Copycat, shadow mode (Nov 10, 2026; leaderboard study idea 2): follow proven winners' public trades.
+"""Copycat (Nov 10, 2026; leaderboard study idea 2): follow proven winners' public trades.
 
-SHADOW ONLY: nothing here places, changes or cancels an order, and it never reads the Kalshi
-trading key. It answers one question: when a proven Kalshi winner whose trades are public makes a
-trade, does the price keep moving their way afterwards, and do we see the trade soon enough to
-follow it?
+Two records per account, kept apart: PAPER (every trade of theirs we saw, scored as if we had
+copied it at the price left ~10-20 s later, after fees) and REAL (copies actually bought with
+money, wxbot/copycat_live.py). Real copies only happen for accounts whose paper record passes
+(100 copies or 7 days, score 80+), and only while copycat_control.json on main says "live".
+The boss (wxbot/copycat_boss.py, Claude) reviews the accounts and can bench them.
 
 How it works (one thread, polite polling of Kalshi's public social API):
   - every 12 h, build the watch list: profitable accounts (lifetime pnl >= MIN_PNL) from the
@@ -93,6 +94,12 @@ def sharp_side(t: dict, nick: str) -> tuple[str | None, str | None]:
 
 
 # ------------------------------------------------------------------ scoring (shared with tools/)
+def taker_fee_c(p: float, n: int = 1) -> float:
+    """Kalshi taker fee in cents per contract: ceil(7% x n x p x (1-p)) dollars, per order."""
+    import math
+    return math.ceil(round(7 * n * p * (1 - p), 6)) / max(1, n)
+
+
 def side_value(side: str, yes_px: float) -> float:
     return yes_px if side == "yes" else 1 - yes_px
 
@@ -100,7 +107,8 @@ def side_value(side: str, yes_px: float) -> float:
 def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
     """Per account (and "ALL"): lists of cents/contract on the sharp's side.
     move_N = mid N s after we saw the fill minus the sharp's price; follow_N = mid minus the ask a
-    copier would have paid at detection; settle = settlement value minus that ask."""
+    copier would have paid at detection (and the taker fee); settle = settlement value minus that
+    ask and fee. Lists are in time order."""
     fills = {r["trade_id"]: r for r in rows if r.get("kind") == "fill" and not r.get("backfill")
              and r.get("side") in ("yes", "no") and r.get("yes_price") is not None}
     snaps: dict[str, dict] = defaultdict(dict)
@@ -118,6 +126,7 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
         side = f["side"]
         entry = side_value(side, f["yes_price"])
         pay = s0["ask"] if side == "yes" else 1 - s0["bid"]
+        fee = taker_fee_c(pay)                 # copying always takes the ask
         for nick in (f["nick"], "ALL"):
             o = out[nick]
             o["lag"].append(f.get("lag_s") or 0)
@@ -127,10 +136,10 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
                     continue
                 mid = side_value(side, (snap["bid"] + snap["ask"]) / 2)
                 o[f"move_{d}"].append(100 * (mid - entry))
-                o[f"follow_{d}"].append(100 * (mid - pay))
+                o[f"follow_{d}"].append(100 * (mid - pay) - fee)
             res = (results or {}).get(f["ticker"])
             if res in ("yes", "no"):
-                o["settle"].append(100 * ((1.0 if res == side else 0.0) - pay))
+                o["settle"].append(100 * ((1.0 if res == side else 0.0) - pay) - fee)
     return out
 
 
@@ -177,7 +186,40 @@ def load_rows(d: Path, cache_done_hours: bool = False, now: float | None = None)
     return rows
 
 
-def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float) -> dict:
+LETTERS = ((97, "A+"), (93, "A"), (90, "A-"), (87, "B+"), (83, "B"), (80, "B-"), (77, "C+"),
+           (73, "C"), (70, "C-"), (67, "D+"), (63, "D"), (60, "D-"))
+COPY_SCORE = 80.0           # B- or better is copied
+
+
+def score_grade(settle: list[float]) -> tuple[float | None, str]:
+    """A test-style score (0-100) and letter from the whole copy history (cents per contract after
+    fees). It is built on the pessimistic mean, so a short lucky run can't score high:
+    80 + 2.5 x (lower 95% bound of the mean, in cents), so 0c = 80 (B-), +4c = 90 (A-), +7c = 97.5 (A+),
+    -4c = 70 (C-), below -8c = F. A small recency term (+/-3) rewards a hot last 50 or marks a cold one."""
+    if len(settle) < MIN_SETTLED:
+        return None, "-"
+    m, low = mean_low(settle)
+    rec = st.mean(settle[-ROLL_WINDOW:]) - m
+    score = max(0.0, min(100.0, 80 + 2.5 * low + max(-3.0, min(3.0, rec * 0.25))))
+    letter = next((lt for cut, lt in LETTERS if score >= cut), "F")
+    return round(score, 1), letter
+
+
+def leeway_c(banked: float, score: float | None = None) -> float:
+    """How bad (c/contract) its last 50 copies may average before it is benched: 5c for a newcomer,
+    +1c per $1 it has made us on 1-contract copies (max +15c), +up to 5c for a high score."""
+    extra = max(0.0, min(5.0, ((score or 80) - 80) / 2))
+    return 5.0 + max(0.0, min(15.0, banked)) + extra
+
+
+def size_for(score: float | None, n: int) -> int:
+    if score is None:
+        return 0
+    return 3 if score >= 95 and n >= 300 else 2 if score >= 90 else 1
+
+
+def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float,
+                 account_stops: dict | None = None, notes: dict | None = None) -> dict:
     g = grade(rows, results)
     accounts = []
     for nick in sorted(set(watch) | {n for n in g if n != "ALL"}):
@@ -191,30 +233,57 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         f300, _ = mean_low(o.get("follow_300", []))
         f1800, _ = mean_low(o.get("follow_1800", []))
         due = n >= GO_LIVE_FILLS or days >= GO_LIVE_DAYS
+        score, gl = score_grade(settle_all)
+        banked = sum(settle_all) / 100            # $ a 1-contract copy would have made, all-time
+        leeway = leeway_c(banked, score)
+        copyable = score is not None and score >= COPY_SCORE
+        rmean = st.mean(window) if window else None
         if not due:
             verdict = "watching"
-        elif settle_low is not None and settle_low >= 0 and len(window) >= MIN_SETTLED:
+        elif (account_stops or {}).get(nick):
+            verdict = "benched"                   # its own real-money loss stop, or the boss
+        elif copyable and rmean is not None and rmean >= -leeway:
             verdict = "passes"
+        elif copyable:
+            verdict = "slump"                     # good record, recent run below its leeway
         else:
             verdict = "fails"
         accounts.append({"nick": nick, "watched": nick in watch, **(watch.get(nick) or {}),
                          "fills": n, "settled": len(settle_all), "window": len(window), "days": round(days, 1),
                          "lag_s": round(st.median(o["lag"]), 1) if n else None,
                          "follow_5m_c": f300, "follow_30m_c": f1800,
-                         "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict})
+                         "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict,
+                         "grade": gl, "score": score, "banked": round(banked, 2), "leeway_c": round(leeway, 1),
+                         "size": size_for(score, len(settle_all)) if verdict == "passes" else 0,
+                         "boss_note": (notes or {}).get(nick)})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
-            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} copied fills or {GO_LIVE_DAYS} days, then on a rolling "
-            f"window of the last {ROLL_WINDOW} settled copies: passes while the pessimistic "
-            f"copy-to-settlement estimate is >= 0 (min {MIN_SETTLED} settled), can pass again later",
+            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} copied fills or {GO_LIVE_DAYS} days. Score 0-100 from every copy so far "
+            "(after fees; 80 = break-even even in the pessimistic case). Copied at 80+ (B- or better) while its "
+            f"last {ROLL_WINDOW} copies average better than -leeway (5c, +1c per $1 it has made us, +up to 5c "
+            "for a high score); benched below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3",
             "accounts": accounts,
             "recent": [{k: r.get(k) for k in ("et", "nick", "ticker", "side", "yes_price", "count",
                                                   "role", "lag_s")} for r in reversed(recent)]}
 
 
+def add_real(status: dict, state: dict | None) -> None:
+    """Puts each account's REAL-money record next to its paper (shadow) record."""
+    pos = (state or {}).get("positions") or {}
+    for a in status["accounts"]:
+        mine = [p for p in pos.values() if p.get("nick") == a["nick"]]
+        done = [p for p in mine if p.get("settled")]
+        a["real"] = {"copies": len(mine), "open": len(mine) - len(done), "settled": len(done),
+                     "won": sum(1 for p in done if (p.get("pnl") or 0) > 0),
+                     "contracts": round(sum(p.get("n") or 0 for p in mine), 2),
+                     "open_cost": round(sum(p.get("cost") or 0 for p in mine if not p.get("settled")), 2),
+                     "pnl": round(((state or {}).get("pnl") or {}).get(a["nick"], 0.0), 2)}
+
+
 class Copycat:
     def __init__(self, out_dir: Path, session: requests.Session | None = None, clock=time.time,
-                 uploader: Callable[[str, bytes], None] | None = None, req_gap: float = REQ_GAP_S):
+                 uploader: Callable[[str, bytes], None] | None = None, req_gap: float = REQ_GAP_S,
+                 live=None, boss=None, alert: Callable[[str, str], None] | None = None):
         self.out = out_dir
         self.out.mkdir(parents=True, exist_ok=True)
         self.s = session or requests.Session()
@@ -234,6 +303,12 @@ class Copycat:
         self.checked: set[str] = set()           # names already looked up by the scout
         self.scout_next = 0.0
         self.hot: set[str] = set()               # passing accounts, polled more often
+        self.acct: dict[str, dict] = {}          # nick -> last status row
+        self.live = live                         # copycat_live.Live (real money) or None
+        self.boss = boss                         # copycat_boss.Boss or None
+        self.alert = alert or (lambda t, b: None)
+        self.copied_once: set[str] = set()
+        self._boss_busy = False
         self._lock = threading.Lock()
 
     # -- files
@@ -383,6 +458,8 @@ class Copycat:
             row["snap"] = not (first or now - self.last_snap.get(key, 0) < SNAP_GAP_S
                                or len(self.snaps) > MAX_PENDING)
             self.write(row)
+            if not first and self.live is not None and nick in self.hot:
+                self.try_copy(row, now)
             if not row["snap"]:
                 continue
             self.last_snap[key] = now
@@ -390,6 +467,24 @@ class Copycat:
                 self.snaps.append((now + d, d, nick, key[1], tid))
         if len(seen) > 5000:                       # keep memory bounded
             self.seen[nick] = {t.get("trade_id") for t in trades}
+
+    def try_copy(self, row: dict, now: float) -> None:
+        """Real money: hand a passing account's new fill to the live rails (they decide)."""
+        try:
+            self.live.refresh(now)
+            if self.live.mode(now) != "live":
+                return
+            snap = self.snapshot(row["ticker"]) if row.get("ticker") else {}
+            what = self.live.maybe_copy(self.acct.get(row["nick"]), row, snap, now)
+        except Exception as exc:  # noqa: BLE001
+            what = f"error: {str(exc)[:120]}"
+        self.write({"kind": "copy", "nick": row["nick"], "ticker": row.get("ticker"),
+                    "trade_id": row.get("trade_id"), "what": what})
+        if what == "copied" and row["nick"] not in self.copied_once:
+            self.copied_once.add(row["nick"])
+            p = self.live.state["positions"].get(row.get("ticker")) or {}
+            self.alert("Copycat: first real copy", f"Copied {row['nick']}: {p.get('n')} x {row.get('side')} "
+                       f"{row.get('ticker')} for ${p.get('cost')}.")
 
     def run_snaps(self, now: float) -> None:
         due = [x for x in self.snaps if x[0] <= now]
@@ -425,16 +520,36 @@ class Copycat:
     def update_status(self, now: float) -> dict:
         rows = load_rows(self.out, cache_done_hours=True, now=now)
         old = now - 900
-        need = sorted({r["ticker"] for r in rows if r.get("kind") == "fill" and not r.get("backfill")
-                       and (r.get("ts") or now) < old and r.get("ticker") not in self.results})
-        for t in need[:30]:
+        held = [t for t, p in (self.live.state["positions"].items() if self.live else [])
+                if not p.get("settled") and t not in self.results]
+        need = held + sorted({r["ticker"] for r in rows if r.get("kind") == "fill" and not r.get("backfill")
+                              and (r.get("ts") or now) < old and r.get("ticker") not in self.results}
+                             - set(held))
+        for t in need[:40]:
             try:
                 res = self.snapshot(t).get("result")
                 if res in ("yes", "no"):
                     self.results[t] = res
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat result %s: %s", t, exc)
-        status = build_status(rows, self.results, self.watch, now)
+        stops, notes, live = {}, {}, None
+        if self.live is not None:
+            self.live.refresh(now, force=True)
+            self.live.settle(self.results, now)
+            stops.update(self.live.benched())
+            live = self.live.summary(now)
+        if self.boss is not None:
+            stops.update({k: "boss: " + v["reason"] for k, v in self.boss.benches(now).items()})
+            notes = dict(self.boss.state["notes"])
+        status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes)
+        add_real(status, self.live.state if self.live else None)
+        status["live"] = live
+        status["mode"] = live["mode"] if live and live["mode"] == "live" else "paper only"
+        if self.boss is not None:
+            status["boss"] = {"summary": self.boss.state.get("summary"), "usage": self.boss.state.get("usage"),
+                              "reviews_today": self.boss.state.get("deep_n"),
+                              "benches": self.boss.benches(now)}
+        self.acct = {a["nick"]: a for a in status["accounts"]}
         self.hot = {a["nick"] for a in status["accounts"] if a["verdict"] == "passes"}
         (self.out / "status.json").write_text(json.dumps(status, separators=(",", ":")))
         if self.uploader:
@@ -442,7 +557,18 @@ class Copycat:
                 self.uploader("copycat/status.json", json.dumps(status).encode())
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat status upload: %s", exc)
+        if self.boss is not None and not self._boss_busy:
+            self._boss_busy = True
+            threading.Thread(target=self._run_boss, args=(status, rows, live), daemon=True).start()
         return status
+
+    def _run_boss(self, status: dict, rows: list[dict], live: dict | None) -> None:
+        try:
+            self.boss.step(status, rows, live)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("copycat boss: %s", exc)
+        finally:
+            self._boss_busy = False
 
     def run(self) -> None:
         last_up = 0.0
@@ -462,10 +588,30 @@ class Copycat:
 
 
 def main() -> int:
+    from wxbot import notify
+    from wxbot.copycat_boss import Boss, make_client
+    from wxbot.copycat_live import Live
+    from wxbot.m15 import client_from_env
+    from wxbot.util import Http, load_config
+
     out = Path(os.environ.get("COPYCAT_DIR", "/var/lib/kalshi-copycat"))
+    out.mkdir(parents=True, exist_ok=True)
     token = os.environ.get("GITHUB_TOKEN", "").strip()
-    for k in list(os.environ):          # shadow only: drop the trading key and other secrets
-        if k.startswith(("KALSHI", "NTFY", "ANTHROPIC", "OANDA")):
-            os.environ.pop(k, None)
-    Copycat(out, uploader=github_put(token, branch=BRANCH) if token else None).run()
+    os.environ.pop("OANDA_TOKEN", None)
+    cfg = load_config()
+    http = Http(UA, min_interval=0.06)
+
+    def alert(title: str, body: str) -> None:
+        try:
+            notify.send(http, cfg, title, body, priority=4, tags=["busts_in_silhouette"])
+        except Exception as exc:  # noqa: BLE001
+            log.warning("copycat alert: %s", exc)
+
+    client = client_from_env(http)        # real orders only when copycat_control.json says "live"
+    live = Live(out, client=client, fetch_json=http.get_json, alert=alert)
+    boss = Boss(out, client=make_client(), alert=alert)
+    cc = Copycat(out, uploader=github_put(token, branch=BRANCH) if token else None,
+                 live=live, boss=boss, alert=alert)
+    live.write = cc.write
+    cc.run()
     return 0
