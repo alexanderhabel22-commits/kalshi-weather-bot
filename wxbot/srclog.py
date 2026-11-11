@@ -52,6 +52,7 @@ BRANCH = "srclog-data"
 UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
       "Chrome/130.0 Safari/537.36")
 SNAP_DELAYS = (0, 10, 30, 60, 300)
+BLOCKED_RETRY_S = 1800      # a source that answers 401/403/429 is retried every 30 min
 RAW_MIN_GAP_S = 600          # at most one raw page saved per source per 10 min
 RAW_MAX_BYTES = 400_000_000  # stop saving raw pages past ~400 MB on disk
 
@@ -101,10 +102,10 @@ def key_arena(r: requests.Response) -> str | None:
 
 
 def key_headers(r: requests.Response) -> str | None:
-    """Static data files (Netflix TSV): Last-Modified + size + first/last bytes of the body."""
-    body = r.content
-    return "|".join([r.headers.get("last-modified", ""), str(len(body)),
-                     hashlib.sha1(body[:4096] + body[-4096:]).hexdigest()])
+    """Static data files (Netflix TSV, fetched with HEAD): Last-Modified + ETag + length."""
+    h = r.headers
+    k = "|".join([h.get("last-modified", ""), h.get("etag", ""), h.get("content-length", "")])
+    return k if k.strip("|") else None
 
 
 def key_tsa(r: requests.Response) -> str | None:
@@ -115,15 +116,14 @@ def key_tsa(r: requests.Response) -> str | None:
 
 
 def key_rt(r: requests.Response) -> str | None:
-    """Rotten Tomatoes title page: Tomatometer score + review count from the scorecard data."""
-    out = []
-    for pat in (r'"criticsScore"\s*:\s*\{[^{}]{0,600}\}', r'"tomatometer"\s*:\s*\{[^{}]{0,300}\}',
-                r'"criticsAll"\s*:\s*\{[^{}]{0,600}\}'):
-        m = re.search(pat, r.text)
-        if m:
-            out.append(m.group(0))
-    if out:
-        return "|".join(out)
+    """Rotten Tomatoes title page: the title's own critics scorecard (score, review counts).
+
+    Only the first "criticsScore" block: other "tomatometer" values on the page belong to
+    other titles (carousels), which is why a plain "tomatometer" match read 97 everywhere.
+    """
+    m = re.search(r'"criticsScore"\s*:\s*\{[^{}]{0,600}\}', r.text)
+    if m:
+        return m.group(0)
     t = visible_text(r.text)
     return around(t, "Tomatometer", 80, 60)
 
@@ -162,6 +162,7 @@ class Source:
     interval: Callable[[datetime], float]
     series: tuple[str, ...] = ()
     headers: dict = field(default_factory=dict)
+    method: str = "GET"
     next_at: float = 0.0
     last_key: str | None = None
     last_status: int | None = None
@@ -182,18 +183,33 @@ def default_sources() -> list[Source]:
                key_hf, lambda now: 300.0, ("KXTOPMODEL",)),
         Source("netflix_global_tsv", "https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv",
                key_headers, interval_netflix,
-               ("KXNETFLIXRANKSHOWGLOBAL", "KXNETFLIXRANKMOVIEGLOBAL")),
+               ("KXNETFLIXRANKSHOWGLOBAL", "KXNETFLIXRANKMOVIEGLOBAL"), method="HEAD"),
         Source("netflix_countries_tsv",
                "https://www.netflix.com/tudum/top10/data/all-weeks-countries.tsv",
                key_headers, interval_netflix,
                ("KXNETFLIXRANKSHOW", "KXNETFLIXRANKMOVIE", "KXNETFLIXRANKSHOWRUNNERUP",
-                "KXNETFLIXRANKMOVIERUNNERUP")),
+                "KXNETFLIXRANKMOVIERUNNERUP"), method="HEAD"),
         Source("tsa_volumes", "https://www.tsa.gov/travel/passenger-volumes",
                key_tsa, interval_weekday_hours(15, 600, 6.0, 12.0), ("KXTSAD", "KXTSAW")),
     ]
 
 
 # ------------------------------------------------------------------ the logger
+
+def rt_movie(title: str) -> str:
+    """'Dune: Part Three: Rotten Tomatoes score' / 'X · Rotten Tomatoes score' / '... score for X?' -> X"""
+    t = title.strip()
+    m = re.search(r"score for\s+(.+?)\??$", t, re.I)
+    if m:
+        t = m.group(1)
+    t = re.sub(r"\s*[\u00b7:|-]\s*Rotten Tomatoes score\s*$", "", t, flags=re.I)
+    return t.strip().strip('"')
+
+
+def rt_slug_words(movie: str) -> set[str]:
+    w = re.sub(r"[^a-z0-9 ]+", " ", movie.lower().replace("&", "and").replace("'", "")).split()
+    return {x for x in w if x not in {"the", "a", "an", "of", "and"}}
+
 
 def _slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
@@ -263,7 +279,10 @@ class SrcLog:
     def poll(self, src: Source, now: float) -> None:
         t0 = self.clock()
         try:
-            r = self.s.get(src.url, timeout=20, headers=src.headers)
+            if src.method == "HEAD":
+                r = self.s.head(src.url, timeout=20, headers=src.headers, allow_redirects=True)
+            else:
+                r = self.s.get(src.url, timeout=20, headers=src.headers)
             status, body = r.status_code, r.content
         except requests.RequestException as exc:
             src.fails += 1
@@ -281,6 +300,8 @@ class SrcLog:
                         "lm": r.headers.get("last-modified")})
         src.last_status = status
         src.fails = 0
+        if status in (401, 403, 429):           # blocked: be polite, retry every 30 min
+            src.next_at = max(src.next_at, now + BLOCKED_RETRY_S)
         if status == 200 and key is None:
             self.write({"kind": "nokey", "src": src.name, "bytes": len(body)})
             if now - src.raw_at >= 6 * 3600:            # keep one sample to fix the parser
@@ -323,8 +344,7 @@ class SrcLog:
         have = {s.name for s in self.sources}
         for ev in events:
             title = ev.get("title") or ""
-            m = re.search(r"(?:score for|for)\s+(.+?)\??$", title) or re.search(r"(.+)", title)
-            movie = m.group(1).strip().strip('"') if m else ""
+            movie = rt_movie(title)
             name = f"rt_{_slug(ev.get('event_ticker') or movie)}"
             if not movie or name in have:
                 continue
@@ -344,8 +364,14 @@ class SrcLog:
             return None
         if r.status_code != 200:
             return None
-        m = re.search(r'href="(https://www\.rottentomatoes\.com/m/[a-z0-9_]+)"', r.text)
-        return m.group(1) if m else None
+        want = rt_slug_words(movie)
+        for url in re.findall(r'href="(https://www\.rottentomatoes\.com/m/[a-z0-9_]+)"', r.text):
+            got = rt_slug_words(url.rsplit("/", 1)[1].replace("_", " "))
+            if url.endswith("/m/rotten_tomatoes"):
+                continue
+            if want and len(want & got) >= max(1, len(want) - 1) and not (got - want - {"2026", "2025", "2027"}):
+                return url
+        return None
 
     # -- uploads (finished hours only)
     def upload_done_hours(self, now: float) -> None:
