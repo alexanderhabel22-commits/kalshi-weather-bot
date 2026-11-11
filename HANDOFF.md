@@ -343,6 +343,16 @@ IP without a token). It never places, changes or cancels anything and needs no s
   `m15-data` (every 15 min: orders, fills, our estimated share, credits, events). State
   /var/lib/kalshi-lip/state.json, daily logs there too.
 
+## Paper tests: wide-spread maker + parlay quote requests (built Nov 11, 2026; no orders)
+- `wxbot/paperlab.py`, `python bot.py paperlab`, systemd service `kalshi-paper` on the 15-min server
+  (`deploy/m15/install-paperlab.sh`). GET requests only; the Kalshi key is wrapped read-only.
+- Maker: ~20 wide-spread (3c+) non-sports, non-crypto markets (Mentions first, up to 8). Each minute a
+  1-contract paper bid on each side 1c above the best bid; a later taker trade through our price fills
+  it; markouts vs the mid at 5 and 30 min. Status `m15/paper-mm.json` on `m15-data` (hourly).
+- Parlays: polls GET /communications/rfqs every 20 s. For combos whose legs are all in different events,
+  fair = product of leg mids; logs the YES-selling quote at margins 0/5/10/20%, whether the combo then
+  traded above it (we'd likely have won), and paper P&L at settlement. Status `m15/paper-rfq.json`.
+
 ## Source shadow logger (built Nov 10, 2026, logging only)
 
 - `wxbot/srclog.py`, `python bot.py srclog`. Separate systemd service `kalshi-srclog` on the 15-min
