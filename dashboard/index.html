@@ -380,20 +380,35 @@ function ccPage(){
   const c = S.cc;
   if (!c) return `<h2>Copycat <span class="sub">starting up</span></h2><div class="card"><div class="mute">No data yet. Copycat posts its first status about 5 minutes after it starts on the server.</div></div>`;
   const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
-  const tag = {watching:["#94a3c8","watching"], passes:["#34d399","passes"], fails:["#f87171","fails"], live:["#c4b5fd","LIVE"]};
-  const acc = (c.accounts || []).slice().sort((a, b) => (b.fills || 0) - (a.fills || 0));
+  const L = c.live || {}, live = c.mode === "live", B = c.boss || {};
+  const tag = {watching:["#94a3c8","testing on paper"], passes:["#34d399", live ? "COPYING WITH REAL MONEY" : "qualified (real money off)"], slump:["#f5b335","slump, paused"], benched:["#f87171","benched"], fails:["#f87171","not copied"]};
+  const gcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
+  const acc = (c.accounts || []).slice().sort((a, b) => (((b.real || {}).copies || 0) - ((a.real || {}).copies || 0)) || ((b.score ?? -1) - (a.score ?? -1)) || ((b.fills || 0) - (a.fills || 0)));
   const n = k => acc.filter(a => a.verdict === k).length;
-  let h = `<h2>Copycat <span class="sub">${esc(c.mode || "")} · ${esc(c.generated || "")}</span></h2><div class="card glow">
-    <div class="hero"><div><div class="lbl">Accounts followed</div><div class="big">${acc.filter(a => a.watched).length}</div></div>
-    <div style="text-align:right"><div class="lbl">Live / passing / failing</div><div class="val">${n("live")} / ${n("passes")} / ${n("fails")}</div></div></div>
-    <div class="mute" style="font-size:11px;margin-top:8px">${esc(c.rule || "")}. "Copy ¢" = what we'd make per contract paying the price we'd see about 10 s after their trade.</div></div>`;
-  h += `<h2>Accounts <span class="sub">copy result per contract</span></h2><div class="card">` + (acc.length ? acc.map(a => { const [col, lbl] = tag[a.verdict] || tag.watching;
-    return `<div class="item" style="padding:8px 0"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:11px;font-weight:700">${lbl}</span></div>
-      <div class="s" style="white-space:normal">${a.fills || 0} copies · ${a.settled || 0} settled · ${a.days || 0} days${a.pnl ? " · lifetime " + money(a.pnl).replace(".00", "") : ""}${(a.cats || []).length ? " · " + esc(a.cats.join("/")) : ""}${a.lag_s != null ? " · seen after " + a.lag_s + "s" : ""}</div>
-      <div class="s" style="white-space:normal">worst case ${ct(a.settle_low_c)} · after 5 min ${ct(a.follow_5m_c)}</div></div>
-      <div class="r"><span class="${cls(a.settle_c || 0)}">${ct(a.settle_c)}</span><small>per contract</small></div></div>`; }).join("") : `<div class="mute">No accounts yet.</div>`) + `</div>`;
+  const stopTxt = L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : "";
+  let h = `<h2>Copycat <span class="sub">${live ? "REAL MONEY ON" : "paper only"} · ${esc(c.generated || "")}</span></h2><div class="card glow">
+    <div class="hero"><div><div class="lbl">Real-money P&L · all time</div><div class="big ${cls(num(L.total_pnl))}">${money(num(L.total_pnl))}</div>
+    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">switch ${esc(String(L.control || "off").toUpperCase())}${live ? ` · <span class="pos">● live</span>` : ""}${stopTxt}</div></div>
+    <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div>
+    <div class="lbl" style="margin-top:8px">Copying / testing / out</div><div class="val" style="font-size:17px">${n("passes")} / ${n("watching")} / ${n("fails") + n("slump") + n("benched")}</div></div></div>
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Every account starts on <b>paper</b>: we score each of its trades as if we had copied it ~10 s later, after Kalshi's fee. At 100 paper copies (or 7 days) with a score of 80+ it moves to <b>real money</b> (1-3 contracts). Paper and real results are shown separately below.</div></div>`;
+  if (B.summary) h += `<h2>The boss <span class="sub">Claude · ${num(B.reviews_today)} reviews today</span></h2><div class="card"><div style="font-size:13px;line-height:1.5;color:#c4b5fd">${esc(B.summary)}</div>${Object.keys(B.benches || {}).length ? `<div class="s" style="margin-top:6px;white-space:normal">Benched by the boss: ${Object.entries(B.benches).map(([k, v]) => esc(k) + " (" + esc(v.reason) + ")").join(", ")}</div>` : ""}</div>`;
+  const row = a => { const [col, lbl] = tag[a.verdict] || tag.watching, R = a.real || {};
+    const prog = a.verdict === "watching" ? Math.min(100, Math.max((a.fills || 0), 100 * (a.days || 0) / 7)) : 100;
+    const realTxt = R.copies ? `${R.copies} real copies (${R.open} open) · won ${R.won}/${R.settled} · <span class="${cls(R.pnl)}">${money(R.pnl)}</span>` : (a.verdict === "passes" ? "no real copies yet" : "none");
+    return `<div class="item" style="padding:9px 0;align-items:flex-start"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:10px;font-weight:700">${lbl}</span></div>
+      <div class="s" style="white-space:normal">${(a.cats || []).length ? esc(a.cats.join("/")) + " · " : ""}${a.pnl ? "lifetime " + money(a.pnl).replace(".00", "") + " · " : ""}${a.lag_s != null ? "we see trades after " + a.lag_s + "s" : ""}</div>
+      <div class="s" style="white-space:normal"><b style="color:#94a3c8">PAPER</b> ${a.fills || 0} copies · ${a.settled || 0} settled · last ${a.window || 0}: ${ct(a.settle_c)}/ct (worst case ${ct(a.settle_low_c)})${a.verdict !== "watching" ? " · leeway " + a.leeway_c + "¢" : ""}</div>
+      ${a.verdict === "watching" ? `<div style="height:4px;background:rgba(148,163,200,.18);border-radius:2px;margin:4px 0 2px;max-width:220px"><div style="height:4px;width:${prog.toFixed(0)}%;background:#22d3ee;border-radius:2px"></div></div><div class="s" style="white-space:normal">${Math.round(prog)}% of the way to its test (100 copies or 7 days)</div>` : ""}
+      <div class="s" style="white-space:normal"><b style="color:#34d399">REAL</b> ${realTxt}${a.size ? " · size " + a.size + " ct" : ""}</div>
+      ${a.boss_note ? `<div class="s" style="white-space:normal;color:#c4b5fd">Boss: ${esc(a.boss_note)}</div>` : ""}</div>
+      <div class="r"><span style="color:${gcol(a.grade)};font-weight:800;font-size:18px">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : "no score yet"}</small></div></div>`; };
+  h += `<h2>Report card <span class="sub">grade · score out of 100 · paper vs real</span></h2><div class="card">` + (acc.length ? acc.filter(a => a.fills || a.watched).map(row).join("") : `<div class="mute">No accounts yet.</div>`) + `</div>`;
+  const pos = [...(L.open || []).map(p => ({...p, open:1})), ...(L.settled || [])];
+  h += `<h2>Real-money copies <span class="sub">${(L.open || []).length} open · ${(L.settled || []).length} settled</span></h2><div class="card">` + (pos.length ? pos.slice(0, 30).map(p =>
+    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(p.nick)} · ${esc((p.side || "").toUpperCase())} × ${p.n} · $${num(p.cost).toFixed(2)}</div><div class="s">${esc(p.ticker)}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${esc(String(p.result || "").toUpperCase())}</small>`}</div></div>`).join("") : `<div class="mute" style="font-size:12px">None yet. The first real copy happens when an account passes its paper test${live ? "" : " and the switch is on"}.</div>`) + `</div>`;
   const rc = c.recent || [];
-  h += `<h2>Latest trades seen <span class="sub">watch-only, no orders</span></h2><div class="card">` + (rc.length ? rc.slice(0, 25).map(r =>
+  h += `<h2>Latest trades seen <span class="sub">paper record</span></h2><div class="card">` + (rc.length ? rc.slice(0, 25).map(r =>
     `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`) + `</div>`;
   return h;
 }

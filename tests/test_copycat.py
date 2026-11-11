@@ -119,8 +119,8 @@ def test_grade_follow_and_settle():
     o = out["sharp"]
     assert len(o["lag"]) == 1                          # backfill ignored
     assert round(o["move_300"][0], 1) == 11.0          # mid 0.61 - 0.50
-    assert round(o["follow_300"][0], 1) == 7.0         # mid 0.61 - ask 0.54
-    assert round(o["settle"][0], 1) == 46.0            # 1.00 - 0.54
+    assert round(o["follow_300"][0], 1) == 5.0         # mid 0.61 - ask 0.54 - 2c taker fee
+    assert round(o["settle"][0], 1) == 44.0            # 1.00 - 0.54 - 2c fee
 
 
 def test_status_verdicts(tmp_path):
@@ -130,7 +130,7 @@ def test_status_verdicts(tmp_path):
         rows_ += [{"kind": "fill", "trade_id": tid, "nick": "good", "ticker": f"T{i}", "side": "yes",
                    "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
                   {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
-    results = {f"T{i}": ("yes" if i % 10 < 7 else "no") for i in range(120)}   # 70% at 52c
+    results = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(120)}   # 80% at 52c
     s = copycat.build_status(rows_, results, {"good": {"pnl": 1}, "new": {"pnl": 2}}, now=2000.0)
     acc = {a["nick"]: a for a in s["accounts"]}
     assert acc["good"]["fills"] == 120 and acc["good"]["verdict"] == "passes"
@@ -146,7 +146,7 @@ def test_update_status_writes_file(tmp_path):
     cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
     cc.watch = {"sharp": {"pnl": 5}}
     st_ = cc.update_status(1_000_000.0)
-    assert (tmp_path / "status.json").exists() and st_["mode"] == "watch-only"
+    assert (tmp_path / "status.json").exists() and st_["mode"] == "paper only"
 
 
 def test_scout_adds_profitable_names_from_global_feed(tmp_path):
@@ -179,9 +179,34 @@ def test_rolling_window_drops_then_readmits(tmp_path):
                     {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.48, "ask": 0.50}]
             res[f"T{i}"] = "yes" if win else "no"
         return out, res
-    good = [i % 10 < 8 for i in range(100)]
+    good = [i % 10 < 8 for i in range(200)]
     bad = [i % 10 < 2 for i in range(50)]
-    r, res = rows_for(good + bad)                # last 50 are bad: dropped
-    assert copycat.build_status(r, res, {"a": {}}, 2000.0)["accounts"][0]["verdict"] == "fails"
-    r, res = rows_for(good + bad + good[:50])    # last 50 good again: back in
-    assert copycat.build_status(r, res, {"a": {}}, 2000.0)["accounts"][0]["verdict"] == "passes"
+    v = lambda o: copycat.build_status(*rows_for(o), {"a": {}}, 2000.0)["accounts"][0]  # noqa: E731
+    a = v(good[:150])
+    assert a["score"] >= 90 and a["grade"].startswith("A") and a["verdict"] == "passes" and a["size"] == 2
+    a = v(good[:150] + bad)                      # strong record, awful last 50: benched as a slump
+    assert a["verdict"] == "slump" and a["size"] == 0
+    a = v(good[:150] + bad + good[:50])          # recovers: back in
+    assert a["verdict"] == "passes"
+    a = v(bad + bad)                             # never any good: fails
+    assert a["grade"] == "F" and a["score"] < 60 and a["verdict"] == "fails"
+
+
+def test_leeway_grows_with_banked_profit_and_score():
+    assert copycat.leeway_c(0) == 5 and copycat.leeway_c(-3) == 5
+    assert copycat.leeway_c(8) == 13 and copycat.leeway_c(100) == 20
+    assert copycat.leeway_c(100, 99) == 25 and copycat.leeway_c(0, 70) == 5
+
+
+def test_score_letters():
+    assert copycat.score_grade([1.0] * 10) == (None, "-")
+    sc, lt = copycat.score_grade([0.0, 2.0] * 50)       # mean +1c, tight: low just under +1
+    assert 80 <= sc < 83 and lt == "B-"
+    sc, lt = copycat.score_grade([-20.0, 10.0] * 50)    # mean -5c
+    assert lt in ("D-", "F", "D", "D+") and sc < 70
+
+
+def test_taker_fee():
+    assert copycat.taker_fee_c(0.50) == 2.0
+    assert copycat.taker_fee_c(0.95) == 1.0
+    assert copycat.taker_fee_c(0.99) == 1.0

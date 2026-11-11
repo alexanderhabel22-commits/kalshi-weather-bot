@@ -1,5 +1,5 @@
 [Unit]
-Description=Shadow logger: public trades of proven Kalshi winners vs later prices (logs only, never trades)
+Description=Copycat: grades public trades of proven Kalshi winners on paper; copies passing accounts with real money when copycat_control.json says live
 After=network-online.target
 Wants=network-online.target
 
@@ -7,8 +7,8 @@ Wants=network-online.target
 Type=simple
 User=kalshi
 WorkingDirectory=/opt/kalshi-m15/app
-# Needs only GITHUB_TOKEN from the env file (uploads); copycat.main() drops every other
-# variable (Kalshi key, ntfy topic, API keys) before doing anything.
+# Uses GITHUB_TOKEN (uploads), the Kalshi key (real copies, only when copycat_control.json on main says "live"),
+# NTFY_TOPIC (alerts) and ANTHROPIC_API_KEY (the boss). Kill: set mode "off" in copycat_control.json.
 EnvironmentFile=/etc/kalshi-m15/env
 ExecStart=/opt/kalshi-m15/venv/bin/python bot.py copycat -v
 Environment=COPYCAT_DIR=/var/lib/kalshi-copycat
