@@ -78,6 +78,8 @@ DROP_DAYS = 30              # dropped accounts (failed the 150-copy test, or lon
 RECHECK_S = 7 * 86400       # re-check each watched account's Kalshi profit weekly ...
 RECHECK_PER_SCOUT = 15      # ... a few per scout run, oldest check first
 LOSER_STRIKES = 2           # dropped after 2 weekly checks in a row losing money over the last 30 days
+FEED_KEEP_DAYS = 7          # every public trade (anonymous too) kept on the server, rolling (Alex, Nov 11):
+FEED_MIN_FREE_GB = 3.0      # ~300 trades/s, ~0.5 GB/day gzipped; oldest files go first if disk runs low
 WHALE_USD = 500             # "big bet" scanner (Alex, Nov 11 12:23 AM ET): any named trade of $500+
 WHALE_NEW_DAYS = 30         # flagged NEW if the account joined within 30 days or has traded <= 10 markets;
 WHALE_FEW_MARKETS = 10      # paper only: we log the bet and score how it settles, never copy it
@@ -424,6 +426,9 @@ class Copycat:
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
         self.feed_seen: set[str] = set()         # trade ids already read from the global feed
         self.feed_top: str | None = None         # newest trade id of the feed snapshot last read
+        self.feed_fh = None                      # open gzip file for the rolling full-feed log
+        self.feed_hour = ""
+        self.feed_off = False
         self.profiles: dict[str, dict] = {}      # nick -> {"joined", "markets", "new"} for the big-bet scanner
         self.whale_queue: list[tuple[str, dict, float]] = []   # (nick, trade, seen) awaiting a profile lookup
         self.feed_next = 0.0
@@ -697,6 +702,10 @@ class Copycat:
         if boot:
             return                                  # first read after a start: may be minutes old
         now = self.clock()
+        try:
+            self.log_feed(new, now)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("copycat feed log: %s", exc)
         by: dict[str, list] = defaultdict(list)
         for t in new:
             self.spot_whale(t, now)
@@ -719,6 +728,45 @@ class Copycat:
         self.feed_lags = self.feed_lags[-5000:]
         for n, ts in by.items():
             self.ingest(n, ts, now, quiet=n in self.dropped, src="feed")
+
+    def log_feed(self, trades: list[dict], now: float) -> None:
+        """Rolling raw log of every public trade: feed/feed-YYYY-MM-DD-HH.csv.gz on the server only
+        (too big for the data branch). Columns: trade time, ticker, yes price, contracts, taker side,
+        taker action, taker name, maker name, trade id, seen-at."""
+        if self.feed_off or not trades:
+            return
+        d = self.out / "feed"
+        hour = datetime.fromtimestamp(now, timezone.utc).strftime("%Y-%m-%d-%H")
+        if hour != self.feed_hour:
+            if self.feed_fh:
+                self.feed_fh.close()
+            d.mkdir(exist_ok=True)
+            self.prune_feed(d, now)
+            if self.feed_off:
+                self.feed_fh = None
+                return
+            self.feed_fh = gzip.open(d / f"feed-{hour}.csv.gz", "at", encoding="utf-8")
+            self.feed_hour = hour
+        seen = round(now, 1)
+        for t in reversed(trades):
+            self.feed_fh.write(",".join(str(t.get(k) or "").replace(",", " ") for k in
+                                        ("create_date", "ticker", "price_dollars", "count_fp", "taker_side",
+                                         "taker_action", "taker_nickname", "maker_nickname", "trade_id"))
+                               + f",{seen}\n")
+
+    def prune_feed(self, d: Path, now: float) -> None:
+        import shutil
+        files = sorted(d.glob("feed-*.csv.gz"))
+        for p in files:
+            if now - p.stat().st_mtime > FEED_KEEP_DAYS * 86400:
+                p.unlink(missing_ok=True)
+        files = sorted(d.glob("feed-*.csv.gz"))
+        while files and shutil.disk_usage(d).free / 1e9 < FEED_MIN_FREE_GB:
+            files.pop(0).unlink(missing_ok=True)
+        if shutil.disk_usage(d).free / 1e9 < FEED_MIN_FREE_GB:
+            if not self.feed_off:
+                log.warning("copycat feed log off: disk under %s GB free", FEED_MIN_FREE_GB)
+            self.feed_off = True
 
     def spot_whale(self, t: dict, now: float) -> None:
         """Queues a named trade of WHALE_USD+ (each named side) for the big-bet scanner."""
