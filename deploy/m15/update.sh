@@ -37,7 +37,18 @@ rollback() {   # $1 = commit to return to, $2 = new commit's code signature, $3 
 before=$(g rev-parse HEAD)
 g fetch -q origin main
 after=$(g rev-parse origin/main)
-if [ "$before" != "$after" ] && g diff --name-only "$before" "$after" -- $CODE | grep -q .; then
+# Files the 15-min bot itself never loads: changing only these needs no bot restart (the
+# watcher is a separate 15-min timer job), so the trading bot keeps running untouched.
+NO_RESTART='^(wxbot/watch\.py|deploy/m15/(update\.sh|install-watch\.sh|set-anthropic-key\.sh|kalshi-watch\.(service|timer)))$'
+if [ "$before" != "$after" ] && g diff --name-only "$before" "$after" -- $CODE | grep -q . \
+   && ! g diff --name-only "$before" "$after" -- $CODE | grep -Evq "$NO_RESTART"; then
+  g reset -q --hard "$after"
+  if ! preflight; then
+    rollback "$before" "$(sig "$after")" "New watcher code from main failed its start-up check and was NOT used."
+  else
+    echo "updated $before -> $after (watcher/deploy only, bot not restarted)"
+  fi
+elif [ "$before" != "$after" ] && g diff --name-only "$before" "$after" -- $CODE | grep -q .; then
   newsig=$(sig "$after")
   if [ -f "$BAD" ] && [ "$(cat "$BAD")" = "$newsig" ]; then
     echo "main still has the code that failed here ($newsig); staying on $before"

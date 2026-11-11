@@ -54,9 +54,20 @@ DEFAULTS = {
     "max_filled_per_market": 2,    # contracts + extra_contracts (Nov 8 rule)
     "exposure_slack": 1.15,        # live_exposure above pool_pct * bankroll * this = malfunction
     "auto_pause": True,
+    "mem_warn_pct": 85,            # server RAM used; Alex's droplet jumped 35% -> 60% on Nov 10
+    "svc_mem_warn_pct": 85,        # kalshi-m15 vs its MemoryMax (systemd kills it at 100%)
+    "journal_keep": 30,            # Foreman's memory: recent events fed back into each check
+    "notes_keep": 8,               # ... and standing notes it chose to remember
 }
 
-HAIKU_SYSTEM = """You watch two small automated Kalshi trading bots for their owner, Alex.
+PERSONA = """You are the Foreman: the night-and-day crew boss Alex put over his two trading bots.
+Voice: steady, plain-spoken, a little dry, like a good site foreman. Short sentences. At most
+one light touch of personality per message; never joke about losses, a pause, or a problem
+Alex must fix. You never touch the money settings; you watch, report, and stop the line only
+when a machine is clearly broken."""
+
+HAIKU_SYSTEM = PERSONA + """
+You watch two small automated Kalshi trading bots for their owner, Alex.
 - MAIN BOT: GitHub Actions. A weather scan is dispatched every 5 minutes, then a trade run.
   Strategies: Mentions NO, big-event favorites, Fed/CPI fade, weather day-before. Halts itself
   at its stops (-10%/day pause, -25% total halt).
@@ -70,9 +81,14 @@ You get a digest with health facts and rule flags. Decide:
 - escalate: a likely malfunction or something Alex or an engineer must look at now (bot down or
   stuck, orders bigger than allowed, mode not matching its control, scans stopped, repeated
   failures/rejects, money moving in ways the rules don't explain).
-Be calm and conservative: do not escalate on ordinary P&L swings. One or two short sentences."""
+Be calm and conservative: do not escalate on ordinary P&L swings. One or two short sentences.
+Use YOUR MEMORY (your notes and recent log) to spot repeats: something that keeps coming back
+deserves a mention; something already known and explained does not need re-escalating.
+"remember": usually empty. Fill it (one line) only with a durable fact that will help future
+checks, e.g. a new recurring pattern or a known harmless quirk. Never restate the digest."""
 
-OPUS_SYSTEM = """You are the on-call engineer for two small automated Kalshi trading bots owned by
+OPUS_SYSTEM = PERSONA + """
+Right now you are the on-call engineer for two small automated Kalshi trading bots owned by
 Alex (not a coder; reads on his iPhone; wants plain words and Eastern times). A cheaper watcher
 escalated the digest below. Rails you must respect: you may recommend pausing the 15-minute bot
 (it switches to paper, logging continues) ONLY for a clear malfunction (wrong order sizes, mode
@@ -82,15 +98,18 @@ change caps, stops, sizes or code; propose fixes for an engineer instead.
 Return: severity ok (false alarm, no push), alert (push Alex), or pause_m15; a short title; a
 message for Alex (max 60 words, plain English, ET times, say what he should do, or that nothing
 is needed from him); your diagnosis; a concrete proposed fix (files/functions if you can tell);
-needs_alex true only if he personally must act (deposit, key, server console, approval)."""
+needs_alex true only if he personally must act (deposit, key, server console, approval).
+Check YOUR MEMORY first: say so if this is a repeat. "notebook": your full standing notes after
+this incident (max 8 short lines; keep what still matters, drop what's stale)."""
 
 HAIKU_SCHEMA = {
     "type": "object",
     "properties": {
         "level": {"type": "string", "enum": ["ok", "watch", "escalate"]},
         "summary": {"type": "string"},
+        "remember": {"type": "string"},
     },
-    "required": ["level", "summary"],
+    "required": ["level", "summary", "remember"],
     "additionalProperties": False,
 }
 OPUS_SCHEMA = {
@@ -102,8 +121,9 @@ OPUS_SCHEMA = {
         "diagnosis": {"type": "string"},
         "proposed_fix": {"type": "string"},
         "needs_alex": {"type": "boolean"},
+        "notebook": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["severity", "title", "message", "diagnosis", "proposed_fix", "needs_alex"],
+    "required": ["severity", "title", "message", "diagnosis", "proposed_fix", "needs_alex", "notebook"],
     "additionalProperties": False,
 }
 
@@ -176,7 +196,29 @@ def _sh(cmd: list, runner=subprocess.run) -> str:
         return f"unavailable: {exc}"
 
 
-def gather(gh: GitHub, now: float, runner=subprocess.run) -> dict:
+def mem_used(path: str = "/proc/meminfo") -> float | None:
+    """Percent of server RAM in use (MemAvailable counts reclaimable cache as free)."""
+    try:
+        kv = {}
+        for line in Path(path).read_text().splitlines():
+            k, v = line.split(":", 1)
+            kv[k] = float(v.split()[0])
+        return round(100 * (1 - kv["MemAvailable"] / kv["MemTotal"]), 1)
+    except Exception:
+        return None
+
+
+def svc_mem_pct(text: str | None) -> float | None:
+    """kalshi-m15's memory as a percent of its MemoryMax (from systemctl show)."""
+    try:
+        kv = dict(line.split("=", 1) for line in (text or "").splitlines() if "=" in line)
+        cur, cap = float(kv["MemoryCurrent"]), float(kv["MemoryMax"])
+        return round(100 * cur / cap, 1) if cap > 0 else None
+    except (KeyError, ValueError):
+        return None
+
+
+def gather(gh: GitHub, now: float, runner=subprocess.run, meminfo: str = "/proc/meminfo") -> dict:
     f: dict = {"now": now, "errors": []}
 
     def grab(key, fn):
@@ -195,6 +237,8 @@ def gather(gh: GitHub, now: float, runner=subprocess.run) -> dict:
     grab("bankroll", lambda: gh.json("data/bankroll.json"))
     grab("runs", gh.runs)
     f["service"] = _sh(["systemctl", "is-active", "kalshi-m15"], runner)
+    f["mem"] = mem_used(meminfo)
+    f["svc_mem"] = _sh(["systemctl", "show", "-p", "MemoryCurrent", "-p", "MemoryMax", "kalshi-m15"], runner)
     f["journal"] = _sh(["journalctl", "-u", "kalshi-m15", "--since", "-20 min", "-p", "warning",
                         "--no-pager", "-o", "cat", "-n", "40"], runner)
     return f
@@ -266,6 +310,13 @@ def rules(f: dict, s: dict, m15cfg: dict | None = None, over_seen: dict | None =
     if br and exp > pool * br * s["exposure_slack"]:
         flag("M15_EXPOSURE", "critical",
              f"15-min live exposure ${exp:.2f} above its pool (${pool * br:.2f})", malfunction=True)
+    mem = f.get("mem")
+    if mem is not None and mem >= s["mem_warn_pct"]:
+        flag("MEM_HIGH", "critical", f"server RAM {mem:.0f}% used (warn at {s['mem_warn_pct']}%)")
+    smem = svc_mem_pct(f.get("svc_mem"))
+    if smem is not None and smem >= s["svc_mem_warn_pct"]:
+        flag("M15_MEM_HIGH", "critical",
+             f"15-min bot using {smem:.0f}% of its memory cap (systemd kills it at 100%)")
     if st.get("spot_ok") is False:
         flag("M15_SPOT", "warn", "Coinbase spot feed down (jump guard blind)")
 
@@ -320,6 +371,7 @@ def digest(f: dict, flags: list[dict]) -> str:
         lines.append("Last live fills today (ticker filled cost pnl):")
         for r in live[-8:]:
             lines.append(f"  {r.get('ticker')} {r.get('filled')} {r.get('cost')} {r.get('pnl')}")
+    lines.append(f"SERVER: RAM {f.get('mem')}% used, 15-min bot at {svc_mem_pct(f.get('svc_mem'))}% of its memory cap")
     tr = f.get("trader") or {}
     br = f.get("bankroll") or {}
     lines.append(f"MAIN: mode={tr.get('mode')} halted={bool(tr.get('halted'))} bankroll=${br.get('total')} "
@@ -333,7 +385,8 @@ def digest(f: dict, flags: list[dict]) -> str:
     if j:
         lines.append("15-min log warnings (last 20 min):\n" + "\n".join(j.splitlines()[-12:]))
     lines.append("RULE FLAGS: " + ("none" if not flags else "; ".join(
-        f"[{x['sev']}{', malfunction' if x['malfunction'] else ''}] {x['code']}: {x['text']}" for x in flags)))
+        f"[{x['sev']}{', malfunction' if x['malfunction'] else ''}] {x['code']}: {x['text']}"
+        + (f" ({x['runs']} checks in a row)" if x.get("runs", 1) > 1 else "") for x in flags)))
     return "\n".join(lines)
 
 
@@ -377,6 +430,28 @@ def pause_m15(gh: GitHub, reason: str, now: float) -> bool:
         return False
 
 
+def journal(state: dict, stamp: str, what: str, keep: int) -> None:
+    """The Foreman's running log of notable events (not every quiet check)."""
+    j = state.setdefault("journal", [])
+    j.append(f"{stamp}: {what[:240]}")
+    state["journal"] = j[-keep:]
+
+
+def remember(state: dict, note: str | None, keep: int) -> None:
+    note = (note or "").strip()
+    if not note:
+        return
+    notes = [n for n in state.get("notes", []) if n.lower() != note.lower()]
+    state["notes"] = (notes + [note[:200]])[-keep:]
+
+
+def memory_block(state: dict) -> str:
+    notes = state.get("notes") or []
+    j = (state.get("journal") or [])[-10:]
+    return ("YOUR MEMORY (the Foreman's notebook):\nNotes: " + ("; ".join(notes) if notes else "none yet")
+            + "\nRecent log:\n" + ("\n".join(f"  {e}" for e in j) if j else "  nothing notable yet"))
+
+
 def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = None,
         now: float | None = None, runner=subprocess.run, state_path: Path = STATE) -> dict:
     s = settings(cfg)
@@ -399,7 +474,18 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
     flags = rules(f, s, cfg.raw.get("m15", {}) if hasattr(cfg, "raw") else {}, over_seen=state["over_seen"])
     state["over_seen"] = {**({} if state.get("over_day") != day else state["over_seen"]), **over}
     state["over_day"] = day
-    text = digest(f, flags)
+    streak = {x["code"]: (state.get("streak") or {}).get(x["code"], 0) + 1 for x in flags}
+    for x in flags:
+        x["runs"] = streak[x["code"]]
+    codes, prev_codes = set(streak), set(state.get("streak") or {})
+    state["streak"] = streak
+    stamp = f"{datetime.fromtimestamp(now, ET):%b %d} {et(now)}"
+    jot = lambda what: journal(state, stamp, what, s["journal_keep"])  # noqa: E731
+    if codes - prev_codes:
+        jot("new: " + "; ".join(x["text"] for x in flags if x["code"] in codes - prev_codes))
+    if prev_codes - codes:
+        jot("cleared: " + ", ".join(sorted(prev_codes - codes)))
+    text = digest(f, flags) + "\n\n" + memory_block(state)
     rec = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
            "flags": flags, "haiku": None, "opus": None, "action": None}
 
@@ -412,6 +498,10 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
             state["tokens"]["haiku_out"] += u["out"]
             rec["haiku"] = h
             level = h.get("level", "ok")
+            if level != state.get("last_level", "ok") and level != "watch":
+                jot(f"check: {level}. {h.get('summary', '')}")
+            state["last_level"] = level
+            remember(state, h.get("remember"), s["notes_keep"])
         except Exception as exc:
             rec["haiku"] = {"error": str(exc)[:200]}
             level = "escalate" if any(x["sev"] == "critical" for x in flags) else "watch"
@@ -432,6 +522,9 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
                 state["tokens"]["opus_in"] += u["in"]
                 state["tokens"]["opus_out"] += u["out"]
                 rec["opus"] = o
+                jot(f"escalated: {o.get('title')} ({o.get('severity')}). {o.get('diagnosis', '')}")
+                if o.get("notebook"):
+                    state["notes"] = [str(n)[:200] for n in o["notebook"]][-s["notes_keep"]:]
             except Exception as exc:
                 rec["opus"] = {"error": str(exc)[:200]}
         if fresh:
@@ -440,15 +533,17 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
             if malfunction and s["auto_pause"] and (o is None or sev == "pause_m15"):
                 paused = pause_m15(gh, "; ".join(x["text"] for x in malfunction), now)
                 rec["action"] = "paused_m15" if paused else "pause_failed"
+                jot(f"ACTION {rec['action']}: " + "; ".join(x["text"] for x in malfunction))
             if sev != "ok" or paused:
-                title = "🤖 Ops: " + ((o or {}).get("title") or ", ".join(x["code"] for x in critical) or "check")
+                title = "👷 Foreman: " + ((o or {}).get("title") or ", ".join(x["code"] for x in critical) or "check")
                 body = (o or {}).get("message") or "\n".join(x["text"] for x in critical)
                 if paused:
                     body = "PAUSED the 15-min bot to paper (logging continues). " + body
                 elif rec["action"] == "pause_failed":
                     body = "Tried to pause the 15-min bot and FAILED. " + body
                 notify.send(http, cfg, title, body + f"\n({et(now)})", priority=5 if paused else 4,
-                            tags=["robot"])
+                            tags=["construction_worker"])
+                jot(f"pushed Alex: {title[11:]}")
             state.setdefault("alerted", {})[key] = now
     state["last"] = rec
     log_ = state.setdefault("log", [])
@@ -458,6 +553,7 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
     write_json(state_path, state)
     try:
         out = {"last": rec, "today": {k: state.get(k) for k in ("day", "haiku", "opus", "tokens")},
+               "notes": state.get("notes", []), "journal": state.get("journal", []),
                "log": state["log"], "digest": text}
         gh.put("m15/watch.json", json.dumps(out, indent=1, default=str),
                "m15: watch.json [skip ci]", branch="m15-data")
