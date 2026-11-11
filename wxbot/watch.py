@@ -48,7 +48,9 @@ DEFAULTS = {
     "max_opus_per_day": 6,
     "realert_hours": 6,
     "status_stale_min": 35,        # m15 uploads every 15 min
-    "copycat_stale_min": 20,       # Copycat writes status every 5 min (it crash-looped unseen for 9 h, Nov 11)
+    "copycat_stale_min": 20,
+    "lip_stale_min": 40,           # rewards bot uploads lip-status.json every 15 min
+    "lip_budget_slack": 1.10,      # resting + filled above budget * this = malfunction -> pull bids       # Copycat writes status every 5 min (it crash-looped unseen for 9 h, Nov 11)
     "scan_gap_min": 25,            # cron-job.org dispatches a scan every 5 min
     "bankroll_stale_min": 40,
     "fail_runs_1h": 2,
@@ -61,14 +63,14 @@ DEFAULTS = {
     "notes_keep": 8,               # ... and standing notes it chose to remember
 }
 
-PERSONA = """You are the Foreman: the night-and-day crew boss Alex put over his two trading bots.
+PERSONA = """You are the Foreman: the night-and-day crew boss Alex put over his trading bots.
 Voice: steady, plain-spoken, a little dry, like a good site foreman. Short sentences. At most
 one light touch of personality per message; never joke about losses, a pause, or a problem
 Alex must fix. You never touch the money settings; you watch, report, and stop the line only
 when a machine is clearly broken."""
 
 HAIKU_SYSTEM = PERSONA + """
-You watch two small automated Kalshi trading bots for their owner, Alex.
+You watch the small automated Kalshi trading bots for their owner, Alex.
 - MAIN BOT: GitHub Actions. A weather scan is dispatched every 5 minutes, then a trade run.
   Strategies: Mentions NO, big-event favorites, Fed/CPI fade, weather day-before. Halts itself
   at its stops (-10%/day pause, -25% total halt).
@@ -76,6 +78,14 @@ You watch two small automated Kalshi trading bots for their owner, Alex.
   1 contract (2 at 80-87c). Paper markets also run for data. Its own stops: rolling 24h -35%,
   total -50%. A losing window costs ~$0.75-1.60; a winning one makes ~$0.05-0.45. Losing days
   happen and are NOT a malfunction while within the stops.
+- REWARDS BOT (kalshi-lip, real money test Nov 11-15): rests small 1-8c bids in ~8 quiet Kalshi
+  liquidity-reward markets to earn Kalshi's daily reward pool (paid after the period ends, so
+  $0 credits before then is NORMAL). Budget ~$20 resting + filled, own $10 fill stop, news guard
+  (pulls a bid for 6 h when the price jumps 3c). A fill is not a malfunction; it is the risk we
+  accepted, and the bot alerts Alex itself. Its halting at the fill stop is the stop WORKING.
+  Danger signs: bot down/stale while bids still rest (nobody watching them), bids above budget,
+  bids still up after it was switched off, repeated rejects or errors.
+- PAPER LAB (kalshi-paper): read-only paper tests (market making, parlay quotes). Low stakes.
 You get a digest with health facts and rule flags. Decide:
 - ok: healthy (losses inside the stops are fine).
 - watch: something odd but not urgent; note it.
@@ -90,10 +100,12 @@ checks, e.g. a new recurring pattern or a known harmless quirk. Leave it empty i
 already cover it. Never restate the digest."""
 
 OPUS_SYSTEM = PERSONA + """
-Right now you are the on-call engineer for two small automated Kalshi trading bots owned by
+Right now you are the on-call engineer for the small automated Kalshi trading bots owned by
 Alex (not a coder; reads on his iPhone; wants plain words and Eastern times). A cheaper watcher
 escalated the digest below. Rails you must respect: you may recommend pausing the 15-minute bot
-(it switches to paper, logging continues) ONLY for a clear malfunction (wrong order sizes, mode
+(it switches to paper, logging continues) or pulling the rewards bot's bids (pause_lip: its
+switch goes off and it cancels its resting bids; filled contracts are held) ONLY for a clear
+malfunction (wrong order sizes, mode
 not matching its control, stuck/hung bot that still holds orders, exposure above its pool,
 runaway errors). Never pause for ordinary losses: the bots' own stops handle those. You cannot
 change caps, stops, sizes or code; propose fixes for an engineer instead.
@@ -117,7 +129,7 @@ HAIKU_SCHEMA = {
 OPUS_SCHEMA = {
     "type": "object",
     "properties": {
-        "severity": {"type": "string", "enum": ["ok", "alert", "pause_m15"]},
+        "severity": {"type": "string", "enum": ["ok", "alert", "pause_m15", "pause_lip"]},
         "title": {"type": "string"},
         "message": {"type": "string"},
         "diagnosis": {"type": "string"},
@@ -248,6 +260,10 @@ def gather(gh: GitHub, now: float, runner=subprocess.run, meminfo: str = "/proc/
     f["journal"] = _sh(["journalctl", "-u", "kalshi-m15", "--since", "-20 min", "-p", "warning",
                         "--no-pager", "-o", "cat", "-n", "40"], runner)
     f["cc_service"] = _sh(["systemctl", "is-active", "kalshi-copycat"], runner)
+    grab("lip", lambda: gh.json("m15/lip-status.json", "m15-data"))
+    grab("lip_control", lambda: gh.json("lip_control.json"))
+    f["lip_service"] = _sh(["systemctl", "is-active", "kalshi-lip"], runner)
+    f["paper_service"] = _sh(["systemctl", "is-active", "kalshi-paper"], runner)
     try:                              # same server: the file's age shows whether Copycat is working
         f["cc_age_min"] = round((now - (cc_status or COPYCAT_STATUS).stat().st_mtime) / 60, 1)
     except OSError:
@@ -361,8 +377,62 @@ def rules(f: dict, s: dict, m15cfg: dict | None = None, over_seen: dict | None =
     j = f.get("journal") or ""
     if "Traceback" in j or j.count("ERROR") >= 3:
         flag("M15_LOG_ERRORS", "warn", "errors in the 15-min bot log (last 20 min)")
+    out += lip_rules(f, s)
     for e in f.get("errors") or []:
         flag("WATCH_FETCH", "warn", f"watcher could not read {e[:120]}")
+    return out
+
+
+def lip_rules(f: dict, s: dict) -> list[dict]:
+    """Checks on the liquidity-reward bot. Malfunction flags carry target "lip" (pull its bids)."""
+    out = []
+    now = f["now"]
+
+    def flag(code, sev, text, malfunction=False):
+        out.append({"code": code, "sev": sev, "text": text, "malfunction": malfunction, "target": "lip"})
+
+    ctl = f.get("lip_control") or {}
+    st = f.get("lip") or {}
+    until = _ts(ctl.get("until"))
+    on = (ctl.get("mode") or "").lower() == "live" and (until is None or now < until)
+    orders = st.get("orders") or {}
+    resting = float(st.get("resting_cost") or 0)
+    filled = float(st.get("filled_cost") or 0)
+    svc = str(f.get("lip_service") or "")
+    if on and svc and svc != "active" and not svc.startswith("unavailable"):
+        flag("LIP_SERVICE_DOWN", "critical", f"rewards bot service kalshi-lip is '{svc}' while the test is on"
+             + (f" and {len(orders)} bids may still be resting unwatched" if orders else ""))
+    at = _ts(st.get("at"))
+    if on and at is None and ctl:
+        flag("LIP_STATUS_MISSING", "warn", "no rewards-bot status file")
+    elif at is not None and (on or orders) and now - at > s["lip_stale_min"] * 60:
+        flag("LIP_STATUS_STALE", "critical", f"rewards bot status last updated {int((now - at) / 60)} min ago"
+             + (f" with {len(orders)} bids resting (news guard not running)" if orders else ""))
+    fresh = at is not None and now - at <= s["lip_stale_min"] * 60
+    budget = float(st.get("budget") or ctl.get("budget") or 0)
+    if fresh and budget and resting + filled > budget * s["lip_budget_slack"]:
+        flag("LIP_OVER_BUDGET", "critical", f"rewards bot has ${resting:.2f} resting + ${filled:.2f} filled, "
+             f"above its ${budget:.0f} budget", malfunction=True)
+    if fresh and orders and not on and (st.get("control") == "off" or (until and now - until > 1800)):
+        flag("LIP_OFF_BUT_BIDDING", "critical", f"rewards bot is switched off but still shows {len(orders)} "
+             "resting bids", malfunction=True)
+    if st.get("halted"):
+        flag("LIP_HALTED", "info", f"rewards bot stopped itself: {str(st['halted'])[:120]}")
+    stop = float(ctl.get("fill_stop") or 10)
+    if filled >= stop / 2 and not st.get("halted"):
+        flag("LIP_FILLS", "warn", f"rewards bot bids filled ${filled:.2f} (stop at ${stop:.0f})")
+    recent = [e for e in st.get("events") or [] if isinstance(e.get("t"), (int, float)) and now - e["t"] < 3600]
+    rej = [e for e in recent if e.get("kind") == "reject"]
+    if len(rej) >= 3:
+        flag("LIP_REJECTS", "warn", f"rewards bot: {len(rej)} order rejects in the last hour, last: "
+             f"{str(rej[-1].get('error'))[:120]}")
+    errs = [e for e in recent if e.get("kind") == "error"]
+    if len(errs) >= 3:
+        flag("LIP_ERRORS", "critical" if len(errs) >= 8 else "warn",
+             f"rewards bot: {len(errs)} errors in the last hour, last: {str(errs[-1].get('error'))[:120]}")
+    psvc = str(f.get("paper_service") or "")
+    if psvc and psvc not in ("active",) and not psvc.startswith("unavailable") and psvc != "inactive":
+        flag("PAPER_DOWN", "warn", f"paper lab service kalshi-paper is '{psvc}'")
     return out
 
 
@@ -392,6 +462,17 @@ def digest(f: dict, flags: list[dict]) -> str:
     lines.append(f"SERVER: RAM {f.get('mem')}% used, 15-min bot at {svc_mem_pct(f.get('svc_mem'))}% of its memory cap")
     lines.append(f"COPYCAT (separate paper/copy service): {f.get('cc_service')}, status file updated "
                  f"{f.get('cc_age_min')} min ago (normal: under 6)")
+    ls, lc = f.get("lip") or {}, f.get("lip_control") or {}
+    lev = [e for e in (ls.get("events") or []) if e.get("kind") in ("fill", "reject", "error", "cancel", "credit")]
+    lines.append(f"REWARDS BOT (real $, liquidity rewards): service={f.get('lip_service')} switch={lc.get('mode')} "
+                 f"until={lc.get('until')} status_at={ls.get('at')} mode={ls.get('mode')} halted={ls.get('halted')} "
+                 f"bids={len(ls.get('orders') or {})} resting=${ls.get('resting_cost')} filled=${ls.get('filled_cost')} "
+                 f"budget=${ls.get('budget')} fill_stop=${lc.get('fill_stop')} credits_seen={len(ls.get('credits') or [])}")
+    if lev:
+        lines.append("  recent rewards-bot events: " + "; ".join(
+            f"{e.get('kind')} {e.get('ticker', '')} {str(e.get('why') or e.get('error') or e.get('px') or '')[:60]}"
+            for e in lev[-5:]))
+    lines.append(f"PAPER LAB: service={f.get('paper_service')}")
     tr = f.get("trader") or {}
     br = f.get("bankroll") or {}
     lines.append(f"MAIN: mode={tr.get('mode')} halted={bool(tr.get('halted'))} bankroll=${br.get('total')} "
@@ -447,6 +528,22 @@ def pause_m15(gh: GitHub, reason: str, now: float) -> bool:
         return True
     except Exception as exc:
         log.error("pause failed: %s", exc)
+        return False
+
+
+def pause_lip(gh: GitHub, reason: str, now: float) -> bool:
+    """Switch the rewards bot off: within ~5 min it cancels every resting bid (fills are held)."""
+    try:
+        cur = gh.json("lip_control.json") or {}
+        if (cur.get("mode") or "").lower() == "off":
+            return True
+        cur["mode"] = "off"
+        cur["paused_by"] = f"watcher {datetime.fromtimestamp(now, timezone.utc):%Y-%m-%dT%H:%MZ}: {reason[:200]}"
+        gh.put("lip_control.json", json.dumps(cur, indent=1) + "\n",
+               "watch: switch rewards bot off (malfunction) [skip ci]")
+        return True
+    except Exception as exc:
+        log.error("lip pause failed: %s", exc)
         return False
 
 
@@ -557,17 +654,27 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
         if fresh:
             sev = (o or {}).get("severity", "alert" if critical else "ok")
             paused = False
-            if malfunction and s["auto_pause"] and (o is None or sev == "pause_m15"):
-                paused = pause_m15(gh, "; ".join(x["text"] for x in malfunction), now)
+            m15_bad = [x for x in malfunction if x.get("target", "m15") == "m15"]
+            lip_bad = [x for x in malfunction if x.get("target") == "lip"]
+            what = "15-min bot"
+            if m15_bad and s["auto_pause"] and (o is None or sev == "pause_m15"):
+                paused = pause_m15(gh, "; ".join(x["text"] for x in m15_bad), now)
                 rec["action"] = "paused_m15" if paused else "pause_failed"
-                jot(f"ACTION {rec['action']}: " + "; ".join(x["text"] for x in malfunction))
+                jot(f"ACTION {rec['action']}: " + "; ".join(x["text"] for x in m15_bad))
+            elif lip_bad and s["auto_pause"] and (o is None or sev in ("pause_lip", "pause_m15")):
+                what = "rewards bot"
+                paused = pause_lip(gh, "; ".join(x["text"] for x in lip_bad), now)
+                rec["action"] = "paused_lip" if paused else "pause_failed"
+                jot(f"ACTION {rec['action']}: " + "; ".join(x["text"] for x in lip_bad))
             if sev != "ok" or paused:
                 title = "👷 Foreman: " + ((o or {}).get("title") or ", ".join(x["code"] for x in critical) or "check")
                 body = (o or {}).get("message") or "\n".join(x["text"] for x in critical)
-                if paused:
+                if paused and what == "rewards bot":
+                    body = "SWITCHED OFF the rewards bot (its bids get cancelled within ~5 min). " + body
+                elif paused:
                     body = "PAUSED the 15-min bot to paper (logging continues). " + body
                 elif rec["action"] == "pause_failed":
-                    body = "Tried to pause the 15-min bot and FAILED. " + body
+                    body = f"Tried to pause the {what} and FAILED. " + body
                 notify.send(http, cfg, title, body + f"\n({et(now)})", priority=5 if paused else 4,
                             tags=["construction_worker"])
                 jot(f"pushed Alex: {title[11:]}")
