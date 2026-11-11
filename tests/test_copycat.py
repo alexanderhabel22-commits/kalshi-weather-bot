@@ -441,3 +441,11 @@ def test_big_order_split_into_many_fills_counts_as_one_bet(tmp_path):
         cc.spot_whale(x, 1_000_000.0)
     w = [r for r in rows(tmp_path) if r.get("kind") == "whale"]
     assert len(w) == 1 and w[0]["anon"] and w[0]["usd"] == 2160 and w[0]["fills"] == 4   # $2,160 on NO at 90c
+
+
+
+def test_whale_rows_survive_load_rows(tmp_path):
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: 1_000_000.0, req_gap=0)
+    cc.spot_whale(dict(trade("w1", side="yes", px="0.80"), count_fp="3000.00"), 1_000_000.0)
+    got = [r for r in copycat.load_rows(tmp_path) if r.get("kind") == "whale"]
+    assert len(got) == 1 and copycat.whale_summary(got, {}, 1_000_000.0)["anon_count"] == 1

@@ -306,8 +306,8 @@ _ROW_CACHE: dict[str, list[dict]] = {}
 
 
 def _slim(r: dict) -> bool:
-    """Rows the scoring needs: snapped fills and their snapshots (keeps memory small)."""
-    return r.get("kind") == "snap" or (r.get("kind") == "fill" and r.get("snap", True)
+    """Rows the scoring needs: snapped fills, their snapshots and big-bet rows (keeps memory small)."""
+    return r.get("kind") in ("snap", "whale") or (r.get("kind") == "fill" and r.get("snap", True)
                                          and not r.get("backfill"))
 
 
