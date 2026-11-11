@@ -81,8 +81,51 @@ this is a few dollars a month per contract, not a big number.
 "need" orders at 1 contract (15% of bankroll cap, own stop at -10% of bankroll).
 Highs and the "holds" orders stay on paper. Reviews at 100/300/500 contracts.
 
-## 3. Better forecast sources
+**Out of sample (added Nov 11 evening):** the new download added Nov 4-9, days the rule
+was never fit on: 53 fills, **+6.9c ± 1.2**, every one of the 6 days positive (+$3.64 at
+1 contract). A forecast skip filter was also tested (skip when the day-old forecast says
+the low reaches the bracket): it HURTS. Those nights earned +8.3c / +2.7c, and +11c / +14c
+when the forecast was 2F+ inside the bracket; skipping them cuts the total from $115 to
+$49 and from $18 to $14. The market overreacts to forecast cold fronts. Not added.
 
-Download running (about 20 more models from Open-Meteo incl. HRRR, NAM, NBM, ECMWF
-9 km, AIFS, GraphCast, UKMO; NWS guidance NBE, LAMP, NAM/ECMWF MOS). Results will be
-added here.
+## 3. Better forecast sources: none beats the market
+
+Download of Nov 11 (`runs/20261111-2021` on branch `wx-research-data`): about 20 extra
+Open-Meteo models (NBM, HRRR, NAM, GFS 13 km, GraphCast, AI-GFS, ECMWF 9 km and AIFS,
+UKMO, Meteo-France, JMA, GEM incl. HRDPS, ICON, KMA, CMA), Kalshi markets Oct 25 -
+Nov 11, readings, and NWS guidance. The Open-Meteo part stopped after two stations (an
+empty reply, likely the rate limit), so the model comparison covers **NYC and Chicago
+only** (highs and lows). Script: `research_wx/a11_models.py`.
+
+Day-old runs (`previous_day1`), each model bias-corrected walk-forward, scored on the
+same city-days as the market's own implied temperature, Sep-Nov 2026:
+
+| Source | 36h before close MAE | slope | 24h before close MAE | slope |
+|---|---|---|---|---|
+| **Market price** | **1.27F** | | **1.07F** | |
+| Mean of all models | 1.39 | +0.30 ± 0.09 | 1.38 | +0.10 ± 0.08 |
+| NBM | 1.60 | +0.03 | 1.59 | -0.01 |
+| ICON | 1.67 | +0.18 | 1.70 | +0.09 |
+| AI-GFS | 1.74 | -0.01 | 1.76 | -0.06 |
+| ECMWF AIFS | 1.78 | +0.06 | 1.76 | +0.03 |
+| ECMWF 9 km | 1.86 | +0.03 | 1.87 | -0.00 |
+| HRRR | 2.00 | +0.07 | 1.95 | +0.03 |
+| GFS 13 km | 2.08 | +0.03 | 2.11 | -0.02 |
+
+(slope = how much of the gap between a source and the market turns out to be right;
+0 means the market already has it.)
+
+- **No single model beats the market** at either time, in any of the three periods since
+  Mar 2026. The best (NBM, ICON) are still 0.3-0.5F worse.
+- The mean of ~20 models keeps a little information at 36h (slope 0.30), but that is
+  exactly where the archive's day-old runs may include runs not yet out at order time,
+  and by 24h it is gone. Our 4-model day-before replay had slope 0.13 and lost money
+  live, so this is not enough to bring day-before back.
+- Mar-Aug 2026, ECMWF's AI model (AIFS) matched the market (1.70 vs 1.73F, slope 0.55):
+  then the market caught up. Same story as section 1.
+- Look-ahead check: Open-Meteo's single-run API only keeps runs from about Aug 2026 on
+  (Mar 2026 and Oct 2025 runs are gone), so a clean as-issued test is possible only for
+  Aug-Nov. Not worth it given the above.
+
+**Verdict:** more or fancier models won't rescue day-before weather. The edge left in
+weather is the late-day pattern in section 2, which needs no forecast.
