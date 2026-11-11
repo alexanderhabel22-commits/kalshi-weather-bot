@@ -20,8 +20,8 @@
     },
     "weather": {
       "label": "Weather day-before",
-      "backtest_c": 1.3,
-      "backtest_note": "Maker orders 36h before close; Sep-Oct 2026 about +3% ROI at ~44c avg (not yet significant)"
+      "backtest_c": 1.0,
+      "backtest_note": "Maker orders 36h before close; Sep-Nov 2026 +2.3c +-1.2 at best. Back on paper Nov 11: the market's forecast now beats the model."
     },
     "edge-shadow": {
       "label": "EDGE calls (silent)",
@@ -64,7 +64,11 @@
     {"date": "2026-11-05", "title": "Newly launched markets", "verdict": "PENDING", "area": "Platform",
      "summary": "Launch backtest running; new-market watcher logging in shadow."},
     {"date": "2026-11-05", "title": "Sportsbook odds vs Kalshi", "verdict": "PENDING", "area": "Sports",
-     "summary": "Research just started."}
+     "summary": "Research just started."},
+    {"date": "2026-11-11", "title": "Weather day-before back to paper", "verdict": "PAPER", "area": "Weather",
+     "summary": "Kalshi's prices now forecast tomorrow's temperature better than our models do (1.31F miss vs 1.60F), so the edge is gone. Real test lost $3.95 on 43 contracts. Re-check Jan-Feb."},
+    {"date": "2026-11-11", "title": "Late-day lows", "verdict": "PAPER TEST", "area": "Weather",
+     "summary": "After midday the market overpays for brackets below the low already recorded. Selling them backtests at +5.7c per contract (Oct 2025-Aug 2026) and +3.7c (Sep-Nov 2026), about 7 fills a day. Verdict at 300 paper fills."}
   ],
   "checkpoints": [
     {"date": "2026-11-07", "title": "LOCK verdict"},
@@ -74,6 +78,7 @@
     {"date": "2026-11-17", "title": "Project checkpoint: sizing and next steps"},
     {"date": "2026-11-18", "title": "Hourly longshot re-test"},
     {"date": "2026-12-03", "title": "Mentions paper judged"},
+    {"date": "2026-12-20", "title": "Late-day lows paper verdict (300 fills)"},
     {"date": "2027-01-25", "title": "Renew the scan timer token (expires Feb 2)"},
     {"date": "2027-02-01", "title": "Econ weak leads re-test"}
   ]
