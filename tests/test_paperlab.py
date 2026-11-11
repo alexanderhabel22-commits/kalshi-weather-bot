@@ -1,4 +1,4 @@
-from wxbot.paperlab import Lab, MakerPaper, ReadOnly, RfqPaper
+from wxbot.paperlab import FieldPaper, Lab, MakerPaper, ReadOnly, RfqPaper
 
 T0 = 1_794_400_000.0
 
@@ -104,6 +104,43 @@ def test_maker_tags_fills_with_casual_share_and_scores_settlement(tmp_path):
     mm.settle()
     assert mm.st["held"] == []
     assert mm.status()["by_flow"]["under20|no"]["settled_c"] == 45.0
+
+
+def test_field_paper_sells_the_field_once_and_scores(tmp_path):
+    http, clock = Http(), [T0]
+    fp = FieldPaper(lab(tmp_path, http, clock))
+    mk = lambda tk, b, a: {"ticker": tk, "status": "active", "yes_bid_dollars": b, "yes_ask_dollars": a,  # noqa: E731
+                           "volume_24h_fp": "300"}
+    ev = {"event_ticker": "KXTOP-1", "category": "Entertainment", "mutually_exclusive": True, "markets": [
+        mk("A", "0.40", "0.44"), mk("B", "0.20", "0.24"), mk("C", "0.12", "0.16"),
+        mk("D", "0.03", "0.05"), mk("E", "0.70", "0.74")]}
+    fp.consider(ev, T0)
+    fp.consider(ev, T0 + 60)                                   # an event is entered only once
+    assert [r["tk"] for r in fp.st["open"]] == ["A", "B", "C"]   # only the 10-50c candidates
+    assert fp.st["open"][0]["no_take"] == 0.60 and fp.st["events"]["KXTOP-1"]["ask_sum"] == 1.63
+    # not one-winner, wrong category, or too few candidates: skipped
+    fp.consider(dict(ev, event_ticker="X2", mutually_exclusive=False), T0)
+    fp.consider(dict(ev, event_ticker="X3", category="Sports"), T0)
+    fp.consider(dict(ev, event_ticker="X4", markets=ev["markets"][:3]), T0)
+    assert len(fp.st["open"]) == 3
+    http.markets = {"A": {"result": "yes"}, "B": {"result": "no"}}
+    fp.settle()
+    assert [r["tk"] for r in fp.st["open"]] == ["C"]
+    st = fp.status()
+    assert st["all"]["n"] == 2 and st["all"]["no_won"] == 1
+    a, b = st["recent"]
+    assert a["pnl_take"] == round((0 - 0.60 - 0.07 * 0.6 * 0.4) * 100, 2)
+    assert b["pnl_take"] == round((1 - 0.80 - 0.07 * 0.8 * 0.2) * 100, 2)
+
+
+def test_maker_scan_feeds_field_paper(tmp_path):
+    http, clock = Http(), [T0]
+    lb = lab(tmp_path, http, clock)
+    fp = FieldPaper(lb)
+    seen = []
+    fp.consider = lambda e, now: seen.append(e["event_ticker"])
+    MakerPaper(lb, fp).cycle()
+    assert seen == ["KXMEN-1", "KXNFL-1"]
 
 
 def test_rfq_prices_cross_combos_and_scores(tmp_path):

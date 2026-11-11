@@ -7,6 +7,8 @@ Standing paper rule for every row (from RESULTS.md): rest NO bids only, 1 contra
 best bid, only where the spread is 3c or more, in markets where small orders are 50%+ of the flow. Never rest
 a YES bid. The paper market maker on the server picks the busiest wide-spread markets by itself every 6 hours
 and now tags each fill with the casual share, so these events enter the paper test without extra work.
+"Sell the field" rows are logged by the paper book in `wxbot/paperlab.py` (`m15/paper-field.json`): it enters every
+one-winner event with 5+ candidates by itself, so the December and Super Bowl events are picked up when Kalshi lists them.
 The live favorites strategy (85-96c in 1M+ Entertainment, Politics and Elections events) already trades the
 big ones with real money.
 

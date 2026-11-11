@@ -373,6 +373,15 @@ IP without a token). It never places, changes or cancels anything and needs no s
 - Parlays: polls GET /communications/rfqs every 20 s. For combos whose legs are all in different events,
   fair = product of leg mids; logs the YES-selling quote at margins 0/5/10/20%, whether the combo then
   traded above it (we'd likely have won), and paper P&L at settlement. Status `m15/paper-rfq.json`.
+- **Casual-flow tags (Nov 11):** each paper maker fill records the market's casual share (share of
+  taker contracts from orders of $25 or less) and is scored again at settlement; `by_flow` in
+  `m15/paper-mm.json` splits results by casual share and side. Research: `research_casual/RESULTS.md`
+  (small orders lose ~3c/ct everywhere; rest NO bids only, never YES).
+- **Sell the field (paper, Nov 11):** `FieldPaper` logs a paper NO on every 10-50c candidate of each
+  open one-winner event with 5+ candidates (Entertainment, Social, Companies, Sci/Tech, World, Health),
+  bought at the NO ask, scored at settlement after the taker fee. Status `m15/paper-field.json`.
+  Target events and dates: `research_casual/CALENDAR.md` (Spotify Wrapped ~Dec 2, TIME and Google
+  ~Dec 8-11, Super Bowl ~Feb 14). Real money needs Alex's OK.
 
 ## Source shadow logger (built Nov 10, 2026, logging only)
 
