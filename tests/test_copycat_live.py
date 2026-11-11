@@ -158,3 +158,15 @@ def test_poll_copies_new_fill_of_hot_account(tmp_path):
     assert lv.client.orders == [("KXTEST-1", "yes", 0.63, 1)]
     rows = [json.loads(x) for p in tmp_path.glob("copycat-*.jsonl") for x in p.read_text().splitlines()]
     assert [r["what"] for r in rows if r["kind"] == "copy"] == ["copied"]
+
+
+def test_hot_accounts_get_every_other_poll(tmp_path):
+    cc = copycat.Copycat(tmp_path, clock=lambda: 1.0, req_gap=0)
+    cc.watch = {f"a{i}": {} for i in range(20)}
+    cc.hot = {"a7"}
+    cc.watch_next = cc.scout_next = 10**12
+    polled = []
+    cc.poll = lambda nick, now: polled.append(nick)
+    for _ in range(10):
+        cc.step()
+    assert polled.count("a7") >= 5
