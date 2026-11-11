@@ -15,6 +15,7 @@ skip_cities = []                 # e.g. ["Denver"]
 auto_discover = true             # pick up new/renamed weather series from Kalshi daily
 rain_census = false              # silent test Nov 4-11, 2026: all 14 passed thresholds were already $1.00; off
 paper_daybefore = true           # paper-trade day-before limit orders (no money, no alerts)
+paper_late = true                # paper test: late-day orders on today's lows/highs (no money; wxbot/latepaper.py)
 launch_watch = true              # watch for brand-new Kalshi series/categories (data/launches.json)
 
 [strategy]
@@ -80,8 +81,8 @@ spread_inflation = 1.15
 # live = true (it passed its paper test and Alex said go); otherwise paper.
 # New edge = a module in wxbot/strats/ (NAME + propose) + a [trading.<NAME>] table.
 mode = "live"                    # REAL money since Nov 5 7 PM ET (Alex's OK) for the strategies
-                                 # whose table says live = true: mentions, favorites, macro_fade,
-                                 # weather (15% cap test). LOCKs stay paper. KILL SWITCH: set the GitHub
+                                 # whose table says live = true: mentions, favorites, macro_fade.
+                                 # Weather day-before back to paper Nov 11. LOCKs stay paper. KILL SWITCH: set the GitHub
                                  # variable TRADING_MODE to off (Settings > Secrets and variables
                                  # > Actions > Variables), or paper to go back to paper.
 max_contracts_per_order = 10     # hard per-order size limit (each strategy's own size is smaller)
@@ -203,12 +204,14 @@ max_market_contracts = 50
 max_event_pct = 0.20             # at most 20% of the bankroll on one city-day
 
 [trading.weather]
-# Day-before weather limit orders (mirrors the paper orders). Live as a small
-# test from Nov 5 (Alex: "test money"), capped at 15% of the bankroll.
+# Day-before weather limit orders (mirrors the paper orders). Real-money test
+# Nov 5-11: 43 contracts settled, -$3.95. BACK TO PAPER Nov 11 (research_wx/RESULTS.md):
+# the market's own forecast is now more accurate than the model, so the edge is ~0.
+# Orders already resting or filled finish on their own. Re-check Jan-Feb.
 max_week_contracts = 4000        # fair share of the flow (scale study)
 max_market_contracts = 50        # per-market ceiling (scale study)
 enabled = true
-live = true                      # REAL money as a small test (Nov 5 7 PM ET): real fill rates
+live = false                     # paper since Nov 11 (was a real-money test Nov 5-11)
 contracts = 1
 max_open_pct = 0.15             # small test: at most 15% of the bankroll (~$7.50)
 max_event_pct = 0.15

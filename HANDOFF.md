@@ -156,12 +156,23 @@ record earns it. Be candid about odds and risk; no hype.
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
 - **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
-  live = true for mentions, favorites, macro_fade, and weather day-before (small test,
-  15% cap). LOCKs stay
+  live = true for mentions, favorites and macro_fade (weather day-before was a small
+  test until Nov 11, now paper). LOCKs stay
   paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
   orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
   GitHub variable TRADING_MODE=off. Since Nov 10 "off" also cancels the main bot's resting real-money orders (held positions stay).
+- **Weather day-before: back to PAPER since Nov 11** (`[trading.weather] live = false`). The
+  real-money test (Nov 5-11) lost $3.95 on 43 contracts and the paper record was -2.0c per
+  contract on 162 fills. Cause (research_wx/RESULTS.md): since September the market's own
+  implied forecast misses by 1.31F at 36h, our model mix by 1.60F, so the model has almost
+  nothing the price doesn't. Re-check in Jan-Feb; it keeps logging on paper.
+- **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
+  `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
+  beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES
+  on the bracket holding it. Backtest for lows: +5.7c per contract Oct 2025-Aug 2026, +3.7c
+  Sep-Nov 2026, about 7 fills a day. Review at 300 filled low orders; real money needs Alex's
+  OK. Switch off with `[markets] paper_late = false`.
 - **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
   and `[trading.locks] live = true`; every other strategy stays paper. The scan
   writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert
