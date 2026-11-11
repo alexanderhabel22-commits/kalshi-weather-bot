@@ -13,6 +13,11 @@ and only uses GET requests. Two studies from the overnight research
    quote we'd give (selling YES at fair + margin), whether the combo then traded above that price
    (we'd likely have won the request), and the result at settlement.
 
+Casual-flow tags (Nov 11, thread "Find where casual traders lose money"): every maker fill also
+carries the share of the market's taker contracts that came from small orders (<= $25), and is
+scored again at settlement, split by that share and by the side we bought (history says the edge
+sits in casual-heavy markets on the NO side: /mnt/project-files/analysis/casual-flow/RESULTS.md).
+
 Status files go to the m15-data branch: m15/paper-mm.json and m15/paper-rfq.json (hourly).
 """
 from __future__ import annotations
@@ -32,7 +37,8 @@ MM_CATS = ("Mentions", "Science and Technology", "Financials", "Politics", "Elec
            "World", "Entertainment", "Companies", "Climate and Weather", "Health", "Transportation",
            "Social")
 MM = {"markets": 20, "per_event": 2, "min_spread": 0.03, "min_vol24": 100.0, "mid_lo": 0.10,
-      "mid_hi": 0.90, "cycle_s": 60, "select_s": 6 * 3600, "max_inv": 10, "event_pages": 400}
+      "mid_hi": 0.90, "cycle_s": 60, "select_s": 6 * 3600, "max_inv": 10, "event_pages": 400,
+      "small_usd": 25.0, "flow_min_ct": 50.0, "settle_checks": 40, "held_max": 2000}
 RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.00), "check_s": 600, "keep_days": 4,
        "pages": 5,                  # the open-RFQ list is paged 100 at a time (one poll hit 100)
        # what a small real test would allow: per combo at most this many contracts and this much loss
@@ -102,7 +108,8 @@ class MakerPaper:
         except (OSError, ValueError):
             self.st = {}
         for k, v in (("markets", {}), ("orders", {}), ("pending", []), ("inv", {}), ("seen", {}),
-                     ("selected_at", 0.0), ("stats", {}), ("hours", {}), ("last", 0.0)):
+                     ("selected_at", 0.0), ("stats", {}), ("hours", {}), ("last", 0.0),
+                     ("flow", {}), ("held", []), ("flow_stats", {})):
             self.st.setdefault(k, v)
 
     def save(self):
@@ -168,6 +175,7 @@ class MakerPaper:
 
     def fills_from(self, tk: str, trades: list, now: float, mid: float | None) -> None:
         seen = self.st["seen"].setdefault(tk, [])
+        self.tally_flow(tk, [t for t in trades if t.get("trade_id") not in seen])
         for t in sorted(trades, key=lambda t: t.get("created_time") or ""):
             tid = t.get("trade_id")
             if tid in seen:
@@ -191,10 +199,78 @@ class MakerPaper:
                 f = {"tk": tk, "cat": self.st["markets"].get(tk, {}).get("cat", "?"), "side": side,
                      "px": o["px"], "t": ts, "spread": o["spread"],
                      "edge0": round((val0 - o["px"]) * 100, 2) if val0 is not None else None,
-                     "fee": round(maker_fee(o["px"]) * 100, 2)}
+                     "fee": round(maker_fee(o["px"]) * 100, 2), "casual": self.casual_share(tk)}
                 self.st["pending"].append(f)
+                self.st["held"].append({k: f[k] for k in ("tk", "side", "px", "t", "casual")})
+                self.st["held"] = self.st["held"][-MM["held_max"]:]
                 self.lab.write("mm", dict(f, kind="fill"))
         self.st["seen"][tk] = seen[-300:]
+
+    def tally_flow(self, tk: str, new: list) -> None:
+        """Adds new trades to the market's running count of taker contracts, and of those that came
+        from small orders. One order that sweeps several price levels prints several trades with the
+        same time and side, so those are summed into one order first."""
+        orders: dict = {}
+        for t in new:
+            yp, n = _f(t.get("yes_price_dollars")), _f(t.get("count_fp", t.get("count")), 0.0) or 0.0
+            if yp is None or n <= 0:
+                continue
+            side = t.get("taker_side")
+            o = orders.setdefault((t.get("created_time"), side), [0.0, 0.0])
+            o[0] += n
+            o[1] += n * (yp if side == "yes" else 1 - yp)
+        if not orders:
+            return
+        fl = self.st["flow"].setdefault(tk, {"all": 0.0, "small": 0.0})
+        for n, cost in orders.values():
+            fl["all"] = round(fl["all"] + n, 2)
+            if cost <= MM["small_usd"]:
+                fl["small"] = round(fl["small"] + n, 2)
+
+    def casual_share(self, tk: str) -> float | None:
+        """Share of the market's taker contracts (seen so far) that came from orders of $25 or less."""
+        fl = self.st["flow"].get(tk)
+        if not fl or fl["all"] < MM["flow_min_ct"]:
+            return None
+        return round(fl["small"] / fl["all"], 3)
+
+    @staticmethod
+    def flow_key(casual: float | None, side: str) -> str:
+        b = "unknown" if casual is None else "under20" if casual < 0.2 else "20to50" if casual < 0.5 else "50plus"
+        return f"{b}|{side}"
+
+    def flow_stat(self, f: dict) -> dict:
+        return self.st["flow_stats"].setdefault(self.flow_key(f.get("casual"), f["side"]), {
+            "fills": 0, "mk30": 0.0, "n30": 0, "settled": 0, "settle": 0.0, "fee": 0.0})
+
+    def settle(self) -> None:
+        """Scores held paper fills whose market has settled: result minus the price paid (cents)."""
+        waiting, looked, checked, res = [], [], 0, {}
+        for h in self.st["held"]:
+            tk = h["tk"]
+            if tk not in res:
+                if checked >= MM["settle_checks"]:
+                    waiting.append(h)                 # not looked at this round: first in line next time
+                    continue
+                checked += 1
+                try:
+                    m = self.lab.get(f"/markets/{tk}").get("market") or {}
+                    res[tk] = str(m.get("result") or "").lower()
+                except Exception as exc:  # noqa: BLE001
+                    log.info("paper mm settle %s: %s", tk, exc)
+                    res[tk] = ""
+            if res[tk] not in ("yes", "no"):
+                looked.append(h)
+                continue
+            pnl = round(((1.0 if res[tk] == h["side"] else 0.0) - h["px"]) * 100, 2)
+            s = self.flow_stat(h)
+            s["settled"] += 1
+            s["settle"] = round(s["settle"] + pnl, 2)
+            self.lab.write("mm", dict(h, kind="settled", result=res[tk], pnl=pnl))
+        self.st["held"] = waiting + looked
+        held = {h["tk"] for h in self.st["held"]}
+        self.st["flow"] = {k: v for k, v in self.st["flow"].items()
+                           if k in self.st["markets"] or k in held}
 
     def markouts(self, mids: dict, now: float) -> None:
         keep = []
@@ -215,6 +291,12 @@ class MakerPaper:
                 if f.get("mk30") is not None:
                     s["mk30"] += f["mk30"]
                     s["n30"] += 1
+                fs = self.flow_stat(f)
+                fs["fills"] += 1
+                fs["fee"] = round(fs["fee"] + f["fee"], 2)
+                if f.get("mk30") is not None:
+                    fs["mk30"] = round(fs["mk30"] + f["mk30"], 2)
+                    fs["n30"] += 1
                 self.lab.write("mm", dict(f, kind="markout"))
             else:
                 keep.append(f)
@@ -224,6 +306,10 @@ class MakerPaper:
         now = self.lab.clock()
         if now - self.st["selected_at"] > MM["select_s"] or not self.st["markets"]:
             self.select()
+            try:
+                self.settle()
+            except Exception as exc:  # noqa: BLE001
+                log.info("paper mm settle: %s", exc)
         mids = {}
         dt = now - self.st["last"] if self.st["last"] else 0
         self.st["last"] = now
@@ -271,8 +357,16 @@ class MakerPaper:
                         "markout_5m_c": round(s["mk5"] / s["n5"], 2) if s["n5"] else None,
                         "markout_30m_c": round(s["mk30"] / s["n30"], 2) if s["n30"] else None,
                         "maker_fee_c": round(s["fee"] / s["fills"], 2) if s["fills"] else None}
-        return {"markets": self.st["markets"], "by_category": out, "pending": len(self.st["pending"]),
-                "inventory": self.st["inv"]}
+        flow = {}
+        for k, s in sorted(self.st["flow_stats"].items()):
+            flow[k] = {"fills": s["fills"], "settled": s["settled"],
+                       "markout_30m_c": round(s["mk30"] / s["n30"], 2) if s["n30"] else None,
+                       "settled_c": round(s["settle"] / s["settled"], 2) if s["settled"] else None,
+                       "maker_fee_c": round(s["fee"] / s["fills"], 2) if s["fills"] else None}
+        for tk, info in self.st["markets"].items():
+            info["casual"] = self.casual_share(tk)
+        return {"markets": self.st["markets"], "by_category": out, "by_flow": flow,
+                "pending": len(self.st["pending"]), "held": len(self.st["held"]), "inventory": self.st["inv"]}
 
 
 class RfqPaper:
