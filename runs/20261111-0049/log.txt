@@ -1,0 +1,95 @@
+PAGE https://kalshi.com/social/leaderboard 429 20768
+PAGE https://kalshi.com/profile/Domer 429 20768
+PAGE https://kalshi.com/ideas/profiles/Domer 429 20768
+DISCOVERED []
+TRY 200 14549 https://api.elections.kalshi.com/v1/social/leaderboard?metric_name=projected_pnl&limit=100&since_day_before=0 {"rank_list":[{"nickname":"final.lamb3899","social_id":"","profile_image_path":"final.lamb3899-generated-0-1780002060610","value":7851034,"rank":1,"is_anonymous":false},{"nickname":"4thewin","social_i
+TRY 200 14549 https://api.elections.kalshi.com/v1/social/leaderboard?metric_name=projected_pnl&limit=100 {"rank_list":[{"nickname":"final.lamb3899","social_id":"","profile_image_path":"final.lamb3899-generated-0-1780002060610","value":7851034,"rank":1,"is_anonymous":false},{"nickname":"4thewin","social_i
+TRY 400 233 https://api.elections.kalshi.com/v1/social/leaderboard?metric_name=pnl&limit=100&time_period=all_time {"error":{"code":"invalid_parameters","message":"Some of your input is not valid","details":"Key: 'GetLeaderboardRequest.MetricName' Error:Field validation for 'MetricName' failed on the 'oneof' tag",
+TRY 200 14996 https://api.elections.kalshi.com/v1/social/leaderboard?metric_name=volume&limit=100&since_day_before=0 {"rank_list":[{"nickname":"wonderful.cougar7351","social_id":"","profile_image_path":"generated-profile-pool/v1/3665","value":5515520500,"rank":1,"is_anonymous":false},{"nickname":"imawhale","social_i
+TRY 400 241 https://api.elections.kalshi.com/v1/social/leaderboard?limit=100 {"error":{"code":"missing_parameters","message":"Some required information is missing","details":"Key: 'GetLeaderboardRequest.MetricName' Error:Field validation for 'MetricName' failed on the 'require
+TRY 200 353 https://api.elections.kalshi.com/v1/social/profile?nickname=Domer {"social_profile":{"social_id":"e1727a0d-001b-07bd-8667-2572669002f9","nickname":"Domer","follower_count":24068,"following_count":0,"posts_count":44,"profile_image_path":"domer","description":"","pend
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/Domer 
+TRY 200 82 https://api.elections.kalshi.com/v1/social/profile/metrics?nickname=Domer {"metrics":{"pnl":23555902810},"social_id":"e1727a0d-001b-07bd-8667-2572669002f9"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=Domer&limit=100 {"holdings":[],"social_id":"e1727a0d-001b-07bd-8667-2572669002f9","visibility_state":"hidden"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=Domer&closed_positions=true&limit=100 {"holdings":[],"social_id":"e1727a0d-001b-07bd-8667-2572669002f9","visibility_state":"hidden"}
+TRY 200 41 https://api.elections.kalshi.com/v1/social/trades?nickname=Domer&limit=100 {"trades":[],"visibility_state":"hidden"}
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/positions?nickname=Domer&limit=100 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/pnl?nickname=Domer 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/category_metrics?nickname=Domer 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/metrics/categories?nickname=Domer 
+TRY 200 432 https://api.elections.kalshi.com/v1/social/profile?nickname=final.lamb3899 {"social_profile":{"social_id":"32420684-158d-459c-8c03-9ffd4e85adc9","nickname":"final.lamb3899","follower_count":47795,"following_count":0,"posts_count":0,"profile_image_path":"final.lamb3899-genera
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/final.lamb3899 
+TRY 200 187 https://api.elections.kalshi.com/v1/social/profile/metrics?nickname=final.lamb3899 {"metrics":{"volume":489304850,"volume_fp":"489304850.00","dollars_traded":3194117202172,"pnl":78510343843,"num_markets_traded":193057},"social_id":"32420684-158d-459c-8c03-9ffd4e85adc9"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=final.lamb3899&limit=100 {"holdings":[],"social_id":"32420684-158d-459c-8c03-9ffd4e85adc9","visibility_state":"hidden"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=final.lamb3899&closed_positions=true&limit=100 {"holdings":[],"social_id":"32420684-158d-459c-8c03-9ffd4e85adc9","visibility_state":"hidden"}
+TRY 200 41 https://api.elections.kalshi.com/v1/social/trades?nickname=final.lamb3899&limit=100 {"trades":[],"visibility_state":"hidden"}
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/positions?nickname=final.lamb3899&limit=100 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/pnl?nickname=final.lamb3899 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/category_metrics?nickname=final.lamb3899 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/metrics/categories?nickname=final.lamb3899 
+TRY 200 494 https://api.elections.kalshi.com/v1/social/profile?nickname=4thewin {"social_profile":{"social_id":"d3301a4f-f7c7-4f6f-b249-fb6c0278754b","nickname":"4thewin","follower_count":31192,"following_count":0,"posts_count":0,"profile_image_path":"jpow","description":"acapita
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/4thewin 
+TRY 200 185 https://api.elections.kalshi.com/v1/social/profile/metrics?nickname=4thewin {"metrics":{"volume":807939129,"volume_fp":"807939129.00","dollars_traded":4082830812513,"pnl":77423861156,"num_markets_traded":4134},"social_id":"d3301a4f-f7c7-4f6f-b249-fb6c0278754b"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=4thewin&limit=100 {"holdings":[],"social_id":"d3301a4f-f7c7-4f6f-b249-fb6c0278754b","visibility_state":"hidden"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=4thewin&closed_positions=true&limit=100 {"holdings":[],"social_id":"d3301a4f-f7c7-4f6f-b249-fb6c0278754b","visibility_state":"hidden"}
+TRY 200 41 https://api.elections.kalshi.com/v1/social/trades?nickname=4thewin&limit=100 {"trades":[],"visibility_state":"hidden"}
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/positions?nickname=4thewin&limit=100 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/pnl?nickname=4thewin 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/category_metrics?nickname=4thewin 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/metrics/categories?nickname=4thewin 
+TRY 200 434 https://api.elections.kalshi.com/v1/social/profile?nickname=longcastles {"social_profile":{"social_id":"2848103d-9619-bb87-f541-04272543f34d","nickname":"longcastles","follower_count":2578,"following_count":0,"posts_count":0,"profile_image_path":"drag-generated-133-178045
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/longcastles 
+TRY 200 155 https://api.elections.kalshi.com/v1/social/profile/metrics?nickname=longcastles {"metrics":{"volume":199638933,"volume_fp":"199638933.00","pnl":32901525853,"num_markets_traded":18426},"social_id":"2848103d-9619-bb87-f541-04272543f34d"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=longcastles&limit=100 {"holdings":[],"social_id":"2848103d-9619-bb87-f541-04272543f34d","visibility_state":"hidden"}
+TRY 200 94 https://api.elections.kalshi.com/v1/social/profile/holdings?nickname=longcastles&closed_positions=true&limit=100 {"holdings":[],"social_id":"2848103d-9619-bb87-f541-04272543f34d","visibility_state":"hidden"}
+TRY 200 41 https://api.elections.kalshi.com/v1/social/trades?nickname=longcastles&limit=100 {"trades":[],"visibility_state":"hidden"}
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/positions?nickname=longcastles&limit=100 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/pnl?nickname=longcastles 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/category_metrics?nickname=longcastles 
+TRY 404 0 https://api.elections.kalshi.com/v1/social/profile/metrics/categories?nickname=longcastles 
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/leaderboard?metric_name=projected_pnl&limit=100&since_day_before=0 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/leaderboard?metric_name=projected_pnl&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/leaderboard?metric_name=pnl&limit=100&time_period=all_time 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/leaderboard?metric_name=volume&limit=100&since_day_before=0 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/leaderboard?limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile?nickname=Domer 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/Domer 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics?nickname=Domer 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=Domer&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=Domer&closed_positions=true&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/trades?nickname=Domer&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/positions?nickname=Domer&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/pnl?nickname=Domer 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/category_metrics?nickname=Domer 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics/categories?nickname=Domer 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile?nickname=final.lamb3899 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/final.lamb3899 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics?nickname=final.lamb3899 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=final.lamb3899&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=final.lamb3899&closed_positions=true&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/trades?nickname=final.lamb3899&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/positions?nickname=final.lamb3899&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/pnl?nickname=final.lamb3899 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/category_metrics?nickname=final.lamb3899 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics/categories?nickname=final.lamb3899 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile?nickname=4thewin 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/4thewin 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics?nickname=4thewin 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=4thewin&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=4thewin&closed_positions=true&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/trades?nickname=4thewin&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/positions?nickname=4thewin&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/pnl?nickname=4thewin 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/category_metrics?nickname=4thewin 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics/categories?nickname=4thewin 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile?nickname=longcastles 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/longcastles 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics?nickname=longcastles 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=longcastles&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/holdings?nickname=longcastles&closed_positions=true&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/trades?nickname=longcastles&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/positions?nickname=longcastles&limit=100 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/pnl?nickname=longcastles 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/category_metrics?nickname=longcastles 404 page not found
+TRY 404 18 https://api.elections.kalshi.com/trade-api/v2/social/profile/metrics/categories?nickname=longcastles 404 page not found
+DONE
