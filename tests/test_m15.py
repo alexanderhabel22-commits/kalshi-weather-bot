@@ -1071,7 +1071,7 @@ def test_early_window_off_by_default_waits_for_last_ten_minutes(monkeypatch):
 
 
 def test_early_window_bids_14_to_10_min_left_80_95(monkeypatch):
-    b, clk, cl, w = early_bot(monkeypatch, early_on=True, extra_contracts=1)
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, extra_contracts=1, early_contracts=0)
     b.step()
     assert len(cl.placed) == 1 and cl.placed[0][3] == 1      # 1 contract, no extra at 82c
     m = b.state["markets"][TK]
@@ -1104,3 +1104,9 @@ def test_early_window_switches_on_by_itself_at_n_contracts(monkeypatch):
     clk.t += 5
     b.step()
     assert len(alerts) == 1
+
+
+def test_early_window_contracts_setting(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, early_contracts=3, extra_contracts=1)
+    b.step()
+    assert len(cl.placed) == 1 and cl.placed[0][3] == 3

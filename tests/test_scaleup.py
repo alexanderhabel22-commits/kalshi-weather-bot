@@ -113,7 +113,7 @@ def test_extra_contract_scales_with_step():
 def test_m15_bot_off_ignores_step(monkeypatch):
     World(monkeypatch)
     cl = Client()
-    b = bot(m15_cfg(mode="live", pool_pct=1.0, stop_guard=False), Clock(), cl)
+    b = bot(m15_cfg(mode="live", pool_pct=1.0, stop_guard=False, early_after_contracts=0), Clock(), cl)
     b.state["series"] = {"KXBTC15M": {"fills": 900, "pnl": 40.0, "step": 2}}
     b.step()
     assert cl.placed[-1][3] == 1                           # kit off: step ignored
@@ -122,7 +122,7 @@ def test_m15_bot_off_ignores_step(monkeypatch):
 def test_m15_bot_on_places_step(monkeypatch):
     World(monkeypatch)
     cl2 = Client()
-    c2 = on(m15_cfg(mode="live", pool_pct=1.0, stop_guard=False))
+    c2 = on(m15_cfg(mode="live", pool_pct=1.0, stop_guard=False, early_after_contracts=0))
     b2 = bot(c2, Clock(), cl2)
     b2.paper_bankroll = 1000.0
     b2.fetch_json = lambda url: {"mode": "live", "halted": {}} if "trader_state" in url else {"total": 1000.0}
