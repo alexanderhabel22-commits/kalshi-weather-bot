@@ -69,58 +69,22 @@ def iso(v):
     return calendar.timegm(time.strptime(str(v)[:19], "%Y-%m-%dT%H:%M:%S"))
 
 
-# ---------- Polymarket US discovery ----------
-def pmus_updown(now, probe=False):
-    """Open 15-min Up/Down markets on Polymarket US: {coin: [market, ...]}."""
-    found, seen = {"btc": [], "silver": []}, 0
-    types = {}
-    lo = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now - 60))
-    hi = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now + 3600))
-    tries = ({"endDateMin": lo, "endDateMax": hi},
-             {"endDateMin": lo, "endDateMax": hi, "includeHidden": "true"},
-             {"endDateMin": lo, "endDateMax": hi, "categories": "crypto"},
-             {"endDateMin": lo, "endDateMax": hi, "categories": "commodities"})
-    for extra in tries:
-        if probe:
-            js = get(PMUS + "/markets", params={"limit": 20, **extra})
-            ms = (js or {}).get("markets") or []
-            log("pmus try", extra, "n", len(ms), [(m.get("slug"), (m.get("assetPriceTerms") or {})
-                                                   .get("marketType")) for m in ms[:8]])
-        for off in range(0, 1000, 100):
-            js = get(PMUS + "/markets", params={"limit": 100, "offset": off, **extra}, quiet=True)
-            ms = (js or {}).get("markets") or []
-            seen += len(ms)
-            for m in ms:
-                apt = m.get("assetPriceTerms") or {}
-                mt = apt.get("marketType")
-                types[mt] = types.get(mt, 0) + 1
-                if mt != "ASSET_PRICE_MARKET_TYPE_UP_DOWN":
-                    continue
-                sym = str((apt.get("asset") or {}).get("symbol", "")).lower()
-                coin = "btc" if "btc" in sym else "silver" if sym in ("xag", "silver") else None
-                try:
-                    ws = iso(apt["windowStart"])
-                    we = iso(apt["windowEnd"])
-                except (KeyError, TypeError, ValueError):
-                    continue
-                if coin and 800 <= we - ws <= 1000 and we > now:
-                    m["_ws"], m["_we"] = ws, we
-                    if all(x.get("slug") != m.get("slug") for x in found[coin]):
-                        found[coin].append(m)
-            if len(ms) < 100:
-                break
-        if found["btc"] and found["silver"] and not probe:
-            break
+# ---------- Polymarket US ----------
+PMUS_PREFIX = {"btc": "cpc-btc-updown-15m", "silver": "cpagsp-silver-updown-15m"}
+
+
+def pmus_market(coin, ws, probe=False):
+    """The Polymarket US 15-min market whose window starts at `ws` (slug from the docs)."""
+    slug = PMUS_PREFIX[coin] + time.strftime("-%Y-%m-%d-%H%Mz", time.gmtime(ws))
+    js = get(PMUS + "/markets", params={"slug": slug}, quiet=True)
+    ms = (js or {}).get("markets") or []
+    m = ms[0] if ms else None
     if probe:
-        log("pmus scanned", seen, "types", types,
-            {k: [(m.get("slug"), m["_we"]) for m in v[:3]] for k, v in found.items()})
-        for k, v in found.items():
-            if v:
-                m = v[0]
-                log("pmus sample", k, json.dumps({x: m.get(x) for x in (
-                    "slug", "id", "marketSides", "outcomes", "assetPriceTerms",
-                    "orderPriceMinTickSize", "feeCoefficient")})[:1500])
-    return found
+        log("pmus", coin, slug, "found" if m else "MISSING",
+            json.dumps({x: m.get(x) for x in ("id", "status", "marketSides", "assetPriceTerms",
+                                               "orderPriceMinTickSize", "feeCoefficient")})[:1200]
+            if m else "")
+    return slug if m else None
 
 
 def pmus_quote(slug):
@@ -188,7 +152,6 @@ def main():
         need = any(c not in cur or cur[c]["we"] <= now for c in KSERIES)
         if need or now - last_disc > 120:
             last_disc = now
-            us = pmus_updown(now, probe=first)
             for coin, series in KSERIES.items():
                 ks = sorted(kalshi_open(series, now), key=lambda m: m["_we"])
                 if not ks:
@@ -197,7 +160,7 @@ def main():
                 we = k["_we"]
                 if coin in cur and cur[coin]["we"] == we and cur[coin].get("us"):
                     continue
-                usm = next((m for m in us.get(coin, []) if abs(m["_we"] - we) < 5), None)
+                usm = pmus_market(coin, we - 900, probe=first or n < 400)
                 im = intl_market(coin, we - 900)
                 tok = None
                 if im:
@@ -210,10 +173,15 @@ def main():
                 if coin not in cur or cur[coin]["we"] != we:
                     if coin in cur:
                         pending.append((cur[coin]["we"] + 150, coin, cur[coin]))
-                    log("window", coin, k["ticker"], "us", usm and usm.get("slug"),
+                    log("window", coin, k["ticker"], "us", usm,
                         "intl", im and im.get("slug"))
-                cur[coin] = {"we": we, "k": k["ticker"], "us": usm and usm.get("slug"),
-                             "us_meta": usm, "intl": im and im.get("slug"), "tok": tok}
+                cur[coin] = {"we": we, "k": k["ticker"], "us": usm,
+                             "intl": im and im.get("slug"), "tok": tok}
+            if first:
+                for coin, c in cur.items():
+                    if c["us"]:
+                        js = get(PMUS + f"/markets/{c['us']}/bbo")
+                        log("pmus bbo", coin, json.dumps(js)[:800])
             first = False
         for coin, c in cur.items():
             if c["we"] <= now:
