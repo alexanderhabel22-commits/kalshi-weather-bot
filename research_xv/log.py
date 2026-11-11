@@ -74,10 +74,20 @@ def pmus_updown(now, probe=False):
     """Open 15-min Up/Down markets on Polymarket US: {coin: [market, ...]}."""
     found, seen = {"btc": [], "silver": []}, 0
     types = {}
-    for extra in ({}, {"includeHidden": "true"}):
-        for off in range(0, 3000, 100):
-            js = get(PMUS + "/markets", params={"active": "true", "closed": "false", "limit": 100,
-                                                "offset": off, **extra}, quiet=True)
+    lo = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now - 60))
+    hi = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now + 3600))
+    tries = ({"endDateMin": lo, "endDateMax": hi},
+             {"endDateMin": lo, "endDateMax": hi, "includeHidden": "true"},
+             {"endDateMin": lo, "endDateMax": hi, "categories": "crypto"},
+             {"endDateMin": lo, "endDateMax": hi, "categories": "commodities"})
+    for extra in tries:
+        if probe:
+            js = get(PMUS + "/markets", params={"limit": 20, **extra})
+            ms = (js or {}).get("markets") or []
+            log("pmus try", extra, "n", len(ms), [(m.get("slug"), (m.get("assetPriceTerms") or {})
+                                                   .get("marketType")) for m in ms[:8]])
+        for off in range(0, 1000, 100):
+            js = get(PMUS + "/markets", params={"limit": 100, "offset": off, **extra}, quiet=True)
             ms = (js or {}).get("markets") or []
             seen += len(ms)
             for m in ms:
@@ -99,7 +109,7 @@ def pmus_updown(now, probe=False):
                         found[coin].append(m)
             if len(ms) < 100:
                 break
-        if found["btc"] or found["silver"]:
+        if found["btc"] and found["silver"] and not probe:
             break
     if probe:
         log("pmus scanned", seen, "types", types,
