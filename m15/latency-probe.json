@@ -1,4 +1,46 @@
 {
- "version": "v3",
- "error": "Traceback (most recent call last):\n  File \"/opt/kalshi-m15/app/wxbot/latency_probe.py\", line 129, in main\n    res = run(http, client)\n          ^^^^^^^^^^^^^^^^^\n  File \"/opt/kalshi-m15/app/wxbot/latency_probe.py\", line 92, in run\n    ms, _ = _ms(client.balance)\n            ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/kalshi-m15/app/wxbot/latency_probe.py\", line 33, in _ms\n    out = f()\n          ^^^\n  File \"/opt/kalshi-m15/app/wxbot/kalshi_api.py\", line 84, in balance\n    js = self._get(\"/portfolio/balance\")\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/kalshi-m15/app/wxbot/kalshi_api.py\", line 67, in _get\n    return self.http.get_json(url, params=params, headers=self.headers(\"GET\", url))\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/kalshi-m15/app/wxbot/util.py\", line 79, in get_json\n    return self._request(\"GET\", url, params=params, headers=headers).json()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/kalshi-m15/app/wxbot/util.py\", line 75, in _request\n    raise last_exc\nwxbot.util.HttpError: HTTP 429 for https://api.elections.kalshi.com/trade-api/v2/portfolio/balance: {\"error\":{\"code\":\"too_many_requests\",\"message\":\"too many requests\"}}\n"
+ "version": "v4",
+ "at": "2026-11-11T08:56:24Z",
+ "public_book_ms": {
+  "n": 15,
+  "min": 22.3,
+  "p50": 25.3,
+  "p90": 26.8,
+  "max": 27.5
+ },
+ "signed_get_ms": {
+  "n": 5,
+  "min": 30.1,
+  "p50": 32.2,
+  "p90": 32.6,
+  "max": 63.6
+ },
+ "markets": {
+  "KXFEDDECISION-28JAN-H25": {
+   "place_ms": {
+    "n": 8,
+    "min": 23.9,
+    "p50": 55.1,
+    "p90": 60.1,
+    "max": 61.8
+   },
+   "cancel_ms": {
+    "n": 8,
+    "min": 23.1,
+    "p50": 58.6,
+    "p90": 59.5,
+    "max": 79.7
+   },
+   "status_ms": {
+    "n": 8,
+    "min": 29.5,
+    "p50": 31.8,
+    "p90": 33.1,
+    "max": 33.9
+   },
+   "filled": 0.0,
+   "errors": []
+  }
+ },
+ "host_base": "https://api.elections.kalshi.com/trade-api/v2"
 }
