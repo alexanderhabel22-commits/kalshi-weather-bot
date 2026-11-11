@@ -628,9 +628,9 @@ const darkC = c => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m) return
 // [m15] live_series in config.toml, minus any market the server auto-cut (status.json "cut"). Default on.
 function m15LiveSeries(){ const ls_ = ((S.data.config || {}).m15 || {}).live_series, cut = ((S.m15 || {}).status || {}).cut || {};
   return Array.isArray(ls_) ? new Set(ls_.filter(x => !(x in cut))) : null; }
-// Default OFF (Alex, Nov 11): the headline must be ALL real 15-min money, including markets later cut,
-// or the cut markets' losses vanish from the total. The switch only narrows the view on request.
-const m15OnlyLive = () => ls.get("m15Only2") === "1" && !!m15LiveSeries();
+// Default ON (Alex, Nov 11 12:37 AM ET: "ok with just btc and silver for that chart"). While it is on,
+// the switch line also shows the all-markets real total (incl. cut markets) so their losses stay visible.
+const m15OnlyLive = () => ls.get("m15Only2") !== "0" && !!m15LiveSeries();
 function m15AllRealPnl(){ const M = S.m15; if (!M) return null;
   return M.rows.filter(r => r.mode === "live" && num(r.filled) > 0 && (r.won === "1" || r.won === "0")).reduce((a, r) => a + num(r.pnl), 0); }
 const m15Keep = r => !m15OnlyLive() || m15LiveSeries().has(String(r.series || r.ticker || "").split("-")[0]);
