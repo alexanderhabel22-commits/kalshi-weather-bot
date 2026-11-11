@@ -1,0 +1,50 @@
+name: xvdump-research
+
+# Research only: snapshot every open Polymarket US and Kalshi market for an offline
+# arbitrage match. Public read-only data; never trades, no secrets. Runs only on push to this
+# research branch. Output goes to the xv-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-32j0yp"]
+    paths: ["research_xv/dump.py", ".github/workflows/xvdump-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xvdump-research
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - run: mkdir -p out && timeout 3000 python -u research_xv/dump.py out | tee out/log.txt || true
+      - name: Save to xv-research-data branch
+        if: always() && hashFiles('out/pmus.jsonl') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="dump-$(date -u +%Y%m%dT%H%MZ)"
+          gzip -k out/*.jsonl
+          mkdir -p /tmp/keep && mkdir -p "/tmp/keep/$stamp" && cp out/*.gz out/log.txt "/tmp/keep/$stamp/" 2>/dev/null || true
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin xv-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/xv-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "xv dump $stamp" || exit 0
+            git push origin HEAD:xv-research-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
