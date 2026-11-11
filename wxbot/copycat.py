@@ -70,6 +70,12 @@ ROW_V = 2                   # fresh start (Alex, Nov 10 10:20 PM ET): fills logg
 GO_LIVE_FILLS = 100         # tiered test (Alex, Nov 10): B+ (87+) accounts qualify at 100 paper copies,
 GO_LIVE_FAST_SCORE = 87.0   # everyone else needs 150; no time-based shortcut (a quiet account can't
 GO_LIVE_SLOW_FILLS = 150    # qualify on a handful of trades)
+DROP_DAYS = 30              # dropped accounts (failed the 150-copy test, or long-run losers) are not
+                            # watched, polled or snapshotted; after 30 days they may be re-scouted
+                            # and start again from zero (Alex, Nov 10 10:31 PM ET)
+RECHECK_S = 7 * 86400       # re-check each watched account's Kalshi profit weekly ...
+RECHECK_PER_SCOUT = 15      # ... a few per scout run, oldest check first
+LOSER_STRIKES = 2           # dropped after 2 weekly checks in a row losing money over the last 30 days
 CATEGORIES = ("Sports", "Politics", "Crypto", "Economics", "Climate and Weather", "Financials",
               "Entertainment", "Mentions", "Combos", "Commodities", "Elections", "Companies")
 SEED = ("BWmarkets", "thebigdon", "BitcoinTradingChallenge", "szg.szg", "brief.theme",
@@ -376,13 +382,17 @@ class Copycat:
         self.feed_next = 0.0
         self.scout_queue: dict[str, None] = {}    # names seen in the feed, not looked up yet
         self.feed_names: set[str] = set()         # every public trader seen in the feed
+        self.dropped: dict[str, dict] = {}        # nick -> {"at", "reason", ...}; not watched for DROP_DAYS
         try:                                      # restart fast: reuse the saved watch list
             w = json.loads((self.out / "watch.json").read_text())
             self.watch = w.get("watch") or {}
             self.watch_next = (w.get("at") or 0) + WATCH_REFRESH_S
+            self.dropped = w.get("dropped") or {}
         except (OSError, ValueError):
             pass
         self._boss_busy = False
+        self._in_status = False
+        self.last_up = 0.0
         self._lock = threading.Lock()
 
     # -- files
@@ -433,6 +443,8 @@ class Copycat:
         keep: dict[str, dict] = {}
         for n in names:
             self.tick()
+            if self.is_dropped(n):
+                continue
             if n in self.watch and self.watch[n].get("src") != "scout":
                 keep[n] = self.watch[n]          # already checked; refreshed on restart only
                 continue
@@ -447,7 +459,8 @@ class Copycat:
                 if pnl < MIN_PNL:
                     continue
                 p = (self.get(f"{SOCIAL}/profile", nickname=n).get("social_profile") or {})
-                keep[n] = {"pnl": round(pnl), "contracts": m.get("volume"),
+                keep[n] = {"pnl": round(pnl), "since": round(self.clock()), "checked": self.clock(),
+                           "contracts": m.get("volume"),
                            "markets": m.get("num_markets_traded"),
                            "cats": p.get("top_categories"), "joined": p.get("joined_at")}
             except Exception as exc:  # noqa: BLE001
@@ -462,9 +475,56 @@ class Copycat:
 
     def save_watch(self) -> None:
         try:
-            (self.out / "watch.json").write_text(json.dumps({"at": self.clock(), "watch": self.watch}))
+            (self.out / "watch.json").write_text(json.dumps({"at": self.clock(), "watch": self.watch,
+                                                             "dropped": self.dropped}))
         except OSError as exc:
             log.warning("copycat watch save: %s", exc)
+
+    def is_dropped(self, n: str, now: float | None = None) -> bool:
+        d = self.dropped.get(n)
+        if not d:
+            return False
+        if (now or self.clock()) - (d.get("at") or 0) < DROP_DAYS * 86400:
+            return True
+        self.dropped.pop(n, None)                 # time served: may be scouted again, from zero
+        self.checked.discard(n)
+        return False
+
+    def drop(self, n: str, reason: str, **extra) -> None:
+        """Stops watching an account (no polls, snapshots or copies) for DROP_DAYS."""
+        self.watch.pop(n, None)
+        self.hot.discard(n)
+        self.seen.pop(n, None)
+        self.snaps = [x for x in self.snaps if x[2] != n]
+        self.dropped[n] = {"at": round(self.clock()), "reason": reason, **extra}
+        self.write({"kind": "drop", "nick": n, "reason": reason, **extra})
+        log.info("copycat dropped %s: %s", n, reason)
+
+    def recheck(self) -> None:
+        """Weekly look at each watched account's own Kalshi profit; drops long-run losers."""
+        now = self.clock()
+        old = sorted((n for n, v in self.watch.items() if now - (v.get("checked") or v.get("since") or 0) >= RECHECK_S),
+                     key=lambda n: self.watch[n].get("checked") or 0)
+        for n in old[:RECHECK_PER_SCOUT]:
+            self.tick()
+            v = self.watch.get(n)
+            if v is None:                         # dropped by the status update meanwhile
+                continue
+            try:
+                m = self.get(f"{SOCIAL}/profile/metrics", nickname=n).get("metrics") or {}
+                m30 = self.get(f"{SOCIAL}/profile/metrics", nickname=n, since_day_before=30).get("metrics") or {}
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat recheck %s: %s", n, exc)
+                v["checked"] = now
+                continue
+            pnl, pnl30 = (m.get("pnl") or 0) / 1e4, (m30.get("pnl") or 0) / 1e4
+            v.update(pnl=round(pnl), pnl_30d=round(pnl30), checked=now)
+            v["strikes"] = (v.get("strikes") or 0) + 1 if pnl30 < 0 else 0
+            if v["strikes"] >= LOSER_STRIKES or (pnl < MIN_PNL and pnl30 < MIN_PNL_30D):
+                self.drop(n, "long-run loser" if v["strikes"] >= LOSER_STRIKES else "no longer profitable",
+                          pnl=round(pnl), pnl_30d=round(pnl30))
+        if old:
+            self.save_watch()
 
     def check_name(self, n: str) -> dict | None:
         m = self.get(f"{SOCIAL}/profile/metrics", nickname=n).get("metrics") or {}
@@ -482,7 +542,9 @@ class Copycat:
 
     def scout(self) -> None:
         """Reads recent pages of the global public trade feed and adds new profitable names."""
-        names: dict[str, None] = {n: None for n in self.scout_queue if n not in self.checked}
+        now = self.clock()
+        names: dict[str, None] = {n: None for n in self.scout_queue
+                                  if n not in self.checked and not self.is_dropped(n, now)}
         self.scout_queue = {}
         cursor = None
         for _ in range(SCOUT_PAGES if len(names) < SCOUT_CHECKS else 0):
@@ -492,7 +554,8 @@ class Copycat:
             j = self.get(f"{SOCIAL}/trades", **params)
             for t in j.get("trades") or []:
                 for k in ("maker_nickname", "taker_nickname"):
-                    if t.get(k) and t[k] not in self.checked and t[k] not in self.watch:
+                    if (t.get(k) and t[k] not in self.checked and t[k] not in self.watch
+                            and not self.is_dropped(t[k], now)):
                         names.setdefault(t[k], None)
             cursor = j.get("cursor")
             if not cursor:
@@ -514,11 +577,12 @@ class Copycat:
                 if low is None or (self.watch[low].get("pnl") or 0) >= info["pnl"]:
                     continue
                 self.watch.pop(low)
-            self.watch[n] = dict(info, src="scout")
+            self.watch[n] = dict(info, src="scout", since=round(self.clock()), checked=self.clock())
             added.append(n)
         if added:
             self.save_watch()
             self.write({"kind": "scout", "added": added, "looked_up": min(len(names), SCOUT_CHECKS)})
+        self.recheck()
 
     def snapshot(self, ticker: str) -> dict:
         m = self.get(f"{KALSHI}/markets/{ticker}").get("market") or {}
@@ -535,8 +599,19 @@ class Copycat:
             self.seen[nick] = {t.get("trade_id") for t in trades}
 
     def tick(self) -> None:
-        """Keeps the fast feed going during long jobs (watch-list rebuild, scouting)."""
+        """Keeps the fast feed and the 5-minute status going during long jobs (watch-list rebuild,
+        scouting, snapshot backlogs)."""
         now = self.clock()
+        if self.uploader and not self._in_status and now - self.last_up > STATUS_EVERY_S:
+            self._in_status = True
+            try:
+                self.last_up = now
+                self.upload_done_hours(now)
+                self.update_status(now)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat status: %s", exc)
+            finally:
+                self._in_status = False
         if now >= self.feed_next:
             self.feed_next = now + FEED_EVERY_S
             try:
@@ -569,7 +644,8 @@ class Copycat:
                 n = t.get(k)
                 if n and len(self.feed_names) < 500_000:
                     self.feed_names.add(n)
-                if n and n not in self.watch and n not in self.checked and len(self.scout_queue) < 2000:
+                if (n and n not in self.watch and n not in self.checked and n not in self.dropped
+                        and len(self.scout_queue) < 2000):
                     self.scout_queue[n] = None        # looked up by the next scout
                 if n and n in self.watch and n in self.seen:
                     by[n].append(t)
@@ -674,8 +750,14 @@ class Copycat:
         self.run_snaps(self.clock())
 
     def update_status(self, now: float) -> dict:
-        rows = [r for r in load_rows(self.out, cache_done_hours=True, now=now)
-                if r.get("kind") != "fill" or (r.get("v") or 1) >= ROW_V]      # fresh start
+        def counts(r: dict) -> bool:
+            if r.get("kind") != "fill":
+                return True
+            n = r.get("nick")
+            if (r.get("v") or 1) < ROW_V or n in self.dropped:                # fresh start
+                return False
+            return (r.get("ts") or now) >= ((self.watch.get(n) or {}).get("since") or 0)
+        rows = [r for r in load_rows(self.out, cache_done_hours=True, now=now) if counts(r)]
         old = now - 900
         held = [t for t, p in (self.live.state["positions"].items() if self.live else [])
                 if not p.get("settled") and t not in self.results]
@@ -700,9 +782,22 @@ class Copycat:
             notes = dict(self.boss.state["notes"])
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes)
         add_real(status, self.live.state if self.live else None)
+        for a in status["accounts"]:
+            if a["verdict"] == "fails" and a["fills"] >= GO_LIVE_SLOW_FILLS:
+                self.drop(a["nick"], "failed its paper test", fills=a["fills"], score=a["score"],
+                          grade=a["grade"], real_pnl=(a.get("real") or {}).get("pnl"))
+        if any(a["nick"] in self.dropped for a in status["accounts"]):
+            status["accounts"] = [a for a in status["accounts"] if a["nick"] not in self.dropped]
+            self.save_watch()
+        status["dropped"] = sorted(({"nick": k, **v, "back": datetime.fromtimestamp(v["at"] + DROP_DAYS * 86400, ET)
+                                     .strftime("%b %-d")} for k, v in self.dropped.items()),
+                                   key=lambda x: -x["at"])[:200]
         status["live"] = live
+        v2 = [r["ts"] for r in rows if r.get("kind") == "fill" and r.get("ts")]
+        status["fresh_since"] = datetime.fromtimestamp(min(v2), ET).strftime("%b %-d, %-I:%M %p ET") if v2 else None
         status["scan"] = {"public_traders_seen": len(self.feed_names), "looked_up": len(self.checked),
-                          "watched": len(self.watch), "min_profit": MIN_PNL, "max_watch": MAX_WATCH}
+                          "watched": len(self.watch), "min_profit": MIN_PNL, "max_watch": MAX_WATCH,
+                          "dropped": len(self.dropped), "drop_days": DROP_DAYS}
         status["mode"] = live["mode"] if live and live["mode"] == "live" else "paper only"
         if self.boss is not None:
             status["boss"] = {"summary": self.boss.state.get("summary"), "usage": self.boss.state.get("usage"),
@@ -730,15 +825,13 @@ class Copycat:
             self._boss_busy = False
 
     def run(self) -> None:
-        last_up = 0.0
         self.write({"kind": "start"})
         while True:
             try:
                 self.step()
-                if self.clock() - last_up > 300:
-                    last_up = self.clock()
-                    self.upload_done_hours(last_up)
-                    self.update_status(last_up)
+                if not self.uploader and self.clock() - self.last_up > STATUS_EVERY_S:
+                    self.last_up = self.clock()
+                    self.update_status(self.last_up)
             except Exception as exc:  # noqa: BLE001  never die; log and keep going
                 log.warning("copycat step: %s", exc)
                 time.sleep(10)

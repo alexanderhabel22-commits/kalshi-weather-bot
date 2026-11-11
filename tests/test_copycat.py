@@ -214,3 +214,72 @@ def test_taker_fee():
     assert copycat.taker_fee_c(0.50) == 2.0
     assert copycat.taker_fee_c(0.95) == 1.0
     assert copycat.taker_fee_c(0.99) == 1.0
+
+
+def _fail_rows(cc, nick, n, t0):
+    for i in range(n):
+        tid = f"{nick}{i}"
+        cc.write({"kind": "fill", "v": copycat.ROW_V, "trade_id": tid, "nick": nick, "ticker": f"{nick}T{i}",
+                  "side": "yes", "yes_price": 0.50, "backfill": False, "lag_s": 5, "ts": t0 + i})
+        cc.write({"kind": "snap", "trade_id": tid, "nick": nick, "ticker": f"{nick}T{i}", "delay": 0,
+                  "bid": 0.48, "ask": 0.50, "ts": t0 + i})
+        cc.results[f"{nick}T{i}"] = "yes" if i % 10 < 2 else "no"
+
+
+def test_failed_test_drops_account_then_readmits_from_zero(tmp_path):
+    now = [1_000_000.0]
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now[0], req_gap=0)
+    cc.watch = {"loser": {"pnl": 500, "since": 0}, "sharp": {"pnl": 900_000, "since": 0}}
+    _fail_rows(cc, "loser", 150, now[0] - 5000)
+    st_ = cc.update_status(now[0])
+    assert "loser" not in cc.watch and cc.dropped["loser"]["reason"] == "failed its paper test"
+    assert all(a["nick"] != "loser" for a in st_["accounts"])
+    assert st_["scan"]["dropped"] == 1 and st_["dropped"][0]["grade"] == "F"
+    saved = json.loads((tmp_path / "watch.json").read_text())
+    assert "loser" in saved["dropped"]                       # survives a restart
+    cc.poll_feed(now[0])                                     # feed / scout never queue it again
+    assert "loser" not in cc.scout_queue and cc.is_dropped("loser")
+    now[0] += copycat.DROP_DAYS * 86400 + 1                  # 30 days later: eligible again
+    assert not cc.is_dropped("loser") and "loser" not in cc.dropped
+    cc.watch["loser"] = {"pnl": 500, "since": now[0]}        # re-scouted: old copies don't count
+    a = {x["nick"]: x for x in cc.update_status(now[0])["accounts"]}["loser"]
+    assert a["fills"] == 0 and a["verdict"] == "watching"
+
+
+def test_recheck_drops_long_run_losers(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/profile/metrics"):
+            s.calls.append((url, dict(params)))
+            pnl = -40 if params.get("since_day_before") == 30 else 5000
+            return Resp({"metrics": {"pnl": pnl * 10_000}})
+        return orig(url, params, timeout)
+    s.get = get
+    now = [1_000_000.0]
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: now[0], req_gap=0)
+    cc.watch = {"cold": {"pnl": 5000, "checked": now[0] - copycat.RECHECK_S - 1},
+                "fresh": {"pnl": 5000, "checked": now[0]}}
+    cc.recheck()
+    assert cc.watch["cold"]["strikes"] == 1 and cc.watch["cold"]["pnl_30d"] == -40   # one bad month: kept
+    assert "strikes" not in cc.watch["fresh"]                                        # not due yet
+    now[0] += copycat.RECHECK_S + 1
+    cc.recheck()                                                                     # still losing a week later
+    assert "cold" not in cc.watch and cc.dropped["cold"]["reason"] == "long-run loser"
+
+
+def test_status_keeps_posting_during_long_jobs(tmp_path):
+    now = [1_000_000.0]
+    ups = []
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now[0], req_gap=0,
+                         uploader=lambda path, data: ups.append(path))
+    cc.tick()
+    assert "copycat/status.json" in ups
+    st_ = json.loads((tmp_path / "status.json").read_text())
+    assert "scan" in st_ and "fresh_since" in st_
+    n = len(ups)
+    now[0] += 10
+    cc.tick()                                    # not again within 5 minutes
+    assert len(ups) == n
