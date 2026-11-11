@@ -36,3 +36,39 @@ for d in days:
                 try: vol[k] += float(r[iv] or 0)
                 except Exception: pass
             p("  volume by prefix", vol.most_common(25)); p("  count", n.most_common(25))
+
+# Stage 1b: Kalshi game-winner markets + trade tapes for the same days (for offline matching)
+K = "https://api.elections.kalshi.com/trade-api/v2"
+import time, datetime as dt
+lo = int(dt.datetime(2026, 11, 2, 5, tzinfo=dt.timezone.utc).timestamp())
+hi = int(dt.datetime(2026, 11, 10, 12, tzinfo=dt.timezone.utc).timestamp())
+os.makedirs(f"{OUT}/kalshi", exist_ok=True)
+def kget(path, **params):
+    for a in range(5):
+        try:
+            r = S.get(K + path, params=params, timeout=30)
+            if r.status_code == 429: time.sleep(2 + a * 2); continue
+            return r.json()
+        except Exception as e:
+            p("kalshi err", path, e); time.sleep(2)
+    return {}
+for ser in ("KXNFLGAME", "KXNBAGAME", "KXNHLGAME", "KXNCAAFGAME"):
+    mk, cur = [], None
+    while True:
+        j = kget("/markets", series_ticker=ser, min_close_ts=lo, max_close_ts=hi, limit=1000, **({"cursor": cur} if cur else {}))
+        mk += j.get("markets", []); cur = j.get("cursor")
+        if not cur: break
+    p(ser, "markets", len(mk))
+    json.dump(mk, open(f"{OUT}/kalshi/{ser}_markets.json", "w"))
+    with open(f"{OUT}/kalshi/{ser}_trades.csv", "w", newline="") as fh:
+        w = csv.writer(fh); w.writerow(["ticker", "created_time", "yes_price", "count", "taker_side"])
+        for m in mk:
+            cur, pages = None, 0
+            while pages < 15:
+                j = kget("/markets/trades", ticker=m["ticker"], limit=1000, **({"cursor": cur} if cur else {}))
+                for t in j.get("trades", []):
+                    w.writerow([t.get("ticker"), t.get("created_time"), t.get("yes_price"), t.get("count"), t.get("taker_side")])
+                cur = j.get("cursor"); pages += 1
+                if not cur: break
+                time.sleep(0.05)
+p("done")

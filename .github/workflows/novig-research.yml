@@ -10,15 +10,35 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: novig-research
   cancel-in-progress: false
 
 jobs:
-  run:
+  # one research job at a time: wait (first come, first served) for research runs
+  # started before this one, so two waiting runs never wait on each other
+  wait:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 355
+    steps:
+      - name: Wait for earlier research runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          me=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq .created_at)
+          for i in $(seq 1 175); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs?status=in_progress&per_page=100" \
+                  --jq "[.workflow_runs[] | select((.name | endswith(\"research\")) and .id != ${{ github.run_id }} and .created_at < \"$me\")] | length")
+            [ "$n" = "0" ] && exit 0
+            echo "earlier research runs in progress: $n"; sleep 120
+          done
+          exit 1
+  run:
+    needs: wait
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
