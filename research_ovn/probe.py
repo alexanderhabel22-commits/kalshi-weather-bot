@@ -10,6 +10,10 @@ usage: python research_ovn/probe.py OUT_DIR
 4. mve_markets.jsonl.gz + mve_trades.jsonl.gz: settled combo (MVE) markets and a sample
    of their trade tapes (what do parlay sellers earn?).
 5. results.jsonl.gz: results of every market ticker seen in step 3.
+7. fast.jsonl.gz: 1-second KXBTC15M book + Coinbase spot + request round-trip times.
+6. mm_books.jsonl.gz + mm_trades.jsonl.gz: order books (~every 60 s) and trade tapes for
+   ~150 active markets across categories (plus the live 15-min BTC/silver/ETH windows) for
+   MM_HOURS, to replay resting two-sided quotes with real queue positions.
 """
 from __future__ import annotations
 
@@ -99,9 +103,140 @@ def step_incentives():
     json.dump(out, open(OUT / "incentives.json", "w"))
 
 
+MM_HOURS = float(os.environ.get("MM_HOURS", "3.5"))
+MM_SERIES = ("KXBTC15M", "KXSILVER15M", "KXETH15M")
+_mm_pick: list = []
+
+
+def _f(m, *ks):
+    for k in ks:
+        v = m.get(k)
+        if v not in (None, ""):
+            try:
+                v = float(v)
+                return v / 100 if k in ("yes_bid", "yes_ask") else v
+            except Exception:
+                pass
+    return None
+
+
+def pick_mm(events):
+    now = time.time()
+    by = {}
+    for e in events:
+        cat = e.get("category") or "?"
+        for m in e.get("markets") or []:
+            try:
+                ct = time.mktime(time.strptime(m["close_time"][:19], "%Y-%m-%dT%H:%M:%S")) - time.timezone
+            except Exception:
+                continue
+            if ct < now + MM_HOURS * 3600 + 1800:
+                continue
+            v = _f(m, "volume_24h_fp", "volume_24h") or 0
+            b = _f(m, "yes_bid_dollars", "yes_bid")
+            a = _f(m, "yes_ask_dollars", "yes_ask")
+            if v < 200 or b is None or a is None or b <= 0 or a >= 1:
+                continue
+            by.setdefault(cat, []).append((v, a - b, m["ticker"]))
+    pick = []
+    for cat, lst in by.items():
+        lst.sort(reverse=True)
+        pick += [t for _, _, t in lst[:10]]                      # busiest
+        wide = sorted([x for x in lst[10:] if x[1] >= 0.04], reverse=True)
+        pick += [t for _, _, t in wide[:6]]                      # busy-ish but wide spread
+    random.seed(2)
+    random.shuffle(pick)
+    return pick[:170]
+
+
+def step_mm():
+    while not _mm_pick and time.time() - T0 < 1800:
+        time.sleep(10)
+    static = list(_mm_pick)
+    log("mm markets", len(static))
+    fb, ft = gzw("mm_books.jsonl.gz"), gzw("mm_trades.jsonl.gz")
+    last_ts = {}
+    end = time.time() + MM_HOURS * 3600
+    cyc = 0
+    while time.time() < end and left() > 900:
+        t0 = time.time()
+        live = []
+        for s in MM_SERIES:
+            j = get(K + "/markets", {"series_ticker": s, "status": "open", "limit": 5})
+            for m in (j or {}).get("markets", [])[:1]:
+                live.append(m["ticker"])
+        for tk in static + live:
+            ob = get(K + f"/markets/{tk}/orderbook", {"depth": 30})
+            if ob is not None:
+                fb.write(json.dumps({"t": time.time(), "ticker": tk, "ob": ob}) + "\n")
+            p = {"ticker": tk, "limit": 1000}
+            if tk in last_ts:
+                p["min_ts"] = int(last_ts[tk])
+            else:
+                p["min_ts"] = int(time.time() - 600)
+            j = get(K + "/markets/trades", p)
+            for tr in (j or {}).get("trades", []):
+                ft.write(json.dumps(tr) + "\n")
+            last_ts[tk] = time.time() - 5
+        cyc += 1
+        if cyc % 10 == 0:
+            log("mm cycle", cyc, "secs", round(time.time() - t0))
+            fb.flush()
+            ft.flush()
+    fb.close()
+    ft.close()
+    log("mm done", cyc)
+
+
+def step_fast():
+    """1-second loop: current KXBTC15M book + Coinbase BTC spot, and our own request round-trip
+    times (how stale do resting Kalshi quotes get after a spot move?)."""
+    ss = requests.Session()
+    ss.headers["User-Agent"] = "Mozilla/5.0 (research)"
+    f = gzw("fast.jsonl.gz")
+    end = time.time() + MM_HOURS * 3600
+    cur, cur_until, n = None, 0, 0
+    while time.time() < end and left() > 900:
+        t0 = time.time()
+        if t0 > cur_until:
+            j = get(K + "/markets", {"series_ticker": "KXBTC15M", "status": "open", "limit": 5})
+            ms = (j or {}).get("markets", [])
+            if ms:
+                cur = ms[0]["ticker"]
+                try:
+                    cur_until = time.mktime(time.strptime(ms[0]["close_time"][:19], "%Y-%m-%dT%H:%M:%S")) - time.timezone
+                except Exception:
+                    cur_until = t0 + 60
+        rec = {"t": t0, "ticker": cur}
+        try:
+            a = time.time()
+            r = ss.get("https://api.exchange.coinbase.com/products/BTC-USD/ticker", timeout=5)
+            rec["cb_rtt"] = time.time() - a
+            jj = r.json()
+            rec["cb"] = [jj.get("bid"), jj.get("ask"), jj.get("price"), jj.get("time")]
+        except Exception as e:
+            rec["cb_err"] = str(e)[:80]
+        if cur:
+            try:
+                a = time.time()
+                r = ss.get(K + f"/markets/{cur}/orderbook", params={"depth": 5}, timeout=5)
+                rec["k_rtt"] = time.time() - a
+                rec["ob"] = r.json() if r.status_code == 200 else r.status_code
+            except Exception as e:
+                rec["k_err"] = str(e)[:80]
+        f.write(json.dumps(rec) + "\n")
+        n += 1
+        if n % 600 == 0:
+            f.flush()
+            log("fast", n)
+        time.sleep(max(0.0, 1.0 - (time.time() - t0)))
+    f.close()
+
+
 def step_events(snap):
     f = gzw("events_open.jsonl.gz")
     cur, n = None, 0
+    evs = []
     for _ in range(400):
         p = {"status": "open", "with_nested_markets": "true", "limit": 200}
         if cur:
@@ -113,12 +248,15 @@ def step_events(snap):
             e["_snap"] = snap
             e["_t"] = time.time()
             f.write(json.dumps(e) + "\n")
+            evs.append(e)
             n += 1
         cur = j.get("cursor")
         if not cur:
             break
     f.close()
     log("events snap", snap, n)
+    if snap == 0:
+        _mm_pick.extend(pick_mm(evs))
 
 
 def step_feed():
@@ -267,10 +405,15 @@ if __name__ == "__main__":
             step_events(k)
             time.sleep(1500)
     threading.Thread(target=snaps, daemon=True).start()
+    mm = threading.Thread(target=step_mm, daemon=True)
+    mm.start()
+    fast = threading.Thread(target=step_fast, daemon=True)
+    fast.start()
     names, mve = step_feed()
     th = threading.Thread(target=lambda: step_mve(mve), daemon=True)
     th.start()
     tick = step_accounts(names)
     step_results(tick)
-    th.join(timeout=max(60, left() - 300))
+    th.join(timeout=max(60, left() - 600))
+    mm.join(timeout=max(60, left() - 300))
     log("DONE")
