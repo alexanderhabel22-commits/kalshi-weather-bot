@@ -92,6 +92,7 @@ DEFAULTS = {
     "group": [],
     "group_cap": 0,
     "min_fav": 0.71,
+    "series_min_fav": {},           # per-series floor above min_fav, e.g. {"KXSILVER15M": 0.80}
     "max_fav": 0.95,
     "stop_quote_s": 0,
     # bid only in the last N seconds of the window, per series. Backtest split (Nov 8):
@@ -867,7 +868,13 @@ class Bot(FillQuality):
                 self._end_order(m)
             return
         early = self.early_active(m, now)
-        band = dict(s, min_fav=s["early_min"], max_fav=s["early_max"]) if early else s
+        floor = (s.get("series_min_fav") or {}).get(m["series"])
+        if early:
+            band = dict(s, min_fav=s["early_min"], max_fav=s["early_max"])
+        elif floor is not None:
+            band = dict(s, min_fav=max(float(s["min_fav"]), float(floor)))   # per-market floor (Nov 11)
+        else:
+            band = s
         want = desired_quote(quote, band) if quote else None
         m["why"] = "no quote" if not quote else ("out of band" if want is None else "ok")
         if quote:

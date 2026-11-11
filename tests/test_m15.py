@@ -1110,3 +1110,16 @@ def test_early_window_contracts_setting(monkeypatch):
     b, clk, cl, w = early_bot(monkeypatch, early_on=True, early_contracts=3, extra_contracts=1)
     b.step()
     assert len(cl.placed) == 1 and cl.placed[0][3] == 3
+
+
+def test_series_floor_skips_bids_below_it(monkeypatch):
+    w = World(monkeypatch, yb=0.76, ya=0.78)
+    clk = Clock()
+    b = bot(cfg(mode="paper", series_min_fav={"KXBTC15M": 0.80}), clk)
+    b.step()
+    m = b.state["markets"][TK]
+    assert m.get("order") is None and m["why"] == "out of band"
+    w.book = {"yes_bid": 0.81, "yes_ask": 0.83}
+    clk.t += 10
+    b.step()
+    assert m["order"]["q"] == 0.81
