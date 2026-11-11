@@ -156,8 +156,8 @@ record earns it. Be candid about odds and risk; no hype.
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
 - **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
-  live = true for mentions, favorites and macro_fade (weather day-before was a small
-  test until Nov 11, now paper). LOCKs stay
+  live = true for mentions, favorites, macro_fade and weather_late (late-day lows, Nov 11;
+  weather day-before was a small test until Nov 11, now paper). LOCKs stay
   paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
   orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
@@ -173,6 +173,13 @@ record earns it. Be candid about odds and risk; no hype.
   on the bracket holding it. Backtest for lows: +5.7c per contract Oct 2025-Aug 2026, +3.7c
   Sep-Nov 2026, about 7 fills a day. Review at 300 filled low orders; real money needs Alex's
   OK. Switch off with `[markets] paper_late = false`.
+- **Late-day lows: REAL MONEY since Nov 11** (Alex, 2:18 PM ET: "implement the strategy you
+  mentioned with real money, it can replace the strategy you got rid of"). Strategy
+  `weather_late` (`wxbot/strats/weather_late.py`, `[trading.weather_late]`) mirrors the
+  paper orders in `data/paper_late.csv` that are lows + kind "need": 1 contract, NO 1c inside
+  the offer, hold to settlement, 15% of bankroll cap, 8% per city-day, own loss stop at -10% of
+  bankroll, never crosses the spread. Highs and "holds" orders stay paper. Reviews at
+  100/300/500 contracts; the freeze applies until 500. Back to paper: `live = false`.
 - **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
   and `[trading.locks] live = true`; every other strategy stays paper. The scan
   writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert

@@ -268,7 +268,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -385,7 +385,23 @@ const TEST_START = Date.parse("2026-11-11T13:30:00Z");
 async function loadTests(){
   const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${f}?t=${Date.now()}`, {cache:"no-store"}); return r.ok ? await r.json() : null; } catch(e){ return null; } };
   const [lip, mm, rfq] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json")]);
-  S.tx = {lip, mm, rfq};
+  let late = [];
+  try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
+  S.tx = {lip, mm, rfq, late};
+}
+// Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
+function lateCard(rows){
+  let h = `<h2>Late-day weather <span class="sub">lows trade REAL money · the rest is paper</span></h2><div class="card">`;
+  h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">From midday on, a city has usually recorded its low. The market then pays too much for brackets that need it to get even colder before midnight. The rule buys NO on those (1¢ inside the offer, spreads of 4¢+) and holds. Backtest on lows: +5.7¢ per contract Oct 2025 to Aug 2026, +3.7¢ in Sep to Nov 2026. This card is the full paper log (lows and highs). The first row also trades real money at 1 contract (strategy Late-day lows on the MAIN tab).</div>`;
+  const fills = (rows || []).filter(r => r.status === "filled"), open = (rows || []).filter(r => r.status === "open").length;
+  if (!(rows || []).length) return h + `<div class="mute" style="font-size:12px">No paper orders yet. The first ones are written around midday ET.</div></div>`;
+  const groups = [["low","need","Lows · sell colder brackets"],["low","holds","Lows · buy the bracket holding the low"],["high","need","Highs · sell hotter brackets"],["high","holds","Highs · buy the bracket holding the high"]];
+  for (const [m, k, lbl] of groups){
+    const g = fills.filter(r => r.metric === m && r.kind === k), pnl = g.reduce((a, r) => a + num(r.pnl), 0), won = g.filter(r => num(r.pnl) > 0).length;
+    const per = g.length ? 100 * pnl / g.length : null;
+    h += `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${lbl}</div><div class="s">${g.length} fills · won ${won} · ${money(pnl)}${m === "low" && k === "need" ? ` · also REAL money` : ""}</div></div><div class="r"><span class="${cls(per || 0)}">${per == null ? "—" : (per > 0 ? "+" : per < 0 ? "−" : "") + Math.abs(per).toFixed(1) + "¢"}</span><small>per contract</small></div></div>`;
+  }
+  return h + `<div class="mute" style="font-size:11px;margin-top:6px">${rows.length} orders written · ${open} waiting for their market to settle.</div></div>`;
 }
 function txPage(){
   const T = S.tx || {}, L = T.lip;
@@ -413,6 +429,7 @@ function txPage(){
     h += `<h2>Our bids <span class="sub">${orders.length} resting · ${pos.length} filled</span></h2><div class="card">` + (orders.length + pos.length ? orders.map(bidRow).join("") + pos.map(posRow).join("")
       : `<div class="mute" style="font-size:12px">No bids yet.</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px">Share = our part of the resting size Kalshi scores on that side (our estimate).</div></div>`;
   }
+  h += lateCard(T.late);
   const M = T.mm;
   h += `<h2>Market making <span class="sub">PAPER · wide-spread markets</span></h2><div class="card">`;
   if (!M) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
