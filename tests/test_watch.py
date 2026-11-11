@@ -68,6 +68,7 @@ def go(tmp_path, monkeypatch, gh, client, seed=True):
     st = tmp_path / "w.json"
     if seed and not st.exists():          # a watcher that already ran today with no overfills
         st.write_text(json.dumps({"over_seen": {}, "over_day": "2026-11-10"}))
+    monkeypatch.setattr(watch, "mem_used", lambda path="/proc/meminfo": getattr(gh, "mem", 40.0))
     monkeypatch.setattr(watch.notify, "send", lambda http, cfg, title, body, **kw: sent.append((title, body)))
     rec = watch.run(load_config(), http=object(), client=client, gh=gh, now=NOW, runner=runner,
                     state_path=tmp_path / "w.json")
@@ -156,3 +157,38 @@ def test_first_run_treats_existing_overfills_as_history(tmp_path, monkeypatch):
     four = "ticker,mode,close,filled,cost,pnl\nKXBTC15M-A,live,2026-11-10T19:00:00Z,4,3.3,0.7\n"
     rec, sent = go(tmp_path, monkeypatch, FakeGH(markets=four), FakeClient(), seed=False)
     assert rec["flags"] == [] and not sent
+
+
+def test_ram_and_service_memory(tmp_path, monkeypatch):
+    p = tmp_path / "meminfo"
+    p.write_text("MemTotal: 1000000 kB\nMemFree: 50000 kB\nMemAvailable: 100000 kB\n")
+    assert watch.mem_used(str(p)) == 90.0
+    assert watch.svc_mem_pct("MemoryCurrent=270000000\nMemoryMax=300000000") == 90.0
+    assert watch.svc_mem_pct("MemoryCurrent=[not set]\nMemoryMax=infinity") is None
+    gh = FakeGH()
+    gh.mem = 91.0
+    c = FakeClient(opus={"severity": "alert", "title": "RAM high", "message": "m", "diagnosis": "d",
+                         "proposed_fix": "f", "needs_alex": True, "notebook": ["RAM ran hot Nov 11"]})
+    rec, sent = go(tmp_path, monkeypatch, gh, c)
+    assert [f["code"] for f in rec["flags"]] == ["MEM_HIGH"] and sent
+    assert sent[0][0].startswith("👷 Foreman: RAM high")
+    st = json.loads((tmp_path / "w.json").read_text())
+    assert st["notes"] == ["RAM ran hot Nov 11"]
+    assert any("new: server RAM 91%" in e for e in st["journal"])
+    assert any("escalated: RAM high" in e for e in st["journal"])
+
+
+def test_memory_fed_back_and_streaks(tmp_path, monkeypatch):
+    seen = []
+    c = FakeClient(haiku={"level": "watch", "summary": "spot feed down again",
+                          "remember": "Coinbase feed drops most nights ~2 AM ET; harmless"})
+    orig = c.create
+    c.messages.create = lambda model, **kw: (seen.append(kw["messages"][0]["content"]), orig(model, **kw))[1]
+    st = {"at": iso(NOW - 60), "mode": "live", "control": "live", "errors": 0, "spot_ok": False}
+    for _ in range(3):
+        go(tmp_path, monkeypatch, FakeGH(status=st), c)
+    assert "Coinbase feed drops most nights" in seen[-1]          # its own note comes back
+    assert "M15_SPOT" in seen[-1] and "(3 checks in a row)" in seen[-1]
+    state = json.loads((tmp_path / "w.json").read_text())
+    assert state["notes"] == ["Coinbase feed drops most nights ~2 AM ET; harmless"]   # no dupes
+    assert sum("new: Coinbase" in e for e in state["journal"]) == 1   # logged once, not every run
