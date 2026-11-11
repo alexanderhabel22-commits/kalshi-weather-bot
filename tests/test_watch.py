@@ -63,8 +63,11 @@ def runner(cmd, **kw):
     return SimpleNamespace(stdout="active" if "is-active" in cmd else "")
 
 
-def go(tmp_path, monkeypatch, gh, client):
+def go(tmp_path, monkeypatch, gh, client, seed=True):
     sent = []
+    st = tmp_path / "w.json"
+    if seed and not st.exists():          # a watcher that already ran today with no overfills
+        st.write_text(json.dumps({"over_seen": {}, "over_day": "2026-11-10"}))
     monkeypatch.setattr(watch.notify, "send", lambda http, cfg, title, body, **kw: sent.append((title, body)))
     rec = watch.run(load_config(), http=object(), client=client, gh=gh, now=NOW, runner=runner,
                     state_path=tmp_path / "w.json")
@@ -102,7 +105,8 @@ def test_overfill_pauses_when_opus_agrees(tmp_path, monkeypatch):
     assert rec["action"] == "paused_m15"
     assert json.loads(gh.files[("m15_control.json", "main")])["mode"] == "paper"
     assert sent and sent[0][1].startswith("PAUSED")
-    # second run within re-alert window: no new Opus call, no new push
+    # second run: the same overfill is not flagged again, so no new Opus call or push
+    c.answers["claude-haiku-5-5"] = {"level": "ok", "summary": "seen"}
     rec2, sent2 = go(tmp_path, monkeypatch, gh, c)
     assert c.calls.count("claude-opus-5-5") == 1 and not sent2
 
@@ -132,3 +136,23 @@ def test_scan_gap_and_stale_status_flagged(tmp_path, monkeypatch):
 def test_no_key_does_nothing(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     assert watch.run(load_config()) == {"skipped": "no key"}
+
+
+def test_late_rebook_flagged_once_and_history_seeded(tmp_path, monkeypatch):
+    two = "ticker,mode,close,filled,cost,pnl\nKXBTC15M-A,live,2026-11-10T19:00:00Z,2,1.6,0.4\n"
+    four = "ticker,mode,close,filled,cost,pnl\nKXBTC15M-A,live,2026-11-10T19:00:00Z,4,3.3,0.7\n"
+    c = FakeClient(haiku={"level": "ok", "summary": "x"},
+                   opus={"severity": "alert", "title": "t", "message": "m", "diagnosis": "d",
+                         "proposed_fix": "f", "needs_alex": False})
+    rec, _ = go(tmp_path, monkeypatch, FakeGH(markets=two), c)
+    assert rec["flags"] == []
+    rec, sent = go(tmp_path, monkeypatch, FakeGH(markets=four), c)   # re-booked hours after close
+    assert [f["code"] for f in rec["flags"]] == ["M15_OVERFILL"] and sent
+    rec, _ = go(tmp_path, monkeypatch, FakeGH(markets=four), c)
+    assert rec["flags"] == []
+
+
+def test_first_run_treats_existing_overfills_as_history(tmp_path, monkeypatch):
+    four = "ticker,mode,close,filled,cost,pnl\nKXBTC15M-A,live,2026-11-10T19:00:00Z,4,3.3,0.7\n"
+    rec, sent = go(tmp_path, monkeypatch, FakeGH(markets=four), FakeClient(), seed=False)
+    assert rec["flags"] == [] and not sent
