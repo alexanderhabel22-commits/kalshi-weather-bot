@@ -24,8 +24,8 @@ from .m15 import client_from_env, github_uploader
 from .util import Http
 
 log = logging.getLogger("wxbot")
-VERSION = "v2"
-ROUNDS = 10
+VERSION = "v4"
+ROUNDS = 8
 
 
 def _ms(f):
@@ -84,14 +84,16 @@ def run(http: Http, client, rounds: int = ROUNDS, pause=time.sleep) -> dict:
                  "public_book_ms": [], "signed_get_ms": [], "markets": {}}
     tks = pick_markets(http)
     probe_tk = tks[0] if tks else "KXFEDDECISION"
-    for _ in range(20):
+    # gentle: about one call per second, so the live bots sharing this key never hit
+    # Kalshi's rate limit (v3 got HTTP 429 at 5 calls/s on top of them)
+    for _ in range(15):
         ms, _ = _ms(lambda: http.get_json(f"{BASE}/markets/{probe_tk}/orderbook"))
         res["public_book_ms"].append(ms)
-        pause(0.2)
-    for _ in range(10):
+        pause(1)
+    for _ in range(5):
         ms, _ = _ms(client.balance)
         res["signed_get_ms"].append(ms)
-        pause(0.2)
+        pause(1)
     for tk in tks:
         r = {"place_ms": [], "cancel_ms": [], "status_ms": [], "filled": 0.0, "errors": []}
         for _ in range(rounds):
@@ -100,14 +102,15 @@ def run(http: Http, client, rounds: int = ROUNDS, pause=time.sleep) -> dict:
                 ms, o = _ms(lambda: client.place_limit(tk, "yes", 0.01, 1, cid))
                 r["place_ms"].append(ms)
                 oid = o.get("order_id") or o.get("id")
-                ms, _ = _ms(lambda: client.cancel(oid, tk))
+                ms, _ = _ms(lambda: client.cancel(oid, tk))    # cancel at once, no pause
                 r["cancel_ms"].append(ms)
+                pause(1)
                 ms, ko = _ms(lambda: client.get_order(oid))
                 r["status_ms"].append(ms)
                 r["filled"] += fill_qty(ko, 1)
             except Exception as exc:          # report, never retry into a loop
                 r["errors"].append(str(exc)[:200])
-            pause(2)
+            pause(3)
         res["markets"][tk] = r
     for k in ("public_book_ms", "signed_get_ms"):
         res[k] = summary(res[k])
@@ -119,16 +122,20 @@ def run(http: Http, client, rounds: int = ROUNDS, pause=time.sleep) -> dict:
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO)
-    http = Http("kalshi-m15-latency/1", min_interval=0.0, retries=1)
-    client = client_from_env(http)
-    if client is None:
-        log.warning("no Kalshi key: latency probe skipped")
-        return 1
-    res = run(http, client)
-    res["host_base"] = BASE
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    try:
+        http = Http("kalshi-m15-latency/1", min_interval=0.0, retries=4)
+        client = client_from_env(http)
+        if client is None:
+            res = {"version": VERSION, "error": "no Kalshi key in the environment"}
+        else:
+            res = run(http, client)
+            res["host_base"] = BASE
+    except Exception:                     # report the failure instead of failing silently
+        import traceback
+        res = {"version": VERSION, "error": traceback.format_exc()[-2000:]}
     text = json.dumps(res, indent=1)
     print(text)
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
     if token:
         github_uploader(Http("kalshi-m15-latency/1"), token)({"latency-probe.json": text})
     return 0

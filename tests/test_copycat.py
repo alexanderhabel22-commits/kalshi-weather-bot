@@ -426,3 +426,26 @@ def test_full_feed_rolling_log(tmp_path):
     f = list((tmp_path / "feed").glob("feed-*.csv.gz"))
     lines = gz.open(f[0], "rt").read().splitlines()
     assert [ln.split(",")[8] for ln in lines] == ["b1", "b2"] and "x y" in lines[1]
+
+
+
+def test_big_order_split_into_many_fills_counts_as_one_bet(tmp_path):
+    fills = [dict(trade(f"s{i}", side="no", px="0.10", maker=f"m{i}"), count_fp="600.00") for i in range(4)]
+    o = copycat.orders(fills)
+    taker = [x for x in o if not x["maker_nickname"]]
+    assert len(taker) == 1 and taker[0]["count_fp"] == 2400 and taker[0]["fills"] == 4
+    assert abs(taker[0]["price_dollars"] - 0.10) < 1e-9
+    assert len([x for x in o if x["maker_nickname"]]) == 4          # each named maker on its own
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: 1_000_000.0, req_gap=0)
+    for x in o:
+        cc.spot_whale(x, 1_000_000.0)
+    w = [r for r in rows(tmp_path) if r.get("kind") == "whale"]
+    assert len(w) == 1 and w[0]["anon"] and w[0]["usd"] == 2160 and w[0]["fills"] == 4   # $2,160 on NO at 90c
+
+
+
+def test_whale_rows_survive_load_rows(tmp_path):
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: 1_000_000.0, req_gap=0)
+    cc.spot_whale(dict(trade("w1", side="yes", px="0.80"), count_fp="3000.00"), 1_000_000.0)
+    got = [r for r in copycat.load_rows(tmp_path) if r.get("kind") == "whale"]
+    assert len(got) == 1 and copycat.whale_summary(got, {}, 1_000_000.0)["anon_count"] == 1

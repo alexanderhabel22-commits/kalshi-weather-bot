@@ -126,6 +126,42 @@ def side_value(side: str, yes_px: float) -> float:
     return yes_px if side == "yes" else 1 - yes_px
 
 
+def orders(trades: list[dict]) -> list[dict]:
+    """Groups feed fills into whole orders for the big-bet scanner. A taker's order that sweeps the
+    book shows up as many fills with the same timestamp; so does a maker's resting order filled by
+    several takers at once. Each group becomes one trade-like row (count summed, price averaged)."""
+    g: dict[tuple, dict] = {}
+    for t in trades:
+        px, n = _px(t.get("price_dollars")), t.get("count_fp", t.get("count"))
+        try:
+            n = float(n)
+        except (TypeError, ValueError):
+            continue
+        if px is None:
+            continue
+        for role in ("taker", "maker"):
+            nick = t.get(f"{role}_nickname") or ""
+            if role == "maker" and not nick:
+                continue
+            key = (role, nick, t.get("ticker"), t.get("taker_side"), t.get("taker_action", "buy"), t.get("create_date"))
+            o = g.get(key)
+            if o is None:
+                o = g[key] = {"trade_id": t.get("trade_id"), "ticker": t.get("ticker"), "taker_side": t.get("taker_side"),
+                              "taker_action": t.get("taker_action", "buy"), "create_date": t.get("create_date"),
+                              "taker_nickname": nick if role == "taker" else "",
+                              "maker_nickname": nick if role == "maker" else "", "_n": 0.0, "_px": 0.0, "fills": 0}
+            o["_n"] += n
+            o["_px"] += n * px
+            o["fills"] += 1
+    out = []
+    for o in g.values():
+        if o["_n"] > 0:
+            o["count_fp"] = round(o["_n"], 2)
+            o["price_dollars"] = round(o["_px"] / o["_n"], 4)
+            out.append(o)
+    return out
+
+
 def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict:
     """Paper record of big single bets: per contract, after the taker fee, as if copied at their price."""
     out = {"new": [], "old": [], "anon": []}
@@ -270,8 +306,8 @@ _ROW_CACHE: dict[str, list[dict]] = {}
 
 
 def _slim(r: dict) -> bool:
-    """Rows the scoring needs: snapped fills and their snapshots (keeps memory small)."""
-    return r.get("kind") == "snap" or (r.get("kind") == "fill" and r.get("snap", True)
+    """Rows the scoring needs: snapped fills, their snapshots and big-bet rows (keeps memory small)."""
+    return r.get("kind") in ("snap", "whale") or (r.get("kind") == "fill" and r.get("snap", True)
                                          and not r.get("backfill"))
 
 
@@ -706,9 +742,10 @@ class Copycat:
             self.log_feed(new, now)
         except Exception as exc:  # noqa: BLE001
             log.warning("copycat feed log: %s", exc)
+        for o in orders(new):                    # a big order fills against many makers: judge whole orders
+            self.spot_whale(o, now)
         by: dict[str, list] = defaultdict(list)
         for t in new:
-            self.spot_whale(t, now)
             for k in ("taker_nickname", "maker_nickname"):
                 n = t.get(k)
                 if n and len(self.feed_names) < 500_000:
@@ -791,7 +828,7 @@ class Copycat:
                     self.write({"kind": "whale", "nick": None, "anon": True, "trade_id": t.get("trade_id"),
                                 "ticker": t.get("ticker"), "role": "taker", "side": side, "paid": round(paid, 4),
                                 "count": n, "usd": round(n * paid), "trade_time": t.get("create_date"),
-                                "lag_s": lag, "new": False})
+                                "lag_s": lag, "fills": t.get("fills"), "new": False})
             return
         for k in ("taker_nickname", "maker_nickname"):
             nick = t.get(k)
@@ -840,7 +877,7 @@ class Copycat:
                 lag = None
             self.write({"kind": "whale", "nick": nick, "trade_id": t.get("trade_id"), "ticker": t.get("ticker"),
                         "role": role, "side": side, "paid": round(paid, 4), "count": n, "usd": round(n * paid),
-                        "trade_time": t.get("create_date"), "lag_s": lag, "joined": p["joined"],
+                        "trade_time": t.get("create_date"), "lag_s": lag, "fills": t.get("fills"), "joined": p["joined"],
                         "age_d": p["age_d"], "markets": p["markets"], "their_pnl": p["pnl"], "new": p["new"]})
 
     def ingest(self, nick: str, trades: list[dict], now: float, quiet: bool = False, src: str = "poll") -> None:

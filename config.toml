@@ -260,6 +260,9 @@ stop_guard = false
 group = ["KXCOPPER15M", "KXPALLADIUM15M", "KXPLATINUM15M", "KXGOLD15M", "KXWTI15M"]
 group_cap = 2                    # Nov 10 ~1 AM ET: max 2 of the weaker metals/oil per window; silver (proven) is exempt so palladium's whole-window bids can't crowd it out
 min_fav = 0.71                   # join the favourite's best bid while it's 71-95c (candidate: 0.65)
+series_min_fav = { KXSILVER15M = 0.80, KXGOLD15M = 0.80 }   # Nov 11 1:55 AM ET (Alex: gold now, Claude's call on
+                                 # silver): no bids below 80c. Tape replay, live-calibrated: silver ~+0.7c at 80c vs
+                                 # ~-0.4c at 71c (analysis/fillq/RESULTS.md). BTC's rule E already floors at 80c.
 max_fav = 0.95
 pool_pct = 0.25                  # live: at most 25% of the bankroll at risk at once (the part the
                                  # Actions strategies' 75% cap leaves free; Alex, Nov 8)
