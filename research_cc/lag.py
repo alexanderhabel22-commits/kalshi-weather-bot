@@ -11,6 +11,7 @@ import requests
 SOCIAL = "https://api.elections.kalshi.com/v1/social/trades"
 V2 = "https://api.elections.kalshi.com/trade-api/v2/markets/trades"
 RUN_S = int(sys.argv[1]) if len(sys.argv) > 1 else 240
+PAGES = int(sys.argv[2]) if len(sys.argv) > 2 else 3
 s = requests.Session()
 s.headers["User-Agent"] = "research-probe/1.0"
 
@@ -27,6 +28,7 @@ def pct(v, q):
     return round(v[min(len(v) - 1, int(len(v) * q))], 1) if v else None
 
 
+ages, sizes = {}, {}
 soc, v2 = {}, {}            # trade_id -> (first_seen, create_ts, page, named)
 newest_prev = 0.0
 late_insert, unsorted_pages, polls, errs, v2_polls = 0, 0, 0, 0, 0
@@ -36,7 +38,7 @@ nxt_v2 = 0.0
 while time.time() < end:
     t0 = time.time()
     cursor, newest_now = None, newest_prev
-    for page in range(3):
+    for page in range(PAGES):
         try:
             a = time.time()
             r = s.get(SOCIAL, params={"limit": 100, **({"cursor": cursor} if cursor else {})}, timeout=10)
@@ -47,6 +49,8 @@ while time.time() < end:
             break
         tr = j.get("trades") or []
         cts = [ts(t.get("create_date")) for t in tr]
+        ages.setdefault(page, []).extend(time.time() - c for c in cts if c)
+        sizes.setdefault(page, []).append(len(tr))
         if any(x is not None and y is not None and x < y for x, y in zip(cts, cts[1:])):
             unsorted_pages += 1
         now = time.time()
@@ -87,7 +91,10 @@ rate = len(sl) / max(1, RUN_S - skip)
 out = {"social_trades": len(sl), "per_s": round(rate, 1), "polls": polls, "errors": errs,
        "social_lag": {q: pct(sl, q) for q in (0.1, 0.5, 0.75, 0.9, 0.99)},
        "named_lag": {q: pct(named, q) for q in (0.1, 0.5, 0.9)}, "named_n": len(named),
-       "first_seen_page": {p: pages.count(p) for p in (0, 1, 2)},
+       "first_seen_page": {p: pages.count(p) for p in range(PAGES)},
+       "page_age_p50": {p: pct(ages.get(p, []), 0.5) for p in range(PAGES)},
+       "page_age_max": {p: pct(ages.get(p, []), 0.99) for p in range(PAGES)},
+       "page_size": {p: pct(sizes.get(p, []), 0.5) for p in range(PAGES)},
        "late_inserted_gt5s": late_insert, "unsorted_pages": unsorted_pages,
        "call_ms": {q: pct(call_ms, q) for q in (0.5, 0.9)},
        "v2_trades": len(vl), "v2_lag": {q: pct(vl, q) for q in (0.1, 0.5, 0.9)},

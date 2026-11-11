@@ -24,4 +24,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python research_cc/lag.py 240
+      - run: python research_cc/lag.py 150 10
