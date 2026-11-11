@@ -1,5 +1,5 @@
 {
- "at": "2026-11-11T17:26:34+00:00",
+ "at": "2026-11-11T17:42:13+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.71,
+ "resting_cost": 19.73,
  "filled_cost": 0,
  "orders": {
   "KXEVERIFYLAW-26NOV": {
@@ -80,14 +80,14 @@
    "mid0": 0.93
   },
   "KXSOSRACE-MS-27-D": {
-   "id": "01a1cba5-89d0-75f8-85a8-e75dbdd0c827",
-   "cid": "lip-7527f2ce40fd4805",
+   "id": "01a1cbaf-1ef0-7ba0-97ea-c03c8e437bd5",
+   "cid": "lip-389b2ff7f9d44d57",
    "side": "yes",
-   "px": 0.04,
-   "n": 62,
+   "px": 0.05,
+   "n": 50,
    "filled": 0.0,
-   "at": 1794417986.5565937,
-   "mid0": 0.0645
+   "at": 1794418614.3151863,
+   "mid0": 0.069
   }
  },
  "positions": {},
@@ -309,9 +309,9 @@
     "share": 0.2
    },
    "KXSOSRACE-MS-27-D": {
-    "ahead": 5000.0,
+    "ahead": 4500.0,
     "others": 1000.0,
-    "share": 0.0766
+    "share": 0.0476
    },
    "KXSOSRACE-WV-28-D": {
     "ahead": 0,
@@ -660,6 +660,21 @@
    "side": "yes",
    "px": 0.04,
    "n": 62,
+   "est_day": 3.6088
+  },
+  {
+   "t": 1794418613,
+   "kind": "cancel",
+   "ticker": "KXSOSRACE-MS-27-D",
+   "why": "up to 5c (reference price)"
+  },
+  {
+   "t": 1794418614,
+   "kind": "place",
+   "ticker": "KXSOSRACE-MS-27-D",
+   "side": "yes",
+   "px": 0.05,
+   "n": 50,
    "est_day": 3.6088
   }
  ]
