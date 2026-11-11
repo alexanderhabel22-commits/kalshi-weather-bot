@@ -33,7 +33,7 @@ MM_CATS = ("Mentions", "Science and Technology", "Financials", "Politics", "Elec
            "Social")
 MM = {"markets": 20, "per_event": 2, "min_spread": 0.03, "min_vol24": 100.0, "mid_lo": 0.10,
       "mid_hi": 0.90, "cycle_s": 60, "select_s": 6 * 3600, "max_inv": 10, "event_pages": 400}
-RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20), "check_s": 600, "keep_days": 4,
+RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.00), "check_s": 600, "keep_days": 4,
        "pages": 5,                  # the open-RFQ list is paged 100 at a time (one poll hit 100)
        # what a small real test would allow: per combo at most this many contracts and this much loss
        "cap_ct": 25, "max_loss": 3.0}
@@ -389,10 +389,13 @@ class RfqPaper:
         out = {"polls": self.st["polls"], "errors": self.st["errors"], "last_error": self.st["last_error"],
                "rfqs_seen": len(rows), "cross_priced": len(cross), "settled": len(done), "by_margin": {}}
         for m in map(str, RFQ["margins"]):
-            won = [r for r in cross if r.get("traded") and any(p > r["quotes"][m] for p in r["traded"])]
-            pn = [r["pnl_c"][m] for r in done]
+            # rows from before a margin was added have no quote for it
+            cross_m = [r for r in cross if m in r["quotes"]]
+            done_m = [r for r in done if m in r["quotes"] and m in (r.get("pnl_c") or {})]
+            won = [r for r in cross_m if r.get("traded") and any(p > r["quotes"][m] for p in r["traded"])]
+            pn = [r["pnl_c"][m] for r in done_m]
             # what we would really have traded: only requests a taker filled above our quote
-            ww = [r for r in done if r.get("traded") and any(p > r["quotes"][m] for p in r["traded"])]
+            ww = [r for r in done_m if r.get("traded") and any(p > r["quotes"][m] for p in r["traded"])]
             wpn = [r["pnl_c"][m] for r in ww]
             dol = [capped_size(r, r["quotes"][m]) * r["pnl_c"][m] / 100 for r in ww]
             out["by_margin"][m] = {"would_win": len(won), "settled": len(pn),
@@ -402,6 +405,17 @@ class RfqPaper:
                                    "won_wins": sum(1 for x in wpn if x > 0),
                                    "capped_pnl_dollars": round(sum(dol), 2),
                                    "capped_worst_dollars": round(min(dol), 2) if dol else None}
+        # by fair price band (buyers overpay most at 10-40c, Nov 11 settled-parlay study)
+        out["by_band"] = {}
+        for lo, hi in ((0, .02), (.02, .05), (.05, .10), (.10, .20), (.20, .40), (.40, 1.01)):
+            band = [r for r in done if lo <= r["fair"] < hi]
+            row = {"settled": len(band)}
+            for m in map(str, RFQ["margins"]):
+                ww = [r for r in band if m in (r.get("pnl_c") or {}) and r.get("traded")
+                      and any(p > r["quotes"][m] for p in r["traded"])]
+                row[m] = {"won": len(ww), "pnl_c_per_ct": round(sum(r["pnl_c"][m] for r in ww) / len(ww), 2)
+                          if ww else None}
+            out["by_band"][f"{round(lo * 100)}-{round(min(hi, 1) * 100)}c"] = row
         out["sized"] = sum(1 for r in cross if (r.get("contracts") or 0) > 0 or r.get("target_cost"))
         out["caps"] = {"cap_ct": RFQ["cap_ct"], "max_loss": RFQ["max_loss"]}
         # compact rows for offline grading (settled first, newest last)
