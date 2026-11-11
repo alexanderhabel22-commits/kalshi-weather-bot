@@ -388,3 +388,17 @@ def test_big_bets_by_new_accounts_logged_and_scored(tmp_path):
     n = len(s.calls)
     cc.run_whales()                              # profile cached: no new lookups
     assert len(s.calls) == n
+
+
+
+def test_big_anonymous_bets_logged_without_lookups(tmp_path):
+    s = FakeSession()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    big = dict(trade("a1", side="yes", px="0.80"), count_fp="3000.00")     # $2,400 anonymous YES
+    small = dict(trade("a2", side="yes", px="0.80"), count_fp="1000.00")   # $800 anonymous: under the bar
+    cc.spot_whale(big, 1_000_000.0)
+    cc.spot_whale(small, 1_000_000.0)
+    w = [r for r in rows(tmp_path) if r.get("kind") == "whale"]
+    assert len(w) == 1 and w[0]["anon"] and w[0]["usd"] == 2400 and not s.calls and not cc.whale_queue
+    sm = copycat.whale_summary(w, {"KXTEST-1": "yes"}, 1_000_000.0)
+    assert sm["anon_count"] == 1 and sm["anon"]["settled"] == 1 and sm["count"] == 0
