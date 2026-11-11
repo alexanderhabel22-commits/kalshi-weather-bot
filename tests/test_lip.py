@@ -77,7 +77,9 @@ class Client:
 
 
 def mk(tmp_path, control=None, switch=None, client=None, http=None, now=NOW):
-    data = {CONTROL_URL: {"mode": "live", **(control or {})}, SWITCH_URL: switch or {"mode": "live"}}
+    # most tests pin the original "front" pricing (1c above the best bid); test_ref_* cover "ref"
+    data = {CONTROL_URL: {"mode": "live", "price_mode": "front", **(control or {})},
+            SWITCH_URL: switch or {"mode": "live"}}
     clock = [now]
     alerts = []
     bot = LipBot(tmp_path, client if client is not None else Client(), http or Http(),
@@ -97,12 +99,16 @@ def test_side_stats_scoring():
 
 def test_plan_front_of_cheap_side():
     from wxbot.kalshi import parse_orderbook
-    pl = plan_market(parse_orderbook(BOOK), PROG, dict(lip.DEFAULTS), 2.0)
+    pl = plan_market(parse_orderbook(BOOK), PROG, dict(lip.DEFAULTS, price_mode="front"), 2.0)
     assert pl["side"] == "yes" and pl["px"] == 0.03 and pl["n"] == 66
+    # default "ref": AT the reference price (first 200 = target/5 contracts from the top: 2c)
+    pr = plan_market(parse_orderbook(BOOK), PROG, dict(lip.DEFAULTS), 2.0)
+    assert pr["px"] == 0.02 and pr["n"] == 100 and pr["mid"] == 0.04
     assert pl["est_day"] > 0
     # too expensive: cheap side's best already at 8c
     b = {"yes": [(0.08, 1200)], "no": [(0.90, 1200)]}
-    assert plan_market(b, PROG, dict(lip.DEFAULTS), 2.0) is None
+    assert plan_market(b, PROG, dict(lip.DEFAULTS, price_mode="front"), 2.0) is None
+    assert plan_market({"yes": [(0.09, 1200)], "no": [(0.90, 1200)]}, PROG, dict(lip.DEFAULTS), 2.0) is None
     # neither side deep enough: no reward
     assert plan_market({"yes": [(0.02, 10)], "no": [(0.9, 10)]}, PROG, dict(lip.DEFAULTS), 2.0) is None
 
@@ -244,3 +250,60 @@ def test_strays_cancelled_and_credits_logged(tmp_path):
 
 def test_ledger_tags_rewards_bot():
     assert tag({"client_order_id": "lip-abc", "ticker": "KXA-1", "side": "yes"}, set(), set()) == "rewards bot"
+
+
+def test_ref_pricing_joins_reference_and_follows_it(tmp_path):
+    c = Client(cash=30.0)
+    http = Http()
+    bot, data, clock, _ = mk(tmp_path, client=c, http=http, control={"price_mode": "ref"})
+    bot.cycle()
+    o = bot.state["orders"]["KXA-1"]
+    assert o["px"] == 0.02 and o["n"] == 125            # $2.50 at 2c (float-safe)
+    # someone stacks 500 at 3c: reference moves to 3c, so we'd only get half credit at 2c
+    http.books["KXA-1"] = {"orderbook_fp": {"yes_dollars": [["0.0100", "900"], ["0.0200", str(300 + 125)],
+                                                            ["0.0300", "500"]],
+                                            "no_dollars": [["0.9300", "800"], ["0.9400", "400"]]}}
+    clock[0] += 300
+    bot.cycle()
+    assert bot.state["orders"]["KXA-1"]["px"] == 0.02   # waits ref_requote_s (10 min)
+    clock[0] += 600
+    bot.cycle()
+    assert bot.state["orders"]["KXA-1"]["px"] == 0.03
+    assert len(c.orders) == 1
+
+
+def test_ref_moves_down_when_overpaying_and_reselect(tmp_path):
+    c = Client(cash=30.0)
+    bot, data, clock, _ = mk(tmp_path, client=c, control={"price_mode": "front"})
+    bot.cycle()
+    assert bot.state["orders"]["KXA-1"]["px"] == 0.03
+    data[CONTROL_URL] = {"mode": "live", "price_mode": "ref", "reselect": "nov11-ref"}
+    clock[0] += 700
+    bot.cycle()
+    assert bot.state["orders"]["KXA-1"]["px"] == 0.02
+    assert bot.state["reselect_seen"] == "nov11-ref"
+    assert any(e["kind"] == "select" and e["t"] == round(clock[0]) for e in bot.state["events"])
+
+
+def test_move_guard_pulls_and_pauses(tmp_path):
+    c = Client(cash=30.0)
+    http = Http()
+    bot, data, clock, _ = mk(tmp_path, client=c, http=http, control={"price_mode": "ref"})
+    bot.cycle()
+    assert bot.state["orders"]["KXA-1"]["mid0"] == 0.04
+    # news: the favorite side jumps, the longshot mid drops 3c+
+    http.books["KXA-1"] = {"orderbook_fp": {"yes_dollars": [["0.0100", "1300"]],
+                                            "no_dollars": [["0.9900", "1200"]]}}
+    clock[0] += 300
+    bot.cycle()
+    assert not c.orders and "KXA-1" not in bot.state["orders"]
+    clock[0] += 3600
+    bot.cycle()
+    assert not c.orders                                  # still paused (6 h)
+
+
+def test_busy_market_skipped(tmp_path):
+    c = Client(cash=30.0)
+    bot, _, _, _ = mk(tmp_path, client=c, http=Http(markets={"KXA-1": dict(MKT, volume_24h_fp="5000")}))
+    bot.cycle()
+    assert not c.orders
