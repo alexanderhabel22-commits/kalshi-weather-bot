@@ -297,6 +297,7 @@ def test_dropped_accounts_still_logged_from_feed_without_snapshots(tmp_path):
     s.get = get
     cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
     cc.drop("mm", "failed its paper test")
+    cc.feed_seen = {"older"}                     # past the boot read
     cc.poll_feed(1_000_000.0)
     fills = [r for r in rows(tmp_path) if r.get("kind") == "fill"]
     assert {r["trade_id"] for r in fills} == {"d1", "d2"}
@@ -319,10 +320,40 @@ def test_feed_delay_stats_and_source(tmp_path):
     now = datetime(2026, 11, 10, 20, 0, 12, tzinfo=timezone.utc).timestamp()
     cc = copycat.Copycat(tmp_path, session=s, clock=lambda: now, req_gap=0)
     cc.watch = {"sharp": {"pnl": 5}}
-    cc.seen["sharp"] = set()
+    cc.feed_seen = {"older"}
     cc.poll_feed(now)
     assert cc.feed_lags == [12.0]
     f = [r for r in rows(tmp_path) if r.get("kind") == "fill"]
     assert f[0]["src"] == "feed"
     sc = cc.update_status(now)["scan"]
     assert sc["feed_lag_s"]["p50"] == 12.0 and sc["copy_lag_s"]["feed"]["n"] == 1
+
+
+def test_feed_reads_each_snapshot_once_back_to_last_seen(tmp_path):
+    s = FakeSession()
+    orig = s.get
+    snap = {"pages": []}
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            s.calls.append((url, dict(params)))
+            i = int(params.get("cursor") or 0)
+            pages = snap["pages"]
+            return Resp({"trades": pages[i], "cursor": str(i + 1) if i + 1 < len(pages) else ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.watch = {"sharp": {}}
+    snap["pages"] = [[trade("o1", taker="sharp")], [trade("o0")]]
+    cc.poll_feed(1_000_000.0)                    # boot: remembered, not logged (may be minutes old)
+    assert not [r for r in rows(tmp_path) if r.get("kind") == "fill"]
+    n = len(s.calls)
+    cc.poll_feed(1_000_000.0)                    # snapshot unchanged: one cheap read
+    assert len(s.calls) == n + 1
+    snap["pages"] = [[trade("n3", taker="sharp")], [trade("n2"), trade("n1", maker="sharp")],
+                     [trade("o1", taker="sharp")], [trade("o0")]]
+    cc.poll_feed(1_000_000.0)                    # refreshed: reads new pages back to o1, then stops
+    assert len(s.calls) == n + 1 + 3
+    ids = [r["trade_id"] for r in rows(tmp_path) if r.get("kind") == "fill"]
+    assert sorted(ids) == ["n1", "n3"]

@@ -60,8 +60,10 @@ MIN_SETTLED = 20
 SNAP_DELAYS = (0, 60, 300)  # +0 is the copy price; the rest show the move after (30 min dropped Nov 10 for capacity)
 SNAP_GAP_S = 300            # at most one snapshot series per (account, ticker) per 5 min
 MAX_PENDING = 4000          # cap on queued snapshots
-FEED_EVERY_S = 1.0          # global public trade feed: every account's new trades in one read
-FEED_PAGES = 3
+FEED_EVERY_S = 1.0          # check the global public trade feed's first page every second
+FEED_PAGES = 200            # Kalshi serves the feed as a snapshot refreshed every ~20-30 s (probe, Nov 11:
+FEED_GAP_S = 0.05           # ~250-400 trades/s, so a refresh holds ~50-100 new pages); on each refresh
+                            # read every new page, quickly, back to the last trade already seen
 REQ_GAP_S = 0.3             # spacing between API calls (~150/min; a 3/s test had 0 errors)
 WATCH_REFRESH_S = 12 * 3600
 STATUS_EVERY_S = 300
@@ -370,6 +372,7 @@ class Copycat:
         self.req_gap = req_gap
         self.watch: dict[str, dict] = {}         # nick -> {"pnl":..., "cats":...}
         self.seen: dict[str, set[str]] = {}       # nick -> trade ids already logged
+        self.based: set[str] = set()              # accounts whose trade history a first poll marked as backfill
         self.last_snap: dict[tuple[str, str], float] = {}
         self.snaps: list[tuple[float, int, str, str, str]] = []  # (due, delay, nick, ticker, trade_id)
         self.watch_next = 0.0
@@ -387,6 +390,7 @@ class Copycat:
         self.copied_once: set[str] = set()
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
         self.feed_seen: set[str] = set()         # trade ids already read from the global feed
+        self.feed_top: str | None = None         # newest trade id of the feed snapshot last read
         self.feed_next = 0.0
         self.scout_queue: dict[str, None] = {}    # names seen in the feed, not looked up yet
         self.feed_names: set[str] = set()         # every public trader seen in the feed
@@ -430,10 +434,11 @@ class Copycat:
                 return
 
     # -- api
-    def get(self, url: str, **params):
+    def get(self, url: str, _gap: float | None = None, **params):
         r = self.s.get(url, params=params, timeout=20)
-        if self.req_gap:
-            time.sleep(self.req_gap)
+        gap = self.req_gap if _gap is None or not self.req_gap else _gap
+        if gap:
+            time.sleep(gap)
         if r.status_code != 200:
             raise RuntimeError(f"{r.status_code} {url}")
         return r.json()
@@ -504,6 +509,7 @@ class Copycat:
         self.watch.pop(n, None)
         self.hot.discard(n)
         self.seen.pop(n, None)
+        self.based.discard(n)
         self.snaps = [x for x in self.snaps if x[2] != n]
         self.dropped[n] = {"at": round(self.clock()), "reason": reason, **extra}
         self.write({"kind": "drop", "nick": n, "reason": reason, **extra})
@@ -604,6 +610,7 @@ class Copycat:
     def poll(self, nick: str, now: float) -> None:
         trades = self.get(f"{SOCIAL}/trades", nickname=nick, limit=50).get("trades") or []
         self.ingest(nick, trades, now)
+        self.based.add(nick)
         if len(self.seen[nick]) > 5000:            # keep memory bounded
             self.seen[nick] = {t.get("trade_id") for t in trades}
 
@@ -631,22 +638,30 @@ class Copycat:
     def poll_feed(self, now: float) -> None:
         """One read of Kalshi's global public trade feed covers every watched account at once
         (newest first, 100 per page; reads up to FEED_PAGES pages back to the last trade seen).
-        Accounts are only fed from here after their own first poll, so backfill stays marked."""
-        new, cursor = [], None
-        for _ in range(FEED_PAGES):
+        Fresh trades count from the first sight; an account's own first poll marks its older history as backfill."""
+        new, cursor, boot = [], None, not self.feed_seen
+        for i in range(FEED_PAGES):
             params = {"limit": 100}
             if cursor:
                 params["cursor"] = cursor
-            j = self.get(f"{SOCIAL}/trades", **params)
+            j = self.get(f"{SOCIAL}/trades", _gap=FEED_GAP_S, **params)
             page = j.get("trades") or []
+            if i == 0:
+                top = page[0].get("trade_id") if page else None
+                if top == self.feed_top:
+                    return                          # snapshot not refreshed yet
+                self.feed_top = top
             fresh = [t for t in page if t.get("trade_id") and t["trade_id"] not in self.feed_seen]
             new += fresh
             cursor = j.get("cursor")
-            if not self.feed_seen or len(fresh) < len(page) or not cursor:
+            if boot or len(fresh) < len(page) or not cursor:
                 break
         self.feed_seen.update(t["trade_id"] for t in new)
-        if len(self.feed_seen) > 50_000:
+        if len(self.feed_seen) > 200_000:
             self.feed_seen = {t["trade_id"] for t in new}
+        if boot:
+            return                                  # first read after a start: may be minutes old
+        now = self.clock()
         by: dict[str, list] = defaultdict(list)
         for t in new:
             for k in ("taker_nickname", "maker_nickname"):
@@ -656,7 +671,8 @@ class Copycat:
                 if (n and n not in self.watch and n not in self.checked and n not in self.dropped
                         and len(self.scout_queue) < 2000):
                     self.scout_queue[n] = None        # looked up by the next scout
-                if n and ((n in self.watch and n in self.seen) or n in self.dropped):
+                if n and (n in self.watch or n in self.dropped):   # live from the first second, even
+                                                                    # before the account's own first poll
                     by[n].append(t)
         for t in new:                             # how late Kalshi publishes trades to the feed
             try:
@@ -671,7 +687,7 @@ class Copycat:
     def ingest(self, nick: str, trades: list[dict], now: float, quiet: bool = False, src: str = "poll") -> None:
         """Logs an account's new trades (newest first, as the API sends them). quiet = a dropped
         account: logged for research (e.g. how market makers trade), never snapshotted or copied."""
-        first = nick not in self.seen and not quiet
+        first = src == "poll" and nick not in self.based and not quiet   # its history = backfill
         seen = self.seen.setdefault(nick, set())
         for t in reversed(trades):
             tid = t.get("trade_id")
