@@ -46,3 +46,21 @@ Untouched: BTC time of day, window position, metals/alt crypto (stay paper).
 ## One small logging fix that would help (not a rule change)
 Log each fill's price (or the 1st/2nd contract price) in markets-*.csv so rule C and the true entry-price split can
 be judged. Today a double at 77c + 85c just shows as 81c.
+
+## Update Nov 11, 2026: 80-day candle replay (thread "Grow the 15-minute market edge")
+
+Full write-up in the project files (analysis/m15-edge/RESULTS.md). Kalshi 1-min candles, BTC 7,689 markets
+Aug 21 - Nov 10, buy at the bid on the first minute in the band; train Aug 21 - Oct 9, test Oct 10 - Nov 10.
+
+- Today's BTC rule fades: +1.6c (Aug), +2.1c (Sep), 0.0c (Oct), -0.6c (Nov); test -0.03c/ct.
+- Candidate A (min 81c) is NOT supported over 80 days (<81c +1.0c, >=81c +0.6c). Judge it on live data as planned,
+  but expect it to fail.
+- Candidate B (silver midnight-noon) weakly supported: +1.7c vs +1.1c (test +2.1c vs -0.3c).
+- Candidate C: 2nd contract at 80-87c is -0.6c in the test period; no other band holds. Consider "no 2nd contract".
+
+| # | Market | Candidate | Adopt if | Expected effect |
+|---|---|---|---|---|
+| E | BTC | Bid from 14:00 to 10:00 before close, favourite 80-95c, join the bid, 1 contract, no 2nd contract; skip the window if no such favourite by 10:00 left | on windows after Nov 11 2026 (>= 600 qualifying, ~3 weeks): replay at bid >= +1c AND beats today's rule on the same days AND pay-the-ask version >= 0; then real (paper or live) fills within 1c of the replay | replay train +3.2c, test +1.4c (pay ask +0.4c), ~31 windows/day; ~$20-50/mo at 4 ct |
+| E2 | BTC | E, only when the favourite is against the last hour's move (strike now vs strike 1 h ago) | judged inside E, same bar | test +2.1c on ~16/day |
+
+Freeze: E is a new way to trade BTC, so it starts on paper. Real money needs Alex's OK.
