@@ -469,3 +469,27 @@ def test_load_rows_folds_snaps_across_hours_and_skips_unscored(tmp_path):
     res = {}
     g = copycat.grade(rows, res)
     assert res == {"K": "yes"} and len(g["n"]["settle"]) == 1
+
+
+def test_memory_cap_keeps_newest_copies_per_account(tmp_path, monkeypatch):
+    import json as js
+    monkeypatch.setattr(copycat, "KEEP_COPIES", 3)
+    copycat._ROW_CACHE.clear()
+    for h in ("01", "02"):
+        rows = [{"kind": "fill", "v": 2, "nick": "n", "trade_id": f"{h}-{i}", "ticker": "K", "side": "yes",
+                 "yes_price": 0.5, "ts": 1.0} for i in range(2)]
+        rows.append({"kind": "whale", "ticker": "K", "ts": 1.0})
+        (tmp_path / f"copycat-2026-11-11-{h}.jsonl").write_text("\n".join(js.dumps(r) for r in rows))
+    now = 10 * 86400.0
+    got = copycat.load_rows(tmp_path, cache_done_hours=True, now=now)
+    assert [r["trade_id"] for r in got if r["kind"] == "fill"] == ["01-1", "02-0", "02-1"]
+    assert not [r for r in got if r["kind"] == "whale"]
+    assert len(copycat.load_rows(tmp_path, cache_done_hours=True, now=now)) == 3
+    copycat._ROW_CACHE.clear()
+
+
+def test_restart_does_not_relog_known_accounts_history(tmp_path):
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: 1_000_000.0, req_gap=0)
+    cc.logged_before = {"alice"}
+    cc.ingest("alice", [trade("h1", taker="alice")], 1_000_000.0)
+    assert not [r for r in rows(tmp_path) if r.get("kind") == "fill"] and "h1" in cc.seen["alice"]

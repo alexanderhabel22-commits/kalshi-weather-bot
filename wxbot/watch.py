@@ -48,6 +48,7 @@ DEFAULTS = {
     "max_opus_per_day": 6,
     "realert_hours": 6,
     "status_stale_min": 35,        # m15 uploads every 15 min
+    "copycat_stale_min": 20,       # Copycat writes status every 5 min (it crash-looped unseen for 9 h, Nov 11)
     "scan_gap_min": 25,            # cron-job.org dispatches a scan every 5 min
     "bankroll_stale_min": 40,
     "fail_runs_1h": 2,
@@ -219,7 +220,11 @@ def svc_mem_pct(text: str | None) -> float | None:
         return None
 
 
-def gather(gh: GitHub, now: float, runner=subprocess.run, meminfo: str = "/proc/meminfo") -> dict:
+COPYCAT_STATUS = Path(os.environ.get("COPYCAT_DIR") or "/var/lib/kalshi-copycat") / "status.json"
+
+
+def gather(gh: GitHub, now: float, runner=subprocess.run, meminfo: str = "/proc/meminfo",
+           cc_status: Path | None = None) -> dict:
     f: dict = {"now": now, "errors": []}
 
     def grab(key, fn):
@@ -242,6 +247,11 @@ def gather(gh: GitHub, now: float, runner=subprocess.run, meminfo: str = "/proc/
     f["svc_mem"] = _sh(["systemctl", "show", "-p", "MemoryCurrent", "-p", "MemoryMax", "kalshi-m15"], runner)
     f["journal"] = _sh(["journalctl", "-u", "kalshi-m15", "--since", "-20 min", "-p", "warning",
                         "--no-pager", "-o", "cat", "-n", "40"], runner)
+    f["cc_service"] = _sh(["systemctl", "is-active", "kalshi-copycat"], runner)
+    try:                              # same server: the file's age shows whether Copycat is working
+        f["cc_age_min"] = round((now - (cc_status or COPYCAT_STATUS).stat().st_mtime) / 60, 1)
+    except OSError:
+        f["cc_age_min"] = None
     return f
 
 
@@ -270,6 +280,13 @@ def rules(f: dict, s: dict, m15cfg: dict | None = None, over_seen: dict | None =
 
     st = f.get("status") or {}
     ctl = ((f.get("control") or {}).get("mode") or "").lower()
+    cc_svc = str(f.get("cc_service") or "")
+    if cc_svc and cc_svc not in ("active", "inactive") and not cc_svc.startswith("unavailable"):
+        flag("COPYCAT_DOWN", "critical", f"kalshi-copycat service is '{cc_svc}'")
+    cc_age = f.get("cc_age_min")
+    if cc_svc == "active" and cc_age is not None and cc_age > s["copycat_stale_min"]:
+        flag("COPYCAT_STALE", "critical", f"Copycat status not updated for {int(cc_age)} min "
+             "(running but stuck or restarting; it writes every 5 min)")
     svc = str(f.get("service") or "")
     if svc and svc != "active" and not svc.startswith("unavailable"):
         flag("M15_SERVICE_DOWN", "critical", f"kalshi-m15 service is '{f['service']}'")
@@ -373,6 +390,8 @@ def digest(f: dict, flags: list[dict]) -> str:
         for r in live[-8:]:
             lines.append(f"  {r.get('ticker')} {r.get('filled')} {r.get('cost')} {r.get('pnl')}")
     lines.append(f"SERVER: RAM {f.get('mem')}% used, 15-min bot at {svc_mem_pct(f.get('svc_mem'))}% of its memory cap")
+    lines.append(f"COPYCAT (separate paper/copy service): {f.get('cc_service')}, status file updated "
+                 f"{f.get('cc_age_min')} min ago (normal: under 6)")
     tr = f.get("trader") or {}
     br = f.get("bankroll") or {}
     lines.append(f"MAIN: mode={tr.get('mode')} halted={bool(tr.get('halted'))} bankroll=${br.get('total')} "
