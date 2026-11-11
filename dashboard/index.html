@@ -384,10 +384,10 @@ async function loadCopycat(){
 const TEST_START = Date.parse("2026-11-11T13:30:00Z");
 async function loadTests(){
   const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${f}?t=${Date.now()}`, {cache:"no-store"}); return r.ok ? await r.json() : null; } catch(e){ return null; } };
-  const [lip, mm, rfq] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json")]);
+  const [lip, mm, rfq, field] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json")]);
   let late = [];
   try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
-  S.tx = {lip, mm, rfq, late};
+  S.tx = {lip, mm, rfq, late, field};
 }
 // Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
 function lateCard(rows){
@@ -438,6 +438,20 @@ function txPage(){
     h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">Paper 1-contract bids 1¢ inside the spread in ${Object.keys(M.markets || {}).length} markets (Mentions first). A fill made money if the price 30 min later is above what we paid, minus the maker fee (shown). Needs 100+ fills per category before it means anything. ${esc(ago(M.at))}.</div>`
       + (cats.length ? cats.map(([k, s]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(k)}</div><div class="s">${s.fills} fills · ${s.fills_per_market_hour ?? "—"}/market-hour · fee ${c1(s.maker_fee_c)}</div></div><div class="r"><span class="${cls(num(s.markout_30m_c) - num(s.maker_fee_c))}">${c1(s.markout_30m_c)}</span><small>30 min · 5 min ${c1(s.markout_5m_c)}</small></div></div>`).join("")
         : `<div class="mute" style="font-size:12px">No paper fills scored yet.</div>`);
+    const FL = {under20: "few small traders (<20%)", "20to50": "mixed (20-50%)", "50plus": "mostly small traders (50%+)", unknown: "not enough trades yet"};
+    const fl = Object.entries(M.by_flow || {});
+    if (fl.length) h += `<div class="mute" style="font-size:11px;line-height:1.5;margin:10px 0 6px">Same fills split by how much of the market's trading comes from small orders ($25 or less) and which side we bought. History says the NO side in markets with mostly small traders should do best. Right column = result at settlement.</div>`
+      + fl.map(([k, v]) => { const [b, side] = k.split("|"); return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(String(side).toUpperCase())} · ${esc(FL[b] || b)}</div><div class="s">${v.fills} fills · 30 min ${c1(v.markout_30m_c)}</div></div><div class="r"><span class="${cls(num(v.settled_c))}">${v.settled_c == null ? "—" : c1(v.settled_c)}</span><small>${v.settled} settled</small></div></div>`; }).join("");
+  }
+  h += `</div>`;
+  const F = T.field;
+  h += `<h2>Selling the field <span class="sub">PAPER · many-candidate events</span></h2><div class="card">`;
+  if (!F) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
+  else {
+    const A = F.all || {};
+    h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">In events with many candidates and one winner (top artist, person of the year, first song), small traders pile into YES. We log a paper NO on every candidate priced 10-50¢, bought at the asking price, and score it at settlement after the fee. ${F.open || 0} open in ${F.open_events || 0} events. Needs 20+ settled events before it means anything. ${esc(ago(F.at))}.</div>`
+      + (A.n ? [["All events", A]].concat(Object.entries(F.by_category || {})).map(([k, v]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(k)}</div><div class="s">${v.n} candidates · ${v.events} events (${v.events_positive} positive) · NO won ${v.no_won}</div></div><div class="r"><span class="${cls(num(v.taker_c_event_avg))}">${c1(v.taker_c_event_avg)}</span><small>per contract, by event</small></div></div>`).join("")
+        : `<div class="mute" style="font-size:12px">Nothing settled yet.</div>`);
   }
   h += `</div>`;
   const R = T.rfq;

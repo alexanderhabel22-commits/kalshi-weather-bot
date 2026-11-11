@@ -18,7 +18,14 @@ carries the share of the market's taker contracts that came from small orders (<
 scored again at settlement, split by that share and by the side we bought (history says the edge
 sits in casual-heavy markets on the NO side: /mnt/project-files/analysis/casual-flow/RESULTS.md).
 
-Status files go to the m15-data branch: m15/paper-mm.json and m15/paper-rfq.json (hourly).
+3. FieldPaper ("sell the field", Nov 11): in events with many candidates and one winner (Spotify
+   Wrapped top artist, TIME Person of the Year, Super Bowl first song, Netflix rankings ...) small
+   buyers pile into YES on the candidates. For every such open event we log a paper NO on each
+   candidate priced 10-50c, bought at the NO ask (taker, the pessimistic way) and also marked at the
+   mid, plus the sum of all YES asks at entry. Scored at settlement after the taker fee.
+
+Status files go to the m15-data branch: m15/paper-mm.json, m15/paper-rfq.json and m15/paper-field.json
+(hourly).
 """
 from __future__ import annotations
 
@@ -39,6 +46,9 @@ MM_CATS = ("Mentions", "Science and Technology", "Financials", "Politics", "Elec
 MM = {"markets": 20, "per_event": 2, "min_spread": 0.03, "min_vol24": 100.0, "mid_lo": 0.10,
       "mid_hi": 0.90, "cycle_s": 60, "select_s": 6 * 3600, "max_inv": 10, "event_pages": 400,
       "small_usd": 25.0, "flow_min_ct": 50.0, "settle_checks": 40, "held_max": 2000}
+FIELD_CATS = ("Entertainment", "Mentions", "Social", "Companies", "Science and Technology", "World", "Health")
+FIELD = {"min_markets": 5, "yes_lo": 0.10, "yes_hi": 0.50, "min_vol24": 500.0, "per_event": 15,
+         "max_open": 400, "settle_checks": 60, "keep_done": 3000}
 RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.00), "check_s": 600, "keep_days": 4,
        "pages": 5,                  # the open-RFQ list is paged 100 at a time (one poll hit 100)
        # what a small real test would allow: per combo at most this many contracts and this much loss
@@ -99,9 +109,108 @@ class Lab:
             pass
 
 
-class MakerPaper:
+def taker_fee(p: float) -> float:
+    """Kalshi's taker fee per contract (0.07 * p * (1-p)), before any rounding."""
+    return 0.07 * p * (1 - p)
+
+
+class FieldPaper:
+    """Paper "sell the field": NO on every 10-50c candidate of a many-candidate, one-winner event."""
+
     def __init__(self, lab: Lab):
         self.lab = lab
+        try:
+            self.st = json.loads((lab.out / "field_state.json").read_text())
+        except (OSError, ValueError):
+            self.st = {}
+        for k, v in (("open", []), ("done", []), ("events", {})):
+            self.st.setdefault(k, v)
+
+    def save(self):
+        (self.lab.out / "field_state.json").write_text(json.dumps(self.st))
+
+    def consider(self, e: dict, now: float) -> None:
+        """Called for every open event the maker's scan pages through. Enters each event once."""
+        ev = e.get("event_ticker") or ""
+        if not ev or ev in self.st["events"] or (e.get("category") or "") not in FIELD_CATS \
+                or not e.get("mutually_exclusive") or len(self.st["open"]) >= FIELD["max_open"]:
+            return
+        quoted = []
+        for m in e.get("markets") or []:
+            b, a = _f(m.get("yes_bid_dollars")), _f(m.get("yes_ask_dollars"))
+            if m.get("status") not in ("active", "open") or a is None or not a:
+                continue
+            quoted.append((m.get("ticker") or "", b or 0.0, a, _f(m.get("volume_24h_fp"), 0.0) or 0.0))
+        if len(quoted) < FIELD["min_markets"] or sum(q[3] for q in quoted) < FIELD["min_vol24"]:
+            return
+        ask_sum, bid_sum = round(sum(q[2] for q in quoted), 3), round(sum(q[1] for q in quoted), 3)
+        picks = [q for q in quoted if q[1] > 0 and FIELD["yes_lo"] <= (q[1] + q[2]) / 2 <= FIELD["yes_hi"]]
+        picks = sorted(picks, key=lambda q: -q[3])[:FIELD["per_event"]]
+        if not picks:
+            return
+        self.st["events"][ev] = {"t": round(now), "cat": e.get("category"), "markets": len(quoted),
+                                 "ask_sum": ask_sum, "bid_sum": bid_sum, "picks": len(picks)}
+        for tk, b, a, v in picks:
+            row = {"tk": tk, "event": ev, "cat": e.get("category"), "t": round(now),
+                   "no_take": round(1 - b, 4),               # NO bought at the NO ask (= 1 - YES bid)
+                   "no_mid": round(1 - (a + b) / 2, 4), "ask_sum": ask_sum, "n": len(quoted)}
+            self.st["open"].append(row)
+            self.lab.write("field", dict(row, kind="enter"))
+
+    def settle(self) -> None:
+        waiting, looked, checked = [], [], 0
+        for r in self.st["open"]:
+            if checked >= FIELD["settle_checks"]:
+                waiting.append(r)                     # not looked at this round: first in line next time
+                continue
+            checked += 1
+            try:
+                m = self.lab.get(f"/markets/{r['tk']}").get("market") or {}
+                res = str(m.get("result") or "").lower()
+            except Exception as exc:  # noqa: BLE001
+                log.info("paper field %s: %s", r["tk"], exc)
+                res = ""
+            if res not in ("yes", "no"):
+                looked.append(r)
+                continue
+            won = 1.0 if res == "no" else 0.0
+            r["result"] = res
+            r["pnl_take"] = round((won - r["no_take"] - taker_fee(r["no_take"])) * 100, 2)
+            r["pnl_mid"] = round((won - r["no_mid"]) * 100, 2)
+            self.st["done"].append(r)
+            self.lab.write("field", dict(r, kind="settled"))
+        self.st["open"] = waiting + looked
+        self.st["done"] = self.st["done"][-FIELD["keep_done"]:]
+        live = {r["event"] for r in self.st["open"]} | {r["event"] for r in self.st["done"]}
+        self.st["events"] = {k: v for k, v in self.st["events"].items() if k in live}
+
+    def status(self) -> dict:
+        def summ(rows):
+            if not rows:
+                return {"n": 0}
+            by_ev: dict = {}
+            for r in rows:
+                by_ev.setdefault(r["event"], []).append(r["pnl_take"])
+            ev_avg = [sum(v) / len(v) for v in by_ev.values()]
+            return {"n": len(rows), "events": len(by_ev),
+                    "taker_c": round(sum(r["pnl_take"] for r in rows) / len(rows), 2),
+                    "mid_c": round(sum(r["pnl_mid"] for r in rows) / len(rows), 2),
+                    "taker_c_event_avg": round(sum(ev_avg) / len(ev_avg), 2),
+                    "events_positive": sum(1 for x in ev_avg if x > 0),
+                    "no_won": sum(1 for r in rows if r["result"] == "no")}
+        done = self.st["done"]
+        cats = sorted({r["cat"] for r in done})
+        return {"what": "paper NO on every 10-50c candidate in many-candidate, one-winner events",
+                "open": len(self.st["open"]), "open_events": len({r["event"] for r in self.st["open"]}),
+                "all": summ(done), "by_category": {c: summ([r for r in done if r["cat"] == c]) for c in cats},
+                "events": dict(sorted(self.st["events"].items(), key=lambda kv: -kv[1]["t"])[:60]),
+                "recent": done[-40:]}
+
+
+class MakerPaper:
+    def __init__(self, lab: Lab, field: FieldPaper | None = None):
+        self.lab = lab
+        self.field = field
         p = lab.out / "mm_state.json"
         try:
             self.st = json.loads(p.read_text())
@@ -129,6 +238,11 @@ class MakerPaper:
                 break
             for e in js.get("events") or []:
                 cat = e.get("category") or ""
+                if self.field is not None:
+                    try:
+                        self.field.consider(e, now)
+                    except Exception as exc:  # noqa: BLE001
+                        log.info("paper field consider: %s", exc)
                 if cat not in MM_CATS:
                     continue
                 for m in e.get("markets") or []:
@@ -310,6 +424,12 @@ class MakerPaper:
                 self.settle()
             except Exception as exc:  # noqa: BLE001
                 log.info("paper mm settle: %s", exc)
+            if self.field is not None:
+                try:
+                    self.field.settle()
+                    self.field.save()
+                except Exception as exc:  # noqa: BLE001
+                    log.info("paper field settle: %s", exc)
         mids = {}
         dt = now - self.st["last"] if self.st["last"] else 0
         self.st["last"] = now
@@ -542,7 +662,8 @@ def main() -> int:
     token = os.environ.get("GITHUB_TOKEN", "").strip()
     client = client_from_env(http)
     lab = Lab(out, http)
-    mm = MakerPaper(lab)
+    field = FieldPaper(lab)
+    mm = MakerPaper(lab, field)
     rfq = RfqPaper(lab, ReadOnly(client)) if client is not None else None
     up = github_uploader(Http("kalshi-paperlab/1"), token) if token else None
     last_mm = last_up = 0.0
@@ -566,6 +687,7 @@ def main() -> int:
             at = datetime.now(timezone.utc).isoformat(timespec="seconds")
             try:
                 up({"paper-mm.json": json.dumps(dict(mm.status(), at=at), indent=1),
+                    "paper-field.json": json.dumps(dict(field.status(), at=at), indent=1),
                     "paper-rfq.json": json.dumps(dict(rfq.status() if rfq else {"error": "no key"}, at=at),
                                                  indent=1)})
             except Exception as exc:  # noqa: BLE001
