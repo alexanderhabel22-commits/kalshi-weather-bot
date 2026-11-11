@@ -1,5 +1,5 @@
 {
- "at": "2026-11-11T07:47:00+00:00",
+ "at": "2026-11-11T07:55:03+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -9,16 +9,16 @@
  "fv_skip_on": {},
  "halted": null,
  "last_reject": {
-  "at": 1794382800,
+  "at": 1794383703,
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXGOLD15M-26NOV110245-45"
+  "ticker": "KXGOLD15M-26NOV110300-00"
  },
- "live_exposure": 0.0,
+ "live_exposure": 1.6,
  "live_now": {
   "KXBTC15M-26NOV110300-00": {
    "bid_ask": [
-    0.58,
-    0.59
+    0.959,
+    0.96
    ],
    "mode": "live",
    "order": false,
@@ -26,17 +26,17 @@
   },
   "KXGOLD15M-26NOV110300-00": {
    "bid_ask": [
-    0.4,
-    0.41
+    0.085,
+    0.088
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "order rejected: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}"
   },
   "KXSILVER15M-26NOV110300-00": {
    "bid_ask": [
-    0.49,
-    0.5
+    0.57,
+    0.58
    ],
    "mode": "live",
    "order": false,
@@ -1072,43 +1072,43 @@
     0.46
    ],
    [
-    1794380400,
+    1794380400.0,
     0.42
    ],
    [
-    1794380400,
+    1794380400.0,
     0.38
    ],
    [
-    1794381300,
+    1794381300.0,
     0.38
    ],
    [
-    1794381300,
+    1794381300.0,
     0.07
    ],
    [
-    1794381300,
+    1794381300.0,
     0.1938
    ],
    [
-    1794382200,
+    1794382200.0,
     0.07
    ],
    [
-    1794382200,
+    1794382200.0,
     0.05
    ],
    [
-    1794383100,
+    1794383100.0,
     0.44
    ],
    [
-    1794383100,
+    1794383100.0,
     0.05
    ],
    [
-    1794383100,
+    1794383100.0,
     0.3
    ]
   ],
@@ -3976,7 +3976,7 @@
  "shards": {
   "0": 13.4635,
   "1": 0.0,
-  "2": 18.9653,
+  "2": 22.3653,
   "3": 0.0
  },
  "spot_ok": true,
