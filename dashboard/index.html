@@ -415,7 +415,9 @@ function ccPage(){
     speed:["Fastest seen", a => -(a.lag_s ?? 999)], name:["Name", a => 0]};
   const sk = SORTS[S.ccSort] ? S.ccSort : "grade", q = (S.ccQ || "").trim().toLowerCase();
   const OUT = ["benched", "slump", "fails"], drops = c.dropped || [];
-  const views = {active:["Active", a => !OUT.includes(a.verdict)], benched:["Benched or paused", a => OUT.includes(a.verdict)], dropped:["Dropped", () => false]};
+  const views = {active:["Active", a => !OUT.includes(a.verdict)], benched:["Benched or paused", a => OUT.includes(a.verdict)],
+    solo:["Solo traders (takers)", a => !OUT.includes(a.verdict) && (a.fills || 0) >= 3 && ((a.detail || {}).maker_pct ?? 100) <= 30],
+    dropped:["Dropped", () => false]};
   const vw = views[S.ccView] ? S.ccView : "active";
   const vcount = k => k === "dropped" ? (c.scan || {}).dropped ?? drops.length : acc.filter(a => (a.fills || a.watched) && views[k][1](a)).length;
   const shown = acc.filter(a => a.fills || a.watched).filter(views[vw][1]).filter(a => !q || a.nick.toLowerCase().includes(q) || ((a.detail || {}).series || []).some(x => x.s.toLowerCase().includes(q)) || (a.cats || []).some(x => x.toLowerCase().includes(q)))
@@ -428,6 +430,17 @@ function ccPage(){
   h += `<h2>Report card <span class="sub">${vw === "dropped" ? dq.length : shown.length} accounts${vw === "dropped" ? "" : " · tap one for its full card"}</span></h2><div class="card">` + ctl + (vw === "dropped" ? dropList : shown.length ? top.map(row).join("")
     + (rest.length ? `<details id="ccMore"${S.ccOpen ? " open" : ""} style="margin-top:6px"><summary data-more="Show all ${shown.length} accounts" style="cursor:pointer;font-size:12px;color:#22d3ee;padding:6px 0">${S.ccOpen ? "▲ Collapse to top 5" : `Show all ${shown.length} accounts`}</summary>${rest.map(row).join("")}<button data-cccollapse style="margin-top:8px;width:100%;background:rgba(148,163,200,.16);color:#22d3ee;border:0;border-radius:8px;padding:8px;font-size:12px;cursor:pointer">▲ Collapse to top 5</button></details>` : "")
     : `<div class="mute">${vw === "benched" ? "None benched or paused." : "No accounts yet."}</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">"Worst case" = the low end of what this account's copies are likely worth per contract, given how few we've seen so far (95% confidence). The score is built on it, so a lucky streak can't earn a high grade.</div></div>`;
+  const WH = c.whales;
+  if (WH){
+    const st = x => x && x.settled ? `${x.settled} settled · ${x.won} won · <span class="${cls(x.avg_c)}">${x.avg_c > 0 ? "+" : ""}${x.avg_c}¢</span> per contract` : "none settled yet";
+    const wl = (WH.recent_new || []).slice(0, S.ccWh ? 40 : 6);
+    h += `<h2>Big bets by new accounts <span class="sub">paper only · $${WH.min_usd}+ single bets</span></h2><div class="card">
+      <div class="s" style="white-space:normal;font-size:12px;line-height:1.6">Accounts that joined in the last ${WH.new_days} days (or have traded 10 markets or fewer) placing one bet of $${WH.min_usd}+. Possible inside information. We log each bet and score it as if we had copied it at their price, after the fee. Nothing is copied with real money.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;font-size:12px"><div><b>New accounts:</b> ${WH.new_count} bets · ${st(WH.new)}</div><div class="mute">Older accounts (for comparison): ${WH.count - WH.new_count} bets · ${st(WH.old)}</div></div>`
+      + (wl.length ? wl.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,200,.12);font-size:12px"><div style="min-width:0"><div style="word-break:break-all"><b>${esc(x.nick)}</b> <span class="mute">${x.joined ? "joined " + esc(String(x.joined).slice(0, 10)) : ""}${x.markets != null ? " · " + x.markets + " markets" : ""}</span></div><div class="mute" style="word-break:break-all">${esc(x.ticker)} · ${esc(String(x.side || "").toUpperCase())} at ${Math.round(100 * x.paid)}¢ · ${esc(String(x.et || "").slice(5, 16))}</div></div><div style="text-align:right;white-space:nowrap"><div>$${Number(x.usd).toLocaleString()}</div><div class="${x.result_c == null ? "mute" : cls(x.result_c)}">${x.result_c == null ? "open" : (x.result_c > 0 ? "+" : "") + x.result_c + "¢"}</div></div></div>`).join("")
+        + ((WH.recent_new || []).length > 6 ? `<button data-ccwh style="margin-top:8px;width:100%;background:rgba(148,163,200,.16);color:#22d3ee;border:0;border-radius:8px;padding:8px;font-size:12px;cursor:pointer">${S.ccWh ? "▲ Show fewer" : "Show all " + WH.recent_new.length}</button>` : "")
+        : `<div class="mute">None spotted yet.</div>`) + `</div>`;
+  }
   const rc = c.recent || [];
   h += `<h2>Latest trades seen <span class="sub">paper record</span></h2><div class="card">` + (rc.length ? rc.slice(0, 25).map(r =>
     `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`) + `</div>`;
@@ -1512,6 +1525,7 @@ document.addEventListener("change", e => { if (e.target.id === "ccSort"){ S.ccSo
   if (e.target.id === "ccView"){ S.ccView = e.target.value; renderOverview(); } });
 document.addEventListener("input", e => { if (e.target.id === "ccQ"){ S.ccQ = e.target.value; clearTimeout(S.ccQt); S.ccQt = setTimeout(() => { renderOverview(); const el = document.getElementById("ccQ"); if (el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 400); } });
 document.addEventListener("toggle", e => { if (e.target.id === "ccMore" && S.ccOpen !== e.target.open){ S.ccOpen = e.target.open; const sm = e.target.querySelector("summary"); if (sm) sm.textContent = S.ccOpen ? "▲ Collapse to top 5" : sm.dataset.more || "Show all accounts"; } }, true);
+document.addEventListener("click", e => { if (e.target.closest("[data-ccwh]")){ S.ccWh = !S.ccWh; renderOverview(); } });
 document.addEventListener("click", e => { if (!e.target.closest("[data-cccollapse]")) return; const d = document.getElementById("ccMore"); if (!d) return;
   d.open = false; S.ccOpen = false; const card = d.closest(".card"); if (card) card.scrollIntoView({block: "start", behavior: "smooth"}); });
 document.addEventListener("click", e => { if (e.target.closest("a") || e.target.closest(".chart")) return; const it = e.target.closest(".item.tap"); if (!it) return;

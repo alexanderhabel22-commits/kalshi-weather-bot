@@ -357,3 +357,34 @@ def test_feed_reads_each_snapshot_once_back_to_last_seen(tmp_path):
     assert len(s.calls) == n + 1 + 3
     ids = [r["trade_id"] for r in rows(tmp_path) if r.get("kind") == "fill"]
     assert sorted(ids) == ["n1", "n3"]
+
+
+def test_big_bets_by_new_accounts_logged_and_scored(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/profile/metrics") and params.get("nickname") in ("newbie", "vet"):
+            return Resp({"metrics": {"pnl": 0, "num_markets_traded": 2 if params["nickname"] == "newbie" else 400}})
+        if url.endswith("/profile") and params.get("nickname") in ("newbie", "vet"):
+            return Resp({"social_profile": {"joined_at": "2024-01-01T00:00:00Z"}})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_780_000_000.0, req_gap=0)
+    big = dict(trade("w1", taker="newbie", side="no", px="0.30"), count_fp="1000.00")   # $700 on NO at 70c
+    vet = dict(trade("w2", taker="vet", px="0.60"), count_fp="1000.00", ticker="KXV-1")  # $600 on YES
+    small = trade("w3", taker="newbie", px="0.50")                                     # $5: ignored
+    for t in (big, vet, small):
+        cc.spot_whale(t, 1_780_000_000.0)
+    cc.run_whales()
+    w = {r["nick"]: r for r in rows(tmp_path) if r.get("kind") == "whale"}
+    assert set(w) == {"newbie", "vet"} and w["newbie"]["new"] and not w["vet"]["new"]
+    assert w["newbie"]["side"] == "no" and w["newbie"]["usd"] == 700
+    sm = copycat.whale_summary(list(w.values()), {"KXTEST-1": "no", "KXV-1": "no"}, 1_780_000_000.0)
+    assert sm["new_count"] == 1 and sm["new"]["settled"] == 1 and sm["new"]["avg_c"] > 25   # 100 - 70 - fee
+    assert sm["old"]["avg_c"] < -55
+    cc.spot_whale(big, 1_780_000_001.0)
+    n = len(s.calls)
+    cc.run_whales()                              # profile cached: no new lookups
+    assert len(s.calls) == n

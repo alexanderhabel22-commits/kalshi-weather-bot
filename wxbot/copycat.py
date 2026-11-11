@@ -78,6 +78,10 @@ DROP_DAYS = 30              # dropped accounts (failed the 150-copy test, or lon
 RECHECK_S = 7 * 86400       # re-check each watched account's Kalshi profit weekly ...
 RECHECK_PER_SCOUT = 15      # ... a few per scout run, oldest check first
 LOSER_STRIKES = 2           # dropped after 2 weekly checks in a row losing money over the last 30 days
+WHALE_USD = 500             # "big bet" scanner (Alex, Nov 11 12:23 AM ET): any named trade of $500+
+WHALE_NEW_DAYS = 30         # flagged NEW if the account joined within 30 days or has traded <= 10 markets;
+WHALE_FEW_MARKETS = 10      # paper only: we log the bet and score how it settles, never copy it
+WHALE_CHECKS = 4            # profile lookups per loop (cached per account)
 CATEGORIES = ("Sports", "Politics", "Crypto", "Economics", "Climate and Weather", "Financials",
               "Entertainment", "Mentions", "Combos", "Commodities", "Elections", "Companies")
 SEED = ("BWmarkets", "thebigdon", "BitcoinTradingChallenge", "szg.szg", "brief.theme",
@@ -117,6 +121,30 @@ def taker_fee_c(p: float, n: int = 1) -> float:
 
 def side_value(side: str, yes_px: float) -> float:
     return yes_px if side == "yes" else 1 - yes_px
+
+
+def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict:
+    """Paper record of big single bets: per contract, after the taker fee, as if copied at their price."""
+    out = {"new": [], "old": []}
+    recent = []
+    for r in rows:
+        if r.get("kind") != "whale":
+            continue
+        res = results.get(r.get("ticker") or "")
+        c = None
+        if res in ("yes", "no") and r.get("paid") is not None:
+            c = round(100 * ((1.0 if r["side"] == res else 0.0) - r["paid"]) - taker_fee_c(r["paid"]), 1)
+            out["new" if r.get("new") else "old"].append(c)
+        recent.append({**{k: r.get(k) for k in ("et", "nick", "ticker", "side", "paid", "count", "usd", "joined",
+                                                    "markets", "new", "role", "lag_s")}, "result_c": c})
+
+    def stats(v):
+        m, lo = mean_low(v)
+        return {"settled": len(v), "won": sum(1 for x in v if x > 0), "avg_c": m, "low_c": lo}
+    nw = [x for x in recent if x["new"]]
+    return {"min_usd": WHALE_USD, "new_days": WHALE_NEW_DAYS, "count": len(recent), "new_count": len(nw),
+            "new": stats(out["new"]), "old": stats(out["old"]),
+            "recent_new": list(reversed(nw))[:40], "recent": list(reversed(recent))[:40]}
 
 
 def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
@@ -391,6 +419,8 @@ class Copycat:
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
         self.feed_seen: set[str] = set()         # trade ids already read from the global feed
         self.feed_top: str | None = None         # newest trade id of the feed snapshot last read
+        self.profiles: dict[str, dict] = {}      # nick -> {"joined", "markets", "new"} for the big-bet scanner
+        self.whale_queue: list[tuple[str, dict, float]] = []   # (nick, trade, seen) awaiting a profile lookup
         self.feed_next = 0.0
         self.scout_queue: dict[str, None] = {}    # names seen in the feed, not looked up yet
         self.feed_names: set[str] = set()         # every public trader seen in the feed
@@ -664,6 +694,7 @@ class Copycat:
         now = self.clock()
         by: dict[str, list] = defaultdict(list)
         for t in new:
+            self.spot_whale(t, now)
             for k in ("taker_nickname", "maker_nickname"):
                 n = t.get(k)
                 if n and len(self.feed_names) < 500_000:
@@ -683,6 +714,65 @@ class Copycat:
         self.feed_lags = self.feed_lags[-5000:]
         for n, ts in by.items():
             self.ingest(n, ts, now, quiet=n in self.dropped, src="feed")
+
+    def spot_whale(self, t: dict, now: float) -> None:
+        """Queues a named trade of WHALE_USD+ (each named side) for the big-bet scanner."""
+        px, n = _px(t.get("price_dollars")), t.get("count_fp", t.get("count"))
+        try:
+            n = float(n)
+        except (TypeError, ValueError):
+            return
+        if px is None:
+            return
+        for k in ("taker_nickname", "maker_nickname"):
+            nick = t.get(k)
+            if not nick:
+                continue
+            role, side = sharp_side(t, nick)
+            if not side:
+                continue
+            paid = px if side == "yes" else 1 - px
+            if n * paid >= WHALE_USD and len(self.whale_queue) < 500:
+                self.whale_queue.append((nick, t, now))
+
+    def run_whales(self) -> None:
+        """Looks up queued big bettors (cached) and logs each bet with a NEW flag. Paper only."""
+        looked = 0
+        while self.whale_queue and looked < WHALE_CHECKS:
+            nick, t, seen = self.whale_queue.pop(0)
+            p = self.profiles.get(nick)
+            if p is None:
+                looked += 1
+                self.tick()
+                try:
+                    prof = self.get(f"{SOCIAL}/profile", nickname=nick).get("social_profile") or {}
+                    m = self.get(f"{SOCIAL}/profile/metrics", nickname=nick).get("metrics") or {}
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("copycat whale %s: %s", nick, exc)
+                    continue
+                joined = prof.get("joined_at")
+                try:
+                    age = (seen - datetime.fromisoformat(str(joined).replace("Z", "+00:00")).timestamp()) / 86400
+                except ValueError:
+                    age = None
+                mk = m.get("num_markets_traded")
+                p = {"joined": joined, "age_d": round(age, 1) if age is not None else None, "markets": mk,
+                     "pnl": round((m.get("pnl") or 0) / 1e4),
+                     "new": bool((age is not None and age <= WHALE_NEW_DAYS)
+                                 or (mk is not None and mk <= WHALE_FEW_MARKETS))}
+                if len(self.profiles) < 50_000:
+                    self.profiles[nick] = p
+            role, side = sharp_side(t, nick)
+            px, n = _px(t.get("price_dollars")), float(t.get("count_fp", t.get("count")) or 0)
+            paid = px if side == "yes" else 1 - px
+            try:
+                lag = round(seen - datetime.fromisoformat(str(t.get("create_date")).replace("Z", "+00:00")).timestamp(), 1)
+            except ValueError:
+                lag = None
+            self.write({"kind": "whale", "nick": nick, "trade_id": t.get("trade_id"), "ticker": t.get("ticker"),
+                        "role": role, "side": side, "paid": round(paid, 4), "count": n, "usd": round(n * paid),
+                        "trade_time": t.get("create_date"), "lag_s": lag, "joined": p["joined"],
+                        "age_d": p["age_d"], "markets": p["markets"], "their_pnl": p["pnl"], "new": p["new"]})
 
     def ingest(self, nick: str, trades: list[dict], now: float, quiet: bool = False, src: str = "poll") -> None:
         """Logs an account's new trades (newest first, as the API sends them). quiet = a dropped
@@ -771,6 +861,10 @@ class Copycat:
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat scout: %s", exc)
         self.tick()
+        try:
+            self.run_whales()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("copycat whales: %s", exc)
         hot = [n for n in self.watch if n in self.hot]
         names = list(self.watch)
         if names:
@@ -799,7 +893,10 @@ class Copycat:
         need = held + sorted({r["ticker"] for r in rows if r.get("kind") == "fill" and not r.get("backfill")
                               and (r.get("ts") or now) < old and r.get("ticker") not in self.results}
                              - set(held))
-        for t in need[:40]:
+        whales = sorted({r["ticker"] for r in rows if r.get("kind") == "whale" and r.get("ticker")
+                         and (r.get("ts") or now) < old and r["ticker"] not in self.results} - set(need))
+        need = need[:40] + whales[:30]
+        for t in need:
             try:
                 res = self.snapshot(t).get("result")
                 if res in ("yes", "no"):
@@ -828,6 +925,7 @@ class Copycat:
                                      .strftime("%b %-d")} for k, v in self.dropped.items()),
                                    key=lambda x: -x["at"])[:200]
         status["live"] = live
+        status["whales"] = whale_summary(rows, self.results, now)
         v2 = [r["ts"] for r in rows if r.get("kind") == "fill" and r.get("ts")]
         status["fresh_since"] = datetime.fromtimestamp(min(v2), ET).strftime("%b %-d, %-I:%M %p ET") if v2 else None
         status["scan"] = {"public_traders_seen": len(self.feed_names), "looked_up": len(self.checked),
