@@ -278,7 +278,7 @@ early_after_contracts = 500      # rule E (BTC early window): from BTC's 500th r
                                  # before close, favourite 80-95c, 1 contract, no double (Alex Nov 10 7:56 PM ET:
                                  # "just make them go live at 500"). 80-day replay: today's rule ~0c/ct since Oct 10,
                                  # rule E +1.4c. Graded at every BTC review after; decay guard and stops unchanged.
-early_contracts = 3              # contracts per window under rule E (Alex Nov 10 8:12 PM ET wants ~today's daily
+early_contracts = 2              # MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET): 2 ct/window when rule E starts at 500; 3 if E holds at its review. Was 3: (Alex Nov 10 8:12 PM ET wants ~today's daily
                                  # volume; rule E trades ~31 windows/day vs ~90). 3 = ~95 ct/day.
 
 [watch]
