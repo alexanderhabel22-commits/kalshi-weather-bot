@@ -43,7 +43,9 @@ DEFAULTS = {"mode": "off", "budget": 20.0, "reserve": 6.0, "markets": 8, "min_px
             "max_px": 0.08, "max_ct": 300, "min_days_to_close": 21, "min_days_left": 1.0,
             "fill_stop": 10.0, "requote_s": 1800, "max_requotes_day": 6, "cycle_s": 300,
             "select_s": 21600, "upload_s": 900, "min_est_day": 0.03, "candidates": 60,
-            "exclude_categories": ["Sports"], "exclude_series": [], "only": [], "until": None}
+            "exclude_categories": ["Sports"], "exclude_series": [], "only": [], "until": None,
+            "price_mode": "ref", "ref_requote_s": 600, "reselect": None,
+            "max_vol24": 2000.0, "move_guard": 0.03, "move_pause_s": 6 * 3600}
 CONTROL_STALE_S = 1800
 PACE_S = 1.0                     # seconds between Kalshi calls
 
@@ -95,8 +97,12 @@ def side_stats(levels: list, target: float, disc: float, mine: float = 0.0, my_p
 
 
 def plan_market(book: dict, prog: dict, s: dict, per_mkt: float) -> dict | None:
-    """Where we'd bid in one reward market: cheap side, 1c above its best bid (front of the line),
-    within min_px..max_px, not crossing the other side. None if it doesn't qualify."""
+    """Where we'd bid in one reward market: the cheap side, within min_px..max_px, not crossing
+    the other side. None if it doesn't qualify.
+    price_mode "ref" (default since Nov 11, Alex's question): AT the reference price, the lowest
+    price that still earns full credit (Kalshi scores pro-rata by size, so being first in line
+    earns nothing extra). Cheaper per contract = more contracts per dollar = a bigger share, and
+    other bids sit ahead of ours when someone sells. "front": 1c above the best bid."""
     tgt = _f(prog.get("target_size_fp"), 1000.0) or 1000.0
     disc = (_f(prog.get("discount_factor_bps"), 5000.0) or 5000.0) / 10000
     st = {sd: side_stats(book.get(sd) or [], tgt, disc) for sd in ("yes", "no")}
@@ -106,11 +112,15 @@ def plan_market(book: dict, prog: dict, s: dict, per_mkt: float) -> dict | None:
     side = sides[0]
     other = "no" if side == "yes" else "yes"
     best = st[side][1] or 0.0
-    px = round(max(s["min_px"], math.floor(best * 100 + 1e-6) / 100 + 0.01), 2)
+    if s.get("price_mode", "ref") == "ref":
+        ref = st[side][3] if st[side][3] is not None else best
+        px = round(max(s["min_px"], math.ceil(ref * 100 - 1e-6) / 100), 2)
+    else:
+        px = round(max(s["min_px"], math.floor(best * 100 + 1e-6) / 100 + 0.01), 2)
     other_best = st[other][1] or 0.0
     if px > s["max_px"] + 1e-9 or px + other_best > 0.99 + 1e-9:
         return None
-    n = int(min(s["max_ct"], per_mkt // px))
+    n = int(min(s["max_ct"], math.floor(per_mkt / px + 1e-9)))
     if n < 10:
         return None
     pool = (_f(prog.get("period_reward"), 0.0) or 0.0) / 10000      # centi-cents -> $
@@ -120,7 +130,8 @@ def plan_market(book: dict, prog: dict, s: dict, per_mkt: float) -> dict | None:
     # both sides must reach target for a snapshot to count (our size helps our side)
     both = st[other][2] and (st[side][2] or others + n >= tgt)
     est_day = share * pool / 2 / days if both else 0.0
-    return {"side": side, "px": px, "n": n, "cost": round(px * n, 2), "share": round(share, 4),
+    mid = round((st["yes"][1] + 1 - st["no"][1]) / 2, 4) if st["yes"][1] is not None and st["no"][1] is not None else None
+    return {"side": side, "px": px, "n": n, "cost": round(px * n, 2), "share": round(share, 4), "mid": mid,
             "pool": pool, "days": round(days, 2), "est_day": round(est_day, 4),
             "per_dollar": est_day / (px * n), "ref": st[side][3], "best": best}
 
@@ -291,6 +302,9 @@ class LipBot:
                 continue
             if int(_f(m.get("exchange_index"), 0) or 0) != 0:
                 continue
+            # busy markets fill our bids more often: keep to quiet ones
+            if (_f(m.get("volume_24h_fp"), 0.0) or 0.0) > s["max_vol24"]:
+                continue
             if len(plans) >= s["candidates"]:
                 break
             if self.category(m.get("event_ticker") or "") in s["exclude_categories"] + ["unknown"]:
@@ -346,7 +360,7 @@ class LipBot:
                    f"${self.cfg['fill_stop']:.0f} fill stop.")
 
     def place(self, tk: str, pl: dict, room: float) -> float:
-        n = int(min(pl["n"], room // pl["px"]))
+        n = int(min(pl["n"], math.floor(room / pl["px"] + 1e-9)))
         if n < 10:
             return 0.0
         cid = f"lip-{uuid.uuid4().hex[:16]}"
@@ -359,7 +373,7 @@ class LipBot:
             return 0.0
         oid = o.get("order_id") or o.get("id")
         self.state["orders"][tk] = {"id": oid, "cid": cid, "side": pl["side"], "px": pl["px"], "n": n,
-                                    "filled": 0.0, "at": self.clock()}
+                                    "filled": 0.0, "at": self.clock(), "mid0": pl.get("mid")}
         self.event("place", ticker=tk, side=pl["side"], px=pl["px"], n=n, est_day=pl.get("est_day"))
         return n * pl["px"]
 
@@ -430,10 +444,20 @@ class LipBot:
         for tk, pl in self.state["chosen"].items():
             if tk in self.state["positions"]:
                 continue        # after any fill in a market: no new or moved bids there
+            if self.state["bad"].get(tk, 0) > now:
+                continue                # paused (price jump / rejected)
             b = self.book(tk)
             if not b:
                 continue
             o = self.state["orders"].get(tk)
+            # news guard: the price moved a lot since we bid -> pull and sit out for a while
+            yb = max((p for p, _ in b.get("yes") or []), default=None)
+            nb = max((p for p, _ in b.get("no") or []), default=None)
+            mid = (yb + 1 - nb) / 2 if yb is not None and nb is not None else None
+            if o and mid is not None and o.get("mid0") is not None and abs(mid - o["mid0"]) >= s["move_guard"] - 1e-9:
+                self.cancel(tk, f"price moved {round((mid - o['mid0']) * 100, 1)}c since we bid")
+                self.state["bad"][tk] = now + s["move_pause_s"]
+                continue
             prog = {"target_size_fp": "1000", "discount_factor_bps": 5000,
                     "period_reward": pl["pool"] * 10000, "start_date": None, "end_date": None}
             if o:
@@ -444,10 +468,19 @@ class LipBot:
                 self.state["est"].setdefault(day, {})[tk] = {
                     "ahead": round(sum(q for _, q in others), 2), "others": round(sc, 1),
                     "share": round((o["n"] - o["filled"]) / (sc + o["n"] - o["filled"] + 1e-9), 4)}
-                if others and now - o["at"] > s["requote_s"] and rq.get(f"{day}|{tk}", 0) < s["max_requotes_day"]:
-                    np_ = plan_market(b, prog, s, max(per_mkt, o["px"] * o["n"]))
-                    if np_ and np_["side"] == o["side"] and np_["px"] > o["px"]:
-                        self.cancel(tk, f"outbid, moving to {round(np_['px'] * 100)}c")
+                # where would we bid now, judged on the book WITHOUT our own order?
+                rest = round(o["n"] - o.get("filled", 0), 2)
+                bx = {sd: [(p, q - (rest if sd == o["side"] and abs(p - o["px"]) < 1e-9 else 0))
+                           for p, q in (b.get(sd) or [])] for sd in ("yes", "no")}
+                np_ = plan_market(bx, prog, s, max(per_mkt, o["px"] * o["n"]))
+                moved = np_ and np_["side"] == o["side"] and abs(np_["px"] - o["px"]) > 1e-9
+                below = moved and np_["px"] > o["px"]          # we'd lose credit: move up soon
+                wait = s["ref_requote_s"] if (below or s.get("price_mode", "ref") == "ref") else s["requote_s"]
+                if s.get("price_mode", "ref") != "ref":
+                    moved = moved and bool(others) and below
+                if moved and now - o["at"] > wait and rq.get(f"{day}|{tk}", 0) < s["max_requotes_day"]:
+                    if True:
+                        self.cancel(tk, f"{'up' if below else 'down'} to {round(np_['px'] * 100)}c (reference price)")
                         if tk not in self.state["orders"] and tk not in self.state["positions"]:
                             rq[f"{day}|{tk}"] = rq.get(f"{day}|{tk}", 0) + 1
                             self.place(tk, dict(np_, est_day=pl.get("est_day")), self.room(cash0 + o["px"] * o["n"]))
@@ -496,7 +529,9 @@ class LipBot:
                 self.sync()
                 self.check_stop()
                 if self.mode() == "live":
-                    if now - self.state["selected_at"] > self.cfg["select_s"] or not self.state["chosen"]:
+                    fresh = self.cfg.get("reselect") and self.cfg["reselect"] != self.state.get("reselect_seen")
+                    if fresh or now - self.state["selected_at"] > self.cfg["select_s"] or not self.state["chosen"]:
+                        self.state["reselect_seen"] = self.cfg.get("reselect")
                         self.select()
                     self.manage()
             except Exception as exc:  # noqa: BLE001

@@ -1,10 +1,14 @@
 {
- "_note": "Liquidity-reward test switch (read by the droplet every 5 min). mode: live | off. Alex OK'd a ~$20, 3-day real test on Nov 11, 2026 8:23 AM ET. budget: max $ in resting bids + filled contracts. reserve: free cash always left on exchange shard 0 for the main bot. fill_stop: halt once this much of our bids has filled. until: the bot goes off by itself after this time (UTC). Kill: set mode to off (or TRADING_MODE=off).",
+ "_note": "Liquidity-reward test switch (read by the droplet every 5 min). mode: live | off. Alex OK'd a ~$20, 3-day real test on Nov 11, 2026 8:23 AM ET. budget: max $ in resting bids + filled contracts. reserve: free cash always left on exchange shard 0 for the main bot. fill_stop: halt once this much of our bids has filled. until: the bot goes off by itself after this time (UTC). Kill: set mode to off (or TRADING_MODE=off). price_mode: ref = bid AT the reference price (lowest price with full credit; Kalshi scores pro-rata), front = 1c above the best bid. reselect: change the string to make the bot re-pick its markets now. max_vol24: skip markets busier than this (fill risk). move_guard: pull a market's bid for 6 h if its mid moves this much (news).",
  "mode": "live",
  "budget": 20.0,
  "reserve": 6.0,
  "markets": 8,
  "max_px": 0.08,
  "fill_stop": 10.0,
- "until": "2026-11-15T05:00:00Z"
+ "until": "2026-11-15T05:00:00Z",
+ "price_mode": "ref",
+ "reselect": "2026-11-11-ref",
+ "max_vol24": 2000,
+ "move_guard": 0.03
 }
