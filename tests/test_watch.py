@@ -263,3 +263,11 @@ def test_lip_off_but_bidding_and_after_end():
                    "resting_cost": 0.0, "filled_cost": 0.0, "orders": {}, "events": []},
                   {"mode": "live", "until": iso(NOW - 7200)})
     assert not {c for c in codes(done) if c.startswith("LIP")}
+
+
+def test_same_identifier_note_replaces_old_one():
+    st = {"notes": ["Coinbase feed drops at night; harmless",
+                    "15-MIN funding transfer endpoint returns 403 insufficient_scope (write::transfer); not a trading fault."]}
+    watch.remember(st, "M15_FUND 403 insufficient_scope recurred again at 1:35 PM ET Nov 11 (fifth time that day).", 8)
+    watch.remember(st, "M15_FUND has recurred four times on Nov 11; it stays a key-scope fix for Alex.", 8)
+    assert len(st["notes"]) == 2 and st["notes"][0].startswith("Coinbase") and "four times" in st["notes"][1]
