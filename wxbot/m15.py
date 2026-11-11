@@ -163,6 +163,18 @@ DEFAULTS = {
     "fv_skip_margin": 0.0,
     "fv_skip_min_left_s": 180,
     "fv_skip_after_contracts": 0,     # >0: switch fv_skip on by itself at this many real contracts
+    # EARLY WINDOW (rule E, pre-registered Nov 10 in reports/reviews/m15-candidate-rules-2026-11-10.md):
+    # for early_series, bid only from early_start_s to early_end_s before close, favourite
+    # early_min-early_max, no extra contract; a window without such a favourite by early_end_s is
+    # skipped. 80-day replay: today's rule ~0c/ct since Oct 10, rule E +1.4c. Off unless early_on,
+    # or switched on by itself at early_after_contracts real contracts in that series.
+    "early_on": False,
+    "early_series": ["KXBTC15M"],
+    "early_start_s": 840,
+    "early_end_s": 600,
+    "early_min": 0.80,
+    "early_max": 0.95,
+    "early_after_contracts": 0,
 }
 
 
@@ -281,7 +293,7 @@ class Bot(FillQuality):
                       "summary_day": st.get("summary_day"), "started": st.get("started"),
                       "cut": st.get("cut", {}), "series": st.get("series", {}),
                       "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted"),
-                      "fv_skip_on": st.get("fv_skip_on", {}),
+                      "fv_skip_on": st.get("fv_skip_on", {}), "early_on": st.get("early_on", {}),
                       "code_version": st.get("code_version"), "saved_at": st.get("saved_at"),
                       "fillq": st.get("fillq", [])}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
@@ -853,15 +865,22 @@ class Bot(FillQuality):
             if o:
                 self._end_order(m)
             return
-        want = desired_quote(quote, s) if quote else None
+        early = self.early_active(m, now)
+        band = dict(s, min_fav=s["early_min"], max_fav=s["early_max"]) if early else s
+        want = desired_quote(quote, band) if quote else None
         m["why"] = "no quote" if not quote else ("out of band" if want is None else "ok")
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
-        target = target_contracts(want[1] if want else None, s, m["series"])
+        base_n = int((s.get("series_contracts") or {}).get(m["series"], s["contracts"]))
+        target = base_n if early else target_contracts(want[1] if want else None, s, m["series"])
         if m["mode"] == "live":
-            m["base"] = int((s.get("series_contracts") or {}).get(m["series"], s["contracts"]))
+            m["base"] = base_n
         room = target - m["filled"] - (o["n"] - o["filled"] if o else 0)
-        if left <= s["stop_quote_s"] or left > float((s.get("max_left_s") or {}).get(m["series"], 1e9)):
+        if early:
+            out = left < float(s["early_end_s"]) or left > float(s["early_start_s"])
+        else:
+            out = left > float((s.get("max_left_s") or {}).get(m["series"], 1e9))
+        if left <= s["stop_quote_s"] or out:
             if o:
                 self._end_order(m)
             return
@@ -940,6 +959,31 @@ class Bot(FillQuality):
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, n_new, now)
+
+    def early_active(self, m: dict, now: float) -> bool:
+        """Rule E (BTC early window) on for this market's series? On when early_on, or by itself
+        once the series reaches early_after_contracts real contracts (Alex Nov 10 7:56 PM ET:
+        "just make them go live at 500"). Pushes one alert when it switches on."""
+        s = self.s
+        if m["series"] not in (s.get("early_series") or []):
+            return False
+        if s.get("early_on"):
+            return True
+        on = self.state.setdefault("early_on", {})
+        if m["series"] in on:
+            return True
+        after = int(s.get("early_after_contracts") or 0)
+        done = float((self.state.get("series", {}).get(m["series"]) or {}).get("fills", 0))
+        if not after or done < after:
+            return False
+        if m.get("filled") or m.get("order"):
+            return False                     # never switch rules in the middle of a window
+        on[m["series"]] = int(now)
+        self.alert(f"15-min bot: early-window rule ON for {m['series']}",
+                   f"{done:.0f} real contracts reached (switch-on at {after}). Bids now only "
+                   f"{int(s['early_start_s']) // 60}-{int(s['early_end_s']) // 60} min before close, "
+                   f"favourite {s['early_min']:.2f}-{s['early_max']:.2f}, 1 contract per window.", 3)
+        return True
 
     def fv_blocks(self, m: dict, want, now: float) -> bool:
         """Fair-value filter (OFF by default; Alex Nov 10 "ok then do them", switch on only at a
@@ -1265,6 +1309,7 @@ class Bot(FillQuality):
                   "pnl_24h": self.stop_pnl(now) if self.s.get("rolling_stop") else None, "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
                   "last_reject": self.state.get("last_reject"),
                   "fv_skip_on": self.state.get("fv_skip_on", {}),
+                  "early_on": self.state.get("early_on", {}),
                   "shards": self.state.get("shards"), "fund_error": self.state.get("fund_error"),
                   "spot_ok": bool(self.spot is not None and self.spot.healthy()),
                   "live_now": {k: {"mode": m.get("mode"), "why": m.get("why"), "bid_ask": m.get("bid_ask"),

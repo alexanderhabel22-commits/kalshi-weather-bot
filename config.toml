@@ -257,6 +257,10 @@ guard = true                     # pull bids when BTC/ETH/... spot jumps (Coinba
 fv_skip = false                  # fair-value filter (wxbot/m15_fv.py): skip/pull BTC bids when fair value < bid.
 fv_skip_after_contracts = 500    # ... switches itself ON at BTC's 500th real contract (Alex Nov 10 7:56 PM ET:
                                  # "just make them go live at 500"). Still judged on the fv logs at each review.
+early_after_contracts = 500      # rule E (BTC early window): from BTC's 500th real contract, bid only 14-10 min
+                                 # before close, favourite 80-95c, 1 contract, no double (Alex Nov 10 7:56 PM ET:
+                                 # "just make them go live at 500"). 80-day replay: today's rule ~0c/ct since Oct 10,
+                                 # rule E +1.4c. Graded at every BTC review after; decay guard and stops unchanged.
 
 [watch]
 # AI ops watcher (wxbot/watch.py), every 15 min on the 15-min bot's server (Nov 10, Alex has
