@@ -391,7 +391,7 @@ function ccPage(){
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">switch ${esc(String(L.control || "off").toUpperCase())}${live ? ` · <span class="pos">● live</span>` : ""}${stopTxt}</div></div>
     <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div>
     <div class="lbl" style="margin-top:8px">Copying / testing / out</div><div class="val" style="font-size:17px">${n("passes")} / ${n("watching")} / ${n("fails") + n("slump") + n("benched")}</div></div></div>
-    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Every account starts on <b>paper</b>: we score each of its trades as if we had copied it ~10 s later, after Kalshi's fee. Strong accounts (B+, 87+) are tested at 100 paper copies, everyone else at 150. With a score of 80+ it moves to <b>real money</b> (1-3 contracts). Paper and real results are shown separately below.</div>${c.scan ? `<div class="s" style="margin-top:8px;white-space:normal">Scanning every public Kalshi trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> public traders seen so far, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones (lifetime $${c.scan.min_profit}+) being tested.</div>` : ""}</div>`;
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Every account starts on <b>paper</b>: we score each of its trades as if we had copied it ~10 s later, after Kalshi's fee. Strong accounts (B+, 87+) are tested at 100 paper copies, everyone else at 150. With a score of 80+ it moves to <b>real money</b> (1-3 contracts). Paper and real results are shown separately below.</div>${c.scan ? `<div class="s" style="margin-top:8px;white-space:normal;font-size:12px">Scanning every public Kalshi trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> public traders seen so far, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones (lifetime or last 30 days) being tested.</div>` : ""}</div>`;
   if (B.summary) h += `<h2>The boss <span class="sub">Claude · ${num(B.reviews_today)} reviews today</span></h2><div class="card"><div style="font-size:13px;line-height:1.5;color:#c4b5fd">${esc(B.summary)}</div>${Object.keys(B.benches || {}).length ? `<div class="s" style="margin-top:6px;white-space:normal">Benched by the boss: ${Object.entries(B.benches).map(([k, v]) => esc(k) + " (" + esc(v.reason) + ")").join(", ")}</div>` : ""}</div>`;
   const row = a => { const [col, lbl] = tag[a.verdict] || tag.watching, R = a.real || {};
     const need = (a.score || 0) >= 87 ? 100 : 150, prog = a.verdict === "watching" ? Math.min(100, 100 * (a.fills || 0) / need) : 100;
@@ -406,8 +406,17 @@ function ccPage(){
   const pos = [...(L.open || []).map(p => ({...p, open:1})), ...(L.settled || [])];
   h += `<h2>Real-money copies <span class="sub">${(L.open || []).length} open · ${(L.settled || []).length} settled</span></h2><div class="card">` + (pos.length ? pos.slice(0, 30).map(p =>
     `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(p.nick)} · ${esc((p.side || "").toUpperCase())} × ${p.n} · $${num(p.cost).toFixed(2)}</div><div class="s">${esc(p.ticker)}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${esc(String(p.result || "").toUpperCase())}</small>`}</div></div>`).join("") : `<div class="mute" style="font-size:12px">None yet. The first real copy happens when an account passes its paper test${live ? "" : " and the switch is on"}.</div>`) + `</div>`;
-  const shown = acc.filter(a => a.fills || a.watched), top = shown.slice(0, 5), rest = shown.slice(5);
-  h += `<h2>Report card <span class="sub">top 5 · tap one for its full card</span></h2><div class="card">` + (shown.length ? top.map(row).join("")
+  const SORTS = {grade:["Grade", a => a.score ?? -1], real:["Real P&L", a => num((a.real || {}).pnl)], recent:["Recent result", a => a.settle_c ?? -999],
+    copies:["Paper copies", a => a.fills || 0], profit:["Lifetime profit", a => a.pnl || 0], volume:["Their volume", a => num(a.contracts)],
+    progress:["Closest to qualifying", a => a.verdict === "watching" ? (a.fills || 0) / ((a.score || 0) >= 87 ? 100 : 150) : -1],
+    speed:["Fastest seen", a => -(a.lag_s ?? 999)], name:["Name", a => 0]};
+  const sk = SORTS[S.ccSort] ? S.ccSort : "grade", q = (S.ccQ || "").trim().toLowerCase();
+  const shown = acc.filter(a => a.fills || a.watched).filter(a => !q || a.nick.toLowerCase().includes(q) || ((a.detail || {}).series || []).some(x => x.s.toLowerCase().includes(q)) || (a.cats || []).some(x => x.toLowerCase().includes(q)))
+    .sort(sk === "name" ? (x, y) => x.nick.localeCompare(y.nick) : (x, y) => SORTS[sk][1](y) - SORTS[sk][1](x) || (y.fills || 0) - (x.fills || 0));
+  const top = shown.slice(0, 5), rest = shown.slice(5);
+  const ctl = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><select id="ccSort" style="flex:1;min-width:140px;background:#0b1222;color:#e2e8f0;border:1px solid rgba(148,163,200,.25);border-radius:8px;padding:6px 8px;font-size:12px">${Object.entries(SORTS).map(([k, v]) => `<option value="${k}"${k === sk ? " selected" : ""}>Sort: ${v[0]}</option>`).join("")}</select>
+    <input id="ccQ" value="${esc(S.ccQ || "")}" placeholder="Find name, market (KXNBA) or category" style="flex:2;min-width:160px;background:#0b1222;color:#e2e8f0;border:1px solid rgba(148,163,200,.25);border-radius:8px;padding:6px 8px;font-size:12px"></div>`;
+  h += `<h2>Report card <span class="sub">${shown.length} accounts · tap one for its full card</span></h2><div class="card">` + ctl + (shown.length ? top.map(row).join("")
     + (rest.length ? `<details id="ccMore"${S.ccOpen ? " open" : ""} style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:#22d3ee;padding:6px 0">Show all ${shown.length} accounts</summary>${rest.map(row).join("")}</details>` : "")
     : `<div class="mute">No accounts yet.</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">"Worst case" = the low end of what this account's copies are likely worth per contract, given how few we've seen so far (95% confidence). The score is built on it, so a lucky streak can't earn a high grade.</div></div>`;
   const rc = c.recent || [];
@@ -452,14 +461,74 @@ function ccCard(nick){
     + list("Best copies", D.best) + list("Worst copies", D.worst) + list("Latest trades", D.latest)
     + `<div class="mute" style="font-size:11px;margin-top:12px;line-height:1.5">Copy results are per contract, after Kalshi's fee, at the price we'd have paid when we saw their trade.</div>`;
 }
-function ccOpen(nick){
+function ccCharts(D){
+  const W = 520, H = 120, cv = D.curve || [], out = [];
+  if (cv.length > 1){
+    const lo = Math.min(0, ...cv), hi = Math.max(0, ...cv), sy = v => 8 + (H - 16) * (1 - (v - lo) / ((hi - lo) || 1)), sx = i => 4 + (W - 8) * i / (cv.length - 1);
+    const last = cv[cv.length - 1], col = last >= 0 ? "#34d399" : "#f87171";
+    const pts = cv.map((v, i) => `${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join(" ");
+    out.push(`<div class="lbl" style="margin-top:14px">Paper results over time <span class="mute">· running total, 1 contract per copy</span></div>
+      <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:4px" role="img" aria-label="Running total of paper copy results">
+      <line x1="0" x2="${W}" y1="${sy(0).toFixed(1)}" y2="${sy(0).toFixed(1)}" stroke="rgba(148,163,200,.35)" stroke-dasharray="4 4"/>
+      <polyline points="${sx(0).toFixed(1)},${sy(0).toFixed(1)} ${pts} ${sx(cv.length - 1).toFixed(1)},${sy(0).toFixed(1)}" fill="${col}" fill-opacity=".12" stroke="none"/>
+      <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/></svg>
+      <div class="s" style="font-size:12px;white-space:normal">${cv.length} settled copies · total <span class="${cls(last)}">${money(last / 100)}</span> per contract copied</div>`);
+  }
+  const ser = (D.series || []).filter(x => x.avg_c != null);
+  if (ser.length){
+    const m = Math.max(1, ...ser.map(x => Math.abs(x.avg_c)));
+    out.push(`<div class="lbl" style="margin-top:14px">Result by market <span class="mute">· ¢ per contract</span></div>` + ser.map(x => {
+      const w = 50 * Math.abs(x.avg_c) / m, c = x.avg_c >= 0 ? "#34d399" : "#f87171";
+      return `<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin:3px 0"><div style="width:30%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" class="mute">${esc(x.s)}</div>
+        <div style="flex:1;position:relative;height:10px"><div style="position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(148,163,200,.35)"></div>
+        <div style="position:absolute;top:0;height:10px;border-radius:2px;background:${c};${x.avg_c >= 0 ? "left:50%" : "right:50%"};width:${w}%"></div></div>
+        <div style="width:58px;text-align:right" class="${cls(x.avg_c)}">${x.avg_c > 0 ? "+" : ""}${x.avg_c}¢</div></div>`; }).join(""));
+  }
+  const bands = Object.entries(D.bands || {}).filter(([, v]) => v), bt = bands.reduce((s, [, v]) => s + v, 0);
+  if (bt){
+    const cols = ["#22d3ee", "#34d399", "#f5b335", "#c084fc", "#64748b"]; let a0 = -Math.PI / 2;
+    const arcs = bands.map(([k, v], i) => { const a1 = a0 + 2 * Math.PI * v / bt, big = a1 - a0 > Math.PI ? 1 : 0, r = 46, ri = 28, c = [60, 60];
+      const p = (a, rr) => `${(c[0] + rr * Math.cos(a)).toFixed(2)},${(c[1] + rr * Math.sin(a)).toFixed(2)}`;
+      const d = v === bt ? `M60,14 A46,46 0 1 1 59.99,14 L59.99,32 A28,28 0 1 0 60,32 Z` : `M${p(a0, r)} A${r},${r} 0 ${big} 1 ${p(a1, r)} L${p(a1, ri)} A${ri},${ri} 0 ${big} 0 ${p(a0, ri)} Z`;
+      a0 = a1; return `<path d="${d}" fill="${cols[i % 5]}"><title>${k}: ${v}</title></path>`; }).join("");
+    out.push(`<div class="lbl" style="margin-top:16px">What prices they buy at <span class="mute">· share of their trades</span></div>
+      <div style="display:flex;align-items:center;gap:14px;margin-top:4px"><svg viewBox="0 0 120 120" style="width:120px;flex:none" role="img" aria-label="Price mix">${arcs}</svg>
+      <div style="font-size:12px;line-height:1.7">${bands.map(([k, v], i) => `<div><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${cols[i % 5]};margin-right:6px"></span>${k === "other" ? "under 5¢ or over 95¢" : k} <span class="mute">${Math.round(100 * v / bt)}%</span></div>`).join("")}</div></div>`);
+  }
+  const P = D.pts || [];
+  if (P.length){
+    const ys = P.map(p => p[1]), lo = Math.min(-100, ...ys), hi = Math.max(100, ...ys), Hs = 150;
+    const sx = x => 30 + (W - 52) * x / 100, sy = y => 8 + (Hs - 24) * (1 - (y - lo) / (hi - lo));
+    out.push(`<div class="lbl" style="margin-top:16px">Price paid vs result <span class="mute">· each dot is one settled copy</span></div>
+      <svg viewBox="0 0 ${W} ${Hs}" style="width:100%;height:auto;display:block;margin-top:4px" role="img" aria-label="Price paid versus result">
+      <line x1="30" x2="${W - 8}" y1="${sy(0).toFixed(1)}" y2="${sy(0).toFixed(1)}" stroke="rgba(148,163,200,.35)" stroke-dasharray="4 4"/>
+      ${P.map(([x, y]) => `<circle cx="${sx(x).toFixed(1)}" cy="${sy(y).toFixed(1)}" r="3.2" fill="${y > 0 ? "#34d399" : "#f87171"}" fill-opacity=".75"><title>paid ${x}¢ · ${y > 0 ? "+" : ""}${y}¢</title></circle>`).join("")}
+      ${[0, 25, 50, 75, 100].map(x => `<text x="${sx(x).toFixed(1)}" y="${Hs - 2}" font-size="10" fill="#94a3c8" text-anchor="middle">${x}¢</text>`).join("")}
+      <text x="2" y="${(sy(0) + 3).toFixed(1)}" font-size="10" fill="#94a3c8">0</text></svg>
+      <div class="s" style="font-size:12px;white-space:normal">Green above the line = the copy made money. Shows whether they win on cheap long shots or on favorites.</div>`);
+  }
+  const hr = D.hours || [];
+  if (hr.some(v => v)){
+    const m = Math.max(...hr);
+    out.push(`<div class="lbl" style="margin-top:14px">When they trade <span class="mute">· hour of day, ET</span></div>
+      <svg viewBox="0 0 ${W} 70" style="width:100%;height:auto;display:block;margin-top:4px" role="img" aria-label="Trades by hour of day">${hr.map((v, i) => { const h = 52 * v / m, x = 4 + i * (W - 8) / 24;
+        return `<rect x="${x.toFixed(1)}" y="${(54 - h).toFixed(1)}" width="${((W - 8) / 24 - 3).toFixed(1)}" height="${Math.max(h, v ? 2 : 0).toFixed(1)}" rx="2" fill="#22d3ee" fill-opacity="${v ? .85 : 0}"><title>${i}:00 ET: ${v} trades</title></rect>`; }).join("")}
+      ${[0, 6, 12, 18].map(i => `<text x="${(4 + i * (W - 8) / 24).toFixed(1)}" y="68" font-size="10" fill="#94a3c8">${i === 0 ? "12a" : i === 12 ? "12p" : i < 12 ? i + "a" : i - 12 + "p"}</text>`).join("")}</svg>`);
+  }
+  return out.length ? out.join("") : `<div class="mute" style="margin-top:14px;font-size:13px">No charts yet: they fill in as this account's copies settle.</div>`;
+}
+function ccOpen(nick, tab){
   let m = document.getElementById("ccModal");
   if (!m){ m = document.createElement("div"); m.id = "ccModal";
     m.style.cssText = "position:fixed;inset:0;z-index:999;background:rgba(3,6,15,.72);display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px)";
-    m.addEventListener("click", e => { if (e.target === m || e.target.closest("[data-ccclose]")) m.remove(); });
+    m.addEventListener("click", e => { const t = e.target.closest("[data-cctab]"); if (t){ ccOpen(m.dataset.nick, t.dataset.cctab); return; }
+      if (e.target === m || e.target.closest("[data-ccclose]")) m.remove(); });
     document.body.appendChild(m); }
   m.innerHTML = `<div class="card glow" style="width:100%;max-width:560px;max-height:86vh;overflow-y:auto;margin:0;border-radius:18px;padding:18px 16px 22px;position:relative">
-    <button data-ccclose style="position:sticky;top:0;float:right;background:rgba(148,163,200,.18);color:#e2e8f0;border:0;border-radius:14px;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>${ccCard(nick)}</div>`;
+    <button data-ccclose style="position:sticky;top:0;float:right;background:rgba(148,163,200,.18);color:#e2e8f0;border:0;border-radius:14px;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>
+    <div style="display:flex;gap:6px;margin-bottom:12px">${[["card", "Report card"], ["charts", "Charts"]].map(([k, l]) => `<button data-cctab="${k}" style="border:0;border-radius:14px;padding:5px 12px;font-size:12px;cursor:pointer;background:${(tab || "card") === k ? "#22d3ee" : "rgba(148,163,200,.16)"};color:${(tab || "card") === k ? "#04121a" : "#e2e8f0"};font-weight:700">${l}</button>`).join("")}</div>
+    ${(tab || "card") === "charts" ? `<div style="font-size:18px;font-weight:800;word-break:break-all">${esc(nick)}</div>` + ccCharts((((S.cc || {}).accounts || []).find(x => x.nick === nick) || {}).detail || {}) : ccCard(nick)}</div>`;
+  m.dataset.nick = nick;
 }
 document.addEventListener("click", e => { const it = e.target.closest("[data-ccn]"); if (it) ccOpen(it.getAttribute("data-ccn")); });
 // the 15-minute bot runs on its own server and uploads to the m15-data branch every 15 min
@@ -1430,6 +1499,8 @@ function details(r){
   const tch = n > 0 && r.ticker && r.status !== "settled" ? `<div class="lbl" style="margin:10px 0 2px">Up/down on this bet</div><div class="chart tchart" data-tk="${esc(r.ticker)}" data-side="${esc(r.side)}" data-price="${r.price}" data-n="${n}" data-from="${+(r.filledAt || r.placed) || 0}"><div class="empty">Loading trades…</div></div>` : "";
   return `<div class="more">${tch}${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="${kalshiURL(r)}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
 }
+document.addEventListener("change", e => { if (e.target.id === "ccSort"){ S.ccSort = e.target.value; S.ccOpen = true; renderOverview(); } });
+document.addEventListener("input", e => { if (e.target.id === "ccQ"){ S.ccQ = e.target.value; clearTimeout(S.ccQt); S.ccQt = setTimeout(() => { renderOverview(); const el = document.getElementById("ccQ"); if (el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 400); } });
 document.addEventListener("toggle", e => { if (e.target.id === "ccMore") S.ccOpen = e.target.open; }, true);
 document.addEventListener("click", e => { if (e.target.closest("a") || e.target.closest(".chart")) return; const it = e.target.closest(".item.tap"); if (!it) return;
   it.classList.toggle("open"); if (it.classList.contains("open")) it.querySelectorAll(".tchart").forEach(drawTradeChart); });
