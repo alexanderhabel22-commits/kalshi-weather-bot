@@ -231,8 +231,21 @@ def test_failed_test_drops_account_then_readmits_from_zero(tmp_path):
     cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now[0], req_gap=0)
     cc.watch = {"loser": {"pnl": 500, "since": 0}, "sharp": {"pnl": 900_000, "since": 0}}
     _fail_rows(cc, "loser", 150, now[0] - 5000)
-    st_ = cc.update_status(now[0])
-    assert "loser" not in cc.watch and cc.dropped["loser"]["reason"] == "failed its paper test"
+    st_ = cc.update_status(now[0])                           # 1st fail: a second chance, re-test at 200
+    a = next(x for x in st_["accounts"] if x["nick"] == "loser")
+    assert "loser" in cc.watch and a["chances_left"] == 2 and a["retest_at"] == 200
+    cc.update_status(now[0])                                 # same 150 copies: not judged again
+    assert cc.watch["loser"]["fails_in_row"] == 1
+    for k in (1, 2):
+        for i in range(50):
+            tid = f"loser-{k}-{i}"
+            cc.write({"kind": "fill", "v": copycat.ROW_V, "trade_id": tid, "nick": "loser", "ticker": tid,
+                      "side": "yes", "yes_price": 0.50, "backfill": False, "lag_s": 5, "ts": now[0] - 2000 + 100 * k + i})
+            cc.write({"kind": "snap", "trade_id": tid, "nick": "loser", "ticker": tid, "delay": 0,
+                      "bid": 0.48, "ask": 0.50, "ts": now[0]})
+            cc.results[tid] = "no"
+        st_ = cc.update_status(now[0])
+    assert "loser" not in cc.watch and cc.dropped["loser"]["reason"] == "failed its paper test 3 times"
     assert all(a["nick"] != "loser" for a in st_["accounts"])
     assert st_["scan"]["dropped"] == 1 and st_["dropped"][0]["grade"] == "F"
     saved = json.loads((tmp_path / "watch.json").read_text())
