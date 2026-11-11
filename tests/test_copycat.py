@@ -140,7 +140,7 @@ def test_status_verdicts(tmp_path):
     assert len(s["recent"]) == 40
     bad = {f"T{i}": ("yes" if i % 10 < 4 else "no") for i in range(120)}
     s2 = copycat.build_status(rows_, bad, {"good": {}}, now=2000.0)
-    assert s2["accounts"][0]["verdict"] == "fails"
+    assert s2["accounts"][0]["verdict"] == "watching"   # weak at 120: tested until 150 (B+ fast-tracks at 100)
 
 
 def test_update_status_writes_file(tmp_path):
@@ -190,7 +190,9 @@ def test_rolling_window_drops_then_readmits(tmp_path):
     assert a["verdict"] == "slump" and a["size"] == 0
     a = v(good[:150] + bad + good[:50])          # recovers: back in
     assert a["verdict"] == "passes"
-    a = v(bad + bad)                             # never any good: fails
+    a = v(bad + bad)                             # bad at 100 copies: no fast track, still testing
+    assert a["verdict"] == "watching"
+    a = v(bad + bad + bad)                       # judged at 150: fails
     assert a["grade"] == "F" and a["score"] < 60 and a["verdict"] == "fails"
 
 

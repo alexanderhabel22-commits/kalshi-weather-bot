@@ -3,7 +3,7 @@
 Two records per account, kept apart: PAPER (every trade of theirs we saw, scored as if we had
 copied it at the price left ~10-20 s later, after fees) and REAL (copies actually bought with
 money, wxbot/copycat_live.py). Real copies only happen for accounts whose paper record passes
-(100 copies or 7 days, score 80+), and only while copycat_control.json on main says "live".
+(100 paper copies at a B+ score, else 150; score 80+ to copy), and only while copycat_control.json on main says "live".
 The boss (wxbot/copycat_boss.py, Claude) reviews the accounts and can bench them.
 
 How it works (one thread, polite polling of Kalshi's public social API):
@@ -64,8 +64,11 @@ FEED_PAGES = 3
 REQ_GAP_S = 0.3             # spacing between API calls (~150/min; a 3/s test had 0 errors)
 WATCH_REFRESH_S = 12 * 3600
 STATUS_EVERY_S = 300
-GO_LIVE_FILLS = 100         # an account is judged at 100 copied fills or 7 days, whichever first
-GO_LIVE_DAYS = 7
+ROW_V = 2                   # fresh start (Alex, Nov 10 10:20 PM ET): fills logged before the 1-second
+                            # feed (v1, 20-100 s late) don't count toward any score
+GO_LIVE_FILLS = 100         # tiered test (Alex, Nov 10): B+ (87+) accounts qualify at 100 paper copies,
+GO_LIVE_FAST_SCORE = 87.0   # everyone else needs 150; no time-based shortcut (a quiet account can't
+GO_LIVE_SLOW_FILLS = 150    # qualify on a handful of trades)
 CATEGORIES = ("Sports", "Politics", "Crypto", "Economics", "Climate and Weather", "Financials",
               "Entertainment", "Mentions", "Combos", "Commodities", "Elections", "Companies")
 SEED = ("BWmarkets", "thebigdon", "BitcoinTradingChallenge", "szg.szg", "brief.theme",
@@ -276,8 +279,8 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         settle, settle_low = mean_low(window)
         f300, _ = mean_low(o.get("follow_300", []))
         f1800, _ = mean_low(o.get("follow_1800", []))
-        due = n >= GO_LIVE_FILLS or days >= GO_LIVE_DAYS
         score, gl = score_grade(settle_all)
+        due = n >= GO_LIVE_SLOW_FILLS or (n >= GO_LIVE_FILLS and (score or 0) >= GO_LIVE_FAST_SCORE)
         banked = sum(settle_all) / 100            # $ a 1-contract copy would have made, all-time
         leeway = leeway_c(banked, score)
         copyable = score is not None and score >= COPY_SCORE
@@ -302,7 +305,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
-            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} copied fills or {GO_LIVE_DAYS} days. Score 0-100 from every copy so far "
+            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}. Score 0-100 from every copy so far "
             "(after fees; 80 = break-even even in the pessimistic case). Copied at 80+ (B- or better) while its "
             f"last {ROLL_WINDOW} copies average better than -leeway (5c, +1c per $1 it has made us, +up to 5c "
             "for a high score); benched below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3",
@@ -562,7 +565,7 @@ class Copycat:
                 continue
             seen.add(tid)
             role, side = sharp_side(t, nick)
-            row = {"kind": "fill", "nick": nick, "trade_id": tid, "ticker": t.get("ticker"),
+            row = {"kind": "fill", "v": ROW_V, "nick": nick, "trade_id": tid, "ticker": t.get("ticker"),
                    "role": role, "side": side, "yes_price": _px(t.get("price_dollars")),
                    "count": t.get("count_fp", t.get("count")), "trade_time": t.get("create_date"),
                    "backfill": first}
@@ -650,7 +653,8 @@ class Copycat:
         self.run_snaps(self.clock())
 
     def update_status(self, now: float) -> dict:
-        rows = load_rows(self.out, cache_done_hours=True, now=now)
+        rows = [r for r in load_rows(self.out, cache_done_hours=True, now=now)
+                if r.get("kind") != "fill" or (r.get("v") or 1) >= ROW_V]      # fresh start
         old = now - 900
         held = [t for t, p in (self.live.state["positions"].items() if self.live else [])
                 if not p.get("settled") and t not in self.results]
