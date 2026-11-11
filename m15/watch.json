@@ -1,22 +1,22 @@
 {
  "last": {
-  "at": "2026-11-11T08:05:05+00:00",
+  "at": "2026-11-11T08:20:15+00:00",
   "flags": [],
   "haiku": {
    "level": "watch",
-   "summary": "Both bots are running and within their stops. 15-min bot is live, no errors, no halt, 24h P&L +$1.27. Main bot is live, not halted, and its trade and weather-scan runs are succeeding on schedule. KXBTC15M shows a decay_alert dated today, the first one on record; I'm watching it for repeats.",
-   "remember": "KXBTC15M decay_alert first seen 2026-11-11; treat any recurrence as a repeat pattern to report."
+   "summary": "15-min bot is live, running, no errors, no halt, and inside its stops; 24h P&L of -$0.75 is ordinary. Main bot is live, not halted, scans and trades succeeding. One item to note: KXBTC15M decay_alert fired again today, first seen 2026-11-11, so this is a repeat pattern worth Alex's eye, though not urgent.",
+   "remember": "KXBTC15M decay_alert has been seen on 2026-11-11; treat it as a recurring item to report on later checks."
   },
   "opus": null,
   "action": null
  },
  "today": {
   "day": "2026-11-11",
-  "haiku": 13,
+  "haiku": 14,
   "opus": 0,
   "tokens": {
-   "haiku_in": 21189,
-   "haiku_out": 1957,
+   "haiku_in": 23272,
+   "haiku_out": 2141,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -26,7 +26,8 @@
   "KXBTC15M decay_alert first appeared 2026-11-11; if it recurs on later checks, mention it as a repeat pattern.",
   "KXBTC15M decay_alert first seen 2026-11-11; if it returns on later checks, call it a repeat pattern.",
   "KXBTC15M decay_alert first appeared 2026-11-11; if it recurs on later checks, treat it as a repeat pattern.",
-  "KXBTC15M decay_alert first seen 2026-11-11; treat any recurrence as a repeat pattern to report."
+  "KXBTC15M decay_alert first seen 2026-11-11; treat any recurrence as a repeat pattern to report.",
+  "KXBTC15M decay_alert has been seen on 2026-11-11; treat it as a recurring item to report on later checks."
  ],
  "journal": [],
  "log": [
@@ -314,16 +315,27 @@
    "opus": null
   },
   {
+   "action": null,
    "at": "2026-11-11T08:05:05+00:00",
    "flags": [],
    "haiku": {
     "level": "watch",
-    "summary": "Both bots are running and within their stops. 15-min bot is live, no errors, no halt, 24h P&L +$1.27. Main bot is live, not halted, and its trade and weather-scan runs are succeeding on schedule. KXBTC15M shows a decay_alert dated today, the first one on record; I'm watching it for repeats.",
-    "remember": "KXBTC15M decay_alert first seen 2026-11-11; treat any recurrence as a repeat pattern to report."
+    "remember": "KXBTC15M decay_alert first seen 2026-11-11; treat any recurrence as a repeat pattern to report.",
+    "summary": "Both bots are running and within their stops. 15-min bot is live, no errors, no halt, 24h P&L +$1.27. Main bot is live, not halted, and its trade and weather-scan runs are succeeding on schedule. KXBTC15M shows a decay_alert dated today, the first one on record; I'm watching it for repeats."
+   },
+   "opus": null
+  },
+  {
+   "at": "2026-11-11T08:20:15+00:00",
+   "flags": [],
+   "haiku": {
+    "level": "watch",
+    "summary": "15-min bot is live, running, no errors, no halt, and inside its stops; 24h P&L of -$0.75 is ordinary. Main bot is live, not halted, scans and trades succeeding. One item to note: KXBTC15M decay_alert fired again today, first seen 2026-11-11, so this is a repeat pattern worth Alex's eye, though not urgent.",
+    "remember": "KXBTC15M decay_alert has been seen on 2026-11-11; treat it as a recurring item to report on later checks."
    },
    "opus": null,
    "action": null
   }
  ],
- "digest": "Time: 3:05 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T08:02:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$1.2688 live_total=$11.7653\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $3.64\n  KXBTC15M: fills=488.0 pnl=$8.75 decay_alert=2026-11-11\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=11.0 pnl=$0.89\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=287.99 pnl=$14.033\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV110230-30 1 0.93 0.07\n  KXSILVER15M-26NOV110230-30 1 0.95 0.05\n  KXBTC15M-26NOV110245-45 2 1.56 0.44\n  KXSILVER15M-26NOV110245-45 1 0.95 0.05\n  KXGOLD15M-26NOV110245-45 2 1.7 0.3\n  KXBTC15M-26NOV110300-00 2 1.6 0.4\n  KXGOLD15M-26NOV110300-00 1 0.88 0.12\n  KXSILVER15M-26NOV110300-00 2 1.72 0.28\nSERVER: RAM 65.4% used, 15-min bot at 16.2% of its memory cap\nMAIN: mode=live halted=False bankroll=$59.65 cash=$38.22 at=2026-11-11T08:02:11.735421+00:00\nRecent Actions runs: trade success 08:01Z; weather-scan success 08:00Z; trade success 07:55Z; weather-scan success 07:55Z; trade success 07:50Z; weather-scan success 07:50Z; trade success 07:45Z; weather-scan success 07:45Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: 15-min bot 24h losses of a few dollars on a losing day are normal; KXBTC15M decay_alert appeared 2026-11-11, watch whether it recurs.; KXBTC15M decay_alert first appeared 2026-11-11; if it recurs on later checks, mention it as a repeat pattern.; KXBTC15M decay_alert first seen 2026-11-11; if it returns on later checks, call it a repeat pattern.; KXBTC15M decay_alert first appeared 2026-11-11; if it recurs on later checks, treat it as a repeat pattern.\nRecent log:\n  nothing notable yet"
+ "digest": "Time: 3:20 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T08:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-0.7512 live_total=$10.5853\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $2.46\n  KXBTC15M: fills=490.0 pnl=$7.14 decay_alert=2026-11-11\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=13.0 pnl=$1.27\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=288.99 pnl=$14.083\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXSILVER15M-26NOV110245-45 1 0.95 0.05\n  KXGOLD15M-26NOV110245-45 2 1.7 0.3\n  KXBTC15M-26NOV110300-00 2 1.6 0.4\n  KXGOLD15M-26NOV110300-00 1 0.88 0.12\n  KXSILVER15M-26NOV110300-00 2 1.72 0.28\n  KXBTC15M-26NOV110315-15 2 1.61 -1.61\n  KXSILVER15M-26NOV110315-15 1 0.95 0.05\n  KXGOLD15M-26NOV110315-15 2 1.62 0.38\nSERVER: RAM 67.0% used, 15-min bot at 21.4% of its memory cap\nMAIN: mode=live halted=False bankroll=$58.43 cash=$37.04 at=2026-11-11T08:16:12.129179+00:00\nRecent Actions runs: weather-scan in_progress 08:20Z; trade success 08:15Z; weather-scan success 08:15Z; tests success 08:14Z; tests success 08:13Z; tests success 08:11Z; trade success 08:10Z; tests success 08:10Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: 15-min bot 24h losses of a few dollars on a losing day are normal; KXBTC15M decay_alert appeared 2026-11-11, watch whether it recurs.; KXBTC15M decay_alert first appeared 2026-11-11; if it recurs on later checks, mention it as a repeat pattern.; KXBTC15M decay_alert first seen 2026-11-11; if it returns on later checks, call it a repeat pattern.; KXBTC15M decay_alert first appeared 2026-11-11; if it recurs on later checks, treat it as a repeat pattern.; KXBTC15M decay_alert first seen 2026-11-11; treat any recurrence as a repeat pattern to report.\nRecent log:\n  nothing notable yet"
 }
