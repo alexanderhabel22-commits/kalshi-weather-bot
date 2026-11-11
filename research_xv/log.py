@@ -79,6 +79,26 @@ def pmus_market(coin, ws, probe=False):
     js = get(PMUS + "/markets", params={"slug": slug}, quiet=True)
     ms = (js or {}).get("markets") or []
     m = ms[0] if ms else None
+    if m is None and coin == "silver":
+        lo = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ws))
+        hi = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(ws + 7200))
+        for cat in ("finance", "commodities", None):
+            params = {"limit": 100, "endDateMin": lo, "endDateMax": hi}
+            if cat:
+                params["categories"] = cat
+            js = get(PMUS + "/markets", params=params, quiet=True)
+            for x in (js or {}).get("markets") or []:
+                apt = x.get("assetPriceTerms") or {}
+                if (apt.get("horizon") == "15m" and "silver" in str(x.get("slug"))
+                        and str(apt.get("windowStart", ""))[:16]
+                        == time.strftime("%Y-%m-%dT%H:%M", time.gmtime(ws))):
+                    m, slug = x, x.get("slug")
+                    break
+            if m:
+                break
+        if probe and m is None:
+            log("pmus silver search found nothing; finance sample",
+                [x.get("slug") for x in ((js or {}).get("markets") or [])[:10]])
     if probe:
         log("pmus", coin, slug, "found" if m else "MISSING",
             json.dumps({x: m.get(x) for x in ("id", "status", "marketSides", "assetPriceTerms",
@@ -90,7 +110,9 @@ def pmus_market(coin, ws, probe=False):
 def pmus_quote(slug):
     js = get(PMUS + f"/markets/{slug}/bbo", quiet=True)
     md = (js or {}).get("marketData") or {}
-    return num(md.get("bestBid")), num(md.get("bestAsk")), num(md.get("bidDepth")), num(md.get("askDepth"))
+    lps = md.get("lastPriceSample") or {}
+    return (num(md.get("bestBid")), num(md.get("bestAsk")), num(md.get("bidShares")),
+            num(md.get("askShares")), lps.get("ts"))
 
 
 # ---------- Kalshi ----------
@@ -138,7 +160,7 @@ def main():
     qf = open(os.path.join(out, "quotes.csv"), "a", newline="")
     qw = csv.writer(qf)
     qw.writerow(["ts", "coin", "window_end", "k_ticker", "k_bid", "k_ask", "k_strike",
-                 "us_slug", "us_bid", "us_ask", "us_bid_depth", "us_ask_depth",
+                 "us_slug", "us_bid", "us_ask", "us_bid_shares", "us_ask_shares", "us_sample_ts",
                  "intl_up_bid", "intl_up_ask"])
     mf = open(os.path.join(out, "markets.jsonl"), "a")
     t0 = time.time()
@@ -187,14 +209,14 @@ def main():
             if c["we"] <= now:
                 continue
             kb, ka, ks = kalshi_quote(c["k"])
-            ub = ua = ud = uad = None
+            ub = ua = ud = uad = uts = None
             if c["us"]:
-                ub, ua, ud, uad = pmus_quote(c["us"])
+                ub, ua, ud, uad, uts = pmus_quote(c["us"])
             ib = ia = None
             if c["tok"]:
                 ib, ia = intl_quote(c["tok"])
             qw.writerow([round(now, 1), coin, int(c["we"]), c["k"], kb, ka, ks, c["us"], ub, ua,
-                         ud, uad, ib, ia])
+                         ud, uad, uts, ib, ia])
             n += 1
         qf.flush()
         for item in [p for p in pending if p[0] <= now]:
