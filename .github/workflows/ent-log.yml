@@ -1,0 +1,71 @@
+name: ent-log
+
+# Research logging only: box office (Box Office Mojo) and Rotten Tomatoes scores next to
+# Kalshi prices for those markets. Read-only public data; never trades, never alerts,
+# needs no secrets. One small job every 2 hours (~1-2 min). Output is appended to the
+# ent-log-data branch, never to main, so it can't collide with the bot's data commits.
+on:
+  schedule:
+    - cron: "41 */2 * * *"
+  workflow_dispatch:
+    inputs:
+      backfill:
+        description: "1 = also pull settled markets + daily box office history"
+        default: "0"
+      wayback:
+        description: "1 = also pull RT score history from the Internet Archive (resumable)"
+        default: "0"
+  push:
+    branches: ["claude/project-thread-ws8233"]
+    paths: ["research_ent/logger.py", ".github/workflows/ent-log.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ent-log
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Load previous log
+        run: |
+          if git fetch -q origin ent-log-data 2>/dev/null; then
+            git worktree add -q -f /tmp/data origin/ent-log-data
+          else
+            mkdir -p /tmp/data
+          fi
+      - name: Snapshot
+        env:
+          BACKFILL: ${{ github.event.inputs.backfill || '0' }}
+          # pushes to the research branch continue the one-off RT score history pull
+          WAYBACK: ${{ github.event.inputs.wayback || (github.event_name == 'push' && '1') || '0' }}
+          BACKFILL_FROM: "2025-01-01"
+        run: python research_ent/logger.py /tmp/data/log
+      - name: Save to ent-log-data branch
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          mkdir -p /tmp/keep && cp -r /tmp/data/log /tmp/keep/
+          for i in 1 2 3 4 5 6; do
+            if git fetch -q origin ent-log-data 2>/dev/null; then
+              git checkout -q -f -B data origin/ent-log-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            rm -rf log && cp -r /tmp/keep/log log
+            git add log
+            git commit -qm "ent log $(date -u +%Y%m%d-%H%M) [skip ci]" || exit 0
+            git push -q origin HEAD:ent-log-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
