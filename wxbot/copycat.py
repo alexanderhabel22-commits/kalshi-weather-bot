@@ -7,7 +7,11 @@ follow it?
 
 How it works (one thread, polite polling of Kalshi's public social API):
   - every 12 h, build the watch list: profitable accounts (lifetime pnl >= MIN_PNL) from the
-    all-time and category profit boards whose trade history is public;
+    all-time and category profit boards whose trade history is public; every 10 min, also scout the
+    global public trade feed (every trader with a public profile) and add any new profitable name;
+  - each account is scored on a rolling window of its last 50 settled copies: it passes while the
+    pessimistic estimate is >= 0 (min 20 settled), fails when it isn't, and can pass again later;
+  - passing accounts are polled 3x as often;
   - poll each watched account's public trades round-robin (about every 30-60 s per account);
   - each new fill is logged with the sharp's side (yes/no), price, size, maker/taker, the trade's
     own timestamp and when we saw it (detection lag);
@@ -43,8 +47,13 @@ ET = ZoneInfo("America/New_York")
 SOCIAL = "https://api.elections.kalshi.com/v1/social"
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
 BRANCH = "copycat-data"
-MIN_PNL = 50_000            # dollars of lifetime profit to be watched
-MAX_WATCH = 40
+MIN_PNL = 10_000            # dollars of lifetime profit to be watched
+MAX_WATCH = 100
+SCOUT_EVERY_S = 600         # scan the global public feed for new profitable names
+SCOUT_PAGES = 10            # 100 trades per page
+SCOUT_CHECKS = 40           # new names looked up per scan
+ROLL_WINDOW = 50            # an account's verdict uses its last 50 settled copies
+MIN_SETTLED = 20
 SNAP_DELAYS = (0, 60, 300, 1800)
 SNAP_GAP_S = 300            # at most one snapshot series per (account, ticker) per 5 min
 MAX_PENDING = 4000          # cap on queued snapshots
@@ -176,25 +185,28 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         n = len(o.get("lag", []))
         first = min(o["first_ts"]) if n else None
         days = (now - first) / 86400 if first else 0
-        settle, settle_low = mean_low(o.get("settle", []))
+        settle_all = o.get("settle", [])
+        window = settle_all[-ROLL_WINDOW:]
+        settle, settle_low = mean_low(window)
         f300, _ = mean_low(o.get("follow_300", []))
         f1800, _ = mean_low(o.get("follow_1800", []))
         due = n >= GO_LIVE_FILLS or days >= GO_LIVE_DAYS
         if not due:
             verdict = "watching"
-        elif settle_low is not None and settle_low >= 0 and len(o.get("settle", [])) >= 20:
+        elif settle_low is not None and settle_low >= 0 and len(window) >= MIN_SETTLED:
             verdict = "passes"
         else:
             verdict = "fails"
         accounts.append({"nick": nick, "watched": nick in watch, **(watch.get(nick) or {}),
-                         "fills": n, "settled": len(o.get("settle", [])), "days": round(days, 1),
+                         "fills": n, "settled": len(settle_all), "window": len(window), "days": round(days, 1),
                          "lag_s": round(st.median(o["lag"]), 1) if n else None,
                          "follow_5m_c": f300, "follow_30m_c": f1800,
                          "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
-            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} copied fills or {GO_LIVE_DAYS} days; "
-            "passes if the pessimistic copy-to-settlement estimate is >= 0 (min 20 settled)",
+            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} copied fills or {GO_LIVE_DAYS} days, then on a rolling "
+            f"window of the last {ROLL_WINDOW} settled copies: passes while the pessimistic "
+            f"copy-to-settlement estimate is >= 0 (min {MIN_SETTLED} settled), can pass again later",
             "accounts": accounts,
             "recent": [{k: r.get(k) for k in ("et", "nick", "ticker", "side", "yes_price", "count",
                                                   "role", "lag_s")} for r in reversed(recent)]}
@@ -219,6 +231,9 @@ class Copycat:
         self.uploaded: set[str] = set()
         self.results: dict[str, str] = {}
         self.status_next = 0.0
+        self.checked: set[str] = set()           # names already looked up by the scout
+        self.scout_next = 0.0
+        self.hot: set[str] = set()               # passing accounts, polled more often
         self._lock = threading.Lock()
 
     # -- files
@@ -284,9 +299,58 @@ class Copycat:
                            "cats": p.get("top_categories"), "joined": p.get("joined_at")}
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat check %s: %s", n, exc)
+        scouted = {n: v for n, v in self.watch.items() if v.get("src") == "scout" and n not in keep}
+        keep.update(scouted)
         if keep:
-            self.watch = keep
+            self.watch = dict(sorted(keep.items(), key=lambda kv: -(kv[1].get("pnl") or 0))[:MAX_WATCH])
+        self.checked.update(names)
         self.write({"kind": "watch", "accounts": self.watch})
+
+    def check_name(self, n: str) -> dict | None:
+        m = self.get(f"{SOCIAL}/profile/metrics", nickname=n).get("metrics") or {}
+        pnl = (m.get("pnl") or 0) / 1e4
+        if pnl < MIN_PNL:
+            return None
+        p = (self.get(f"{SOCIAL}/profile", nickname=n).get("social_profile") or {})
+        return {"pnl": round(pnl), "contracts": m.get("volume"), "markets": m.get("num_markets_traded"),
+                "cats": p.get("top_categories"), "joined": p.get("joined_at")}
+
+    def scout(self) -> None:
+        """Reads recent pages of the global public trade feed and adds new profitable names."""
+        names: dict[str, None] = {}
+        cursor = None
+        for _ in range(SCOUT_PAGES):
+            params = {"limit": 100}
+            if cursor:
+                params["cursor"] = cursor
+            j = self.get(f"{SOCIAL}/trades", **params)
+            for t in j.get("trades") or []:
+                for k in ("maker_nickname", "taker_nickname"):
+                    if t.get(k) and t[k] not in self.checked and t[k] not in self.watch:
+                        names.setdefault(t[k], None)
+            cursor = j.get("cursor")
+            if not cursor:
+                break
+        added = []
+        for n in list(names)[:SCOUT_CHECKS]:
+            self.checked.add(n)
+            try:
+                info = self.check_name(n)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat scout %s: %s", n, exc)
+                continue
+            if not info:
+                continue
+            if len(self.watch) >= MAX_WATCH:
+                cold = [k for k in self.watch if k not in self.hot]
+                low = min(cold, key=lambda k: self.watch[k].get("pnl") or 0, default=None)
+                if low is None or (self.watch[low].get("pnl") or 0) >= info["pnl"]:
+                    continue
+                self.watch.pop(low)
+            self.watch[n] = dict(info, src="scout")
+            added.append(n)
+        if added:
+            self.write({"kind": "scout", "added": added, "looked_up": min(len(names), SCOUT_CHECKS)})
 
     def snapshot(self, ticker: str) -> dict:
         m = self.get(f"{KALSHI}/markets/{ticker}").get("market") or {}
@@ -342,7 +406,13 @@ class Copycat:
         if now >= self.watch_next:
             self.watch_next = now + WATCH_REFRESH_S
             self.build_watch()
-        names = list(self.watch)
+        if now >= self.scout_next and self.watch_next > now:
+            self.scout_next = now + SCOUT_EVERY_S
+            try:
+                self.scout()
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat scout: %s", exc)
+        names = list(self.watch) + [n for n in self.watch if n in self.hot] * 2
         if names:
             nick = names[self.rr % len(names)]
             self.rr += 1
@@ -365,6 +435,7 @@ class Copycat:
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat result %s: %s", t, exc)
         status = build_status(rows, self.results, self.watch, now)
+        self.hot = {a["nick"] for a in status["accounts"] if a["verdict"] == "passes"}
         (self.out / "status.json").write_text(json.dumps(status, separators=(",", ":")))
         if self.uploader:
             try:

@@ -147,3 +147,41 @@ def test_update_status_writes_file(tmp_path):
     cc.watch = {"sharp": {"pnl": 5}}
     st_ = cc.update_status(1_000_000.0)
     assert (tmp_path / "status.json").exists() and st_["mode"] == "watch-only"
+
+
+def test_scout_adds_profitable_names_from_global_feed(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            s.calls.append((url, dict(params)))
+            return Resp({"trades": [trade("g1", taker="sharp", maker="small")], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.scout()
+    assert list(cc.watch) == ["sharp"] and cc.watch["sharp"]["src"] == "scout"
+    assert "small" in cc.checked
+    n_calls = len(s.calls)
+    cc.scout()                                   # already checked: no new lookups
+    assert len(s.calls) == n_calls + 1
+
+
+def test_rolling_window_drops_then_readmits(tmp_path):
+    def rows_for(outcomes):
+        out, res = [], {}
+        for i, win in enumerate(outcomes):
+            tid = f"t{i}"
+            out += [{"kind": "fill", "trade_id": tid, "nick": "a", "ticker": f"T{i}", "side": "yes",
+                     "yes_price": 0.50, "backfill": False, "ts": 1000.0 + i},
+                    {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.48, "ask": 0.50}]
+            res[f"T{i}"] = "yes" if win else "no"
+        return out, res
+    good = [i % 10 < 8 for i in range(100)]
+    bad = [i % 10 < 2 for i in range(50)]
+    r, res = rows_for(good + bad)                # last 50 are bad: dropped
+    assert copycat.build_status(r, res, {"a": {}}, 2000.0)["accounts"][0]["verdict"] == "fails"
+    r, res = rows_for(good + bad + good[:50])    # last 50 good again: back in
+    assert copycat.build_status(r, res, {"a": {}}, 2000.0)["accounts"][0]["verdict"] == "passes"
