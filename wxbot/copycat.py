@@ -212,6 +212,14 @@ def _curve(vals: list[float], pts: int = 120) -> list[float]:
     return out
 
 
+def _pcts(v: list[float]) -> dict | None:
+    """Median / 90th percentile / count, for delay stats."""
+    if not v:
+        return None
+    s = sorted(v)
+    return {"p50": s[len(s) // 2], "p90": s[int(len(s) * 0.9)], "n": len(s)}
+
+
 def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
     """Mean and a pessimistic (one-sided 95%) lower bound, in cents."""
     if not vals:
@@ -382,6 +390,7 @@ class Copycat:
         self.feed_next = 0.0
         self.scout_queue: dict[str, None] = {}    # names seen in the feed, not looked up yet
         self.feed_names: set[str] = set()         # every public trader seen in the feed
+        self.feed_lags: list[float] = []          # seconds from trade to its first sight in the feed
         self.dropped: dict[str, dict] = {}        # nick -> {"at", "reason", ...}; not watched for DROP_DAYS
         try:                                      # restart fast: reuse the saved watch list
             w = json.loads((self.out / "watch.json").read_text())
@@ -649,10 +658,17 @@ class Copycat:
                     self.scout_queue[n] = None        # looked up by the next scout
                 if n and ((n in self.watch and n in self.seen) or n in self.dropped):
                     by[n].append(t)
+        for t in new:                             # how late Kalshi publishes trades to the feed
+            try:
+                ct = datetime.fromisoformat(str(t.get("create_date")).replace("Z", "+00:00")).timestamp()
+                self.feed_lags.append(round(now - ct, 1))
+            except ValueError:
+                pass
+        self.feed_lags = self.feed_lags[-5000:]
         for n, ts in by.items():
-            self.ingest(n, ts, now, quiet=n in self.dropped)
+            self.ingest(n, ts, now, quiet=n in self.dropped, src="feed")
 
-    def ingest(self, nick: str, trades: list[dict], now: float, quiet: bool = False) -> None:
+    def ingest(self, nick: str, trades: list[dict], now: float, quiet: bool = False, src: str = "poll") -> None:
         """Logs an account's new trades (newest first, as the API sends them). quiet = a dropped
         account: logged for research (e.g. how market makers trade), never snapshotted or copied."""
         first = nick not in self.seen and not quiet
@@ -666,7 +682,7 @@ class Copycat:
             row = {"kind": "fill", "v": ROW_V, "nick": nick, "trade_id": tid, "ticker": t.get("ticker"),
                    "role": role, "side": side, "yes_price": _px(t.get("price_dollars")),
                    "count": t.get("count_fp", t.get("count")), "trade_time": t.get("create_date"),
-                   "backfill": first}
+                   "backfill": first, "src": src}
             if quiet:
                 row["dropped"] = True
             try:
@@ -800,7 +816,11 @@ class Copycat:
         status["fresh_since"] = datetime.fromtimestamp(min(v2), ET).strftime("%b %-d, %-I:%M %p ET") if v2 else None
         status["scan"] = {"public_traders_seen": len(self.feed_names), "looked_up": len(self.checked),
                           "watched": len(self.watch), "min_profit": MIN_PNL, "max_watch": MAX_WATCH,
-                          "dropped": len(self.dropped), "drop_days": DROP_DAYS}
+                          "dropped": len(self.dropped), "drop_days": DROP_DAYS,
+                          "feed_lag_s": _pcts(self.feed_lags),
+                          "copy_lag_s": {k: _pcts([r["lag_s"] for r in rows if r.get("kind") == "fill" and r.get("src") == k
+                                                   and not r.get("backfill") and r.get("lag_s") is not None][-2000:])
+                                         for k in ("feed", "poll")}}
         status["mode"] = live["mode"] if live and live["mode"] == "live" else "paper only"
         if self.boss is not None:
             status["boss"] = {"summary": self.boss.state.get("summary"), "usage": self.boss.state.get("usage"),

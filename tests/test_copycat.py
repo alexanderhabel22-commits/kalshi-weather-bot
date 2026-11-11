@@ -303,3 +303,26 @@ def test_dropped_accounts_still_logged_from_feed_without_snapshots(tmp_path):
     assert all(r["dropped"] and not r["snap"] and not r["backfill"] for r in fills)
     assert not cc.snaps and "mm" not in cc.watch
     assert all(a["nick"] != "mm" for a in cc.update_status(1_000_000.0)["accounts"])
+
+
+def test_feed_delay_stats_and_source(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            return Resp({"trades": [trade("f1", taker="sharp", t="2026-11-10T20:00:00Z")], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 10, 20, 0, 12, tzinfo=timezone.utc).timestamp()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: now, req_gap=0)
+    cc.watch = {"sharp": {"pnl": 5}}
+    cc.seen["sharp"] = set()
+    cc.poll_feed(now)
+    assert cc.feed_lags == [12.0]
+    f = [r for r in rows(tmp_path) if r.get("kind") == "fill"]
+    assert f[0]["src"] == "feed"
+    sc = cc.update_status(now)["scan"]
+    assert sc["feed_lag_s"]["p50"] == 12.0 and sc["copy_lag_s"]["feed"]["n"] == 1
