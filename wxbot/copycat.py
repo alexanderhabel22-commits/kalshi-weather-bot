@@ -13,7 +13,8 @@ How it works (one thread, polite polling of Kalshi's public social API):
   - each account is scored on a rolling window of its last 50 settled copies: it passes while the
     pessimistic estimate is >= 0 (min 20 settled), fails when it isn't, and can pass again later;
   - passing accounts get every other poll (each checked every few seconds);
-  - poll each watched account's public trades round-robin (about every 30-60 s per account);
+  - read the global public trade feed about every second (one read covers every watched account),
+    and also poll each watched account's own trades round-robin as a backstop;
   - each new fill is logged with the sharp's side (yes/no), price, size, maker/taker, the trade's
     own timestamp and when we saw it (detection lag);
   - the market is snapshotted (best bid/ask, last) when we see the fill and at +1, +5, +30 min.
@@ -58,6 +59,8 @@ MIN_SETTLED = 20
 SNAP_DELAYS = (0, 60, 300, 1800)
 SNAP_GAP_S = 300            # at most one snapshot series per (account, ticker) per 5 min
 MAX_PENDING = 4000          # cap on queued snapshots
+FEED_EVERY_S = 1.0          # global public trade feed: every account's new trades in one read
+FEED_PAGES = 3
 REQ_GAP_S = 0.4             # spacing between API calls (~150/min; a 3/s test had 0 errors)
 WATCH_REFRESH_S = 12 * 3600
 STATUS_EVERY_S = 300
@@ -309,6 +312,8 @@ class Copycat:
         self.alert = alert or (lambda t, b: None)
         self.copied_once: set[str] = set()
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
+        self.feed_seen: set[str] = set()         # trade ids already read from the global feed
+        self.feed_next = 0.0
         self._boss_busy = False
         self._lock = threading.Lock()
 
@@ -438,6 +443,40 @@ class Copycat:
     # -- one account
     def poll(self, nick: str, now: float) -> None:
         trades = self.get(f"{SOCIAL}/trades", nickname=nick, limit=50).get("trades") or []
+        self.ingest(nick, trades, now)
+        if len(self.seen[nick]) > 5000:            # keep memory bounded
+            self.seen[nick] = {t.get("trade_id") for t in trades}
+
+    def poll_feed(self, now: float) -> None:
+        """One read of Kalshi's global public trade feed covers every watched account at once
+        (newest first, 100 per page; reads up to FEED_PAGES pages back to the last trade seen).
+        Accounts are only fed from here after their own first poll, so backfill stays marked."""
+        new, cursor = [], None
+        for _ in range(FEED_PAGES):
+            params = {"limit": 100}
+            if cursor:
+                params["cursor"] = cursor
+            j = self.get(f"{SOCIAL}/trades", **params)
+            page = j.get("trades") or []
+            fresh = [t for t in page if t.get("trade_id") and t["trade_id"] not in self.feed_seen]
+            new += fresh
+            cursor = j.get("cursor")
+            if not self.feed_seen or len(fresh) < len(page) or not cursor:
+                break
+        self.feed_seen.update(t["trade_id"] for t in new)
+        if len(self.feed_seen) > 50_000:
+            self.feed_seen = {t["trade_id"] for t in new}
+        by: dict[str, list] = defaultdict(list)
+        for t in new:
+            for k in ("taker_nickname", "maker_nickname"):
+                n = t.get(k)
+                if n and n in self.watch and n in self.seen:
+                    by[n].append(t)
+        for n, ts in by.items():
+            self.ingest(n, ts, now)
+
+    def ingest(self, nick: str, trades: list[dict], now: float) -> None:
+        """Logs an account's new trades (newest first, as the API sends them)."""
         first = nick not in self.seen
         seen = self.seen.setdefault(nick, set())
         for t in reversed(trades):
@@ -466,8 +505,6 @@ class Copycat:
             self.last_snap[key] = now
             for d in SNAP_DELAYS:
                 self.snaps.append((now + d, d, nick, key[1], tid))
-        if len(seen) > 5000:                       # keep memory bounded
-            self.seen[nick] = {t.get("trade_id") for t in trades}
 
     def category(self, ticker: str) -> str | None:
         """Kalshi category of a market's series (e.g. 'Sports'), cached."""
@@ -520,6 +557,12 @@ class Copycat:
                 self.scout()
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat scout: %s", exc)
+        if now >= self.feed_next:
+            self.feed_next = now + FEED_EVERY_S
+            try:
+                self.poll_feed(now)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat feed: %s", exc)
         hot = [n for n in self.watch if n in self.hot]
         names = list(self.watch)
         if names:
