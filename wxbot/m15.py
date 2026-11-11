@@ -156,6 +156,12 @@ DEFAULTS = {
     "fv": True,
     "fv_coins": {"KXBTC15M": "BTC", "KXETH15M": "ETH", "KXSOL15M": "SOL"},
     "fv_every_s": 5,
+    # fair-value FILTER (changes trading when on): skip/pull the favourite bid when our side's
+    # fair value < bid - margin, with >= min_left seconds left. OFF until the market's 500 review.
+    "fv_skip": False,
+    "fv_skip_series": ["KXBTC15M"],
+    "fv_skip_margin": 0.0,
+    "fv_skip_min_left_s": 180,
 }
 
 
@@ -875,6 +881,11 @@ class Bot(FillQuality):
             if o:
                 self._end_order(m)
             return
+        if self.fv_blocks(m, want, now):
+            m["why"] = "fair value below bid"
+            if o:
+                self._end_order(m)                      # pull a resting bid the model now dislikes
+            return
         if o:
             if want is None:
                 return                                   # keep resting (still in band)
@@ -927,6 +938,34 @@ class Bot(FillQuality):
                 return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, n_new, now)
+
+    def fv_blocks(self, m: dict, want, now: float) -> bool:
+        """Fair-value filter (OFF by default; Alex Nov 10 "ok then do them", switch on only at a
+        market's 500 review). True = don't bid / pull our bid: our side's fair value (official CF
+        index when its feed is up, else the rebuilt one) is below the bid by more than the margin.
+        Only with >= fv_skip_min_left_s left (the model is worse than Kalshi's price late).
+        Fails OPEN: no fair value -> behave exactly as before."""
+        s = self.s
+        if not s.get("fv_skip") or self.fv is None or not want:
+            return False
+        if m["series"] not in (s.get("fv_skip_series") or []):
+            return False
+        if m["close"] - now < float(s.get("fv_skip_min_left_s", 180)):
+            return False
+        try:
+            fv = self.fv.fair_value(m, now)
+        except Exception as exc:
+            log.warning("fair value %s: %s", m["ticker"], exc)
+            return False
+        if not fv:
+            return False
+        y = fv["fv_cf"] if fv.get("fv_cf") is not None else fv["fv_yes"]
+        side, q = want
+        fair = y if side == "yes" else 1 - y
+        if fair < q - float(s.get("fv_skip_margin", 0.0)) - 1e-9:
+            m["fv_skips"] = int(m.get("fv_skips", 0)) + 1
+            return True
+        return False
 
     def group_full(self, m: dict) -> bool:
         """True when this market is in the correlated group, holds nothing yet, and enough
