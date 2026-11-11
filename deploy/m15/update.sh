@@ -73,3 +73,5 @@ bash "$APP/deploy/m15/install-watch.sh" || echo "watch install failed"
 bash "$APP/deploy/m15/install-srclog.sh" || echo "srclog install failed"
 # Copycat in shadow mode (logging only; never trades, never reads the Kalshi key)
 bash "$APP/deploy/m15/install-copycat.sh" || echo "copycat install failed"
+# One-time order speed test (1c post-only bids, cancelled at once; runs once per version)
+bash "$APP/deploy/m15/run-latency-probe.sh" || echo "latency probe failed"
