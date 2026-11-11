@@ -1,0 +1,52 @@
+name: xv-research
+
+# Research only: log Kalshi vs Polymarket (US + international) 15-min BTC/silver quotes side by
+# side. Public read-only data; never trades, no secrets. Runs only on push to this research
+# branch. Output goes to the xv-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-32j0yp"]
+    paths: ["research_xv/log.py", ".github/workflows/xv-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xv-research
+  cancel-in-progress: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Log
+        env:
+          MINUTES: ${{ github.event.head_commit.message == 'probe' && 4 || 330 }}
+        run: timeout $(( MINUTES * 60 + 300 )) python -u research_xv/log.py out $MINUTES 3 || echo "stopped"
+      - name: Save to xv-research-data branch
+        if: always() && hashFiles('out/log.txt') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%dT%H%MZ)"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin xv-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/xv-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "xv log $stamp" || exit 0
+            git push origin HEAD:xv-research-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
