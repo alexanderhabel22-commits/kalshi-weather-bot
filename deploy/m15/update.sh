@@ -69,3 +69,5 @@ else
 fi
 # AI ops watcher timer (no-op when already installed; it does nothing without ANTHROPIC_API_KEY)
 bash "$APP/deploy/m15/install-watch.sh" || echo "watch install failed"
+# Source shadow logger (logging only; never trades, never reads the Kalshi key)
+bash "$APP/deploy/m15/install-srclog.sh" || echo "srclog install failed"

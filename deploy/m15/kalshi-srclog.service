@@ -1,0 +1,24 @@
+[Unit]
+Description=Shadow logger: settlement-source changes vs Kalshi prices (logs only, never trades)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kalshi
+WorkingDirectory=/opt/kalshi-m15/app
+# Needs only GITHUB_TOKEN from the env file (uploads); srclog.main() drops every other
+# variable (Kalshi key, ntfy topic, API keys) before doing anything.
+EnvironmentFile=/etc/kalshi-m15/env
+ExecStart=/opt/kalshi-m15/venv/bin/python bot.py srclog -v
+Environment=SRCLOG_DIR=/var/lib/kalshi-srclog
+StateDirectory=kalshi-srclog
+Restart=always
+RestartSec=60
+Nice=10
+CPUQuota=20%
+MemoryMax=300M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
