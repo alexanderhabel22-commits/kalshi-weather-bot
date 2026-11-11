@@ -8,7 +8,7 @@ from collections import defaultdict
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from . import daybefore, kalshi, launches, ledger, rain
+from . import daybefore, kalshi, latepaper, launches, ledger, rain
 from .util import DATA_DIR
 
 REPORT = DATA_DIR / "REPORT.md"
@@ -259,6 +259,7 @@ def build_report(rows: list[dict], census: dict, frows: list[dict], cfg, now: da
     lines += _forecast_section(frows)
     lines += rain.report_section(rain.load())
     lines += daybefore.report_section(daybefore.load_orders())
+    lines += latepaper.report_section(latepaper.load_orders())
     from . import trader
     lines += trader.report_section(trader.load_all(), cfg)
     lines += launches.report_section(launches.load())

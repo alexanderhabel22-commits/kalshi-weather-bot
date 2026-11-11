@@ -496,11 +496,12 @@ def lcfg(**kw):
 
 
 def test_only_approved_strategies_trade_real_money():
-    # Alex, Nov 5 7 PM ET: mentions, favorites, macro_fade, weather (small) live; LOCKs paper
+    # Alex, Nov 5 7 PM ET: mentions, favorites, macro_fade live; LOCKs paper.
+    # Weather day-before was a small real-money test Nov 5-11 and is back on paper.
     c = load_config()
     live = {n for n in trader.strategies()
             if trader.strategy_mode(c.raw["trading"]["mode"], c.raw["trading"].get(n, {})) == "live"}
-    assert live == {"mentions", "favorites", "macro_fade", "weather"}
+    assert live == {"mentions", "favorites", "macro_fade"}
     assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
 
 
