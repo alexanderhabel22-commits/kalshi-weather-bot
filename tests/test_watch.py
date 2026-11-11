@@ -192,3 +192,11 @@ def test_memory_fed_back_and_streaks(tmp_path, monkeypatch):
     state = json.loads((tmp_path / "w.json").read_text())
     assert state["notes"] == ["Coinbase feed drops most nights ~2 AM ET; harmless"]   # no dupes
     assert sum("new: Coinbase" in e for e in state["journal"]) == 1   # logged once, not every run
+
+
+def test_reworded_note_replaces_old_one():
+    st = {"notes": ["Coinbase feed drops at night; harmless"]}
+    watch.remember(st, "KXBTC15M decay_alert has recurred on every check; keep reporting it until it clears.", 8)
+    watch.remember(st, "KXBTC15M decay_alert has recurred on every 2026-11-11 check; report it until it clears.", 8)
+    assert len(st["notes"]) == 2 and "2026-11-11" in st["notes"][-1]
+    assert st["notes"][0].startswith("Coinbase")
