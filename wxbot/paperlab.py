@@ -33,7 +33,19 @@ MM_CATS = ("Mentions", "Science and Technology", "Financials", "Politics", "Elec
            "Social")
 MM = {"markets": 20, "per_event": 2, "min_spread": 0.03, "min_vol24": 100.0, "mid_lo": 0.10,
       "mid_hi": 0.90, "cycle_s": 60, "select_s": 6 * 3600, "max_inv": 10, "event_pages": 400}
-RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20), "check_s": 600, "keep_days": 4}
+RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20), "check_s": 600, "keep_days": 4,
+       "pages": 5,                  # the open-RFQ list is paged 100 at a time (one poll hit 100)
+       # what a small real test would allow: per combo at most this many contracts and this much loss
+       "cap_ct": 25, "max_loss": 3.0}
+
+
+def capped_size(row: dict, q: float) -> float:
+    """Contracts we would sell at quote q: the request's size, capped by cap_ct and max_loss."""
+    n = row.get("contracts") or 0.0
+    if not n and row.get("target_cost") and q > 0:       # size given as a dollar amount instead
+        n = row["target_cost"] / q
+    room = RFQ["max_loss"] / max(1e-9, 1 - q)            # selling YES at q loses (1 - q) per contract
+    return float(max(0, int(min(n, RFQ["cap_ct"], room) + 1e-9)))
 
 
 def _f(x, d=None):
@@ -305,19 +317,28 @@ class RfqPaper:
     def poll(self) -> None:
         now = self.lab.clock()
         self.st["polls"] += 1
-        try:
-            js = self.lab.get("/communications/rfqs", {"status": "open", "limit": 100}, signed=self.client)
-        except Exception as exc:  # noqa: BLE001
-            self.st["errors"] += 1
-            self.st["last_error"] = str(exc)[:300]
-            return
-        for r in js.get("rfqs") or []:
+        got, cursor = [], None
+        for _ in range(RFQ["pages"]):
+            params = {"status": "open", "limit": 100, **({"cursor": cursor} if cursor else {})}
+            try:
+                js = self.lab.get("/communications/rfqs", params, signed=self.client)
+            except Exception as exc:  # noqa: BLE001
+                self.st["errors"] += 1
+                self.st["last_error"] = str(exc)[:300]
+                break
+            got += js.get("rfqs") or []
+            cursor = js.get("cursor")
+            if not cursor or len(js.get("rfqs") or []) < 100:
+                break
+        for r in got:
             rid = r.get("id") or r.get("rfq_id")
             if not rid or rid in self.st["rfqs"]:
                 continue
             legs = self.legs(r)
             row = {"id": rid, "t": now, "ticker": r.get("market_ticker"), "n_legs": len(legs),
                    "contracts": _f(r.get("contracts_fp"), _f(r.get("contracts"))),
+                   # requests can name a dollar amount instead of contracts (contracts_fp then reads 0)
+                   "target_cost": _f(r.get("target_cost_dollars")),
                    "created": r.get("created_ts") or r.get("created_time"),
                    "cross": len(legs) >= 2 and len({lg["ev"] for lg in legs}) == len(legs)}
             if row["cross"]:
@@ -370,8 +391,22 @@ class RfqPaper:
         for m in map(str, RFQ["margins"]):
             won = [r for r in cross if r.get("traded") and any(p > r["quotes"][m] for p in r["traded"])]
             pn = [r["pnl_c"][m] for r in done]
+            # what we would really have traded: only requests a taker filled above our quote
+            ww = [r for r in done if r.get("traded") and any(p > r["quotes"][m] for p in r["traded"])]
+            wpn = [r["pnl_c"][m] for r in ww]
+            dol = [capped_size(r, r["quotes"][m]) * r["pnl_c"][m] / 100 for r in ww]
             out["by_margin"][m] = {"would_win": len(won), "settled": len(pn),
-                                   "pnl_c_per_ct": round(sum(pn) / len(pn), 2) if pn else None}
+                                   "pnl_c_per_ct": round(sum(pn) / len(pn), 2) if pn else None,
+                                   "won_settled": len(wpn),
+                                   "won_pnl_c_per_ct": round(sum(wpn) / len(wpn), 2) if wpn else None,
+                                   "won_wins": sum(1 for x in wpn if x > 0),
+                                   "capped_pnl_dollars": round(sum(dol), 2),
+                                   "capped_worst_dollars": round(min(dol), 2) if dol else None}
+        out["sized"] = sum(1 for r in cross if (r.get("contracts") or 0) > 0 or r.get("target_cost"))
+        out["caps"] = {"cap_ct": RFQ["cap_ct"], "max_loss": RFQ["max_loss"]}
+        # compact rows for offline grading (settled first, newest last)
+        keep = ("id", "t", "n_legs", "contracts", "target_cost", "fair", "quotes", "traded", "result")
+        out["settled_rows"] = [{k: r.get(k) for k in keep} for r in sorted(done, key=lambda r: r["t"])][-1500:]
         out["recent"] = sorted(rows, key=lambda r: -r["t"])[:20]
         return out
 

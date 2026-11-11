@@ -106,3 +106,13 @@ def test_rfq_prices_cross_combos_and_scores(tmp_path):
     st = rq.status()
     assert st["by_margin"]["0.1"]["would_win"] == 1
     assert st["by_margin"]["0.1"]["pnl_c_per_ct"] == 45.0         # sold YES at 45c, it settled NO
+    assert st["by_margin"]["0.1"]["won_pnl_c_per_ct"] == 45.0
+    assert st["by_margin"]["0.1"]["capped_pnl_dollars"] == 2.25   # loss cap: $3 / 55c risk = 5 contracts x 45c
+    assert len(st["settled_rows"]) == 1
+
+
+def test_capped_size_uses_dollar_size_and_loss_cap():
+    from wxbot.paperlab import capped_size
+    assert capped_size({"contracts": 0.0, "target_cost": 4.0}, 0.8) == 5       # $4 at 80c
+    assert capped_size({"contracts": 100.0}, 0.1) == 3                        # $3 / 90c risk
+    assert capped_size({"contracts": 100.0}, 0.9) == 25                       # contract cap
