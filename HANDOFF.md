@@ -325,6 +325,24 @@ IP without a token). It never places, changes or cancels anything and needs no s
 - Don't copy market makers (their fills are flow, not views); the score fails them on its own. The top
   ~50 accounts hide their trades. Background: Library analysis/leaderboard/RESULTS.md.
 
+## Liquidity-reward test (built Nov 11, 2026; real money, small, 3 days)
+- Kalshi pays daily rewards for resting orders in ~5,000 markets until Jan 1, 2027 (GET
+  /incentive_programs). Research: /mnt/project-files/analysis/overnight-ideas/RESULTS.md, idea #1.
+  Alex OK'd a ~$20, 3-day real test on Nov 11 8:23 AM ET.
+- `wxbot/lip.py`, `python bot.py lip`, systemd service `kalshi-lip` on the 15-min server (installed by
+  the hourly update via `deploy/m15/install-lip.sh`). Every 5 min: rests post-only bids 1c above the
+  best bid on the cheap side (1-8c) of 8 quiet reward markets (market closes 21+ days out, exchange
+  shard 0, no sports), front of the line, moves up at most every 30 min when outbid.
+- Switch `lip_control.json` on main: mode live/off, budget $20 (resting + filled), reserve $6 of free
+  cash always left on shard 0 for the main bot, fill_stop $10 (halt), until 2026-11-14 16:00 UTC (goes
+  off by itself). Also off with TRADING_MODE off/paper, a live halt, or if the switches can't be read
+  for 30 min. Off cancels every bid. Fills are held to settlement.
+- Orders use client ids `lip-` and their own ceilings (kalshi_api.LIP_MAX_*: <=500 ct, <=10c, <=$6
+  per order). The tax ledger tags them "rewards bot".
+- Payouts: logged from GET /portfolio/credit_history every hour. Status: `m15/lip-status.json` on branch
+  `m15-data` (every 15 min: orders, fills, our estimated share, credits, events). State
+  /var/lib/kalshi-lip/state.json, daily logs there too.
+
 ## Source shadow logger (built Nov 10, 2026, logging only)
 
 - `wxbot/srclog.py`, `python bot.py srclog`. Separate systemd service `kalshi-srclog` on the 15-min
