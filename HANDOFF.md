@@ -89,6 +89,9 @@ record earns it. Be candid about odds and risk; no hype.
   the same in a series' first 4 weeks as later (paired diff +0.2c/contract,
   SE 0.4c), so no "be early" edge; no trading strategy built on it.
   Daily rain series (Weather Company source) are not covered.
+  **Result (Nov 11):** 14 thresholds passed in 9 cities; every one was
+  already $1.00 with nothing for sale, even at the provisional sighting hours
+  before the official report. Rain locks are priced in. Turned off.
 - Risk level: normal.
 
 ## Grading data (all in `data/`, committed by the bot)
