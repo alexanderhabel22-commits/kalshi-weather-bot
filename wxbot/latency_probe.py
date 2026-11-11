@@ -24,7 +24,7 @@ from .m15 import client_from_env, github_uploader
 from .util import Http
 
 log = logging.getLogger("wxbot")
-VERSION = "v2"
+VERSION = "v3"
 ROUNDS = 10
 
 
@@ -119,16 +119,20 @@ def run(http: Http, client, rounds: int = ROUNDS, pause=time.sleep) -> dict:
 
 def main() -> int:
     logging.basicConfig(level=logging.INFO)
-    http = Http("kalshi-m15-latency/1", min_interval=0.0, retries=1)
-    client = client_from_env(http)
-    if client is None:
-        log.warning("no Kalshi key: latency probe skipped")
-        return 1
-    res = run(http, client)
-    res["host_base"] = BASE
+    token = os.environ.get("GITHUB_TOKEN", "").strip()
+    try:
+        http = Http("kalshi-m15-latency/1", min_interval=0.0, retries=1)
+        client = client_from_env(http)
+        if client is None:
+            res = {"version": VERSION, "error": "no Kalshi key in the environment"}
+        else:
+            res = run(http, client)
+            res["host_base"] = BASE
+    except Exception:                     # report the failure instead of failing silently
+        import traceback
+        res = {"version": VERSION, "error": traceback.format_exc()[-2000:]}
     text = json.dumps(res, indent=1)
     print(text)
-    token = os.environ.get("GITHUB_TOKEN", "").strip()
     if token:
         github_uploader(Http("kalshi-m15-latency/1"), token)({"latency-probe.json": text})
     return 0
