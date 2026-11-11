@@ -16,7 +16,7 @@ def cfg(mode="paper", bankroll=40.0, **mentions_kw):
     c = load_config()
     c.raw["account"]["bankroll"] = bankroll
     c.raw["trading"]["mode"] = mode
-    for name in ("mentions", "favorites", "macro_fade", "locks", "weather"):
+    for name in ("mentions", "favorites", "macro_fade", "locks", "weather", "weather_late"):
         c.raw["trading"][name]["live"] = False      # tests opt in to real money explicitly
     c.raw["trading"]["mentions"].update({"contracts": 3, "word_pct": 0.05})   # sizes these tests were written for
     c.raw["trading"]["mentions"].update(mentions_kw)
@@ -501,7 +501,10 @@ def test_only_approved_strategies_trade_real_money():
     c = load_config()
     live = {n for n in trader.strategies()
             if trader.strategy_mode(c.raw["trading"]["mode"], c.raw["trading"].get(n, {})) == "live"}
-    assert live == {"mentions", "favorites", "macro_fade"}
+    # Alex, Nov 11 2:18 PM ET: late-day lows (weather_late) live in its place, 1 contract.
+    assert live == {"mentions", "favorites", "macro_fade", "weather_late"}
+    wl = c.raw["trading"]["weather_late"]
+    assert wl["contracts"] == 1 and wl["max_open_pct"] <= 0.15 and wl["metrics"] == ["low"] and wl["kinds"] == ["need"]
     assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
 
 

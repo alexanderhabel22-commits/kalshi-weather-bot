@@ -77,7 +77,9 @@ this is a few dollars a month per contract, not a big number.
 
 **Status:** paper test live in the main scan (`wxbot/latepaper.py`,
 `data/paper_late.csv`, section in REPORT.md), lows and highs, both order kinds.
-Review at 300 filled low orders (about 6 weeks). Real money needs Alex's OK.
+**Real money since Nov 11 (Alex's OK):** strategy `weather_late` trades the lows
+"need" orders at 1 contract (15% of bankroll cap, own stop at -10% of bankroll).
+Highs and the "holds" orders stay on paper. Reviews at 100/300/500 contracts.
 
 ## 3. Better forecast sources
 

@@ -160,7 +160,7 @@ def report_section(orders: list[dict]) -> list[str]:
              "temperature to pass today's low/high so far (kind need, buys NO) and buys the bracket "
              "that holds it (kind holds). Filled = a real trade printed at our price or better. "
              "Backtest for lows, need: +3.7c per contract in Sep-Nov 2026. "
-             "Judge at 300 filled lows (about 6 weeks).", ""]
+             "The lows, need orders also trade real money (strategy weather_late).", ""]
     if not orders:
         return lines + ["No orders yet.", ""]
     done = [o for o in orders if o.get("status") in ("filled", "unfilled")]

@@ -44,6 +44,8 @@ EXPECTED = {
                    "source": "research_alloc streams: 256 fills, 93% hit, +6.3c per $1"},
     "weather":    {"per_dollar": 0.02,  "price": 0.45, "event_sd": None, "events_week": 20,
                    "source": "day-before maker ~+1c/contract this fall (unproven)"},
+    "weather_late": {"per_dollar": 0.05, "price": 0.74, "event_sd": None, "events_week": 45,
+                     "source": "research_wx: late-day lows +3.7c/contract Sep-Nov 2026 at ~74c (backtest)"},
 }
 
 DEFAULTS = {

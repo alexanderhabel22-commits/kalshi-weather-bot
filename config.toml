@@ -81,8 +81,9 @@ spread_inflation = 1.15
 # live = true (it passed its paper test and Alex said go); otherwise paper.
 # New edge = a module in wxbot/strats/ (NAME + propose) + a [trading.<NAME>] table.
 mode = "live"                    # REAL money since Nov 5 7 PM ET (Alex's OK) for the strategies
-                                 # whose table says live = true: mentions, favorites, macro_fade.
-                                 # Weather day-before back to paper Nov 11. LOCKs stay paper. KILL SWITCH: set the GitHub
+                                 # whose table says live = true: mentions, favorites, macro_fade,
+                                 # weather_late (late-day lows, Nov 11). Weather day-before back
+                                 # to paper Nov 11. LOCKs stay paper. KILL SWITCH: set the GitHub
                                  # variable TRADING_MODE to off (Settings > Secrets and variables
                                  # > Actions > Variables), or paper to go back to paper.
 max_contracts_per_order = 10     # hard per-order size limit (each strategy's own size is smaller)
@@ -217,6 +218,24 @@ max_open_pct = 0.15             # small test: at most 15% of the bankroll (~$7.5
 max_event_pct = 0.15
 exit = "model"                   # sell ~12h before close only if the fresh forecast says the bid is worth 8c+ more than holding
 exit_margin = 0.08
+
+[trading.weather_late]
+# Late-day lows (wxbot/strats/weather_late.py, research_wx/RESULTS.md): from about noon on,
+# buy NO 1c inside the offer on LOW brackets below the low already recorded (spread 4c+),
+# hold to settlement. Backtest +5.7c per contract (Oct 2025-Aug 2026), +3.7c (Sep-Nov 2026).
+# REAL money since Nov 11 (Alex's OK), replacing the day-before weather test.
+# Reviews at 100/300/500 contracts like every live market; freeze applies until 500.
+enabled = true
+live = true
+contracts = 1                    # per order; raise only at a review
+metrics = ["low"]                # highs stay on paper (only worked in the cool season)
+kinds = ["need"]                 # "holds" orders stay on paper (noisier)
+max_open_pct = 0.15              # at most 15% of the bankroll at once (about 7 orders a day at ~75c)
+max_event_pct = 0.08             # one city-day
+max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
+exit = "hold"                    # the tested rule holds to settlement
+max_week_contracts = 4000
+max_market_contracts = 50
 
 [allocator]
 # Grades every strategy on profit per $1 risked (settled REAL-money results only,

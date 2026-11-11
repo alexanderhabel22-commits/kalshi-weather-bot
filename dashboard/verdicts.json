@@ -18,6 +18,11 @@
       "backtest_c": 3.7,
       "backtest_note": "Resting bids on 85-96c favorites in Elections/Politics/Entertainment events with 1M+ contracts traded, Feb 2025-Oct 2026, 317 events, 88% up"
     },
+    "weather_late": {
+      "label": "Late-day lows",
+      "backtest_c": 3.7,
+      "backtest_note": "Sell LOW brackets below the low already recorded, 1c inside the offer, spread 4c+. +5.7c per contract Oct 2025-Aug 2026, +3.7c Sep-Nov 2026. Real money since Nov 11."
+    },
     "weather": {
       "label": "Weather day-before",
       "backtest_c": 1.0,
@@ -67,8 +72,8 @@
      "summary": "Research just started."},
     {"date": "2026-11-11", "title": "Weather day-before back to paper", "verdict": "PAPER", "area": "Weather",
      "summary": "Kalshi's prices now forecast tomorrow's temperature better than our models do (1.31F miss vs 1.60F), so the edge is gone. Real test lost $3.95 on 43 contracts. Re-check Jan-Feb."},
-    {"date": "2026-11-11", "title": "Late-day lows", "verdict": "PAPER TEST", "area": "Weather",
-     "summary": "After midday the market overpays for brackets below the low already recorded. Selling them backtests at +5.7c per contract (Oct 2025-Aug 2026) and +3.7c (Sep-Nov 2026), about 7 fills a day. Verdict at 300 paper fills."}
+    {"date": "2026-11-11", "title": "Late-day lows", "verdict": "LIVE", "area": "Weather",
+     "summary": "After midday the market overpays for brackets below the low already recorded. Selling them backtests at +5.7c per contract (Oct 2025-Aug 2026) and +3.7c (Sep-Nov 2026), about 7 fills a day. Real money at 1 contract since Nov 11 (Alex's OK); reviews at 100/300/500 contracts."}
   ],
   "checkpoints": [
     {"date": "2026-11-07", "title": "LOCK verdict"},
@@ -78,7 +83,7 @@
     {"date": "2026-11-17", "title": "Project checkpoint: sizing and next steps"},
     {"date": "2026-11-18", "title": "Hourly longshot re-test"},
     {"date": "2026-12-03", "title": "Mentions paper judged"},
-    {"date": "2026-12-20", "title": "Late-day lows paper verdict (300 fills)"},
+    {"date": "2026-11-26", "title": "Late-day lows 100-contract review"},
     {"date": "2027-01-25", "title": "Renew the scan timer token (expires Feb 2)"},
     {"date": "2027-02-01", "title": "Econ weak leads re-test"}
   ]
