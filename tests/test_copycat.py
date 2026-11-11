@@ -449,3 +449,23 @@ def test_whale_rows_survive_load_rows(tmp_path):
     cc.spot_whale(dict(trade("w1", side="yes", px="0.80"), count_fp="3000.00"), 1_000_000.0)
     got = [r for r in copycat.load_rows(tmp_path) if r.get("kind") == "whale"]
     assert len(got) == 1 and copycat.whale_summary(got, {}, 1_000_000.0)["anon_count"] == 1
+
+
+def test_load_rows_folds_snaps_across_hours_and_skips_unscored(tmp_path):
+    import gzip as gz
+    import json as js
+    a = [{"kind": "fill", "v": 2, "nick": "n", "trade_id": "t1", "ticker": "K", "side": "yes", "yes_price": 0.5,
+          "snap": True, "ts": 1.0},
+         {"kind": "fill", "v": 2, "nick": "n", "trade_id": "t2", "ticker": "K", "snap": False, "backfill": True},
+         {"kind": "fill", "v": 1, "nick": "n", "trade_id": "t0", "ticker": "K", "side": "yes", "yes_price": 0.5},
+         {"kind": "snap", "trade_id": "t1", "ticker": "K", "delay": 0, "bid": 0.48, "ask": 0.52, "result": None}]
+    b = [{"kind": "snap", "trade_id": "t1", "ticker": "K", "delay": 60, "bid": 0.6, "ask": 0.62, "result": "yes"}]
+    with gz.open(tmp_path / "copycat-2026-11-11-01.jsonl.gz", "wt") as fh:
+        fh.write("\n".join(js.dumps(r, separators=(",", ":")) for r in a) + "\n")
+    (tmp_path / "copycat-2026-11-11-02.jsonl").write_text(js.dumps(b[0]) + "\n{torn")
+    rows = copycat.load_rows(tmp_path)
+    fills = [r for r in rows if r["kind"] == "fill"]
+    assert [f["trade_id"] for f in fills] == ["t1"] and fills[0]["_s"] == {0: (0.48, 0.52), 60: (0.6, 0.62)}
+    res = {}
+    g = copycat.grade(rows, res)
+    assert res == {"K": "yes"} and len(g["n"]["settle"]) == 1

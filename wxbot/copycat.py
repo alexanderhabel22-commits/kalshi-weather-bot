@@ -203,9 +203,12 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
             snaps[r["trade_id"]][r["delay"]] = r
             if r.get("result") in ("yes", "no") and results is not None:
                 results.setdefault(r["ticker"], r["result"])
+        elif r.get("kind") == "result" and results is not None:
+            results.setdefault(r["ticker"], r["result"])
     out: dict = defaultdict(lambda: defaultdict(list))
     for tid, f in fills.items():
-        s = snaps.get(tid) or {}
+        s = ({d: {"bid": b, "ask": a} for d, (b, a) in f["_s"].items()} if f.get("_s")
+             else snaps.get(tid) or {})
         s0 = s.get(0)
         if not s0 or s0.get("bid") is None or s0.get("ask") is None:
             continue
@@ -302,37 +305,73 @@ def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
     return round(m, 2), round(m - 1.645 * se, 2)
 
 
-_ROW_CACHE: dict[str, list[dict]] = {}
+_ROW_CACHE: dict[str, tuple[list[dict], dict]] = {}
 
 
 def _slim(r: dict) -> bool:
-    """Rows the scoring needs: snapped fills, their snapshots and big-bet rows (keeps memory small)."""
-    return r.get("kind") in ("snap", "whale") or (r.get("kind") == "fill" and r.get("snap", True)
-                                         and not r.get("backfill"))
+    """Rows the scoring needs: snapped fresh-start fills, their snapshots and big-bet rows (keeps
+    memory small)."""
+    k = r.get("kind")
+    if k == "fill":
+        return r.get("snap", True) and not r.get("backfill") and (r.get("v") or 1) >= ROW_V
+    return k in ("snap", "whale")
+
+
+def _read_part(p: Path, prev: dict) -> tuple[list[dict], dict]:
+    """One hour's scoring rows, streamed line by line: a busy hour is tens of MB once unzipped, and
+    reading whole files pushed the service past its 200 MB cap (crash loop, Nov 11 4:28 AM ET).
+    To keep memory small each snapshot is folded into its fill (fill["_s"] = {delay: (bid, ask)});
+    snapshots come within ~5 min, so a fill from this hour or the one before is found. Settled
+    results become one small {"kind": "result"} row per ticker."""
+    part, tids, res = [], {}, {}
+    try:
+        with (gzip.open(p, "rt", encoding="utf-8") if p.suffix == ".gz"
+              else open(p, encoding="utf-8")) as fh:
+            for x in fh:
+                if '"fill"' in x and ('"snap":false' in x or '"snap": false' in x):
+                    continue                        # unsnapped fills are never scored: skip the parse
+                try:
+                    r = json.loads(x)
+                except ValueError:
+                    continue
+                if not _slim(r):
+                    continue
+                if r["kind"] == "snap":
+                    if r.get("result") in ("yes", "no") and r.get("ticker"):
+                        res[r["ticker"]] = r["result"]
+                    f = tids.get(r.get("trade_id")) or prev.get(r.get("trade_id"))
+                    if f is not None:
+                        f.setdefault("_s", {})[r.get("delay")] = (r.get("bid"), r.get("ask"))
+                    continue
+                if r["kind"] == "fill":
+                    for k in ("trade_time", "snap", "dropped"):
+                        r.pop(k, None)
+                    tids[r.get("trade_id")] = r
+                elif r["kind"] == "whale":
+                    for k in ("trade_id", "trade_time", "age_d", "their_pnl", "fills"):
+                        r.pop(k, None)
+                part.append(r)
+    except (OSError, EOFError) as exc:              # a torn gzip tail (killed mid-write) keeps what parsed
+        log.warning("copycat rows %s: %s", p.name, exc)
+    part += [{"kind": "result", "ticker": t, "result": v} for t, v in res.items()]
+    return part, tids
 
 
 def load_rows(d: Path, cache_done_hours: bool = False, now: float | None = None) -> list[dict]:
     rows = []
     cur = (datetime.fromtimestamp(now, timezone.utc).strftime("copycat-%Y-%m-%d-%H.jsonl")
            if now else None)
+    prev: dict = {}
     for p in sorted(d.glob("copycat-*.jsonl*")):
         if cache_done_hours and p.name in _ROW_CACHE:
-            rows += _ROW_CACHE[p.name]
+            part, prev = _ROW_CACHE[p.name]
+            rows += part
             continue
-        raw = p.read_bytes()
-        if p.suffix == ".gz":
-            raw = gzip.decompress(raw)
-        part = []
-        for x in raw.decode().splitlines():
-            try:
-                r = json.loads(x)
-            except ValueError:
-                continue
-            if _slim(r):
-                part.append(r)
+        part, tids = _read_part(p, prev)
         if cache_done_hours and p.name != cur:
-            _ROW_CACHE[p.name] = part
+            _ROW_CACHE[p.name] = (part, tids)
         rows += part
+        prev = tids
     return rows
 
 
