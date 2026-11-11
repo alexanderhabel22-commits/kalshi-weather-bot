@@ -1035,3 +1035,21 @@ def test_fv_filter_fails_open_and_respects_scope(monkeypatch):
     b4, _ = fv_bot(monkeypatch, 0.78, fv_skip=True, fv_skip_margin=0.03)
     b4.step()
     assert b4.state["markets"][TK]["order"]                # 0.78 within the 3c margin of 0.80
+
+
+def test_fv_filter_switches_on_by_itself_at_n_contracts(monkeypatch):
+    b, clk = fv_bot(monkeypatch, 0.50, fv_skip=False, fv_skip_after_contracts=500)
+    alerts = []
+    monkeypatch.setattr(b, "alert", lambda t, body, p=3: alerts.append(t))
+    b.state["series"] = {"KXBTC15M": {"fills": 499, "pnl": 0.0}}
+    b.step()
+    m = b.state["markets"][TK]
+    assert m["order"] and not alerts                 # 499 real contracts: still off
+    b.state["series"]["KXBTC15M"]["fills"] = 500
+    clk.t += 5
+    b.step()
+    assert m["order"] is None and m["why"] == "fair value below bid"
+    assert b.state["fv_skip_on"]["KXBTC15M"] and len(alerts) == 1
+    clk.t += 5
+    b.step()
+    assert len(alerts) == 1                          # alerts once

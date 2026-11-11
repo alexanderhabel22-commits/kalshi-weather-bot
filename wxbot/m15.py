@@ -162,6 +162,7 @@ DEFAULTS = {
     "fv_skip_series": ["KXBTC15M"],
     "fv_skip_margin": 0.0,
     "fv_skip_min_left_s": 180,
+    "fv_skip_after_contracts": 0,     # >0: switch fv_skip on by itself at this many real contracts
 }
 
 
@@ -280,6 +281,7 @@ class Bot(FillQuality):
                       "summary_day": st.get("summary_day"), "started": st.get("started"),
                       "cut": st.get("cut", {}), "series": st.get("series", {}),
                       "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted"),
+                      "fv_skip_on": st.get("fv_skip_on", {}),
                       "code_version": st.get("code_version"), "saved_at": st.get("saved_at"),
                       "fillq": st.get("fillq", [])}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
@@ -946,10 +948,20 @@ class Bot(FillQuality):
         Only with >= fv_skip_min_left_s left (the model is worse than Kalshi's price late).
         Fails OPEN: no fair value -> behave exactly as before."""
         s = self.s
-        if not s.get("fv_skip") or self.fv is None or not want:
+        if self.fv is None or not want or m["series"] not in (s.get("fv_skip_series") or []):
             return False
-        if m["series"] not in (s.get("fv_skip_series") or []):
-            return False
+        if not s.get("fv_skip"):
+            # auto switch-on at the market's Nth real contract (Alex Nov 10: "make them go live at 500")
+            after = int(s.get("fv_skip_after_contracts") or 0)
+            done = float((self.state.get("series", {}).get(m["series"]) or {}).get("fills", 0))
+            if not after or done < after:
+                return False
+            on = self.state.setdefault("fv_skip_on", {})
+            if m["series"] not in on:
+                on[m["series"]] = int(now)
+                self.alert(f"15-min bot: fair-value filter ON for {m['series']}",
+                           f"{done:.0f} real contracts reached (switch-on at {after}). Bids are now "
+                           "skipped when the fair price says they're overpriced (3+ min left).", 3)
         if m["close"] - now < float(s.get("fv_skip_min_left_s", 180)):
             return False
         try:
@@ -1252,6 +1264,7 @@ class Bot(FillQuality):
                   "roll_stop": self.state.get("roll_stop"),
                   "pnl_24h": self.stop_pnl(now) if self.s.get("rolling_stop") else None, "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
                   "last_reject": self.state.get("last_reject"),
+                  "fv_skip_on": self.state.get("fv_skip_on", {}),
                   "shards": self.state.get("shards"), "fund_error": self.state.get("fund_error"),
                   "spot_ok": bool(self.spot is not None and self.spot.healthy()),
                   "live_now": {k: {"mode": m.get("mode"), "why": m.get("why"), "bid_ask": m.get("bid_ask"),
