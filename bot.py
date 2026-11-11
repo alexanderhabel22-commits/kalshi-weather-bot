@@ -10,6 +10,8 @@
   python bot.py backtest-fetch  download history for a backtest (--days, --out)
   python bot.py trade           automatic orders (mode in config [trading]; --dry-run prints only)
   python bot.py srclog          shadow logger: settlement-source changes vs Kalshi prices (server; logs only)
+  python bot.py paperlab       paper tests: wide-spread market making + parlay quote requests (server; no orders)
+  python bot.py lip            liquidity-reward test: cheap resting bids in reward markets (server; lip_control.json)
   python bot.py copycat        shadow logger: public trades of proven winners vs later prices (server; logs only)
   python bot.py m15             always-on 15-minute fade bot (runs on the server; --once = one step)
   python bot.py watch           AI ops watcher, one pass (server timer every 15 min; needs ANTHROPIC_API_KEY)
@@ -33,7 +35,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify",
                                             "backtest-fetch", "trade", "m15", "checkpoint", "watch", "mentions-ai",
-                                            "tax", "srclog", "copycat"])
+                                            "tax", "srclog", "copycat", "lip", "paperlab"])
     ap.add_argument("--dry-run", action="store_true", help="don't send or save anything")
     ap.add_argument("--every", type=int, default=300, help="loop interval in seconds")
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
@@ -65,6 +67,14 @@ def main(argv=None) -> int:
     if args.command == "srclog":
         from wxbot import srclog
         return srclog.main()
+
+    if args.command == "paperlab":
+        from wxbot import paperlab
+        return paperlab.main()
+
+    if args.command == "lip":
+        from wxbot import lip
+        return lip.main()
 
     if args.command == "copycat":
         from wxbot import copycat

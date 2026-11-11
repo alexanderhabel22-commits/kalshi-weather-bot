@@ -13,7 +13,7 @@ max_days_ahead = 1               # 0 = today only, 1 = today + tomorrow
 series = []                      # e.g. ["KXHIGHNY", "KXHIGHCHI"] to limit; empty = all
 skip_cities = []                 # e.g. ["Denver"]
 auto_discover = true             # pick up new/renamed weather series from Kalshi daily
-rain_census = true               # silent test: log monthly rain thresholds already passed (no alerts)
+rain_census = false              # silent test Nov 4-11, 2026: all 14 passed thresholds were already $1.00; off
 paper_daybefore = true           # paper-trade day-before limit orders (no money, no alerts)
 launch_watch = true              # watch for brand-new Kalshi series/categories (data/launches.json)
 

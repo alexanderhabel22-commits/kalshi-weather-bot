@@ -164,7 +164,7 @@ def orders(trades: list[dict]) -> list[dict]:
 
 def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict:
     """Paper record of big single bets: per contract, after the taker fee, as if copied at their price."""
-    out = {"new": [], "old": [], "anon": []}
+    out = {"new": [], "old": [], "anon": [], "new_ours": []}
     recent = []
     for r in rows:
         if r.get("kind") != "whale":
@@ -174,8 +174,11 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
         if res in ("yes", "no") and r.get("paid") is not None:
             c = round(100 * ((1.0 if r["side"] == res else 0.0) - r["paid"]) - taker_fee_c(r["paid"]), 1)
             out["anon" if r.get("anon") else "new" if r.get("new") else "old"].append(c)
+            if r.get("new") and r.get("ours") is not None:   # as we'd really have copied it
+                out["new_ours"].append(round(100 * ((1.0 if r["side"] == res else 0.0) - r["ours"])
+                                             - taker_fee_c(r["ours"]), 1))
         recent.append({**{k: r.get(k) for k in ("et", "nick", "ticker", "side", "paid", "count", "usd", "joined",
-                                                    "markets", "new", "anon", "role", "lag_s")}, "result_c": c})
+                                                    "markets", "new", "anon", "role", "lag_s", "ours")}, "result_c": c})
 
     def stats(v):
         m, lo = mean_low(v)
@@ -185,7 +188,8 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
     named = [x for x in recent if not x.get("anon")]
     return {"min_usd": WHALE_USD, "anon_min_usd": WHALE_ANON_USD, "new_days": WHALE_NEW_DAYS,
             "count": len(named), "new_count": len(nw), "anon_count": len(an),
-            "new": stats(out["new"]), "old": stats(out["old"]), "anon": stats(out["anon"]),
+            "new": stats(out["new"]), "new_ours": stats(out["new_ours"]), "old": stats(out["old"]),
+            "anon": stats(out["anon"]),
             "recent_new": list(reversed(nw))[:40], "recent_anon": sorted(an, key=lambda x: -(x["usd"] or 0))[:10],
             "recent": list(reversed(named))[:40]}
 
@@ -203,9 +207,12 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
             snaps[r["trade_id"]][r["delay"]] = r
             if r.get("result") in ("yes", "no") and results is not None:
                 results.setdefault(r["ticker"], r["result"])
+        elif r.get("kind") == "result" and results is not None:
+            results.setdefault(r["ticker"], r["result"])
     out: dict = defaultdict(lambda: defaultdict(list))
     for tid, f in fills.items():
-        s = snaps.get(tid) or {}
+        s = ({d: {"bid": b, "ask": a} for d, (b, a) in f["_s"].items()} if f.get("_s")
+             else snaps.get(tid) or {})
         s0 = s.get(0)
         if not s0 or s0.get("bid") is None or s0.get("ask") is None:
             continue
@@ -302,38 +309,102 @@ def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
     return round(m, 2), round(m - 1.645 * se, 2)
 
 
-_ROW_CACHE: dict[str, list[dict]] = {}
+_ROW_CACHE: dict[str, tuple[list[dict], dict]] = {}
+KEEP_COPIES = 500           # newest copies per account held in memory for grading (verdicts come at 100-150;
+                            # everything stays on disk). Memory grew ~100 MB/day without it (crash Nov 11)
+WHALE_MEM_DAYS = 3          # big-bet rows held in memory (anonymous $2,000+ bets alone are ~1,000/hour)
 
 
 def _slim(r: dict) -> bool:
-    """Rows the scoring needs: snapped fills, their snapshots and big-bet rows (keeps memory small)."""
-    return r.get("kind") in ("snap", "whale") or (r.get("kind") == "fill" and r.get("snap", True)
-                                         and not r.get("backfill"))
+    """Rows the scoring needs: snapped fresh-start fills, their snapshots and big-bet rows (keeps
+    memory small)."""
+    k = r.get("kind")
+    if k == "fill":
+        return r.get("snap", True) and not r.get("backfill") and (r.get("v") or 1) >= ROW_V
+    return k in ("snap", "whale")
+
+
+def _read_part(p: Path, prev: dict) -> tuple[list[dict], dict]:
+    """One hour's scoring rows, streamed line by line: a busy hour is tens of MB once unzipped, and
+    reading whole files pushed the service past its 200 MB cap (crash loop, Nov 11 4:28 AM ET).
+    To keep memory small each snapshot is folded into its fill (fill["_s"] = {delay: (bid, ask)});
+    snapshots come within ~5 min, so a fill from this hour or the one before is found. Settled
+    results become one small {"kind": "result"} row per ticker."""
+    part, tids, res = [], {}, {}
+    try:
+        with (gzip.open(p, "rt", encoding="utf-8") if p.suffix == ".gz"
+              else open(p, encoding="utf-8")) as fh:
+            for x in fh:
+                if '"fill"' in x and ('"snap":false' in x or '"snap": false' in x):
+                    continue                        # unsnapped fills are never scored: skip the parse
+                try:
+                    r = json.loads(x)
+                except ValueError:
+                    continue
+                if not _slim(r):
+                    continue
+                if r["kind"] == "snap":
+                    if r.get("result") in ("yes", "no") and r.get("ticker"):
+                        res[r["ticker"]] = r["result"]
+                    f = tids.get(r.get("trade_id")) or prev.get(r.get("trade_id"))
+                    if f is not None:
+                        f.setdefault("_s", {})[r.get("delay")] = (r.get("bid"), r.get("ask"))
+                    continue
+                if r["kind"] == "fill":
+                    for k in ("trade_time", "snap", "dropped"):
+                        r.pop(k, None)
+                    tids[r.get("trade_id")] = r
+                elif r["kind"] == "whale":
+                    for k in ("trade_id", "trade_time", "age_d", "their_pnl", "fills"):
+                        r.pop(k, None)
+                part.append(r)
+    except (OSError, EOFError) as exc:              # a torn gzip tail (killed mid-write) keeps what parsed
+        log.warning("copycat rows %s: %s", p.name, exc)
+    part += [{"kind": "result", "ticker": t, "result": v} for t, v in res.items()]
+    return part, tids
 
 
 def load_rows(d: Path, cache_done_hours: bool = False, now: float | None = None) -> list[dict]:
     rows = []
     cur = (datetime.fromtimestamp(now, timezone.utc).strftime("copycat-%Y-%m-%d-%H.jsonl")
            if now else None)
+    prev: dict = {}
     for p in sorted(d.glob("copycat-*.jsonl*")):
         if cache_done_hours and p.name in _ROW_CACHE:
-            rows += _ROW_CACHE[p.name]
+            part, prev = _ROW_CACHE[p.name]
+            rows += part
             continue
-        raw = p.read_bytes()
-        if p.suffix == ".gz":
-            raw = gzip.decompress(raw)
-        part = []
-        for x in raw.decode().splitlines():
-            try:
-                r = json.loads(x)
-            except ValueError:
-                continue
-            if _slim(r):
-                part.append(r)
+        part, tids = _read_part(p, prev)
         if cache_done_hours and p.name != cur:
-            _ROW_CACHE[p.name] = part
+            _ROW_CACHE[p.name] = (part, tids)
         rows += part
+        prev = tids
+    if cache_done_hours and _trim_cache(rows, now):
+        return load_rows(d, cache_done_hours, now)
     return rows
+
+
+def _trim_cache(rows: list[dict], now: float | None) -> bool:
+    """Drops from the cached hours each account's fills beyond its newest KEEP_COPIES and big-bet
+    rows older than WHALE_MEM_DAYS. True if anything was dropped (the caller reloads from cache)."""
+    per: dict = defaultdict(int)
+    gone: set = set()
+    for r in reversed(rows):
+        if r.get("kind") == "fill":
+            per[r.get("nick")] += 1
+            if per[r.get("nick")] > KEEP_COPIES:
+                gone.add(id(r))
+        elif r.get("kind") == "whale" and now and (r.get("ts") or now) < now - WHALE_MEM_DAYS * 86400:
+            gone.add(id(r))
+    if not gone:
+        return False
+    hit = False
+    for name, (part, tids) in list(_ROW_CACHE.items()):
+        keep = [r for r in part if id(r) not in gone]
+        if len(keep) != len(part):
+            hit = True
+            _ROW_CACHE[name] = (keep, {k: v for k, v in tids.items() if id(v) not in gone})
+    return hit
 
 
 LETTERS = ((97, "A+"), (93, "A"), (90, "A-"), (87, "B+"), (83, "B"), (80, "B-"), (77, "C+"),
@@ -479,6 +550,7 @@ class Copycat:
             self.dropped = w.get("dropped") or {}
         except (OSError, ValueError):
             pass
+        self.logged_before = set(self.watch)     # their history is already on disk: a restart doesn't re-log it
         self._boss_busy = False
         self._in_status = False
         self.last_up = 0.0
@@ -875,7 +947,17 @@ class Copycat:
                 lag = round(seen - datetime.fromisoformat(str(t.get("create_date")).replace("Z", "+00:00")).timestamp(), 1)
             except ValueError:
                 lag = None
+            ours = None                         # NEW accounts: the price we could really have bought at
+            if p["new"]:
+                try:
+                    sn = self.snapshot(t.get("ticker") or "")
+                    b, a = sn.get("bid"), sn.get("ask")
+                    ours = a if side == "yes" else (1 - b if b is not None else None)
+                    ours = round(ours, 4) if ours is not None and 0 < ours < 1 else None
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("copycat whale price %s: %s", t.get("ticker"), exc)
             self.write({"kind": "whale", "nick": nick, "trade_id": t.get("trade_id"), "ticker": t.get("ticker"),
+                        "ours": ours, "ours_lag_s": round(self.clock() - seen + (lag or 0), 1) if ours else None,
                         "role": role, "side": side, "paid": round(paid, 4), "count": n, "usd": round(n * paid),
                         "trade_time": t.get("create_date"), "lag_s": lag, "fills": t.get("fills"), "joined": p["joined"],
                         "age_d": p["age_d"], "markets": p["markets"], "their_pnl": p["pnl"], "new": p["new"]})
@@ -885,6 +967,9 @@ class Copycat:
         account: logged for research (e.g. how market makers trade), never snapshotted or copied."""
         first = src == "poll" and nick not in self.based and not quiet   # its history = backfill
         seen = self.seen.setdefault(nick, set())
+        if first and nick in self.logged_before:  # after a restart: remember, don't re-log ~50 old fills
+            seen.update(t.get("trade_id") for t in trades if t.get("trade_id"))
+            return
         for t in reversed(trades):
             tid = t.get("trade_id")
             if not tid or tid in seen:

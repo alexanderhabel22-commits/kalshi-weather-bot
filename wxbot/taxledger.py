@@ -45,7 +45,7 @@ ET = ZoneInfo("America/New_York")
 OUT = DATA_DIR.parent / "reports" / "tax"
 TRADE_ORDERS = DATA_DIR / "trade_orders.csv"
 MY_TRADES = DATA_DIR / "my_trades.csv"
-BOTS = ("main bot", "15-min bot", "manual")
+BOTS = ("main bot", "15-min bot", "rewards bot", "manual")
 
 FILL_COLS = ["date_et", "time_et", "time_utc", "bot", "ticker", "title", "kalshi_action",
              "kalshi_side", "action", "side", "contracts", "price", "amount", "fee",
@@ -266,6 +266,8 @@ def tag(fill: dict, oids: set, cids: set, exits: dict | None = None) -> str:
     held = (exits or {}).get(fill["ticker"])
     if held and fill["side"] != held:              # the main bot's early sale of what it held
         return "main bot"
+    if cid.startswith("lip-"):                     # liquidity-reward test (wxbot/lip.py)
+        return "rewards bot"
     if cid.startswith("m15-") or is_m15(fill["ticker"]):
         return "15-min bot"
     return "manual"
@@ -447,7 +449,8 @@ def summary(fills, closed, opened, notes, checks, years, now: datetime) -> str:
               f"{losses} lost, {len(rows) - wins - losses} broke even.", ""]
         months = sorted({_et(r["closed"]).month for r in rows})
         if months:
-            L += ["| Month | Main bot | 15-min bot | Manual | Total |", "|---|---:|---:|---:|---:|"]
+            L += ["| Month | " + " | ".join(b.capitalize() for b in BOTS) + " | Total |",
+                  "|---|" + "---:|" * (len(BOTS) + 1)]
             for m in months:
                 mr = [r for r in rows if _et(r["closed"]).month == m]
                 cells = [_money(sum(r["net"] for r in mr if r["bot"] == b)) for b in BOTS]

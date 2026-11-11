@@ -200,3 +200,74 @@ def test_reworded_note_replaces_old_one():
     watch.remember(st, "KXBTC15M decay_alert has recurred on every 2026-11-11 check; report it until it clears.", 8)
     assert len(st["notes"]) == 2 and "2026-11-11" in st["notes"][-1]
     assert st["notes"][0].startswith("Coinbase")
+
+
+def test_copycat_stuck_flagged(tmp_path, monkeypatch):
+    import os
+    p = tmp_path / "cc.json"
+    p.write_text("{}")
+    os.utime(p, (NOW - 3600, NOW - 3600))
+    monkeypatch.setattr(watch, "COPYCAT_STATUS", p)
+    c = FakeClient(opus={"severity": "alert", "title": "Copycat stuck", "message": "m",
+                         "diagnosis": "d", "proposed_fix": "f", "needs_alex": True})
+    rec, sent = go(tmp_path, monkeypatch, FakeGH(), c)
+    assert "COPYCAT_STALE" in {f["code"] for f in rec["flags"]} and sent and rec["action"] is None
+    os.utime(p, (NOW - 120, NOW - 120))
+    assert "COPYCAT_STALE" not in {f["code"] for f in watch.rules(watch.gather(FakeGH(), NOW, runner, cc_status=p), watch.settings(load_config()))}
+
+
+def lip_gh(lip=None, control=None):
+    gh = FakeGH()
+    gh.files[("lip_control.json", "main")] = json.dumps(control or {
+        "mode": "live", "budget": 20.0, "fill_stop": 10.0, "until": iso(NOW + 86400)})
+    gh.files[("m15/lip-status.json", "m15-data")] = json.dumps(lip or {
+        "at": iso(NOW - 300), "mode": "live", "control": "live", "budget": 20.0, "resting_cost": 19.2,
+        "filled_cost": 0.0, "orders": {"KXA-1": {"px": 0.03, "n": 100}}, "events": []})
+    return gh
+
+
+def codes(gh):
+    return {x["code"] for x in watch.rules(watch.gather(gh, NOW, runner), watch.settings(load_config()))}
+
+
+def test_lip_healthy_has_no_flags():
+    assert not {c for c in codes(lip_gh()) if c.startswith("LIP")}
+
+
+def test_lip_stale_and_fills_flagged():
+    gh = lip_gh({"at": iso(NOW - 3600), "budget": 20.0, "resting_cost": 10, "filled_cost": 6.0,
+                 "orders": {"KXA-1": {}}, "events": [{"t": NOW - 60, "kind": "reject", "error": "x"}] * 3})
+    c = codes(gh)
+    assert {"LIP_STATUS_STALE", "LIP_FILLS", "LIP_REJECTS"} <= c
+
+
+def test_lip_over_budget_switches_it_off(tmp_path, monkeypatch):
+    gh = lip_gh({"at": iso(NOW - 300), "mode": "live", "control": "live", "budget": 20.0,
+                 "resting_cost": 30.0, "filled_cost": 0.0, "orders": {"KXA-1": {}}, "events": []})
+    c = FakeClient(haiku={"level": "escalate", "summary": "over budget"},
+                   opus={"severity": "pause_lip", "title": "Rewards bot over budget", "message": "Pulled it.",
+                         "diagnosis": "d", "proposed_fix": "f", "needs_alex": False, "notebook": []})
+    rec, sent = go(tmp_path, monkeypatch, gh, c)
+    assert rec["action"] == "paused_lip"
+    assert json.loads(gh.files[("lip_control.json", "main")])["mode"] == "off"
+    assert json.loads(gh.files[("m15_control.json", "main")])["mode"] == "live"   # 15-min untouched
+    assert sent and "SWITCHED OFF the rewards bot" in sent[0][1]
+
+
+def test_lip_off_but_bidding_and_after_end():
+    gh = lip_gh({"at": iso(NOW - 300), "mode": "off", "control": "off", "budget": 20.0,
+                 "resting_cost": 5.0, "filled_cost": 0.0, "orders": {"KXA-1": {}}, "events": []},
+                {"mode": "off", "budget": 20.0})
+    assert "LIP_OFF_BUT_BIDDING" in codes(gh)
+    done = lip_gh({"at": iso(NOW - 300), "mode": "off", "control": "live", "budget": 20.0,
+                   "resting_cost": 0.0, "filled_cost": 0.0, "orders": {}, "events": []},
+                  {"mode": "live", "until": iso(NOW - 7200)})
+    assert not {c for c in codes(done) if c.startswith("LIP")}
+
+
+def test_same_identifier_note_replaces_old_one():
+    st = {"notes": ["Coinbase feed drops at night; harmless",
+                    "15-MIN funding transfer endpoint returns 403 insufficient_scope (write::transfer); not a trading fault."]}
+    watch.remember(st, "M15_FUND 403 insufficient_scope recurred again at 1:35 PM ET Nov 11 (fifth time that day).", 8)
+    watch.remember(st, "M15_FUND has recurred four times on Nov 11; it stays a key-scope fix for Alex.", 8)
+    assert len(st["notes"]) == 2 and st["notes"][0].startswith("Coinbase") and "four times" in st["notes"][1]
