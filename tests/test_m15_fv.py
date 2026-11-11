@@ -53,7 +53,7 @@ class FakeBot:
         self.http = None
 
     def quote(self, tk, now):
-        return {"yes_bid": 0.80, "yes_ask": 0.82}
+        return {"yes_bid_dollars": 0.80, "yes_ask_dollars": 0.82}
 
 
 def test_shadow_step_logs_ticks_and_fills(tmp_path):
@@ -77,6 +77,7 @@ def test_shadow_step_logs_ticks_and_fills(tmp_path):
     assert rows[0].split(",") == fv.FV_COLS
     events = [r.split(",")[1] for r in rows[1:]]
     assert events == ["tick", "fill"]
+    assert rows[1].split(",")[fv.FV_COLS.index("yes_bid")] == "0.8"
     assert 0.5 < m["fv_fill"] <= 1.0 and m["fv_fills"] == 1
     assert sh.files(now) == {}                 # current hour isn't uploaded yet
     later = sh.files(now + 7200)

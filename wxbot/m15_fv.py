@@ -61,6 +61,12 @@ def _f(x):
         return None
 
 
+def _q(q: dict, key: str):
+    """Bot.quote() returns *_dollars keys; accept the plain ones too."""
+    v = q.get(f"{key}_dollars", q.get(key))
+    return "" if v is None else v
+
+
 def parse_venue(venue: str, raw) -> list[tuple[str, float]]:
     """(symbol, price) pairs from one websocket message; [] for anything unexpected.
     Uses the bid/ask mid where the venue sends one (the index is built from order books)."""
@@ -306,7 +312,7 @@ class FairShadow:
                 "left_s": round(m["close"] - now, 1), "strike": m.get("strike"),
                 "index": round(fv["index"], 6), "venues": fv["venues"],
                 "sigma_bps_s": round(fv["sigma"] * 1e4, 3), "fv_yes": round(fv["fv_yes"], 4),
-                "yes_bid": q.get("yes_bid", ""), "yes_ask": q.get("yes_ask", ""),
+                "yes_bid": _q(q, "yes_bid"), "yes_ask": _q(q, "yes_ask"),
                 "our_side": o.get("side") or m.get("fav_side") or "", "our_q": o.get("q", ""),
                 "filled": m.get("filled", 0), "nth_fill": m.get("fv_fills", 0),
                 "cf_index": "" if fv.get("cf_index") is None else round(fv["cf_index"], 6),
