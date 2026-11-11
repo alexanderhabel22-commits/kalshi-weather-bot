@@ -300,8 +300,8 @@ IP without a token). It never places, changes or cancels anything and needs no s
   every other poll, so a few seconds apart). Feed delay measured Nov 10: median ~10 s.
 - PAPER record (every account): each of their fills is scored as if copied at the price ~10 s later,
   after Kalshi's taker fee. Score 0-100 = 80 + 2.5 x the pessimistic (95% lower bound) cents per
-  contract, +/-3 for a hot/cold last 50; letters A+ 97 ... B- 80 ... F < 60. Judged at 100 copies or
-  7 days (Alex, Nov 10). 80+ = copied, while its last 50 average better than -leeway (5c, +1c per $1
+  contract, +/-3 for a hot/cold last 50; letters A+ 97 ... B- 80 ... F < 60. Judged at 100 paper copies
+  if it scores 87+ (B+), otherwise at 150 (Alex, Nov 10; the 7-day shortcut was dropped). 80+ = copied, while its last 50 average better than -leeway (5c, +1c per $1
   it has made us, up to +5c for a high score); "slump" below that, back when it recovers. Size 1,
   90+ = 2, 95+ with 300 settled = 3.
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing

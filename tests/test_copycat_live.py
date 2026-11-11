@@ -219,3 +219,25 @@ def test_feed_keeps_running_during_snapshot_backlog(tmp_path):
     cc.snaps = [(0.0, 0, "a", f"T{i}", f"x{i}") for i in range(10)]
     cc.run_snaps(0.0)
     assert len(feeds) >= 4                         # ~every second while 5 s of snapshots ran
+
+
+def test_fresh_start_ignores_old_fills(tmp_path):
+    from datetime import datetime, timezone
+    now = 1_762_830_000.0
+    f = tmp_path / datetime.fromtimestamp(now - 3600, timezone.utc).strftime("copycat-%Y-%m-%d-%H.jsonl")
+    old = {"kind": "fill", "nick": "sharp", "trade_id": "o1", "ticker": "T1", "side": "yes", "yes_price": 0.5,
+           "backfill": False, "ts": now - 3600, "et": "x"}
+    new = dict(old, trade_id="n1", v=copycat.ROW_V)
+    snaps = [{"kind": "snap", "trade_id": t, "ticker": "T1", "delay": 0, "bid": 0.5, "ask": 0.52} for t in ("o1", "n1")]
+    f.write_text("\n".join(json.dumps(r) for r in [old, new] + snaps))
+
+    class S:
+        headers = {}
+
+        def get(self, url, params=None, timeout=None):
+            from tests.test_copycat import Resp
+            return Resp({"market": {}})
+    cc = copycat.Copycat(tmp_path, session=S(), clock=lambda: now, req_gap=0)
+    cc.watch = {"sharp": {}}
+    st_ = cc.update_status(now)
+    assert {a["nick"]: a["fills"] for a in st_["accounts"]}["sharp"] == 1
