@@ -1,5 +1,5 @@
 {
- "at": "2026-11-11T23:16:39+00:00",
+ "at": "2026-11-11T23:32:27+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.92,
+ "resting_cost": 19.88,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -21,16 +21,6 @@
    "at": 1794415773.9216497,
    "mid0": 0.015
   },
-  "KXSOSRACE-MS-27-D": {
-   "id": "01a1cbb8-b410-7678-b2ab-a6f7c46e3476",
-   "cid": "lip-975bf4a2d98a4a45",
-   "side": "yes",
-   "px": 0.06,
-   "n": 41,
-   "filled": 0.0,
-   "at": 1794419242.0647283,
-   "mid0": 0.074
-  },
   "KXSOSRACE-WV-28-D": {
    "id": "01a1cc0e-abe0-71bd-b009-19eac0095f0e",
    "cid": "lip-1beb8684bdc04846",
@@ -40,16 +30,6 @@
    "filled": 0.0,
    "at": 1794424876.6815882,
    "mid0": 0.068
-  },
-  "KXSENATENOM-SCD-28-BBRO": {
-   "id": "01a1ccd7-7e08-725f-9db0-f06cdb1b3660",
-   "cid": "lip-ce52c88af49f4ead",
-   "side": "yes",
-   "px": 0.03,
-   "n": 83,
-   "filled": 0.0,
-   "at": 1794438037.0648236,
-   "mid0": 0.0505
   },
   "KXSENATENOM-SCD-28-BWEB": {
    "id": "01a1ccd7-8da8-7abe-9dc3-596aeb0e543a",
@@ -61,26 +41,6 @@
    "at": 1794438041.099724,
    "mid0": 0.0545
   },
-  "KXTREASRACE-WA-28-R": {
-   "id": "01a1ccd7-9d48-7880-97a8-1fe5836949f2",
-   "cid": "lip-1ad2eb5948e84c67",
-   "side": "yes",
-   "px": 0.04,
-   "n": 62,
-   "filled": 0.0,
-   "at": 1794438045.0645928,
-   "mid0": 0.0615
-  },
-  "KXTREASRACE-WA-28-D": {
-   "id": "01a1cce1-4dc0-7162-a066-6c012d8d2bf5",
-   "cid": "lip-f3e1243f17424402",
-   "side": "no",
-   "px": 0.05,
-   "n": 50,
-   "filled": 0.0,
-   "at": 1794438680.4460266,
-   "mid0": 0.933
-  },
   "KXTREASRACE-VT-28-D": {
    "id": "01a1cce1-5d60-7213-b144-ab05d5606259",
    "cid": "lip-6a05dbd784c74ce4",
@@ -90,6 +50,46 @@
    "filled": 0.0,
    "at": 1794438684.448989,
    "mid0": 0.9315
+  },
+  "KXTREASRACE-WA-28-R": {
+   "id": "01a1ccea-eab0-744a-9165-a710ae750c32",
+   "cid": "lip-47ec7b1cc14b4b60",
+   "side": "yes",
+   "px": 0.05,
+   "n": 50,
+   "filled": 0.0,
+   "at": 1794439310.0276613,
+   "mid0": 0.0665
+  },
+  "KXTREASRACE-WA-28-D": {
+   "id": "01a1ccea-fa50-7cc9-8236-83b3f7e72c6f",
+   "cid": "lip-5bc1c8a843e14f0a",
+   "side": "no",
+   "px": 0.06,
+   "n": 41,
+   "filled": 0.0,
+   "at": 1794439314.031313,
+   "mid0": 0.928
+  },
+  "KXSENATENOM-SCD-28-BBRO": {
+   "id": "01a1ccf4-7800-7e8d-9bc9-2236e871c093",
+   "cid": "lip-3d59b37ee23d4291",
+   "side": "yes",
+   "px": 0.04,
+   "n": 62,
+   "filled": 0.0,
+   "at": 1794439936.5414941,
+   "mid0": 0.0555
+  },
+  "KXSOSRACE-MS-27-D": {
+   "id": "01a1ccf4-9f10-7018-b36c-eb9190b466eb",
+   "cid": "lip-ab6f61b5826d4a53",
+   "side": "yes",
+   "px": 0.07,
+   "n": 35,
+   "filled": 0.0,
+   "at": 1794439946.5463912,
+   "mid0": 0.0785
   }
  },
  "positions": {},
@@ -313,7 +313,7 @@
     "share": 0.2
    },
    "KXSOSRACE-MS-27-D": {
-    "ahead": 0,
+    "ahead": 3049.0,
     "others": 1000.0,
     "share": 0.0394
    },
@@ -348,7 +348,7 @@
     "share": 0.0099
    },
    "KXSENATENOM-SCD-28-BBRO": {
-    "ahead": 0,
+    "ahead": 19252.0,
     "others": 1000.0,
     "share": 0.0766
    },
@@ -360,12 +360,12 @@
    "KXTREASRACE-WA-28-R": {
     "ahead": 0,
     "others": 1000.0,
-    "share": 0.0584
+    "share": 0.0476
    },
    "KXTREASRACE-WA-28-D": {
-    "ahead": 18815.0,
+    "ahead": 0,
     "others": 1000.0,
-    "share": 0.0476
+    "share": 0.0394
    },
    "KXTREASRACE-VT-28-D": {
     "ahead": 0,
@@ -376,48 +376,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794408366,
-   "kind": "select",
-   "programs": 4842,
-   "checked": 12,
-   "chosen": [
-    "KXBRCHAMBERPRES-27FEB01-ACOR",
-    "KXBRCHAMBERPRES-27FEB01-LPOB",
-    "KXBRCHAMBERPRES-27FEB01-SCAV",
-    "KXEPOCHSCORE-01JUL27-T185-B01APR27",
-    "KXEPOCHSCORE-01JUL27-T185-B01JAN27",
-    "KXEPOCHSCORE-01JUL27-T185-B01JUL27",
-    "KXEVERIFYLAW-26NOV",
-    "KXMANDERSSONOUT-28-27JAN01"
-   ],
-   "est_day": 12.12
-  },
-  {
-   "t": 1794408370,
-   "kind": "place",
-   "ticker": "KXEVERIFYLAW-26NOV",
-   "side": "yes",
-   "px": 0.03,
-   "n": 80,
-   "est_day": 2.0742
-  },
-  {
-   "t": 1794408371,
-   "kind": "cash_check",
-   "before": 25.3135,
-   "after": 25.3135,
-   "bid_cost": 2.4
-  },
-  {
-   "t": 1794408373,
-   "kind": "place",
-   "ticker": "KXBRCHAMBERPRES-27FEB01-LPOB",
-   "side": "yes",
-   "px": 0.03,
-   "n": 80,
-   "est_day": 1.7859
-  },
   {
    "t": 1794408375,
    "kind": "place",
@@ -989,6 +947,66 @@
    "px": 0.05,
    "n": 50,
    "est_day": 2.4892
+  },
+  {
+   "t": 1794439309,
+   "kind": "cancel",
+   "ticker": "KXTREASRACE-WA-28-R",
+   "why": "up to 5c (reference price)"
+  },
+  {
+   "t": 1794439310,
+   "kind": "place",
+   "ticker": "KXTREASRACE-WA-28-R",
+   "side": "yes",
+   "px": 0.05,
+   "n": 50,
+   "est_day": 2.4892
+  },
+  {
+   "t": 1794439313,
+   "kind": "cancel",
+   "ticker": "KXTREASRACE-WA-28-D",
+   "why": "up to 6c (reference price)"
+  },
+  {
+   "t": 1794439314,
+   "kind": "place",
+   "ticker": "KXTREASRACE-WA-28-D",
+   "side": "no",
+   "px": 0.06,
+   "n": 41,
+   "est_day": 2.4892
+  },
+  {
+   "t": 1794439936,
+   "kind": "cancel",
+   "ticker": "KXSENATENOM-SCD-28-BBRO",
+   "why": "up to 4c (reference price)"
+  },
+  {
+   "t": 1794439937,
+   "kind": "place",
+   "ticker": "KXSENATENOM-SCD-28-BBRO",
+   "side": "yes",
+   "px": 0.04,
+   "n": 62,
+   "est_day": 3.6874
+  },
+  {
+   "t": 1794439946,
+   "kind": "cancel",
+   "ticker": "KXSOSRACE-MS-27-D",
+   "why": "up to 7c (reference price)"
+  },
+  {
+   "t": 1794439947,
+   "kind": "place",
+   "ticker": "KXSOSRACE-MS-27-D",
+   "side": "yes",
+   "px": 0.07,
+   "n": 35,
+   "est_day": 3.6088
   }
  ]
 }
