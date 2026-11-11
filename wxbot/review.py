@@ -255,6 +255,11 @@ def extras(units: list[dict]) -> dict:
     timing = _group(units, lambda u: None if u.get("late") is None else
                     ("Filled in last 5 min" if u["late"] else "Filled with 5+ min left"))
     days = _group(units, lambda u: (_et(u) or datetime.min).strftime("%a %b %d") if _et(u) else None)
+    # paper "skip macro release windows" rule (Alex OK'd a paper track, Nov 10): logged only
+    from . import releases
+    known = releases.load()
+    rel = _group(units, lambda u: "Release windows (paper rule would skip)"
+                 if releases.window_kind(u.get("at") or "", known) else "All other windows")
     # streaks and drawdown
     worst_streak = cur = 0
     peak = run = dd = 0.0
@@ -267,7 +272,7 @@ def extras(units: list[dict]) -> dict:
     best = max(days, key=lambda d: d[2]) if days else None
     worst = min(days, key=lambda d: d[2]) if days else None
     return {"wins": wins, "losses": len(units) - wins, "trend": trend, "bands": bands,
-            "size": size, "times": times, "timing": timing, "best_day": best, "worst_day": worst,
+            "size": size, "times": times, "release": rel, "timing": timing, "best_day": best, "worst_day": worst,
             "worst_streak": worst_streak, "drawdown": dd,
             "big_win": max((u["pnl"] for u in units), default=0.0),
             "big_loss": min((u["pnl"] for u in units), default=0.0)}
@@ -281,6 +286,18 @@ def _table(title: str, rows) -> list[str]:
     for g, n, p, c in rows:
         L.append(f"| {g} | {n:,.0f} | ${p:+.2f} | {_c(c)} | {_bar(c)} |")
     return L + [""]
+
+
+def _release_lines(groups) -> list[str]:
+    """Paper skip-release-windows rule: what the record would be without those windows."""
+    rel = next((g for g in groups if g[0].startswith("Release")), None)
+    if not rel or rel[1] <= 0:
+        return []
+    total = sum(g[2] for g in groups)
+    rest = total - rel[2]
+    return _table("Macro release windows (CPI, jobs, PCE, GDP, Fed; paper rule)", groups) + [
+        f"Paper skip rule: ${rest:+.2f} without release windows vs ${total:+.2f} actual "
+        f"({rel[1]:,.0f} contracts in release windows). Judged at the 500 review; no live change.", ""]
 
 
 def render(r: dict, now: datetime) -> str:
@@ -321,6 +338,7 @@ def render(r: dict, now: datetime) -> str:
     L += _table("Singles vs double-ups", x["size"])
     L += _table("By bid timing", x["timing"])
     L += _table("By time of day", x["times"])
+    L += _release_lines(x.get("release") or [])
     L += ["## Recommendation", "",
           f"- **Action: {r['action']}.**",
           f"- **Contracts per order: {r['rec']}** (now {r['cur']:g}). "
@@ -369,6 +387,14 @@ def run(cfg: Config, now: datetime, http=None, dry_run: bool = False) -> list[st
             return []
     except ValueError:
         pass
+    try:                              # paper release-window rule: keep the calendar fresh (daily)
+        from . import releases
+        upd = (read_json(releases.PATH, {}) or {}).get("updated")
+        if http is not None and (not upd or (now - datetime.fromisoformat(upd)).total_seconds() > 86400):
+            releases.refresh(http, now)
+    except Exception as exc:  # never let the calendar break reviews
+        import logging
+        logging.warning("release calendar refresh failed: %s", exc)
     bankroll = float(trader.settings(cfg)["bankroll"])
     at = state.get("reviews_at") or {}          # last review (or first seen) per bot
 
