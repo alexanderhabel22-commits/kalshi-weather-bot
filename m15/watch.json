@@ -1,21 +1,21 @@
 {
  "last": {
-  "at": "2026-11-11T06:35:25+00:00",
+  "at": "2026-11-11T06:50:21+00:00",
   "flags": [],
   "haiku": {
-   "level": "ok",
-   "summary": "Both bots are healthy: the 15-min bot is active, live, error-free and within its stops (24h P&L -$2.42), and the main bot is live, not halted, with regular scans and trade runs succeeding. No rule flags; the -$7.61 loss day on Nov 10 is ordinary P&L inside the stops."
+   "level": "watch",
+   "summary": "Both bots are running and within their stops; the 15-MIN bot is down $2.15 over 24h with no halts or errors, and the KXBTC15M decay alert is worth a glance. Nothing here looks like a malfunction, so no escalation."
   },
   "opus": null,
   "action": null
  },
  "today": {
   "day": "2026-11-11",
-  "haiku": 7,
+  "haiku": 8,
   "opus": 0,
   "tokens": {
-   "haiku_in": 9933,
-   "haiku_out": 1034,
+   "haiku_in": 11429,
+   "haiku_out": 1129,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -260,7 +260,17 @@
     "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and main-bot scans and trades are completing on schedule. The 15-MIN bot's KXBTC15M shows a decay alert dated 2026-11-10 and its 24h P&L is -$2.21, which is within its stops, so I'd just keep an eye on the BTC decay alert."
    },
    "opus": null
+  },
+  {
+   "at": "2026-11-11T06:50:21+00:00",
+   "flags": [],
+   "haiku": {
+    "level": "watch",
+    "summary": "Both bots are running and within their stops; the 15-MIN bot is down $2.15 over 24h with no halts or errors, and the KXBTC15M decay alert is worth a glance. Nothing here looks like a malfunction, so no escalation."
+   },
+   "opus": null,
+   "action": null
   }
  ],
- "digest": "Time: 1:35 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T06:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-2.415 live_total=$10.4215\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $2.30\n  KXBTC15M: fills=477.0 pnl=$8.6 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=6.0 pnl=$1.11\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=278.97 pnl=$12.6192\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXGOLD15M-26NOV110100-00 2 1.72 0.28\n  KXSILVER15M-26NOV110100-00 1 0.72 -0.72\n  KXBTC15M-26NOV110115-15 2 1.55 0.45\n  KXSILVER15M-26NOV110115-15 2 1.64 0.36\n  KXGOLD15M-26NOV110115-15 2 1.64 0.36\n  KXBTC15M-26NOV110130-30 1 0.78 -0.78\n  KXSILVER15M-26NOV110130-30 2 1.74 0.26\n  KXGOLD15M-26NOV110130-30 2 1.53 0.47\nMAIN: mode=live halted=False bankroll=$58.35 cash=$36.88 at=2026-11-11T06:32:07.118811+00:00\nRecent Actions runs: weather-scan in_progress 06:35Z; trade success 06:31Z; weather-scan success 06:30Z; trade success 06:25Z; weather-scan success 06:25Z; trade success 06:20Z; weather-scan success 06:20Z; trade success 06:15Z\nRULE FLAGS: none"
+ "digest": "Time: 1:50 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T06:47:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-2.145 live_total=$8.6115\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $0.49\n  KXBTC15M: fills=479.0 pnl=$7.04 decay_alert=2026-11-11\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=7.0 pnl=$0.4\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=280.97 pnl=$13.0792\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXSILVER15M-26NOV110115-15 2 1.64 0.36\n  KXGOLD15M-26NOV110115-15 2 1.64 0.36\n  KXBTC15M-26NOV110130-30 1 0.78 -0.78\n  KXSILVER15M-26NOV110130-30 2 1.74 0.26\n  KXGOLD15M-26NOV110130-30 2 1.53 0.47\n  KXBTC15M-26NOV110145-45 2 1.56 -1.56\n  KXGOLD15M-26NOV110145-45 1 0.71 -0.71\n  KXSILVER15M-26NOV110145-45 2 1.54 0.46\nMAIN: mode=live halted=False bankroll=$56.59 cash=$35.07 at=2026-11-11T06:46:08.641810+00:00\nRecent Actions runs: weather-scan in_progress 06:50Z; tests success 06:45Z; trade success 06:45Z; weather-scan success 06:45Z; tests success 06:44Z; trade success 06:40Z; weather-scan success 06:40Z; trade success 06:35Z\nRULE FLAGS: none"
 }
