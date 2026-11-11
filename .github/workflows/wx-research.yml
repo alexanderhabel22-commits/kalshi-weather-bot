@@ -1,0 +1,51 @@
+name: wx-research
+
+# Research only (weather model optimization, Nov 11 2026): downloads more forecast
+# sources (Open-Meteo model archive, NWS station guidance) and recent settled weather
+# markets. Read-only public data; never trades, never alerts. Runs only on push to
+# this research branch. Output goes to the wx-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-lvssk8"]
+    paths: ["research_wx/fetch.py", "research_wx/sections.txt", ".github/workflows/wx-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wx-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 320
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Run
+        run: python research_wx/fetch.py out $(cat research_wx/sections.txt)
+      - name: Save to wx-research-data branch
+        if: always()
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d-%H%M)"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin wx-research-data 2>/dev/null; then
+              git checkout -q -f -B data origin/wx-research-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp" || exit 0
+            git push origin HEAD:wx-research-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
