@@ -1,6 +1,5 @@
 import json
 
-from tools import grade_copycat
 from wxbot import copycat
 
 
@@ -116,9 +115,35 @@ def test_grade_follow_and_settle():
         {"kind": "fill", "trade_id": "b", "nick": "sharp", "ticker": "T", "side": "no",
          "yes_price": 0.50, "backfill": True},
     ]
-    out = grade_copycat.grade(rows_, {"T": "yes"})
+    out = copycat.grade(rows_, {"T": "yes"})
     o = out["sharp"]
     assert len(o["lag"]) == 1                          # backfill ignored
     assert round(o["move_300"][0], 1) == 11.0          # mid 0.61 - 0.50
     assert round(o["follow_300"][0], 1) == 7.0         # mid 0.61 - ask 0.54
     assert round(o["settle"][0], 1) == 46.0            # 1.00 - 0.54
+
+
+def test_status_verdicts(tmp_path):
+    rows_ = []
+    for i in range(120):
+        tid = f"t{i}"
+        rows_ += [{"kind": "fill", "trade_id": tid, "nick": "good", "ticker": f"T{i}", "side": "yes",
+                   "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
+                  {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
+    results = {f"T{i}": ("yes" if i % 10 < 7 else "no") for i in range(120)}   # 70% at 52c
+    s = copycat.build_status(rows_, results, {"good": {"pnl": 1}, "new": {"pnl": 2}}, now=2000.0)
+    acc = {a["nick"]: a for a in s["accounts"]}
+    assert acc["good"]["fills"] == 120 and acc["good"]["verdict"] == "passes"
+    assert acc["new"]["verdict"] == "watching"
+    assert len(s["recent"]) == 40
+    bad = {f"T{i}": ("yes" if i % 10 < 4 else "no") for i in range(120)}
+    s2 = copycat.build_status(rows_, bad, {"good": {}}, now=2000.0)
+    assert s2["accounts"][0]["verdict"] == "fails"
+
+
+def test_update_status_writes_file(tmp_path):
+    s = FakeSession()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.watch = {"sharp": {"pnl": 5}}
+    st_ = cc.update_status(1_000_000.0)
+    assert (tmp_path / "status.json").exists() and st_["mode"] == "watch-only"

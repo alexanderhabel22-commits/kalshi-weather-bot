@@ -13,64 +13,21 @@ estimate is >= 0 over a few hundred fills, per account.
 """
 from __future__ import annotations
 
-import gzip
-import json
 import statistics as st
 import sys
-from collections import defaultdict
 from pathlib import Path
 
 import requests
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from wxbot.copycat import grade, load_rows  # noqa: E402
 
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
 
 
 def load(d: Path) -> list[dict]:
-    rows = []
-    for p in sorted(d.glob("copycat-*.jsonl*")):
-        raw = p.read_bytes()
-        if p.suffix == ".gz":
-            raw = gzip.decompress(raw)
-        rows += [json.loads(x) for x in raw.decode().splitlines() if x.strip()]
-    return rows
-
-
-def side_value(side: str, yes_px: float) -> float:
-    return yes_px if side == "yes" else 1 - yes_px
-
-
-def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
-    fills = {r["trade_id"]: r for r in rows if r.get("kind") == "fill" and not r.get("backfill")
-             and r.get("side") in ("yes", "no") and r.get("yes_price") is not None}
-    snaps = defaultdict(dict)
-    for r in rows:
-        if r.get("kind") == "snap":
-            snaps[r["trade_id"]][r["delay"]] = r
-            if r.get("result") in ("yes", "no") and results is not None:
-                results.setdefault(r["ticker"], r["result"])
-    out = defaultdict(lambda: defaultdict(list))
-    for tid, f in fills.items():
-        s = snaps.get(tid) or {}
-        s0 = s.get(0)
-        if not s0 or s0.get("bid") is None or s0.get("ask") is None:
-            continue
-        side = f["side"]
-        entry = side_value(side, f["yes_price"])
-        # what a follower pays: the ask on the sharp's side when we saw it
-        pay = s0["ask"] if side == "yes" else 1 - s0["bid"]
-        for nick in (f["nick"], "ALL"):
-            o = out[nick]
-            o["lag"].append(f.get("lag_s") or 0)
-            for d, snap in s.items():
-                if snap.get("bid") is None or snap.get("ask") is None:
-                    continue
-                mid = side_value(side, (snap["bid"] + snap["ask"]) / 2)
-                o[f"move_{d}"].append(100 * (mid - entry))
-                o[f"follow_{d}"].append(100 * (mid - pay))
-            res = (results or {}).get(f["ticker"])
-            if res in ("yes", "no"):
-                o["settle"].append(100 * ((1.0 if res == side else 0.0) - pay))
-    return out
+    return load_rows(d)
 
 
 def summary(vals: list[float]) -> str:

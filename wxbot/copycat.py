@@ -25,8 +25,10 @@ import gzip
 import json
 import logging
 import os
+import statistics as st
 import threading
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
@@ -48,6 +50,9 @@ SNAP_GAP_S = 300            # at most one snapshot series per (account, ticker) 
 MAX_PENDING = 4000          # cap on queued snapshots
 REQ_GAP_S = 0.4             # spacing between API calls (~150/min; a 3/s test had 0 errors)
 WATCH_REFRESH_S = 12 * 3600
+STATUS_EVERY_S = 300
+GO_LIVE_FILLS = 100         # an account is judged at 100 copied fills or 7 days, whichever first
+GO_LIVE_DAYS = 7
 CATEGORIES = ("Sports", "Politics", "Crypto", "Economics", "Climate and Weather", "Financials",
               "Entertainment", "Mentions", "Combos", "Commodities", "Elections", "Companies")
 SEED = ("BWmarkets", "thebigdon", "BitcoinTradingChallenge", "szg.szg", "brief.theme",
@@ -78,6 +83,123 @@ def sharp_side(t: dict, nick: str) -> tuple[str | None, str | None]:
     return None, None
 
 
+# ------------------------------------------------------------------ scoring (shared with tools/)
+def side_value(side: str, yes_px: float) -> float:
+    return yes_px if side == "yes" else 1 - yes_px
+
+
+def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
+    """Per account (and "ALL"): lists of cents/contract on the sharp's side.
+    move_N = mid N s after we saw the fill minus the sharp's price; follow_N = mid minus the ask a
+    copier would have paid at detection; settle = settlement value minus that ask."""
+    fills = {r["trade_id"]: r for r in rows if r.get("kind") == "fill" and not r.get("backfill")
+             and r.get("side") in ("yes", "no") and r.get("yes_price") is not None}
+    snaps: dict[str, dict] = defaultdict(dict)
+    for r in rows:
+        if r.get("kind") == "snap":
+            snaps[r["trade_id"]][r["delay"]] = r
+            if r.get("result") in ("yes", "no") and results is not None:
+                results.setdefault(r["ticker"], r["result"])
+    out: dict = defaultdict(lambda: defaultdict(list))
+    for tid, f in fills.items():
+        s = snaps.get(tid) or {}
+        s0 = s.get(0)
+        if not s0 or s0.get("bid") is None or s0.get("ask") is None:
+            continue
+        side = f["side"]
+        entry = side_value(side, f["yes_price"])
+        pay = s0["ask"] if side == "yes" else 1 - s0["bid"]
+        for nick in (f["nick"], "ALL"):
+            o = out[nick]
+            o["lag"].append(f.get("lag_s") or 0)
+            o["first_ts"].append(f.get("ts") or 0)
+            for d, snap in s.items():
+                if snap.get("bid") is None or snap.get("ask") is None:
+                    continue
+                mid = side_value(side, (snap["bid"] + snap["ask"]) / 2)
+                o[f"move_{d}"].append(100 * (mid - entry))
+                o[f"follow_{d}"].append(100 * (mid - pay))
+            res = (results or {}).get(f["ticker"])
+            if res in ("yes", "no"):
+                o["settle"].append(100 * ((1.0 if res == side else 0.0) - pay))
+    return out
+
+
+def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
+    """Mean and a pessimistic (one-sided 95%) lower bound, in cents."""
+    if not vals:
+        return None, None
+    m = st.mean(vals)
+    se = st.pstdev(vals) / len(vals) ** 0.5 if len(vals) > 1 else abs(m) + 50
+    return round(m, 2), round(m - 1.645 * se, 2)
+
+
+_ROW_CACHE: dict[str, list[dict]] = {}
+
+
+def _slim(r: dict) -> bool:
+    """Rows the scoring needs: snapped fills and their snapshots (keeps memory small)."""
+    return r.get("kind") == "snap" or (r.get("kind") == "fill" and r.get("snap", True)
+                                         and not r.get("backfill"))
+
+
+def load_rows(d: Path, cache_done_hours: bool = False, now: float | None = None) -> list[dict]:
+    rows = []
+    cur = (datetime.fromtimestamp(now, timezone.utc).strftime("copycat-%Y-%m-%d-%H.jsonl")
+           if now else None)
+    for p in sorted(d.glob("copycat-*.jsonl*")):
+        if cache_done_hours and p.name in _ROW_CACHE:
+            rows += _ROW_CACHE[p.name]
+            continue
+        raw = p.read_bytes()
+        if p.suffix == ".gz":
+            raw = gzip.decompress(raw)
+        part = []
+        for x in raw.decode().splitlines():
+            try:
+                r = json.loads(x)
+            except ValueError:
+                continue
+            if _slim(r):
+                part.append(r)
+        if cache_done_hours and p.name != cur:
+            _ROW_CACHE[p.name] = part
+        rows += part
+    return rows
+
+
+def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float) -> dict:
+    g = grade(rows, results)
+    accounts = []
+    for nick in sorted(set(watch) | {n for n in g if n != "ALL"}):
+        o = g.get(nick) or {}
+        n = len(o.get("lag", []))
+        first = min(o["first_ts"]) if n else None
+        days = (now - first) / 86400 if first else 0
+        settle, settle_low = mean_low(o.get("settle", []))
+        f300, _ = mean_low(o.get("follow_300", []))
+        f1800, _ = mean_low(o.get("follow_1800", []))
+        due = n >= GO_LIVE_FILLS or days >= GO_LIVE_DAYS
+        if not due:
+            verdict = "watching"
+        elif settle_low is not None and settle_low >= 0 and len(o.get("settle", [])) >= 20:
+            verdict = "passes"
+        else:
+            verdict = "fails"
+        accounts.append({"nick": nick, "watched": nick in watch, **(watch.get(nick) or {}),
+                         "fills": n, "settled": len(o.get("settle", [])), "days": round(days, 1),
+                         "lag_s": round(st.median(o["lag"]), 1) if n else None,
+                         "follow_5m_c": f300, "follow_30m_c": f1800,
+                         "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict})
+    recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
+    return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
+            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} copied fills or {GO_LIVE_DAYS} days; "
+            "passes if the pessimistic copy-to-settlement estimate is >= 0 (min 20 settled)",
+            "accounts": accounts,
+            "recent": [{k: r.get(k) for k in ("et", "nick", "ticker", "side", "yes_price", "count",
+                                                  "role", "lag_s")} for r in reversed(recent)]}
+
+
 class Copycat:
     def __init__(self, out_dir: Path, session: requests.Session | None = None, clock=time.time,
                  uploader: Callable[[str, bytes], None] | None = None, req_gap: float = REQ_GAP_S):
@@ -95,6 +217,8 @@ class Copycat:
         self.watch_next = 0.0
         self.rr = 0
         self.uploaded: set[str] = set()
+        self.results: dict[str, str] = {}
+        self.status_next = 0.0
         self._lock = threading.Lock()
 
     # -- files
@@ -191,9 +315,11 @@ class Copycat:
                 row["lag_s"] = round(now - ct, 1)
             except ValueError:
                 pass
-            self.write(row)
             key = (nick, t.get("ticker") or "")
-            if first or now - self.last_snap.get(key, 0) < SNAP_GAP_S or len(self.snaps) > MAX_PENDING:
+            row["snap"] = not (first or now - self.last_snap.get(key, 0) < SNAP_GAP_S
+                               or len(self.snaps) > MAX_PENDING)
+            self.write(row)
+            if not row["snap"]:
                 continue
             self.last_snap[key] = now
             for d in SNAP_DELAYS:
@@ -226,6 +352,27 @@ class Copycat:
                 log.warning("copycat poll %s: %s", nick, exc)
         self.run_snaps(self.clock())
 
+    def update_status(self, now: float) -> dict:
+        rows = load_rows(self.out, cache_done_hours=True, now=now)
+        old = now - 900
+        need = sorted({r["ticker"] for r in rows if r.get("kind") == "fill" and not r.get("backfill")
+                       and (r.get("ts") or now) < old and r.get("ticker") not in self.results})
+        for t in need[:30]:
+            try:
+                res = self.snapshot(t).get("result")
+                if res in ("yes", "no"):
+                    self.results[t] = res
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat result %s: %s", t, exc)
+        status = build_status(rows, self.results, self.watch, now)
+        (self.out / "status.json").write_text(json.dumps(status, separators=(",", ":")))
+        if self.uploader:
+            try:
+                self.uploader("copycat/status.json", json.dumps(status).encode())
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat status upload: %s", exc)
+        return status
+
     def run(self) -> None:
         last_up = 0.0
         self.write({"kind": "start"})
@@ -235,6 +382,7 @@ class Copycat:
                 if self.clock() - last_up > 300:
                     last_up = self.clock()
                     self.upload_done_hours(last_up)
+                    self.update_status(last_up)
             except Exception as exc:  # noqa: BLE001  never die; log and keep going
                 log.warning("copycat step: %s", exc)
                 time.sleep(10)

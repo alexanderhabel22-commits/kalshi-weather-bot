@@ -55,6 +55,7 @@ header.top{position:sticky;top:0;z-index:20;margin:0 -16px;padding:calc(var(--sa
 .seg button.on[data-m=live]{background:linear-gradient(90deg,rgba(52,211,153,.18),rgba(34,211,238,.14));color:var(--good);box-shadow:inset 0 0 0 1px rgba(52,211,153,.4)}
 .seg button.on[data-m=paper]{background:linear-gradient(90deg,rgba(224,80,240,.18),rgba(139,140,248,.14));color:#f0a8ff;box-shadow:inset 0 0 0 1px rgba(224,80,240,.4)}
 .seg button.on[data-b=main]{background:linear-gradient(90deg,rgba(52,211,153,.18),rgba(34,211,238,.14));color:var(--good);box-shadow:inset 0 0 0 1px rgba(52,211,153,.4)}
+.seg button.on[data-b=cc]{background:linear-gradient(90deg,rgba(167,139,250,.2),rgba(236,72,153,.14));color:#c4b5fd;box-shadow:inset 0 0 0 1px rgba(167,139,250,.45)}
 .seg button.on[data-b=m15]{background:linear-gradient(90deg,rgba(245,179,53,.2),rgba(251,146,60,.14));color:#f5b335;box-shadow:inset 0 0 0 1px rgba(245,179,53,.45)}
 .seg small{font-weight:500;letter-spacing:0;opacity:.8;margin-left:4px}
 .banner{margin:12px 0 0;padding:10px 12px;border-radius:12px;font-size:13px;border:1px solid var(--line2);background:var(--panel)}
@@ -230,6 +231,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
     <div class="seg" id="botSeg">
       <button data-b="main">● MAIN BOT</button>
       <button data-b="m15">⚡ 15-MIN BOT</button>
+      <button data-b="cc">🐈 COPYCAT</button>
     </div>
   </header>
 
@@ -365,8 +367,35 @@ async function loadData(){
   if (!d.verdicts) { try { d.verdicts = await getJSON("verdicts.json"); } catch(e){ d.verdicts = {events:[], checkpoints:[], strategies:{}}; } }
   for (const k of keys) d["_" + k] = d[k];
   await loadM15();
+  await loadCopycat();
   S.noQuotes = false;
   S.data = d; S.errors = errs; S.lastData = Date.now();
+}
+// Copycat (follows proven winners' public trades) runs on the 15-min server; status every 5 min
+async function loadCopycat(){
+  try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/copycat-data/copycat/status.json?t=${Date.now()}`, {cache:"no-store"});
+    S.cc = r.ok ? await r.json() : null; } catch(e){ S.cc = null; }
+}
+function ccPage(){
+  const c = S.cc;
+  if (!c) return `<h2>Copycat <span class="sub">starting up</span></h2><div class="card"><div class="mute">No data yet. Copycat posts its first status about 5 minutes after it starts on the server.</div></div>`;
+  const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
+  const tag = {watching:["#94a3c8","watching"], passes:["#34d399","passes"], fails:["#f87171","fails"], live:["#c4b5fd","LIVE"]};
+  const acc = (c.accounts || []).slice().sort((a, b) => (b.fills || 0) - (a.fills || 0));
+  const n = k => acc.filter(a => a.verdict === k).length;
+  let h = `<h2>Copycat <span class="sub">${esc(c.mode || "")} · ${esc(c.generated || "")}</span></h2><div class="card glow">
+    <div class="hero"><div><div class="lbl">Accounts followed</div><div class="big">${acc.filter(a => a.watched).length}</div></div>
+    <div style="text-align:right"><div class="lbl">Live / passing / failing</div><div class="val">${n("live")} / ${n("passes")} / ${n("fails")}</div></div></div>
+    <div class="mute" style="font-size:11px;margin-top:8px">${esc(c.rule || "")}. "Copy ¢" = what we'd make per contract paying the price we'd see about 10 s after their trade.</div></div>`;
+  h += `<h2>Accounts <span class="sub">copy result per contract</span></h2><div class="card">` + (acc.length ? acc.map(a => { const [col, lbl] = tag[a.verdict] || tag.watching;
+    return `<div class="item" style="padding:8px 0"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:11px;font-weight:700">${lbl}</span></div>
+      <div class="s" style="white-space:normal">${a.fills || 0} copies · ${a.settled || 0} settled · ${a.days || 0} days${a.pnl ? " · lifetime " + money(a.pnl).replace(".00", "") : ""}${(a.cats || []).length ? " · " + esc(a.cats.join("/")) : ""}${a.lag_s != null ? " · seen after " + a.lag_s + "s" : ""}</div>
+      <div class="s" style="white-space:normal">worst case ${ct(a.settle_low_c)} · after 5 min ${ct(a.follow_5m_c)}</div></div>
+      <div class="r"><span class="${cls(a.settle_c || 0)}">${ct(a.settle_c)}</span><small>per contract</small></div></div>`; }).join("") : `<div class="mute">No accounts yet.</div>`) + `</div>`;
+  const rc = c.recent || [];
+  h += `<h2>Latest trades seen <span class="sub">watch-only, no orders</span></h2><div class="card">` + (rc.length ? rc.slice(0, 25).map(r =>
+    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`) + `</div>`;
+  return h;
 }
 // the 15-minute bot runs on its own server and uploads to the m15-data branch every 15 min
 async function loadM15(){
@@ -1187,6 +1216,7 @@ function testsHTML(){
   return h + `</div>`;
 }
 function renderOverview(){
+  if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); return; }
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
     drawM15();
@@ -1605,7 +1635,7 @@ function renderAll(){
   document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.m === S.mode));
   $("#modeSeg").style.display = "none";  // real money is the main view; paper tests sit in their own section
   if (S.view === "overview") S.mode = "live";
-  if (!S.bot) S.bot = ls.get("bot") === "m15" ? "m15" : "main";
+  if (!S.bot) S.bot = ["m15", "cc"].includes(ls.get("bot")) ? ls.get("bot") : "main";
   $("#botSeg").style.display = S.view === "overview" ? "" : "none";
   document.querySelectorAll("#botSeg button").forEach(b => b.classList.toggle("on", b.dataset.b === S.bot));
   renderBanner(); if (!["overview","orders"].includes(S.view)) $("#banner").innerHTML = "";
