@@ -1,12 +1,18 @@
 {
- "_note": "Copycat real-money switch (read by the droplet every minute). mode: live | off. Real copies only for accounts whose paper record passes (100 copies or 7 days, score 80+). Alex approved going live at that threshold on Nov 10, 2026. bench: list of account nicknames never to copy.",
+ "_note": "Copycat real-money switch (read by the droplet every minute). mode: live | off. Real copies only for accounts whose paper record passes (100 copies or 7 days, score 80+). Alex approved going live at that threshold on Nov 10, 2026. bench: list of account nicknames never to copy. exclude_categories: Kalshi categories never copied with real money (Sports = Alex's standing rule).",
  "mode": "live",
  "pool_pct": 0.15,
- "account_stop_pct": 0.10,
+ "account_stop_pct": 0.1,
  "total_stop_pct": 0.25,
  "max_contracts": 3,
  "slip": 0.02,
  "max_lag_s": 60,
- "exclude_series": ["KXBTC15M", "KXSILVER15M"],
+ "exclude_series": [
+  "KXBTC15M",
+  "KXSILVER15M"
+ ],
+ "exclude_categories": [
+  "Sports"
+ ],
  "bench": []
 }

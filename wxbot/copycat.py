@@ -308,6 +308,7 @@ class Copycat:
         self.boss = boss                         # copycat_boss.Boss or None
         self.alert = alert or (lambda t, b: None)
         self.copied_once: set[str] = set()
+        self.cats: dict[str, str | None] = {}    # series -> Kalshi category
         self._boss_busy = False
         self._lock = threading.Lock()
 
@@ -468,6 +469,17 @@ class Copycat:
         if len(seen) > 5000:                       # keep memory bounded
             self.seen[nick] = {t.get("trade_id") for t in trades}
 
+    def category(self, ticker: str) -> str | None:
+        """Kalshi category of a market's series (e.g. 'Sports'), cached."""
+        ser = ticker.split("-")[0]
+        if ser and ser not in self.cats:
+            try:
+                self.cats[ser] = (self.get(f"{KALSHI}/series/{ser}").get("series") or {}).get("category")
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat series %s: %s", ser, exc)
+                return "unknown"            # unknown = not copied (fails the category check below)
+        return self.cats.get(ser)
+
     def try_copy(self, row: dict, now: float) -> None:
         """Real money: hand a passing account's new fill to the live rails (they decide)."""
         try:
@@ -475,6 +487,7 @@ class Copycat:
             if self.live.mode(now) != "live":
                 return
             snap = self.snapshot(row["ticker"]) if row.get("ticker") else {}
+            snap["category"] = self.category(row.get("ticker") or "")
             what = self.live.maybe_copy(self.acct.get(row["nick"]), row, snap, now)
         except Exception as exc:  # noqa: BLE001
             what = f"error: {str(exc)[:120]}"

@@ -37,6 +37,8 @@ class FakeSession:
             return Resp({"metrics": {"pnl": pnl * 10_000, "volume": 5, "num_markets_traded": 3}})
         if url.endswith("/profile"):
             return Resp({"social_profile": {"top_categories": ["Sports"], "joined_at": "2024-01-01"}})
+        if "/series/" in url:
+            return Resp({"series": {"category": "Politics"}})
         if "/markets/" in url:
             return Resp({"market": {"yes_bid_dollars": "0.60", "yes_ask_dollars": "0.62",
                                     "last_price_dollars": "0.61", "status": "active"}})

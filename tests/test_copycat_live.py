@@ -170,3 +170,10 @@ def test_hot_accounts_get_every_other_poll(tmp_path):
     for _ in range(10):
         cc.step()
     assert polled.count("a7") >= 5
+
+
+def test_sports_and_unknown_category_not_copied(tmp_path):
+    lv, _ = mk(tmp_path)
+    assert lv.maybe_copy(ACCT, FILL, dict(SNAP, category="Sports"), 1000.0) == "excluded category (Sports)"
+    assert lv.maybe_copy(ACCT, FILL, dict(SNAP, category="unknown"), 1000.0).startswith("excluded")
+    assert lv.maybe_copy(ACCT, FILL, dict(SNAP, category="Politics"), 1000.0) == "copied"
