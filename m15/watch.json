@@ -1,21 +1,21 @@
 {
  "last": {
-  "at": "2026-11-11T05:20:15+00:00",
+  "at": "2026-11-11T05:35:22+00:00",
   "flags": [],
   "haiku": {
    "level": "watch",
-   "summary": "Both bots are live, unhalted, and within their stops, with zero errors and scans and trades running on schedule. The 15-MIN BTC market has a decay_alert dated 2026-11-10, which is worth a look, but the -$7.61 day and -$3.02 24h P&L are ordinary swings."
+   "summary": "Both bots are live and healthy with no errors, halts, or rule flags, and the MAIN bot's scans and trade runs are succeeding. The 15-MIN bot is down $2.85 over 24h after a $7.61 losing day on Nov 10, which is well inside its -35% stop, but the KXBTC15M decay alert dated Nov 10 is worth a look."
   },
   "opus": null,
   "action": null
  },
  "today": {
   "day": "2026-11-11",
-  "haiku": 2,
+  "haiku": 3,
   "opus": 0,
   "tokens": {
-   "haiku_in": 2625,
-   "haiku_out": 447,
+   "haiku_in": 4010,
+   "haiku_out": 584,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -232,15 +232,25 @@
    "opus": null
   },
   {
+   "action": null,
    "at": "2026-11-11T05:20:15+00:00",
    "flags": [],
    "haiku": {
     "level": "watch",
     "summary": "Both bots are live, unhalted, and within their stops, with zero errors and scans and trades running on schedule. The 15-MIN BTC market has a decay_alert dated 2026-11-10, which is worth a look, but the -$7.61 day and -$3.02 24h P&L are ordinary swings."
    },
+   "opus": null
+  },
+  {
+   "at": "2026-11-11T05:35:22+00:00",
+   "flags": [],
+   "haiku": {
+    "level": "watch",
+    "summary": "Both bots are live and healthy with no errors, halts, or rule flags, and the MAIN bot's scans and trade runs are succeeding. The 15-MIN bot is down $2.85 over 24h after a $7.61 losing day on Nov 10, which is well inside its -35% stop, but the KXBTC15M decay alert dated Nov 10 is worth a look."
+   },
    "opus": null,
    "action": null
   }
  ],
- "digest": "Time: 12:20 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T05:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-3.015 live_total=$8.1515\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $0.03\n  KXBTC15M: fills=468.0 pnl=$7.81 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=270.97 pnl=$12.2492\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV110000-00 1 0.71 -0.71\n  KXSILVER15M-26NOV110000-00 2 1.56 0.44\n  KXBTC15M-26NOV110015-15 2 1.7 0.3\nMAIN: mode=live halted=False bankroll=$55.95 cash=$34.61 at=2026-11-11T05:16:13.931396+00:00\nRecent Actions runs: weather-scan in_progress 05:20Z; trade success 05:15Z; weather-scan success 05:15Z; trade success 05:10Z; weather-scan success 05:10Z; trade success 05:05Z; weather-scan success 05:05Z; trade success 05:02Z\nRULE FLAGS: none"
+ "digest": "Time: 12:35 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T05:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-2.845 live_total=$8.6115\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $0.49\n  KXBTC15M: fills=470.0 pnl=$8.22 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=271.97 pnl=$12.2992\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV110000-00 1 0.71 -0.71\n  KXSILVER15M-26NOV110000-00 2 1.56 0.44\n  KXBTC15M-26NOV110015-15 2 1.7 0.3\n  KXBTC15M-26NOV110030-30 2 1.59 0.41\n  KXSILVER15M-26NOV110030-30 1 0.95 0.05\nMAIN: mode=live halted=False bankroll=$56.41 cash=$35.07 at=2026-11-11T05:31:55.294181+00:00\nRecent Actions runs: weather-scan in_progress 05:35Z; tests success 05:34Z; tests success 05:33Z; trade success 05:31Z; tests success 05:30Z; dashboard success 05:30Z; weather-scan success 05:30Z; ovn-research in_progress 05:30Z\nRULE FLAGS: none"
 }
