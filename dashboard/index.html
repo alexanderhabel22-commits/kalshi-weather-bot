@@ -391,12 +391,12 @@ function ccPage(){
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">switch ${esc(String(L.control || "off").toUpperCase())}${live ? ` · <span class="pos">● live</span>` : ""}${stopTxt}</div></div>
     <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div>
     <div class="lbl" style="margin-top:8px">Copying / testing / out</div><div class="val" style="font-size:17px">${n("passes")} / ${n("watching")} / ${n("fails") + n("slump") + n("benched")}</div></div></div>
-    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Every account starts on <b>paper</b>: we score each of its trades as if we had copied it ~10 s later, after Kalshi's fee. At 100 paper copies (or 7 days) with a score of 80+ it moves to <b>real money</b> (1-3 contracts). Paper and real results are shown separately below.</div></div>`;
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Every account starts on <b>paper</b>: we score each of its trades as if we had copied it ~10 s later, after Kalshi's fee. At 100 paper copies (or 7 days) with a score of 80+ it moves to <b>real money</b> (1-3 contracts). Paper and real results are shown separately below.</div>${c.scan ? `<div class="s" style="margin-top:8px;white-space:normal">Scanning every public Kalshi trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> public traders seen so far, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones (lifetime $${c.scan.min_profit}+) being tested.</div>` : ""}</div>`;
   if (B.summary) h += `<h2>The boss <span class="sub">Claude · ${num(B.reviews_today)} reviews today</span></h2><div class="card"><div style="font-size:13px;line-height:1.5;color:#c4b5fd">${esc(B.summary)}</div>${Object.keys(B.benches || {}).length ? `<div class="s" style="margin-top:6px;white-space:normal">Benched by the boss: ${Object.entries(B.benches).map(([k, v]) => esc(k) + " (" + esc(v.reason) + ")").join(", ")}</div>` : ""}</div>`;
   const row = a => { const [col, lbl] = tag[a.verdict] || tag.watching, R = a.real || {};
     const prog = a.verdict === "watching" ? Math.min(100, Math.max((a.fills || 0), 100 * (a.days || 0) / 7)) : 100;
     const realTxt = R.copies ? `${R.copies} real copies (${R.open} open) · won ${R.won}/${R.settled} · <span class="${cls(R.pnl)}">${money(R.pnl)}</span>` : (a.verdict === "passes" ? "no real copies yet" : "none");
-    return `<div class="item" style="padding:9px 0;align-items:flex-start"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:10px;font-weight:700">${lbl}</span></div>
+    return `<div class="item" data-ccn="${esc(a.nick)}" style="padding:9px 0;align-items:flex-start;cursor:pointer"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:10px;font-weight:700">${lbl}</span></div>
       <div class="s" style="white-space:normal">${(a.cats || []).length ? esc(a.cats.join("/")) + " · " : ""}${a.pnl ? "lifetime " + money(a.pnl).replace(".00", "") + " · " : ""}${a.lag_s != null ? "we see trades after " + a.lag_s + "s" : ""}</div>
       <div class="s" style="white-space:normal"><b style="color:#94a3c8">PAPER</b> ${a.fills || 0} copies · ${a.settled || 0} settled · last ${a.window || 0}: ${ct(a.settle_c)}/ct (worst case ${ct(a.settle_low_c)})${a.verdict !== "watching" ? " · leeway " + a.leeway_c + "¢" : ""}</div>
       ${a.verdict === "watching" ? `<div style="height:4px;background:rgba(148,163,200,.18);border-radius:2px;margin:4px 0 2px;max-width:220px"><div style="height:4px;width:${prog.toFixed(0)}%;background:#22d3ee;border-radius:2px"></div></div><div class="s" style="white-space:normal">${Math.round(prog)}% of the way to its test (100 copies or 7 days)</div>` : ""}
@@ -407,7 +407,7 @@ function ccPage(){
   h += `<h2>Real-money copies <span class="sub">${(L.open || []).length} open · ${(L.settled || []).length} settled</span></h2><div class="card">` + (pos.length ? pos.slice(0, 30).map(p =>
     `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(p.nick)} · ${esc((p.side || "").toUpperCase())} × ${p.n} · $${num(p.cost).toFixed(2)}</div><div class="s">${esc(p.ticker)}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${esc(String(p.result || "").toUpperCase())}</small>`}</div></div>`).join("") : `<div class="mute" style="font-size:12px">None yet. The first real copy happens when an account passes its paper test${live ? "" : " and the switch is on"}.</div>`) + `</div>`;
   const shown = acc.filter(a => a.fills || a.watched), top = shown.slice(0, 5), rest = shown.slice(5);
-  h += `<h2>Report card <span class="sub">top 5 · grade · score out of 100</span></h2><div class="card">` + (shown.length ? top.map(row).join("")
+  h += `<h2>Report card <span class="sub">top 5 · tap one for its full card</span></h2><div class="card">` + (shown.length ? top.map(row).join("")
     + (rest.length ? `<details id="ccMore"${S.ccOpen ? " open" : ""} style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:#22d3ee;padding:6px 0">Show all ${shown.length} accounts</summary>${rest.map(row).join("")}</details>` : "")
     : `<div class="mute">No accounts yet.</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">"Worst case" = the low end of what this account's copies are likely worth per contract, given how few we've seen so far (95% confidence). The score is built on it, so a lucky streak can't earn a high grade.</div></div>`;
   const rc = c.recent || [];
@@ -415,6 +415,53 @@ function ccPage(){
     `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`) + `</div>`;
   return h;
 }
+// Copycat: tap an account for its full report card (pop-up)
+function ccCard(nick){
+  const a = ((S.cc || {}).accounts || []).find(x => x.nick === nick); if (!a) return "";
+  const D = a.detail || {}, R = a.real || {};
+  const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
+  const gcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
+  const stat = (l, v) => `<div><div class="lbl">${l}</div><div class="val" style="font-size:15px">${v}</div></div>`;
+  const tr = t => `<div class="item" style="padding:5px 0"><div class="main" style="min-width:0"><div class="t" style="font-size:12px">${esc((t.side || "").toUpperCase())} · they paid ${t.their_c}¢ · we'd pay ${t.pay_c}¢ × ${esc(t.count)}${t.role ? " · " + esc(t.role) : ""}</div><div class="s">${esc(t.ticker)} · ${esc(t.et)} ET</div></div><div class="r">${t.c == null ? `<small class="mute">open</small>` : `<span class="${cls(t.c)}">${ct(t.c)}</span><small>${esc(String(t.result || "").toUpperCase())}</small>`}</div></div>`;
+  const list = (title, arr) => `<div class="lbl" style="margin-top:14px">${title}</div>` + (arr && arr.length ? arr.map(tr).join("") : `<div class="mute" style="font-size:12px">None yet.</div>`);
+  const bands = D.bands || {}, bt = Object.values(bands).reduce((x, y) => x + y, 0) || 1;
+  return `<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="min-width:0"><div style="font-size:18px;font-weight:800;word-break:break-all">${esc(a.nick)}</div>
+      <div class="s" style="white-space:normal">${(a.cats || []).length ? esc(a.cats.join(" / ")) + " · " : ""}${a.joined ? "on Kalshi since " + esc(String(a.joined).slice(0, 10)) : ""}</div></div>
+      <div style="text-align:right"><div style="color:${gcol(a.grade)};font-weight:800;font-size:30px;line-height:1">${esc(a.grade || "-")}</div><small class="mute">${a.score != null ? a.score.toFixed(1) + " / 100" : "no score yet"}</small></div></div>
+    ${a.boss_note ? `<div style="margin-top:10px;font-size:13px;color:#c4b5fd;line-height:1.45">Boss: ${esc(a.boss_note)}</div>` : ""}
+    <div class="grid g3" style="margin-top:12px;gap:10px">
+      ${stat("Lifetime Kalshi profit", a.pnl ? money(a.pnl).replace(".00", "") : "—")}
+      ${stat("Their contracts", a.contracts != null ? Number(a.contracts).toLocaleString() : "—")}
+      ${stat("Markets traded", a.markets != null ? Number(a.markets).toLocaleString() : "—")}
+      ${stat("Paper copies", (a.fills || 0) + " · " + (a.settled || 0) + " settled")}
+      ${stat("Won / lost (paper)", (D.won || 0) + " / " + (D.lost || 0))}
+      ${stat("Copy result last " + (a.window || 0), ct(a.settle_c) + "/ct")}
+      ${stat("Worst case", ct(a.settle_low_c) + "/ct")}
+      ${stat("Price 1 min later", ct(D.follow_1m_c) + "/ct")}
+      ${stat("We see trades after", a.lag_s != null ? a.lag_s + "s" : "—")}
+      ${stat("Real copies", (R.copies || 0) + (R.copies ? " · won " + R.won + "/" + R.settled : ""))}
+      ${stat("Real P&L", `<span class="${cls(num(R.pnl))}">${money(num(R.pnl))}</span>`)}
+      ${stat("Status", esc(a.verdict || "") + (a.size ? " · " + a.size + " ct" : ""))}
+    </div>
+    <div class="lbl" style="margin-top:14px">How they trade</div>
+    <div class="s" style="white-space:normal;line-height:1.6">Typical price ${D.median_price_c != null ? D.median_price_c + "¢" : "—"} · typical size ${D.median_size != null ? D.median_size + " contracts" : "—"} · ${D.maker_pct != null ? D.maker_pct + "% resting orders (maker)" : ""}${(D.busiest_hours_et || []).length ? " · busiest hours " + D.busiest_hours_et.map(h => h + ":00").join(", ") + " ET" : ""}</div>
+    <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin:6px 0 2px">${Object.entries(bands).filter(([, v]) => v).map(([k, v], i) => `<div title="${k}" style="width:${100 * v / bt}%;background:${["#22d3ee", "#34d399", "#f5b335", "#c084fc", "#64748b"][i % 5]}"></div>`).join("")}</div>
+    <div class="s">${Object.entries(bands).filter(([, v]) => v).map(([k, v]) => `${k}: ${v}`).join(" · ")}</div>
+    <div class="lbl" style="margin-top:14px">Markets they trade</div>` + ((D.series || []).length ? D.series.map(x => `<div class="item" style="padding:4px 0"><div class="main"><div class="t" style="font-size:12px">${esc(x.s)}</div><div class="s">${x.n} copies · ${x.settled} settled</div></div><div class="r"><span class="${cls(num(x.avg_c))}">${ct(x.avg_c)}</span></div></div>`).join("") : `<div class="mute" style="font-size:12px">None yet.</div>`)
+    + list("Best copies", D.best) + list("Worst copies", D.worst) + list("Latest trades", D.latest)
+    + `<div class="mute" style="font-size:11px;margin-top:12px;line-height:1.5">Copy results are per contract, after Kalshi's fee, at the price we'd have paid when we saw their trade.</div>`;
+}
+function ccOpen(nick){
+  let m = document.getElementById("ccModal");
+  if (!m){ m = document.createElement("div"); m.id = "ccModal";
+    m.style.cssText = "position:fixed;inset:0;z-index:999;background:rgba(3,6,15,.72);display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)";
+    m.addEventListener("click", e => { if (e.target === m || e.target.closest("[data-ccclose]")) m.remove(); });
+    document.body.appendChild(m); }
+  m.innerHTML = `<div class="card glow" style="width:100%;max-width:560px;max-height:88vh;overflow-y:auto;margin:0;border-radius:18px 18px 0 0;padding:18px 16px 28px;position:relative">
+    <button data-ccclose style="position:sticky;top:0;float:right;background:rgba(148,163,200,.18);color:#e2e8f0;border:0;border-radius:14px;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>${ccCard(nick)}</div>`;
+}
+document.addEventListener("click", e => { const it = e.target.closest("[data-ccn]"); if (it) ccOpen(it.getAttribute("data-ccn")); });
 // the 15-minute bot runs on its own server and uploads to the m15-data branch every 15 min
 async function loadM15(){
   const get = async (path, json) => { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${path}?t=${Date.now()}`, {cache:"no-store"});

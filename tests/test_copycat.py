@@ -33,7 +33,7 @@ class FakeSession:
                 return Resp({"trades": [{"trade_id": "x"}]})
             return Resp({"trades": [], "visibility_state": "hidden"})
         if url.endswith("/profile/metrics"):
-            pnl = 900_000 if params.get("nickname") == "sharp" else 1_000
+            pnl = 900_000 if params.get("nickname") == "sharp" else 100
             return Resp({"metrics": {"pnl": pnl * 10_000, "volume": 5, "num_markets_traded": 3}})
         if url.endswith("/profile"):
             return Resp({"social_profile": {"top_categories": ["Sports"], "joined_at": "2024-01-01"}})

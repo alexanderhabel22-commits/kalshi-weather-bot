@@ -294,8 +294,9 @@ IP without a token). It never places, changes or cancels anything and needs no s
   if TRADING_MODE is off/paper or the main bot is halted). Whole service: `sudo systemctl disable --now
   kalshi-copycat` and `sudo touch /var/lib/kalshi-copycat.disabled`.
 - Uses Kalshi's public social API (`api.elections.kalshi.com/v1/social`): every 12 h it rebuilds the
-  watch list (profit boards, public trades, >= $10K lifetime profit, max 100); every 10 min it scouts
-  the global public trade feed for new profitable names. Polls accounts round-robin (passing ones get
+  watch list (profit boards, public trades, >= $500 lifetime profit, max 1,000; saved in watch.json); every 10 min it scouts
+  every name seen in the global public trade feed. It reads that feed about once a second (one read
+  covers every account) and also polls accounts round-robin as a backstop (passing ones get
   every other poll, so a few seconds apart). Feed delay measured Nov 10: median ~10 s.
 - PAPER record (every account): each of their fills is scored as if copied at the price ~10 s later,
   after Kalshi's taker fee. Score 0-100 = 80 + 2.5 x the pessimistic (95% lower bound) cents per

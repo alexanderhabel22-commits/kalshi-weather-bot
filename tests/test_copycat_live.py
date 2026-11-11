@@ -208,3 +208,14 @@ def test_global_feed_logs_watched_accounts_fast(tmp_path):
     cc.poll("sharp", 4.0)                            # account poll doesn't double-log
     rows = [json.loads(x) for p in tmp_path.glob("copycat-*.jsonl") for x in p.read_text().splitlines()]
     assert len([r for r in rows if r["kind"] == "fill"]) == 2
+
+
+def test_feed_keeps_running_during_snapshot_backlog(tmp_path):
+    t = [0.0]
+    cc = copycat.Copycat(tmp_path, clock=lambda: t[0], req_gap=0)
+    feeds = []
+    cc.poll_feed = lambda now: feeds.append(now)
+    cc.snapshot = lambda ticker: (t.__setitem__(0, t[0] + 0.5), {})[1]   # each snapshot takes 0.5 s
+    cc.snaps = [(0.0, 0, "a", f"T{i}", f"x{i}") for i in range(10)]
+    cc.run_snaps(0.0)
+    assert len(feeds) >= 4                         # ~every second while 5 s of snapshots ran
