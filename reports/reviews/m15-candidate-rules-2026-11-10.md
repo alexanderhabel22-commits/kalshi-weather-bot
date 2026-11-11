@@ -64,3 +64,20 @@ Aug 21 - Nov 10, buy at the bid on the first minute in the band; train Aug 21 - 
 | E2 | BTC | E, only when the favourite is against the last hour's move (strike now vs strike 1 h ago) | judged inside E, same bar | test +2.1c on ~16/day |
 
 Freeze: E is a new way to trade BTC, so it starts on paper. Real money needs Alex's OK.
+
+## Update Nov 11, 2026: Rule F, fair-value filter (thread "Test a price-driven 15-min trading bot")
+
+Coded but OFF (`[m15] fv_skip = false`, wxbot/m15.py `fv_blocks`). The fair value comes from the
+shadow logger (wxbot/m15_fv.py): Kalshi's official CF Benchmarks index (or the rebuilt
+Coinbase/Kraken/Bitstamp median when that feed is down), P(60-s settlement average >= strike).
+History hint (hist15 thread, ~7,600 BTC markets, not fill-conditioned): with 5-10 min left,
+model >= 5 pts above the bid earns about +2c/ct more than when they agree; the model is worse
+than Kalshi's price in the last ~2-3 min.
+
+| # | Market | Candidate | Adopt at its 500 review if | Expected effect |
+|---|---|---|---|---|
+| F | BTC | Skip/pull the favourite bid when our side's fair value < bid - margin (default 0c), only with >= 3 min left (`fv_skip_min_left_s` 180). Fails open (no fair value = bid as today) | on live BTC fills logged since Nov 10 7 PM ET (fv_fill column, fv-*.csv "fill" rows): fills with fair < fill price earn <= 0 AND fills with fair >= fill price earn >= +2c/ct AND the gap holds in both halves of the sample; skipped share <= 50% of windows. Judge again on the pessimistic paper rule | Removes the worst fills; at today's +1-2c/ct, roughly +1-2c/ct on what's left (fewer contracts) |
+| F2 | BTC | F with margin 3c (skip only clear overpricing) | judged inside F, same bar | Fewer skips |
+
+Freeze: F changes live BTC behaviour, so it switches on only at the BTC 500 review, and only if the
+bar above is met. It is judged alongside E.

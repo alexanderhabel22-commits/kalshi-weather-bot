@@ -974,3 +974,64 @@ def test_fill_quality_logs_fair_value_when_shadow_present(monkeypatch):
     b.step()
     r = fill_rows(b, fill_t)[0]
     assert r["fv_yes"] == "0.83" and r["index_px"] == "101234.5"
+
+
+class FakeFV:
+    """Stand-in for m15_fv.FairShadow with a settable fair value for YES."""
+
+    def __init__(self, y):
+        self.y = y
+
+    def fair_value(self, m, now):
+        return None if self.y is None else {"fv_yes": self.y, "fv_cf": None, "index": 1, "venues": 3,
+                                            "sigma": 1e-4}
+
+    def step(self, bot, now):
+        pass
+
+    def files(self, now):
+        return {}
+
+
+def fv_bot(monkeypatch, y, **kw):
+    World(monkeypatch)                       # favourite = YES, bid 0.80
+    clk = Clock()
+    b = m15.Bot(cfg(mode="paper", **kw), http=None, clock=clk, fetch_json=lambda url: {},
+                fv=FakeFV(y))
+    return b, clk
+
+
+def test_fv_filter_off_by_default(monkeypatch):
+    b, _ = fv_bot(monkeypatch, 0.50)        # model hates it, but the filter is off
+    b.step()
+    assert b.state["markets"][TK]["order"]
+
+
+def test_fv_filter_skips_and_pulls_when_fair_below_bid(monkeypatch):
+    b, clk = fv_bot(monkeypatch, 0.90, fv_skip=True)
+    b.step()
+    m = b.state["markets"][TK]
+    assert m["order"]                        # fair 0.90 >= bid 0.80: bid as usual
+    b.fv.y = 0.70
+    clk.t += 5
+    b.step()
+    assert m["order"] is None and m["why"] == "fair value below bid" and m["fv_skips"] >= 1
+    b.fv.y = 0.85
+    clk.t += 5
+    b.step()
+    assert m["order"]                        # back above: bids again
+
+
+def test_fv_filter_fails_open_and_respects_scope(monkeypatch):
+    b, _ = fv_bot(monkeypatch, None, fv_skip=True)         # no fair value -> as before
+    b.step()
+    assert b.state["markets"][TK]["order"]
+    b2, _ = fv_bot(monkeypatch, 0.5, fv_skip=True, fv_skip_series=["KXETH15M"])
+    b2.step()
+    assert b2.state["markets"][TK]["order"]                # BTC not in scope
+    b3, clk = fv_bot(monkeypatch, 0.5, fv_skip=True, fv_skip_min_left_s=900)
+    b3.step()
+    assert b3.state["markets"][TK]["order"]                # 600 s left < min_left: too late to trust
+    b4, _ = fv_bot(monkeypatch, 0.78, fv_skip=True, fv_skip_margin=0.03)
+    b4.step()
+    assert b4.state["markets"][TK]["order"]                # 0.78 within the 3c margin of 0.80
