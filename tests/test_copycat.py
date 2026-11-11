@@ -283,3 +283,23 @@ def test_status_keeps_posting_during_long_jobs(tmp_path):
     now[0] += 10
     cc.tick()                                    # not again within 5 minutes
     assert len(ups) == n
+
+
+def test_dropped_accounts_still_logged_from_feed_without_snapshots(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            return Resp({"trades": [trade("d1", taker="mm"), trade("d2", maker="mm")], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.drop("mm", "failed its paper test")
+    cc.poll_feed(1_000_000.0)
+    fills = [r for r in rows(tmp_path) if r.get("kind") == "fill"]
+    assert {r["trade_id"] for r in fills} == {"d1", "d2"}
+    assert all(r["dropped"] and not r["snap"] and not r["backfill"] for r in fills)
+    assert not cc.snaps and "mm" not in cc.watch
+    assert all(a["nick"] != "mm" for a in cc.update_status(1_000_000.0)["accounts"])

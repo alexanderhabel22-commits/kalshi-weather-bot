@@ -647,14 +647,15 @@ class Copycat:
                 if (n and n not in self.watch and n not in self.checked and n not in self.dropped
                         and len(self.scout_queue) < 2000):
                     self.scout_queue[n] = None        # looked up by the next scout
-                if n and n in self.watch and n in self.seen:
+                if n and ((n in self.watch and n in self.seen) or n in self.dropped):
                     by[n].append(t)
         for n, ts in by.items():
-            self.ingest(n, ts, now)
+            self.ingest(n, ts, now, quiet=n in self.dropped)
 
-    def ingest(self, nick: str, trades: list[dict], now: float) -> None:
-        """Logs an account's new trades (newest first, as the API sends them)."""
-        first = nick not in self.seen
+    def ingest(self, nick: str, trades: list[dict], now: float, quiet: bool = False) -> None:
+        """Logs an account's new trades (newest first, as the API sends them). quiet = a dropped
+        account: logged for research (e.g. how market makers trade), never snapshotted or copied."""
+        first = nick not in self.seen and not quiet
         seen = self.seen.setdefault(nick, set())
         for t in reversed(trades):
             tid = t.get("trade_id")
@@ -666,16 +667,18 @@ class Copycat:
                    "role": role, "side": side, "yes_price": _px(t.get("price_dollars")),
                    "count": t.get("count_fp", t.get("count")), "trade_time": t.get("create_date"),
                    "backfill": first}
+            if quiet:
+                row["dropped"] = True
             try:
                 ct = datetime.fromisoformat(str(t.get("create_date")).replace("Z", "+00:00")).timestamp()
                 row["lag_s"] = round(now - ct, 1)
             except ValueError:
                 pass
             key = (nick, t.get("ticker") or "")
-            row["snap"] = not (first or now - self.last_snap.get(key, 0) < SNAP_GAP_S
+            row["snap"] = not (first or quiet or now - self.last_snap.get(key, 0) < SNAP_GAP_S
                                or len(self.snaps) > MAX_PENDING)
             self.write(row)
-            if not first and self.live is not None and nick in self.hot:
+            if not first and not quiet and self.live is not None and nick in self.hot:
                 self.try_copy(row, now)
             if not row["snap"]:
                 continue
