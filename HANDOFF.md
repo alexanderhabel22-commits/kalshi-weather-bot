@@ -304,6 +304,10 @@ IP without a token). It never places, changes or cancels anything and needs no s
   if it scores 87+ (B+), otherwise at 150 (Alex, Nov 10; the 7-day shortcut was dropped). 80+ = copied, while its last 50 average better than -leeway (5c, +1c per $1
   it has made us, up to +5c for a high score); "slump" below that, back when it recovers. Size 1,
   90+ = 2, 95+ with 300 settled = 3.
+  DROPS (Alex, Nov 10 10:31 PM ET): an account that fails at 150 copies (score under 80, e.g. a
+  market maker), or loses money over the last 30 days on two weekly re-checks in a row, is dropped:
+  no polls, snapshots or copies for 30 days, then it may be re-scouted and starts again from zero.
+  Kept in watch.json "dropped" and listed on the dashboard.
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
   account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
   their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
