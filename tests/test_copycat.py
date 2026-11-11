@@ -402,3 +402,27 @@ def test_big_anonymous_bets_logged_without_lookups(tmp_path):
     assert len(w) == 1 and w[0]["anon"] and w[0]["usd"] == 2400 and not s.calls and not cc.whale_queue
     sm = copycat.whale_summary(w, {"KXTEST-1": "yes"}, 1_000_000.0)
     assert sm["anon_count"] == 1 and sm["anon"]["settled"] == 1 and sm["count"] == 0
+
+
+
+def test_full_feed_rolling_log(tmp_path):
+    import gzip as gz
+    s = FakeSession()
+    orig = s.get
+    page = {"t": []}
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            return Resp({"trades": page["t"], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    page["t"] = [trade("b0")]
+    cc.poll_feed(1_000_000.0)                    # boot: not logged
+    page["t"] = [trade("b2", taker="x,y"), trade("b1"), trade("b0")]
+    cc.poll_feed(1_000_000.0)
+    cc.feed_fh.close()
+    f = list((tmp_path / "feed").glob("feed-*.csv.gz"))
+    lines = gz.open(f[0], "rt").read().splitlines()
+    assert [ln.split(",")[8] for ln in lines] == ["b1", "b2"] and "x y" in lines[1]
