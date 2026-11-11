@@ -23,6 +23,11 @@ from .util import Http, HttpError
 log = logging.getLogger("wxbot")
 
 HARD_MAX_CONTRACTS = 25          # no single order bigger than this, whatever the config says
+# Liquidity-reward test (wxbot/lip.py) only: big but cheap resting bids. Each order <= 500
+# contracts, <= 10c, and <= $6 in total, so one order can never risk more than $6.
+LIP_MAX_CONTRACTS = 500
+LIP_MAX_PRICE = 0.10
+LIP_MAX_ORDER_COST = 6.0
 
 
 class OrderRejected(Exception):
@@ -190,8 +195,11 @@ class KalshiClient:
     # as a dollar string, count a string.
     def _order_v2(self, ticker: str, side: str, buy: bool, price: float, count: int,
                   client_order_id: str, tif: str, post_only: bool = False,
-                  reduce_only: bool = False) -> dict:
-        check_order(side, price, count)
+                  reduce_only: bool = False, lip: bool = False) -> dict:
+        if lip:
+            check_lip_order(side, price, count)
+        else:
+            check_order(side, price, count)
         yes_px = price if side == "yes" else 1.0 - price
         book = "bid" if (side == "yes") == buy else "ask"
         payload = {"ticker": ticker, "client_order_id": client_order_id, "side": book,
@@ -237,6 +245,31 @@ class KalshiClient:
         return self._order_v2(ticker, side, True, price, count, client_order_id,
                               "good_till_canceled", post_only=True)
 
+    def place_lip_bid(self, ticker: str, side: str, price: float, count: int,
+                      client_order_id: str) -> dict:
+        """Liquidity-reward test only: a resting post-only BUY with the LIP ceilings
+        (cheap and capped in dollars instead of the 25-contract ceiling)."""
+        return self._order_v2(ticker, side, True, price, count, client_order_id,
+                              "good_till_canceled", post_only=True, lip=True)
+
+    def credit_history(self, max_pages: int = 5) -> list:
+        """Credits Kalshi applied to the account, newest first (GET /portfolio/credit_history;
+        where incentive payouts are expected to show up)."""
+        out, cursor = [], None
+        for _ in range(max_pages):
+            params = {"limit": 200}
+            if cursor:
+                params["cursor"] = cursor
+            js = self._get("/portfolio/credit_history", params)
+            rows = js.get("credits") or js.get("credit_history")
+            if rows is None:            # field name not documented: take the first list
+                rows = next((v for v in js.values() if isinstance(v, list)), [])
+            out.extend(rows)
+            cursor = js.get("cursor") or js.get("next_cursor")
+            if not cursor:
+                break
+        return out
+
     def buy_now(self, ticker: str, side: str, price: float, count: int,
                 client_order_id: str) -> dict:
         """Buy at `price` or better right now (takes the ask); whatever doesn't
@@ -260,6 +293,14 @@ def check_order(side: str, price: float, count: int) -> None:
         raise OrderRejected(f"bad size {count!r}")
     if not (0.01 <= price <= 0.99) or abs(price * 100 - round(price * 100)) > 1e-6:
         raise OrderRejected(f"bad price {price!r}")
+
+
+def check_lip_order(side: str, price: float, count: int) -> None:
+    check_order(side, price, 1)
+    if not isinstance(count, int) or not (1 <= count <= LIP_MAX_CONTRACTS):
+        raise OrderRejected(f"bad lip size {count!r}")
+    if price > LIP_MAX_PRICE + 1e-9 or price * count > LIP_MAX_ORDER_COST + 1e-9:
+        raise OrderRejected(f"lip order too big: {count} @ {price}")
 
 
 def fill_qty(order: dict, placed: float) -> float:

@@ -1,0 +1,24 @@
+[Unit]
+Description=Liquidity-reward test: cheap resting bids in Kalshi reward markets (lip_control.json on main switches it)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kalshi
+WorkingDirectory=/opt/kalshi-m15/app
+# Uses the Kalshi key (bids), GITHUB_TOKEN (status upload to m15-data) and NTFY_TOPIC (alerts).
+# Kill: set mode "off" in lip_control.json (all bids cancelled within ~5 min), or TRADING_MODE=off.
+EnvironmentFile=/etc/kalshi-m15/env
+ExecStart=/opt/kalshi-m15/venv/bin/python bot.py lip -v
+Environment=LIP_DIR=/var/lib/kalshi-lip
+StateDirectory=kalshi-lip
+Restart=always
+RestartSec=60
+Nice=10
+CPUQuota=10%
+MemoryMax=150M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target
