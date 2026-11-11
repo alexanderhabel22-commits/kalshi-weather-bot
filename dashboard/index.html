@@ -628,13 +628,17 @@ const darkC = c => { const m = /^#([0-9a-f]{6})$/i.exec(c || ""); if (!m) return
 // [m15] live_series in config.toml, minus any market the server auto-cut (status.json "cut"). Default on.
 function m15LiveSeries(){ const ls_ = ((S.data.config || {}).m15 || {}).live_series, cut = ((S.m15 || {}).status || {}).cut || {};
   return Array.isArray(ls_) ? new Set(ls_.filter(x => !(x in cut))) : null; }
-const m15OnlyLive = () => ls.get("m15Only") !== "0" && !!m15LiveSeries();
+// Default OFF (Alex, Nov 11): the headline must be ALL real 15-min money, including markets later cut,
+// or the cut markets' losses vanish from the total. The switch only narrows the view on request.
+const m15OnlyLive = () => ls.get("m15Only2") === "1" && !!m15LiveSeries();
+function m15AllRealPnl(){ const M = S.m15; if (!M) return null;
+  return M.rows.filter(r => r.mode === "live" && num(r.filled) > 0 && (r.won === "1" || r.won === "0")).reduce((a, r) => a + num(r.pnl), 0); }
 const m15Keep = r => !m15OnlyLive() || m15LiveSeries().has(String(r.series || r.ticker || "").split("-")[0]);
 function m15OnlyHTML(){ const L = m15LiveSeries(); if (!L) return "";
   const names = [...L].map(x => x.replace(/^KX|15M$/g, "")).map(n => n.length <= 3 ? n : n.charAt(0) + n.slice(1).toLowerCase());
   return `<label id="m15Only" style="display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:13px;cursor:pointer">
     <input type="checkbox" ${m15OnlyLive() ? "checked" : ""} style="width:18px;height:18px;accent-color:#f5b335;margin:0">
-    <span><b>Live markets only</b> <span class="mute">· ${esc(names.join(", ") || "none")} on real money now</span></span></label>`; }
+    <span><b>Live markets only</b> <span class="mute">· ${esc(names.join(", ") || "none")} on real money now${m15OnlyLive() && m15AllRealPnl() != null ? ` · all 15-min real money incl. cut markets: <b>${m15AllRealPnl() >= 0 ? "+" : "-"}$${Math.abs(m15AllRealPnl()).toFixed(2)}</b>` : ""}</span></span></label>`; }
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
 function m15Fills(){
   const M = S.m15; if (!M) return [];
@@ -1376,7 +1380,7 @@ function renderOverview(){
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
     drawM15();
-    if ($("#m15Only")) $("#m15Only").querySelector("input").onchange = e => { ls.set("m15Only", e.target.checked ? "1" : "0"); renderOverview(); };
+    if ($("#m15Only")) $("#m15Only").querySelector("input").onchange = e => { ls.set("m15Only2", e.target.checked ? "1" : "0"); renderOverview(); };
     $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
     return;
   }
