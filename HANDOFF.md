@@ -329,6 +329,9 @@ IP without a token). It never places, changes or cancels anything and needs no s
   market maker), or loses money over the last 30 days on two weekly re-checks in a row, is dropped:
   no polls, snapshots or copies for 30 days, then it may be re-scouted and starts again from zero.
   Kept in watch.json "dropped" and listed on the dashboard.
+  CHANCES (Alex, Nov 11 6:10 PM ET, "don't disqualify someone for a bad day"): the score uses the
+  LAST 150 copies; a fail at 150 is re-tested at 200 and 250 (TEST_CHANCES=3, RETEST_EVERY=50), and
+  only 3 fails in a row drop it; a pass in between resets the count (watch.json fails_in_row/retest_at).
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
   account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
   their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
