@@ -24,7 +24,7 @@ from .m15 import client_from_env, github_uploader
 from .util import Http
 
 log = logging.getLogger("wxbot")
-VERSION = "v1"
+VERSION = "v2"
 ROUNDS = 10
 
 
@@ -55,15 +55,18 @@ def pick_markets(http: Http) -> list[str]:
     and one Fed-decision market (default shard) with YES between 10c and 90c."""
     out = []
     js = http.get_json(f"{BASE}/markets", params={"series_ticker": "KXBTC15M", "status": "open",
-                                                  "limit": 5})
-    for m in js.get("markets") or []:
-        mid = _yes_mid(m)
+                                                  "limit": 200})
+    def left(m):
         try:
-            left = time.mktime(time.strptime(m["close_time"][:19], "%Y-%m-%dT%H:%M:%S")) \
+            return time.mktime(time.strptime(m["close_time"][:19], "%Y-%m-%dT%H:%M:%S")) \
                 - time.timezone - time.time()
         except (KeyError, ValueError):
-            continue
-        if mid is not None and 0.2 <= mid <= 0.8 and left > 480:
+            return -1.0
+    # the open list also holds stale windows: take the one closing soonest in the future
+    live = sorted((m for m in js.get("markets") or [] if left(m) > 0), key=left)
+    for m in live[:1]:
+        mid = _yes_mid(m)
+        if mid is not None and 0.2 <= mid <= 0.8 and left(m) > 480:
             out.append(m["ticker"])
             break
     js = http.get_json(f"{BASE}/markets", params={"series_ticker": "KXFEDDECISION",
