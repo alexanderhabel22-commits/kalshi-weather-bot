@@ -285,6 +285,30 @@ IP without a token). It never places, changes or cancels anything and needs no s
   un-pauses, never changes caps/stops/sizes/code. Results: `m15/watch.json` on branch m15-data;
   the scheduled Claude check-ins read it and turn proposed fixes into PRs.
 
+## Copycat (built Nov 10, 2026; watch-only for now)
+
+- Alex's idea and name: copy proven Kalshi winners' trades. `wxbot/copycat.py`, `python bot.py copycat`,
+  separate systemd service `kalshi-copycat` on the 15-min server (installed by the hourly update via
+  `deploy/m15/install-copycat.sh`; CPU 10%, 200 MB cap). Never loads the Kalshi key, never orders.
+  Off: `sudo systemctl disable --now kalshi-copycat` and `sudo touch /var/lib/kalshi-copycat.disabled`.
+- Uses Kalshi's public social API (`api.elections.kalshi.com/v1/social`): every 12 h it rebuilds the
+  watch list (accounts on the all-time and category profit boards with public trades and >= $10K
+  lifetime profit, max 100); every 10 min it also scouts the global public trade feed and adds any
+  new name with >= $10K profit. It polls each account's public trades round-robin (passing accounts
+  3x as often), logs every new fill (side, price, size, maker/taker, detection lag) and snapshots the
+  market at +0/60/300/1800 s. `copycat/status.json` (every 5 min) holds each account's score and
+  verdict; the dashboard's COPYCAT tab shows it. Feed delay measured Nov 10: median ~10 s.
+- Verdict per account: judged at 100 copied fills or 7 days, then on its last 50 settled copies:
+  passes while the pessimistic copy-to-settlement estimate is >= 0 (min 20 settled), fails when it
+  isn't, and can pass again later (Alex: copy them while they make us money, drop them, rinse, repeat).
+  Hourly files on branch `copycat-data` (copycat/copycat-YYYY-MM-DD-HH.jsonl.gz).
+- Score: `python tools/grade_copycat.py <dir>` (per account: price move after their fill, what a
+  copier paying the ask at detection would make at +1/5/30 min and at settlement).
+- Plan: about a week of data, then a real-money copy mode (1 contract per trade, own loss stop) only
+  for accounts whose pessimistic copy-to-settlement estimate is >= 0; confirm with Alex before enabling.
+  Don't copy market makers (their fills are flow, not views). The top ~50 accounts hide their trades.
+  Background: Library analysis/leaderboard/RESULTS.md.
+
 ## Source shadow logger (built Nov 10, 2026, logging only)
 
 - `wxbot/srclog.py`, `python bot.py srclog`. Separate systemd service `kalshi-srclog` on the 15-min

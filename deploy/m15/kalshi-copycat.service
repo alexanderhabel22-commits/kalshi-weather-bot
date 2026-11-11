@@ -1,0 +1,24 @@
+[Unit]
+Description=Shadow logger: public trades of proven Kalshi winners vs later prices (logs only, never trades)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kalshi
+WorkingDirectory=/opt/kalshi-m15/app
+# Needs only GITHUB_TOKEN from the env file (uploads); copycat.main() drops every other
+# variable (Kalshi key, ntfy topic, API keys) before doing anything.
+EnvironmentFile=/etc/kalshi-m15/env
+ExecStart=/opt/kalshi-m15/venv/bin/python bot.py copycat -v
+Environment=COPYCAT_DIR=/var/lib/kalshi-copycat
+StateDirectory=kalshi-copycat
+Restart=always
+RestartSec=60
+Nice=10
+CPUQuota=10%
+MemoryMax=200M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

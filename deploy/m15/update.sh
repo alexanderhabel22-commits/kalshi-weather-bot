@@ -71,3 +71,5 @@ fi
 bash "$APP/deploy/m15/install-watch.sh" || echo "watch install failed"
 # Source shadow logger (logging only; never trades, never reads the Kalshi key)
 bash "$APP/deploy/m15/install-srclog.sh" || echo "srclog install failed"
+# Copycat in shadow mode (logging only; never trades, never reads the Kalshi key)
+bash "$APP/deploy/m15/install-copycat.sh" || echo "copycat install failed"
