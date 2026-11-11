@@ -1,10 +1,10 @@
 {
  "last": {
-  "at": "2026-11-11T13:35:28+00:00",
+  "at": "2026-11-11T13:50:28+00:00",
   "flags": [],
   "haiku": {
    "level": "watch",
-   "summary": "Both bots are running and inside their stops. The 15-min bot is live, no errors, no halt, 24h P&L about -$12.51, well within its -35% stop. Main bot is live, not halted, scans and trades succeeding. KXBTC15M decay_alert is still active, as on every check today; keeping it on watch. Losses are ordinary swings, not a malfunction.",
+   "summary": "Both bots are running in their set modes with no errors, halts, or rule flags. The 15-min bot is down about $6 today and about $11 over 24h, well inside its stops. KXBTC15M decay_alert is still active, as it has been on every check today. Main bot and scans are current.",
    "remember": ""
   },
   "opus": null,
@@ -12,11 +12,11 @@
  },
  "today": {
   "day": "2026-11-11",
-  "haiku": 35,
+  "haiku": 36,
   "opus": 0,
   "tokens": {
-   "haiku_in": 69425,
-   "haiku_out": 6011,
+   "haiku_in": 71619,
+   "haiku_out": 6122,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -33,16 +33,6 @@
  ],
  "journal": [],
  "log": [
-  {
-   "action": null,
-   "at": "2026-11-11T01:35:15+00:00",
-   "flags": [],
-   "haiku": {
-    "level": "watch",
-    "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and the main bot's scans and trades are succeeding on schedule. The 15-min bot lost $9.03 today and shows a decay alert on KXBTC15M, which is inside its stops but worth a look."
-   },
-   "opus": null
-  },
   {
    "action": null,
    "at": "2026-11-11T02:05:10+00:00",
@@ -449,16 +439,27 @@
    "opus": null
   },
   {
+   "action": null,
    "at": "2026-11-11T13:35:28+00:00",
    "flags": [],
    "haiku": {
     "level": "watch",
-    "summary": "Both bots are running and inside their stops. The 15-min bot is live, no errors, no halt, 24h P&L about -$12.51, well within its -35% stop. Main bot is live, not halted, scans and trades succeeding. KXBTC15M decay_alert is still active, as on every check today; keeping it on watch. Losses are ordinary swings, not a malfunction.",
+    "remember": "",
+    "summary": "Both bots are running and inside their stops. The 15-min bot is live, no errors, no halt, 24h P&L about -$12.51, well within its -35% stop. Main bot is live, not halted, scans and trades succeeding. KXBTC15M decay_alert is still active, as on every check today; keeping it on watch. Losses are ordinary swings, not a malfunction."
+   },
+   "opus": null
+  },
+  {
+   "at": "2026-11-11T13:50:28+00:00",
+   "flags": [],
+   "haiku": {
+    "level": "watch",
+    "summary": "Both bots are running in their set modes with no errors, halts, or rule flags. The 15-min bot is down about $6 today and about $11 over 24h, well inside its stops. KXBTC15M decay_alert is still active, as it has been on every check today. Main bot and scans are current.",
     "remember": ""
    },
    "opus": null,
    "action": null
   }
  ],
- "digest": "Time: 8:35 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T13:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-12.5112 live_total=$1.4153\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-6.71\n  KXBTC15M: fills=509.0 pnl=$2.15 decay_alert=2026-11-11\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=42.0 pnl=$1.18\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=316.99 pnl=$9.993\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV110800-00 2 1.64 -1.64\n  KXSILVER15M-26NOV110800-00 2 1.6 0.4\n  KXGOLD15M-26NOV110800-00 2 1.66 0.34\n  KXBTC15M-26NOV110815-15 2 1.66 -1.66\n  KXSILVER15M-26NOV110815-15 2 1.82 0.18\n  KXGOLD15M-26NOV110815-15 2 1.68 0.32\n  KXGOLD15M-26NOV110830-30 1 0.92 0.08\n  KXSILVER15M-26NOV110830-30 2 1.76 -1.76\nSERVER: RAM 61.4% used, 15-min bot at 23.9% of its memory cap\nMAIN: mode=live halted=False bankroll=$49.68 cash=$29.7 at=2026-11-11T13:31:58.374494+00:00\nRecent Actions runs: weather-scan in_progress 13:35Z; tests success 13:34Z; tests success 13:33Z; tests success 13:33Z; tests success 13:33Z; trade success 13:31Z; weather-scan success 13:30Z; tests success 13:26Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: KXBTC15M decay_alert has persisted on every 2026-11-11 check; still watching until it clears.; KXBTC15M decay_alert has been recurring on every 2026-11-11 check; still active and being reported until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check; report it until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check; keep reporting it until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check and is still active; keep reporting until it clears.; KXBTC15M decay_alert has been recurring all day on 2026-11-11; keep reporting it until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check; keep reporting until it clears.; KXBTC15M decay_alert has been active on every 2026-11-11 check; keep reporting it until it clears.\nRecent log:\n  nothing notable yet"
+ "digest": "Time: 8:50 AM ET Wed Nov 11\n15-MIN: service=active mode=live control=live status_at=2026-11-11T13:47:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-10.8912 live_total=$1.8553\n15-MIN live P&L by day: 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-6.27\n  KXBTC15M: fills=509.0 pnl=$2.15 decay_alert=2026-11-11\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=43.0 pnl=$1.24\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=318.99 pnl=$10.373\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXGOLD15M-26NOV110800-00 2 1.66 0.34\n  KXBTC15M-26NOV110815-15 2 1.66 -1.66\n  KXSILVER15M-26NOV110815-15 2 1.82 0.18\n  KXGOLD15M-26NOV110815-15 2 1.68 0.32\n  KXGOLD15M-26NOV110830-30 1 0.92 0.08\n  KXSILVER15M-26NOV110830-30 2 1.76 -1.76\n  KXSILVER15M-26NOV110845-45 2 1.62 0.38\n  KXGOLD15M-26NOV110845-45 1 0.94 0.06\nSERVER: RAM 52.4% used, 15-min bot at 24.9% of its memory cap\nMAIN: mode=live halted=False bankroll=$59.89 cash=$40.16 at=2026-11-11T13:46:09.576926+00:00\nRecent Actions runs: weather-scan in_progress 13:50Z; trade success 13:45Z; weather-scan success 13:45Z; dashboard success 13:41Z; trade success 13:41Z; weather-scan success 13:40Z; xvdump-research in_progress 13:38Z; tests success 13:37Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: KXBTC15M decay_alert has persisted on every 2026-11-11 check; still watching until it clears.; KXBTC15M decay_alert has been recurring on every 2026-11-11 check; still active and being reported until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check; report it until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check; keep reporting it until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check and is still active; keep reporting until it clears.; KXBTC15M decay_alert has been recurring all day on 2026-11-11; keep reporting it until it clears.; KXBTC15M decay_alert has recurred on every 2026-11-11 check; keep reporting until it clears.; KXBTC15M decay_alert has been active on every 2026-11-11 check; keep reporting it until it clears.\nRecent log:\n  nothing notable yet"
 }
