@@ -49,7 +49,8 @@ ET = ZoneInfo("America/New_York")
 SOCIAL = "https://api.elections.kalshi.com/v1/social"
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
 BRANCH = "copycat-data"
-MIN_PNL = 500               # dollars of lifetime profit to be watched (Alex Nov 10: as many as possible)
+MIN_PNL = 100               # watched if lifetime profit >= $100 OR last-30-day profit >= MIN_PNL_30D
+MIN_PNL_30D = 100           # (Alex Nov 10: as many as possible; catches lifetime losers on a hot run)
 MAX_WATCH = 1000            # the global feed covers every account in one read, so more is cheap
 SCOUT_EVERY_S = 600         # scan the global public feed for new profitable names
 SCOUT_PAGES = 10            # 100 trades per page
@@ -187,7 +188,22 @@ def detail(o: dict) -> dict:
         "maker_pct": round(100 * sum(1 for t in tr if t["role"] == "maker") / len(tr)) if tr else None,
         "busiest_hours_et": [h for h, _ in sorted(hours.items(), key=lambda kv: -kv[1])[:3]],
         "follow_1m_c": mean_low(o.get("follow_60", []))[0],
+        "curve": _curve([t["c"] for t in done]),
+        "pts": [[t["pay_c"], t["c"]] for t in done[-150:]],
+        "hours": [hours.get(f"{h:02d}", 0) for h in range(24)],
     }
+
+
+def _curve(vals: list[float], pts: int = 120) -> list[float]:
+    """Running total of paper copy results in cents (1 contract each), thinned to <= pts points."""
+    out, tot = [], 0.0
+    for v in vals:
+        tot += v
+        out.append(round(tot, 1))
+    if len(out) > pts:
+        step = len(out) / pts
+        out = [out[int(i * step)] for i in range(pts - 1)] + [out[-1]]
+    return out
 
 
 def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
@@ -453,10 +469,15 @@ class Copycat:
     def check_name(self, n: str) -> dict | None:
         m = self.get(f"{SOCIAL}/profile/metrics", nickname=n).get("metrics") or {}
         pnl = (m.get("pnl") or 0) / 1e4
+        pnl30 = None
         if pnl < MIN_PNL:
-            return None
+            m30 = self.get(f"{SOCIAL}/profile/metrics", nickname=n, since_day_before=30).get("metrics") or {}
+            pnl30 = (m30.get("pnl") or 0) / 1e4
+            if pnl30 < MIN_PNL_30D:
+                return None
         p = (self.get(f"{SOCIAL}/profile", nickname=n).get("social_profile") or {})
-        return {"pnl": round(pnl), "contracts": m.get("volume"), "markets": m.get("num_markets_traded"),
+        return {"pnl": round(pnl), "pnl_30d": round(pnl30) if pnl30 is not None else None,
+                "contracts": m.get("volume"), "markets": m.get("num_markets_traded"),
                 "cats": p.get("top_categories"), "joined": p.get("joined_at")}
 
     def scout(self) -> None:
