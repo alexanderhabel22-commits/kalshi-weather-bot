@@ -126,6 +126,49 @@ def test_main_drops_secrets(monkeypatch, tmp_path):
 
 def test_tsa_and_headers_keys():
     assert srclog.key_tsa(Resp("<td>11/9/2026</td><td>2,612,345</td>")) == "11/9/2026 2,612,345"
-    a = srclog.key_headers(Resp("x" * 10, headers={"last-modified": "Tue"}))
-    b = srclog.key_headers(Resp("y" * 10, headers={"last-modified": "Tue"}))
+    a = srclog.key_headers(Resp("", headers={"last-modified": "Tue", "content-length": "10"}))
+    b = srclog.key_headers(Resp("", headers={"last-modified": "Wed", "content-length": "10"}))
     assert a != b
+
+
+def test_rt_title_and_slug_matching():
+    assert srclog.rt_movie("Dune: Part Three: Rotten Tomatoes score") == "Dune: Part Three"
+    assert srclog.rt_movie("Ebenezer · Rotten Tomatoes score") == "Ebenezer"
+
+    class S:
+        headers = {}
+
+        def __init__(self, page):
+            self.page = page
+
+        def get(self, url, params=None, timeout=None, headers=None):
+            return Resp(self.page)
+    page = ('<a href="https://www.rottentomatoes.com/m/rotten_tomatoes">x</a>'
+            '<a href="https://www.rottentomatoes.com/m/dune_part_two">x</a>'
+            '<a href="https://www.rottentomatoes.com/m/how_to_rob_a_bank_2026">x</a>')
+    lg = srclog.SrcLog.__new__(srclog.SrcLog)
+    lg.s = S(page)
+    assert lg.rt_lookup("Dune: Part Three") is None            # never the wrong sequel
+    assert lg.rt_lookup("How to Rob a Bank").endswith("/m/how_to_rob_a_bank_2026")
+
+
+def test_rt_key_uses_own_scorecard_only():
+    page = ('"criticsScore":{"likedCount":92,"reviewCount":104,"score":"88"}'
+            ' ... "tomatometer":{"tomatometer":97}')
+    k = srclog.key_rt(Resp(page))
+    assert "104" in k and "97" not in k
+
+
+def test_blocked_source_backs_off(tmp_path):
+    t = [1_700_000_000.0]
+    lg = make(tmp_path, {"https://rcp.test/page": [Resp("denied", status=403)]}, lambda: t[0])
+    lg.rt_next = 10 ** 12
+    lg.step()
+    assert lg.sources[0].next_at >= t[0] + srclog.BLOCKED_RETRY_S
+
+
+def test_head_key_from_headers():
+    k = srclog.key_headers(Resp("", headers={"last-modified": "Tue", "etag": "e1",
+                                             "content-length": "9"}))
+    assert k == "Tue|e1|9"
+    assert srclog.key_headers(Resp("")) is None
