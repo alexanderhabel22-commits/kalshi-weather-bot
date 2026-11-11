@@ -57,6 +57,8 @@ header.top{position:sticky;top:0;z-index:20;margin:0 -16px;padding:calc(var(--sa
 .seg button.on[data-b=main]{background:linear-gradient(90deg,rgba(52,211,153,.18),rgba(34,211,238,.14));color:var(--good);box-shadow:inset 0 0 0 1px rgba(52,211,153,.4)}
 .seg button.on[data-b=cc]{background:linear-gradient(90deg,rgba(167,139,250,.2),rgba(236,72,153,.14));color:#c4b5fd;box-shadow:inset 0 0 0 1px rgba(167,139,250,.45)}
 .seg button.on[data-b=m15]{background:linear-gradient(90deg,rgba(245,179,53,.2),rgba(251,146,60,.14));color:#f5b335;box-shadow:inset 0 0 0 1px rgba(245,179,53,.45)}
+.seg button.on[data-b=tx]{background:linear-gradient(90deg,rgba(34,211,238,.2),rgba(52,211,153,.12));color:#67e8f9;box-shadow:inset 0 0 0 1px rgba(34,211,238,.45)}
+#botSeg button{letter-spacing:.03em;font-size:11px}
 .seg small{font-weight:500;letter-spacing:0;opacity:.8;margin-left:4px}
 .banner{margin:12px 0 0;padding:10px 12px;border-radius:12px;font-size:13px;border:1px solid var(--line2);background:var(--panel)}
 .banner.paper{border-color:rgba(224,80,240,.35);background:linear-gradient(90deg,rgba(224,80,240,.08),transparent)}
@@ -232,6 +234,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
       <button data-b="main">● MAIN BOT</button>
       <button data-b="m15">⚡ 15-MIN BOT</button>
       <button data-b="cc">🐈 COPYCAT</button>
+      <button data-b="tx">🧪 TESTS</button>
     </div>
   </header>
 
@@ -368,6 +371,7 @@ async function loadData(){
   for (const k of keys) d["_" + k] = d[k];
   await loadM15();
   await loadCopycat();
+  await loadTests();
   S.noQuotes = false;
   S.data = d; S.errors = errs; S.lastData = Date.now();
 }
@@ -375,6 +379,58 @@ async function loadData(){
 async function loadCopycat(){
   try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/copycat-data/copycat/status.json?t=${Date.now()}`, {cache:"no-store"});
     S.cc = r.ok ? await r.json() : null; } catch(e){ S.cc = null; }
+}
+// New-idea tests (Nov 11): liquidity-reward test (real money) + two paper tests, all on the 15-min server
+const TEST_START = Date.parse("2026-11-11T13:30:00Z");
+async function loadTests(){
+  const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${f}?t=${Date.now()}`, {cache:"no-store"}); return r.ok ? await r.json() : null; } catch(e){ return null; } };
+  const [lip, mm, rfq] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json")]);
+  S.tx = {lip, mm, rfq};
+}
+function txPage(){
+  const T = S.tx || {}, L = T.lip;
+  const ago = a => { const t = Date.parse(a || ""); if (!t) return ""; const m = Math.round((Date.now() - t) / 6e4); return m < 90 ? m + " min ago" : Math.round(m / 60) + " h ago"; };
+  const day = a => { const t = Date.parse(a || ""); return t ? new Date(t).toLocaleString("en-US", {timeZone:TZ, month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + " ET" : ""; };
+  const c1 = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "¢";
+  let h = `<h2>Rewards test <span class="sub">REAL MONEY · Kalshi pays for resting bids</span></h2>`;
+  if (!L) h += `<div class="card"><div class="mute" style="font-size:12px;line-height:1.5">Starting up. The server installs it at its next hourly update; the first status appears ~15 min after that.</div></div>`;
+  else {
+    const cr = (L.credits || []).filter(c => (Date.parse(c.created_time || "") || 0) >= TEST_START), paid = cr.reduce((a, c) => a + num(c.amount_dollars), 0);
+    const live = L.mode === "live", orders = Object.entries(L.orders || {}), pos = Object.entries(L.positions || {});
+    const est = Object.values(L.chosen || {}).reduce((a, p) => a + num(p.est_day), 0);
+    const lastEst = (L.est || {})[Object.keys(L.est || {}).sort().pop()] || {};
+    h += `<div class="card glow"><div class="hero"><div><div class="lbl">Rewards paid to us</div><div class="big ${cls(paid)}">${money(paid)}</div>
+      <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${live ? `<span class="pos">● live</span>` : "off"} · switch ${esc(String(L.control || "off").toUpperCase())}${L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : ""} · ${esc(ago(L.at))}</div></div>
+      <div style="text-align:right"><div class="lbl">In resting bids</div><div class="val">$${num(L.resting_cost).toFixed(2)} <small class="mute">/ $${num(L.budget).toFixed(0)}</small></div>
+      <div class="lbl" style="margin-top:8px">Bids filled (held)</div><div class="val" style="font-size:17px">$${num(L.filled_cost).toFixed(2)}</div></div></div>
+      <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">We rest cheap bids (1-8¢) at the front of the line in quiet reward markets. Kalshi pays daily (~6 AM ET) by our share of the resting size. Model estimate: ~${money(est, false)}/day; the real payouts above are what count. A filled bid is a longshot we hold to settlement (we can lose at most its cost). $10 of fills halts it; it ends Nov 14.</div></div>`;
+    h += `<h2>Payouts <span class="sub">${cr.length} since the test began</span></h2><div class="card">` + (cr.length ? cr.slice().reverse().map(c =>
+      `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(c.type || "credit")}</div><div class="s" style="white-space:normal">${esc(c.reason || "")} · ${esc(day(c.created_time))}</div></div><div class="r"><span class="pos">${money(num(c.amount_dollars))}</span><small>${esc(c.status || "")}</small></div></div>`).join("")
+      : `<div class="mute" style="font-size:12px">None yet. The first payout should land around 6 AM ET the morning after the bids go up.</div>`) + `</div>`;
+    const bidRow = ([tk, o]) => { const e = lastEst[tk] || {}, ch = (L.chosen || {})[tk] || {};
+      return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(String(o.side).toUpperCase())} ${o.n} @ ${Math.round(o.px * 100)}¢ · $${(o.px * o.n).toFixed(2)}</div><div class="s">${esc(tk)}</div></div><div class="r"><span>${e.share != null ? (100 * e.share).toFixed(1) + "%" : "—"}</span><small>${e.ahead ? e.ahead + " ahead" : "front of line"}${ch.est_day ? " · ~$" + num(ch.est_day).toFixed(2) + "/d" : ""}</small></div></div>`; };
+    const posRow = ([tk, p]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">FILLED ${esc(String(p.side).toUpperCase())} × ${p.n} · $${num(p.cost).toFixed(2)}</div><div class="s">${esc(tk)}</div></div><div class="r"><small class="mute">held</small></div></div>`;
+    h += `<h2>Our bids <span class="sub">${orders.length} resting · ${pos.length} filled</span></h2><div class="card">` + (orders.length + pos.length ? orders.map(bidRow).join("") + pos.map(posRow).join("")
+      : `<div class="mute" style="font-size:12px">No bids yet.</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px">Share = our part of the resting size Kalshi scores on that side (our estimate).</div></div>`;
+  }
+  const M = T.mm;
+  h += `<h2>Market making <span class="sub">PAPER · wide-spread markets</span></h2><div class="card">`;
+  if (!M) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
+  else {
+    const cats = Object.entries(M.by_category || {}).sort((a, b) => b[1].fills - a[1].fills);
+    h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">Paper 1-contract bids 1¢ inside the spread in ${Object.keys(M.markets || {}).length} markets (Mentions first). A fill made money if the price 30 min later is above what we paid, minus the maker fee (shown). Needs 100+ fills per category before it means anything. ${esc(ago(M.at))}.</div>`
+      + (cats.length ? cats.map(([k, s]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(k)}</div><div class="s">${s.fills} fills · ${s.fills_per_market_hour ?? "—"}/market-hour · fee ${c1(s.maker_fee_c)}</div></div><div class="r"><span class="${cls(num(s.markout_30m_c) - num(s.maker_fee_c))}">${c1(s.markout_30m_c)}</span><small>30 min · 5 min ${c1(s.markout_5m_c)}</small></div></div>`).join("")
+        : `<div class="mute" style="font-size:12px">No paper fills scored yet.</div>`);
+  }
+  h += `</div>`;
+  const R = T.rfq;
+  h += `<h2>Selling parlays <span class="sub">PAPER · answering quote requests</span></h2><div class="card">`;
+  if (!R) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
+  else {
+    h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">Parlay buyers lose ~28% per dollar (overnight study). We price each request whose legs are in different events (fair = product of the legs) and log a quote to sell YES at fair + margin. "Would win" = the parlay then traded above our quote. P&L per contract at settlement. ${R.rfqs_seen || 0} requests seen, ${R.cross_priced || 0} priced, ${R.settled || 0} settled${R.errors ? ` · <span class="neg">${R.errors} read errors</span>` : ""}. ${esc(ago(R.at))}.</div>`
+      + Object.entries(R.by_margin || {}).map(([m, v]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">fair + ${Math.round(num(m) * 100)}%</div><div class="s">would win ${v.would_win} · settled ${v.settled}</div></div><div class="r"><span class="${cls(num(v.pnl_c_per_ct))}">${v.pnl_c_per_ct == null ? "—" : c1(v.pnl_c_per_ct)}</span><small>per contract</small></div></div>`).join("");
+  }
+  return h + `</div>`;
 }
 function ccPage(){
   const c = S.cc;
@@ -1377,6 +1433,7 @@ function testsHTML(){
 }
 function renderOverview(){
   if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); return; }
+  if (S.bot === "tx"){ $("#v-overview").innerHTML = txPage(); return; }
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
     drawM15();
@@ -1802,7 +1859,7 @@ function renderAll(){
   document.querySelectorAll("#modeSeg button").forEach(b => b.classList.toggle("on", b.dataset.m === S.mode));
   $("#modeSeg").style.display = "none";  // real money is the main view; paper tests sit in their own section
   if (S.view === "overview") S.mode = "live";
-  if (!S.bot) S.bot = ["m15", "cc"].includes(ls.get("bot")) ? ls.get("bot") : "main";
+  if (!S.bot) S.bot = ["m15", "cc", "tx"].includes(ls.get("bot")) ? ls.get("bot") : "main";
   $("#botSeg").style.display = S.view === "overview" ? "" : "none";
   document.querySelectorAll("#botSeg button").forEach(b => b.classList.toggle("on", b.dataset.b === S.bot));
   renderBanner(); if (!["overview","orders"].includes(S.view)) $("#banner").innerHTML = "";
