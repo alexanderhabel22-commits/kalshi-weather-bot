@@ -149,6 +149,22 @@ def pick_mm(events):
     return pick[:170]
 
 
+def _ct(m):
+    try:
+        return time.mktime(time.strptime(m["close_time"][:19], "%Y-%m-%dT%H:%M:%S")) - time.timezone
+    except Exception:
+        return 0.0
+
+
+def current_market(series):
+    """The open market of a rolling series that closes soonest in the future
+    (the API's open list also holds stale windows, Nov 11 check)."""
+    j = get(K + "/markets", {"series_ticker": series, "status": "open", "limit": 200})
+    now = time.time()
+    ms = [m for m in (j or {}).get("markets", []) if _ct(m) > now]
+    return min(ms, key=_ct) if ms else None
+
+
 def step_mm():
     while not _mm_pick and time.time() - T0 < 1800:
         time.sleep(10)
@@ -162,8 +178,8 @@ def step_mm():
         t0 = time.time()
         live = []
         for s in MM_SERIES:
-            j = get(K + "/markets", {"series_ticker": s, "status": "open", "limit": 5})
-            for m in (j or {}).get("markets", [])[:1]:
+            m = current_market(s)
+            if m:
                 live.append(m["ticker"])
         for tk in static + live:
             ob = get(K + f"/markets/{tk}/orderbook", {"depth": 30})
@@ -199,14 +215,11 @@ def step_fast():
     while time.time() < end and left() > 900:
         t0 = time.time()
         if t0 > cur_until:
-            j = get(K + "/markets", {"series_ticker": "KXBTC15M", "status": "open", "limit": 5})
-            ms = (j or {}).get("markets", [])
-            if ms:
-                cur = ms[0]["ticker"]
-                try:
-                    cur_until = time.mktime(time.strptime(ms[0]["close_time"][:19], "%Y-%m-%dT%H:%M:%S")) - time.timezone
-                except Exception:
-                    cur_until = t0 + 60
+            m = current_market("KXBTC15M")
+            if m:
+                cur, cur_until = m["ticker"], _ct(m)
+            else:
+                cur_until = t0 + 30
         rec = {"t": t0, "ticker": cur}
         try:
             a = time.time()
