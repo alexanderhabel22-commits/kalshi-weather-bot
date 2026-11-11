@@ -27,9 +27,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # wait only for research runs created before this one (two waiters must not wait on each other)
+          me=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq .created_at)
           for i in $(seq 1 170); do
             n=$(gh api "repos/${{ github.repository }}/actions/runs?status=in_progress&per_page=100" \
-                  --jq "[.workflow_runs[] | select((.name | endswith(\"research\")) and .id != ${{ github.run_id }})] | length")
+                  --jq "[.workflow_runs[] | select((.name | endswith(\"research\")) and .id != ${{ github.run_id }} and .created_at < \"$me\")] | length")
             [ "$n" = "0" ] && exit 0
             echo "other research runs in progress: $n"; sleep 120
           done
