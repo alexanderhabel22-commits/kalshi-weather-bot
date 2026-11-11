@@ -1,21 +1,21 @@
 {
  "last": {
-  "at": "2026-11-11T00:05:28+00:00",
+  "at": "2026-11-11T00:20:28+00:00",
   "flags": [],
   "haiku": {
-   "level": "watch",
-   "summary": "Both bots are running and within their stops, with no rule flags, and the main bot's scans and trades are succeeding. The 15-MIN bot lost $10.57 today, which is a normal losing day, though the KXBTC15M decay alert and recent fills near 1.5-1.6 cost on losing windows are worth a quick look."
+   "level": "ok",
+   "summary": "Both bots look healthy: 15-MIN is active in live mode with zero errors and no halt, and its losing day (-$9.73 on Nov 10) sits well inside its stops. MAIN is live, not halted, and its weather scans and trade runs are succeeding on schedule with no rule flags."
   },
   "opus": null,
   "action": null
  },
  "today": {
   "day": "2026-11-10",
-  "haiku": 8,
+  "haiku": 9,
   "opus": 0,
   "tokens": {
-   "haiku_in": 11819,
-   "haiku_out": 2303,
+   "haiku_in": 13285,
+   "haiku_out": 2415,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -82,15 +82,15 @@
    "opus": null
   },
   {
+   "action": null,
    "at": "2026-11-11T00:05:28+00:00",
    "flags": [],
    "haiku": {
     "level": "watch",
     "summary": "Both bots are running and within their stops, with no rule flags, and the main bot's scans and trades are succeeding. The 15-MIN bot lost $10.57 today, which is a normal losing day, though the KXBTC15M decay alert and recent fills near 1.5-1.6 cost on losing windows are worth a quick look."
    },
-   "opus": null,
-   "action": null
+   "opus": null
   }
  ],
- "digest": "Time: 7:05 PM ET Tue Nov 10\n15-MIN: service=active mode=live control=live status_at=2026-11-11T00:02:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-4.6562 live_total=$5.1613\n15-MIN live P&L by day: 2026-11-07 $0.18, 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-10.57\n  KXBTC15M: fills=428.0 pnl=$5.77 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=240.59 pnl=$11.299\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV101745-45 2 1.54 0.46\n  KXBTC15M-26NOV101800-00 2 1.57 -1.57\n  KXBTC15M-26NOV101815-15 2 1.63 0.37\n  KXBTC15M-26NOV101830-30 2 1.6 -1.6\n  KXBTC15M-26NOV101845-45 2 1.55 0.45\n  KXSILVER15M-26NOV101845-45 1 0.73 0.27\n  KXBTC15M-26NOV101900-00 2 1.54 0.46\n  KXSILVER15M-26NOV101900-00 2 1.57 -1.57\nMAIN: mode=live halted=False bankroll=$52.97 cash=$35.34 at=2026-11-11T00:02:43.909080+00:00\nRecent Actions runs: weather-scan in_progress 00:05Z; trade success 00:02Z; weather-scan success 00:00Z; trade success 23:56Z; tests success 23:55Z; src-research in_progress 23:55Z; weather-scan success 23:55Z; trade success 23:50Z\nRULE FLAGS: none"
+ "digest": "Time: 7:20 PM ET Tue Nov 10\n15-MIN: service=active mode=live control=live status_at=2026-11-11T00:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-3.3362 live_total=$6.0013\n15-MIN live P&L by day: 2026-11-07 $0.18, 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-9.73\n  KXBTC15M: fills=430.0 pnl=$6.13 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=242.59 pnl=$11.779\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV101815-15 2 1.63 0.37\n  KXBTC15M-26NOV101830-30 2 1.6 -1.6\n  KXBTC15M-26NOV101845-45 2 1.55 0.45\n  KXSILVER15M-26NOV101845-45 1 0.73 0.27\n  KXBTC15M-26NOV101900-00 2 1.54 0.46\n  KXSILVER15M-26NOV101900-00 2 1.57 -1.57\n  KXBTC15M-26NOV101915-15 2 1.64 0.36\n  KXSILVER15M-26NOV101915-15 2 1.52 0.48\nMAIN: mode=live halted=False bankroll=$53.81 cash=$36.18 at=2026-11-11T00:16:12.838876+00:00\nRecent Actions runs: weather-scan in_progress 00:20Z; trade success 00:15Z; weather-scan success 00:15Z; tests success 00:14Z; tests success 00:13Z; tests success 00:10Z; trade success 00:10Z; weather-scan success 00:10Z\nRULE FLAGS: none"
 }
