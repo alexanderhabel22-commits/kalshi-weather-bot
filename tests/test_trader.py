@@ -798,3 +798,25 @@ def test_kill_switch_cancels_resting_live_orders_and_books_fills(monkeypatch):
     # next run: nothing left to cancel, no second alert
     out = trader.run(cfg(mode="live", live=True), now=NOW + timedelta(minutes=10), http=http, client=cl)
     assert not out["stops"] and cl.cancelled == ["o2"]
+
+
+def test_mentions_wide_only_logs_extra_words_on_paper():
+    from wxbot.strats import mentions_wide
+    c = cfg()
+    live, wide = c.raw["trading"]["mentions"], c.raw["trading"]["mentions_wide"]
+    assert wide["live"] is False
+    ms = [mkt(w, 0.12, 0.14) for w in "ABCDE"] + [mkt("THIN", 0.12, 0.14, vol=300),
+                                                 mkt("TINY", 0.12, 0.14, vol=50)]
+    series = {"KXTRUMPMENTION"}
+    live_pick = {i.ticker for i in mentions.candidates(ms, series, live, 40.0, None)}
+    out = mentions_wide.extra(ms, series, wide, live, 40.0, None, None)
+    tks = {i.ticker for i in out}
+    assert len(live_pick) == 3 and not (tks & live_pick)
+    assert "KXTRUMPMENTION-26NOV06-THIN" in tks and "KXTRUMPMENTION-26NOV06-TINY" not in tks
+    assert len(tks) == 3 and all(i.strategy == "mentions_wide" and i.count == 1 for i in out)
+
+
+def test_mentions_wide_paper_mode_even_when_trading_live():
+    c = cfg(mode="live")
+    sp = trader.strategy_settings(c, "mentions_wide", trader.settings(c))
+    assert trader.strategy_mode("live", sp) == "paper"
