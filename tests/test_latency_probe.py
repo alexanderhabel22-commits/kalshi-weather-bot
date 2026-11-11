@@ -38,4 +38,4 @@ def test_probe_places_tiny_bids_and_cancels_each():
     assert len(c.placed) == 6 and len(c.cancelled) == 6
     r = res["markets"]["KXBTC15M-X"]
     assert r["filled"] == 0 and r["place_ms"]["n"] == 3 and not r["errors"]
-    assert res["public_book_ms"]["n"] == 20
+    assert res["public_book_ms"]["n"] == 15
