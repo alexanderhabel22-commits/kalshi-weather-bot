@@ -13,7 +13,8 @@ How it works (one thread, polite polling of Kalshi's public social API):
   - each account is scored on a rolling window of its last 50 settled copies: it passes while the
     pessimistic estimate is >= 0 (min 20 settled), fails when it isn't, and can pass again later;
   - passing accounts get every other poll (each checked every few seconds);
-  - poll each watched account's public trades round-robin (about every 30-60 s per account);
+  - read the global public trade feed about every second (one read covers every watched account),
+    and also poll each watched account's own trades round-robin as a backstop;
   - each new fill is logged with the sharp's side (yes/no), price, size, maker/taker, the trade's
     own timestamp and when we saw it (detection lag);
   - the market is snapshotted (best bid/ask, last) when we see the fill and at +1, +5, +30 min.
@@ -48,17 +49,19 @@ ET = ZoneInfo("America/New_York")
 SOCIAL = "https://api.elections.kalshi.com/v1/social"
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
 BRANCH = "copycat-data"
-MIN_PNL = 10_000            # dollars of lifetime profit to be watched
-MAX_WATCH = 100
+MIN_PNL = 500               # dollars of lifetime profit to be watched (Alex Nov 10: as many as possible)
+MAX_WATCH = 1000            # the global feed covers every account in one read, so more is cheap
 SCOUT_EVERY_S = 600         # scan the global public feed for new profitable names
 SCOUT_PAGES = 10            # 100 trades per page
-SCOUT_CHECKS = 40           # new names looked up per scan
+SCOUT_CHECKS = 80           # new names looked up per scan
 ROLL_WINDOW = 50            # an account's verdict uses its last 50 settled copies
 MIN_SETTLED = 20
-SNAP_DELAYS = (0, 60, 300, 1800)
+SNAP_DELAYS = (0, 60, 300)  # +0 is the copy price; the rest show the move after (30 min dropped Nov 10 for capacity)
 SNAP_GAP_S = 300            # at most one snapshot series per (account, ticker) per 5 min
 MAX_PENDING = 4000          # cap on queued snapshots
-REQ_GAP_S = 0.4             # spacing between API calls (~150/min; a 3/s test had 0 errors)
+FEED_EVERY_S = 1.0          # global public trade feed: every account's new trades in one read
+FEED_PAGES = 3
+REQ_GAP_S = 0.3             # spacing between API calls (~150/min; a 3/s test had 0 errors)
 WATCH_REFRESH_S = 12 * 3600
 STATUS_EVERY_S = 300
 GO_LIVE_FILLS = 100         # an account is judged at 100 copied fills or 7 days, whichever first
@@ -140,7 +143,48 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
             res = (results or {}).get(f["ticker"])
             if res in ("yes", "no"):
                 o["settle"].append(100 * ((1.0 if res == side else 0.0) - pay) - fee)
+        res = (results or {}).get(f["ticker"])
+        out[f["nick"]]["trades"].append({
+            "et": (f.get("et") or "")[5:16], "ticker": f.get("ticker"), "side": side,
+            "their_c": round(100 * entry), "pay_c": round(100 * pay), "count": f.get("count"),
+            "role": f.get("role"), "result": res,
+            "c": round(100 * ((1.0 if res == side else 0.0) - pay) - fee, 1) if res in ("yes", "no") else None})
     return out
+
+
+def detail(o: dict) -> dict:
+    """The pop-up report card: best/worst copies, latest trades and how the account trades."""
+    tr = o.get("trades") or []
+    done = [t for t in tr if t["c"] is not None]
+    ser = defaultdict(lambda: [0, 0.0, 0])           # series -> [copies, cents sum, settled]
+    for t in tr:
+        k = (t["ticker"] or "").split("-")[0]
+        ser[k][0] += 1
+        if t["c"] is not None:
+            ser[k][1] += t["c"]
+            ser[k][2] += 1
+    prices = sorted(t["pay_c"] for t in tr)
+    sizes = sorted(float(t["count"] or 0) for t in tr)
+    hours = defaultdict(int)
+    for t in tr:
+        if len(t["et"]) >= 8:
+            hours[t["et"][6:8]] += 1
+    bands = {"5-25c": 0, "25-50c": 0, "50-75c": 0, "75-95c": 0, "other": 0}
+    for p in prices:
+        b = "5-25c" if 5 <= p < 25 else "25-50c" if p < 50 else "50-75c" if p < 75 else "75-95c" if p <= 95 else "other"
+        bands[b] += 1
+    med = lambda v: v[len(v) // 2] if v else None  # noqa: E731
+    return {
+        "best": sorted(done, key=lambda t: -t["c"])[:5], "worst": sorted(done, key=lambda t: t["c"])[:5],
+        "latest": list(reversed(tr[-10:])),
+        "won": sum(1 for t in done if t["c"] > 0), "lost": sum(1 for t in done if t["c"] <= 0),
+        "series": [{"s": k, "n": v[0], "settled": v[2], "avg_c": round(v[1] / v[2], 1) if v[2] else None}
+                   for k, v in sorted(ser.items(), key=lambda kv: -kv[1][0])[:8]],
+        "bands": bands, "median_price_c": med(prices), "median_size": med(sizes),
+        "maker_pct": round(100 * sum(1 for t in tr if t["role"] == "maker") / len(tr)) if tr else None,
+        "busiest_hours_et": [h for h, _ in sorted(hours.items(), key=lambda kv: -kv[1])[:3]],
+        "follow_1m_c": mean_low(o.get("follow_60", []))[0],
+    }
 
 
 def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
@@ -255,7 +299,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict,
                          "grade": gl, "score": score, "banked": round(banked, 2), "leeway_c": round(leeway, 1),
                          "size": size_for(score, len(settle_all)) if verdict == "passes" else 0,
-                         "boss_note": (notes or {}).get(nick)})
+                         "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
             "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} copied fills or {GO_LIVE_DAYS} days. Score 0-100 from every copy so far "
@@ -309,6 +353,16 @@ class Copycat:
         self.alert = alert or (lambda t, b: None)
         self.copied_once: set[str] = set()
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
+        self.feed_seen: set[str] = set()         # trade ids already read from the global feed
+        self.feed_next = 0.0
+        self.scout_queue: dict[str, None] = {}    # names seen in the feed, not looked up yet
+        self.feed_names: set[str] = set()         # every public trader seen in the feed
+        try:                                      # restart fast: reuse the saved watch list
+            w = json.loads((self.out / "watch.json").read_text())
+            self.watch = w.get("watch") or {}
+            self.watch_next = (w.get("at") or 0) + WATCH_REFRESH_S
+        except (OSError, ValueError):
+            pass
         self._boss_busy = False
         self._lock = threading.Lock()
 
@@ -359,6 +413,10 @@ class Copycat:
                 log.warning("copycat board %s: %s", b, exc)
         keep: dict[str, dict] = {}
         for n in names:
+            self.tick()
+            if n in self.watch and self.watch[n].get("src") != "scout":
+                keep[n] = self.watch[n]          # already checked; refreshed on restart only
+                continue
             if len(keep) >= MAX_WATCH:
                 break
             try:
@@ -381,6 +439,13 @@ class Copycat:
             self.watch = dict(sorted(keep.items(), key=lambda kv: -(kv[1].get("pnl") or 0))[:MAX_WATCH])
         self.checked.update(names)
         self.write({"kind": "watch", "accounts": self.watch})
+        self.save_watch()
+
+    def save_watch(self) -> None:
+        try:
+            (self.out / "watch.json").write_text(json.dumps({"at": self.clock(), "watch": self.watch}))
+        except OSError as exc:
+            log.warning("copycat watch save: %s", exc)
 
     def check_name(self, n: str) -> dict | None:
         m = self.get(f"{SOCIAL}/profile/metrics", nickname=n).get("metrics") or {}
@@ -393,9 +458,10 @@ class Copycat:
 
     def scout(self) -> None:
         """Reads recent pages of the global public trade feed and adds new profitable names."""
-        names: dict[str, None] = {}
+        names: dict[str, None] = {n: None for n in self.scout_queue if n not in self.checked}
+        self.scout_queue = {}
         cursor = None
-        for _ in range(SCOUT_PAGES):
+        for _ in range(SCOUT_PAGES if len(names) < SCOUT_CHECKS else 0):
             params = {"limit": 100}
             if cursor:
                 params["cursor"] = cursor
@@ -409,6 +475,7 @@ class Copycat:
                 break
         added = []
         for n in list(names)[:SCOUT_CHECKS]:
+            self.tick()
             self.checked.add(n)
             try:
                 info = self.check_name(n)
@@ -426,6 +493,7 @@ class Copycat:
             self.watch[n] = dict(info, src="scout")
             added.append(n)
         if added:
+            self.save_watch()
             self.write({"kind": "scout", "added": added, "looked_up": min(len(names), SCOUT_CHECKS)})
 
     def snapshot(self, ticker: str) -> dict:
@@ -438,6 +506,54 @@ class Copycat:
     # -- one account
     def poll(self, nick: str, now: float) -> None:
         trades = self.get(f"{SOCIAL}/trades", nickname=nick, limit=50).get("trades") or []
+        self.ingest(nick, trades, now)
+        if len(self.seen[nick]) > 5000:            # keep memory bounded
+            self.seen[nick] = {t.get("trade_id") for t in trades}
+
+    def tick(self) -> None:
+        """Keeps the fast feed going during long jobs (watch-list rebuild, scouting)."""
+        now = self.clock()
+        if now >= self.feed_next:
+            self.feed_next = now + FEED_EVERY_S
+            try:
+                self.poll_feed(now)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat feed: %s", exc)
+
+    def poll_feed(self, now: float) -> None:
+        """One read of Kalshi's global public trade feed covers every watched account at once
+        (newest first, 100 per page; reads up to FEED_PAGES pages back to the last trade seen).
+        Accounts are only fed from here after their own first poll, so backfill stays marked."""
+        new, cursor = [], None
+        for _ in range(FEED_PAGES):
+            params = {"limit": 100}
+            if cursor:
+                params["cursor"] = cursor
+            j = self.get(f"{SOCIAL}/trades", **params)
+            page = j.get("trades") or []
+            fresh = [t for t in page if t.get("trade_id") and t["trade_id"] not in self.feed_seen]
+            new += fresh
+            cursor = j.get("cursor")
+            if not self.feed_seen or len(fresh) < len(page) or not cursor:
+                break
+        self.feed_seen.update(t["trade_id"] for t in new)
+        if len(self.feed_seen) > 50_000:
+            self.feed_seen = {t["trade_id"] for t in new}
+        by: dict[str, list] = defaultdict(list)
+        for t in new:
+            for k in ("taker_nickname", "maker_nickname"):
+                n = t.get(k)
+                if n and len(self.feed_names) < 500_000:
+                    self.feed_names.add(n)
+                if n and n not in self.watch and n not in self.checked and len(self.scout_queue) < 2000:
+                    self.scout_queue[n] = None        # looked up by the next scout
+                if n and n in self.watch and n in self.seen:
+                    by[n].append(t)
+        for n, ts in by.items():
+            self.ingest(n, ts, now)
+
+    def ingest(self, nick: str, trades: list[dict], now: float) -> None:
+        """Logs an account's new trades (newest first, as the API sends them)."""
         first = nick not in self.seen
         seen = self.seen.setdefault(nick, set())
         for t in reversed(trades):
@@ -466,8 +582,6 @@ class Copycat:
             self.last_snap[key] = now
             for d in SNAP_DELAYS:
                 self.snaps.append((now + d, d, nick, key[1], tid))
-        if len(seen) > 5000:                       # keep memory bounded
-            self.seen[nick] = {t.get("trade_id") for t in trades}
 
     def category(self, ticker: str) -> str | None:
         """Kalshi category of a market's series (e.g. 'Sports'), cached."""
@@ -503,6 +617,7 @@ class Copycat:
         due = [x for x in self.snaps if x[0] <= now]
         self.snaps = [x for x in self.snaps if x[0] > now]
         for _, d, nick, ticker, tid in sorted(due):
+            self.tick()                          # the 1-second feed always comes first
             try:
                 self.write({"kind": "snap", "nick": nick, "ticker": ticker, "trade_id": tid,
                             "delay": d, **self.snapshot(ticker)})
@@ -520,6 +635,7 @@ class Copycat:
                 self.scout()
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat scout: %s", exc)
+        self.tick()
         hot = [n for n in self.watch if n in self.hot]
         names = list(self.watch)
         if names:
@@ -560,6 +676,8 @@ class Copycat:
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes)
         add_real(status, self.live.state if self.live else None)
         status["live"] = live
+        status["scan"] = {"public_traders_seen": len(self.feed_names), "looked_up": len(self.checked),
+                          "watched": len(self.watch), "min_profit": MIN_PNL, "max_watch": MAX_WATCH}
         status["mode"] = live["mode"] if live and live["mode"] == "live" else "paper only"
         if self.boss is not None:
             status["boss"] = {"summary": self.boss.state.get("summary"), "usage": self.boss.state.get("usage"),

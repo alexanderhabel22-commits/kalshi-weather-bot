@@ -177,3 +177,45 @@ def test_sports_and_unknown_category_not_copied(tmp_path):
     assert lv.maybe_copy(ACCT, FILL, dict(SNAP, category="Sports"), 1000.0) == "excluded category (Sports)"
     assert lv.maybe_copy(ACCT, FILL, dict(SNAP, category="unknown"), 1000.0).startswith("excluded")
     assert lv.maybe_copy(ACCT, FILL, dict(SNAP, category="Politics"), 1000.0) == "copied"
+
+
+def test_global_feed_logs_watched_accounts_fast(tmp_path):
+    from tests.test_copycat import FakeSession, trade, Resp
+
+    class Feed(FakeSession):
+        feed = []
+
+        def get(self, url, params=None, timeout=None):
+            if url.endswith("/social/trades") and not (params or {}).get("nickname"):
+                self.calls.append((url, dict(params or {})))
+                return Resp({"trades": self.feed, "cursor": None})
+            return super().get(url, params, timeout)
+
+    s = Feed()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1.0, req_gap=0)
+    cc.watch = {"sharp": {}}
+    s.feed = [trade("a", taker="sharp"), trade("z", taker="stranger")]
+    cc.poll_feed(1.0)                                # sharp not polled on its own yet: skipped
+    s.trades = [trade("a", taker="sharp")]
+    cc.poll("sharp", 2.0)                            # backfill
+    s.feed = [trade("b", maker="sharp"), trade("a", taker="sharp")]
+    cc.poll_feed(3.0)
+    rows = [json.loads(x) for p in tmp_path.glob("copycat-*.jsonl") for x in p.read_text().splitlines()]
+    fills = [r for r in rows if r["kind"] == "fill"]
+    assert [(r["trade_id"], r["backfill"]) for r in fills] == [("a", True), ("b", False)]
+    assert fills[1]["role"] == "maker"
+    s.trades = [trade("b", maker="sharp"), trade("a", taker="sharp")]
+    cc.poll("sharp", 4.0)                            # account poll doesn't double-log
+    rows = [json.loads(x) for p in tmp_path.glob("copycat-*.jsonl") for x in p.read_text().splitlines()]
+    assert len([r for r in rows if r["kind"] == "fill"]) == 2
+
+
+def test_feed_keeps_running_during_snapshot_backlog(tmp_path):
+    t = [0.0]
+    cc = copycat.Copycat(tmp_path, clock=lambda: t[0], req_gap=0)
+    feeds = []
+    cc.poll_feed = lambda now: feeds.append(now)
+    cc.snapshot = lambda ticker: (t.__setitem__(0, t[0] + 0.5), {})[1]   # each snapshot takes 0.5 s
+    cc.snaps = [(0.0, 0, "a", f"T{i}", f"x{i}") for i in range(10)]
+    cc.run_snaps(0.0)
+    assert len(feeds) >= 4                         # ~every second while 5 s of snapshots ran
