@@ -175,6 +175,7 @@ DEFAULTS = {
     "early_min": 0.80,
     "early_max": 0.95,
     "early_after_contracts": 0,
+    "early_contracts": 0,             # >0: contracts per window under rule E (0 = the usual base)
 }
 
 
@@ -872,6 +873,9 @@ class Bot(FillQuality):
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
         base_n = int((s.get("series_contracts") or {}).get(m["series"], s["contracts"]))
+        if early and int(s.get("early_contracts") or 0) > 0:
+            base_n = max(base_n, int(s["early_contracts"]))  # rule E size (Alex Nov 10: keep daily volume);
+                                                             # a bigger scale-up step still wins
         target = base_n if early else target_contracts(want[1] if want else None, s, m["series"])
         if m["mode"] == "live":
             m["base"] = base_n
