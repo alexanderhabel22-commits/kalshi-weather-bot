@@ -120,6 +120,26 @@ min_volume = 1000                # contracts traded so far (Nov 5 walk-forward: 
                                  # paid more in 10 of 14 months; see research_mn/)
 max_open_pct = 0.50              # at most 50% of the bankroll in Mentions
 max_event_pct = 0.20             # at most 20% of the bankroll on one event (one speech)
+# SHADOW AI score (Nov 10, wxbot/mentions_ai.py): Haiku 5.5 + web search guesses how likely each word is
+# said and logs it (note column + data/mentions_ai.csv). Changes NO bets. Needs the ANTHROPIC_API_KEY
+# secret. Judge at the Dec 3 Mentions review: python bot.py mentions-ai
+
+[trading.mentions_wide]
+# PAPER SHADOW ONLY (Nov 10, 2026, leaderboard study): the same Mentions NO bet spread over more
+# words. Logs 1-contract paper orders on the words the live rule above leaves out (more than 3 per
+# event, or 100-999 contracts traded). Never live before the Dec 3 Mentions verdict, and then only
+# with Alex's OK. Compare it with `mentions` at the Dec 3 review.
+max_week_contracts = 2000
+max_market_contracts = 200
+enabled = true
+live = false                     # keep false: paper only
+contracts = 1
+max_words_per_event = 20
+min_price = 0.75
+max_price = 0.90
+min_volume = 100
+max_open_pct = 0.40              # leave paper room for the weather LOCK census
+max_event_pct = 0.10
 
 [trading.macro_fade]
 # Fade longshots in Fed and CPI/PCE markets: resting NO at 71-95c (YES 5-29c).
@@ -219,7 +239,7 @@ paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for n
 mode = "live"                    # off | paper | live. LIVE from the start (Alex, Nov 8: "this is the
                                  # test", no paper run). Without a Kalshi key on the server it stays
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
-live_series = ["KXBTC15M", "KXSILVER15M"]   # real money only on these. Nov 10 12:15 PM ET (Alex, trim
+live_series = ["KXBTC15M", "KXSILVER15M", "KXGOLD15M"]   # real money only on these. GOLD live Nov 11 12:50 AM ET (Alex OK, 1 ct + same 2nd-contract rule; review at 100 fills, paper if < -5c). Nov 10 12:15 PM ET (Alex, trim
                                  # decision): copper, palladium, platinum, WTI back to PAPER, all red
                                  # all-time (-$18.59 on 469 ct) vs BTC+silver +$14.23. They keep logging.
                                  # platinum + WTI live Nov 9 ~1:30 PM ET (Alex OK), 1 contract, last 5 min,
@@ -251,6 +271,15 @@ total_loss_pct = 0.50            # Alex (Nov 10 1 AM ET): test money, halt at -5
 cut_after_fills = 100            # a live market below -5c/contract after 100 real fills goes
 cut_below_ct = -0.05             # back to paper by itself (pre-registered, Nov 8)
 guard = true                     # pull bids when BTC/ETH/... spot jumps (Coinbase feed)
+fv_skip = false                  # fair-value filter (wxbot/m15_fv.py): skip/pull BTC bids when fair value < bid.
+fv_skip_after_contracts = 500    # ... switches itself ON at BTC's 500th real contract (Alex Nov 10 7:56 PM ET:
+                                 # "just make them go live at 500"). Still judged on the fv logs at each review.
+early_after_contracts = 500      # rule E (BTC early window): from BTC's 500th real contract, bid only 14-10 min
+                                 # before close, favourite 80-95c, 1 contract, no double (Alex Nov 10 7:56 PM ET:
+                                 # "just make them go live at 500"). 80-day replay: today's rule ~0c/ct since Oct 10,
+                                 # rule E +1.4c. Graded at every BTC review after; decay guard and stops unchanged.
+early_contracts = 2              # MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET): 2 ct/window when rule E starts at 500; 3 if E holds at its review. Was 3: (Alex Nov 10 8:12 PM ET wants ~today's daily
+                                 # volume; rule E trades ~31 windows/day vs ~90). 3 = ~95 ct/day.
 
 [watch]
 # AI ops watcher (wxbot/watch.py), every 15 min on the 15-min bot's server (Nov 10, Alex has
@@ -263,3 +292,53 @@ max_haiku_per_day = 120
 max_opus_per_day = 6
 realert_hours = 6
 auto_pause = true
+
+[scaleup]
+# SCALE-UP KIT (wxbot/scaleup.py, built Nov 10). OFF until the 500-contract reviews and the
+# Nov 17 checkpoint pass AND Alex OKs adding bankroll. Switch on = enabled = true (Alex's OK).
+# While off, nothing above changes; the 15-min bot only keeps each coin's step record.
+# Tiers can only TIGHTEN limits (min of the value above and the tier's), never loosen them.
+enabled = false
+steps = [1, 2, 4]                # 15-min contracts per market, one step at a time
+step_min_bankroll = [0, 150, 400]  # bankroll needed to sit at each step
+step_min_review = 500            # the coin passed its 500-contract review count
+step_min_contracts = 300         # real contracts at the current step before the next one...
+step_min_ct = 0.01               # ...earning +1c per contract or better there...
+step_min_days = 3                # ...and at least 3 days at the step
+step_down_ct = -0.02             # last 300 contracts at a step below -2c -> back one step
+step_scales_extra = true         # the 80-87c extra contract scales too (1+1, 2+2, 4+4)
+max_trade_pushes_per_day = 40    # >300 orders/day: routine fill pushes stop after 40; stops still push
+
+[[scaleup.tiers]]
+name = "test money"              # today's settings, unchanged
+min_bankroll = 0
+
+[[scaleup.tiers]]
+name = "small real"
+min_bankroll = 300
+max_open_pct = 0.50              # main bot live cap 75% -> 50%
+daily_loss_pct = 0.08            # main bot daily stop 10% -> 8%
+total_loss_pct = 0.20            # main bot halt 25% -> 20%
+m15_daily_loss_pct = 0.15        # 15-min 24h stop 35% -> 15%
+m15_total_loss_pct = 0.25        # 15-min halt 50% -> 25%
+m15_stop_guard = true            # window guard back on
+
+[[scaleup.tiers]]
+name = "real"
+min_bankroll = 1000
+max_open_pct = 0.50
+daily_loss_pct = 0.06
+total_loss_pct = 0.15
+m15_daily_loss_pct = 0.10
+m15_total_loss_pct = 0.15
+m15_stop_guard = true
+
+[[scaleup.tiers]]
+name = "large"
+min_bankroll = 5000
+max_open_pct = 0.50
+daily_loss_pct = 0.04
+total_loss_pct = 0.10
+m15_daily_loss_pct = 0.06
+m15_total_loss_pct = 0.10
+m15_stop_guard = true

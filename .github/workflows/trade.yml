@@ -49,13 +49,14 @@ jobs:
           TRADE_FORCE_SCAN: ${{ inputs.force_scan && '1' || '' }}
           KALSHI_API_KEY_ID: ${{ secrets.KALSHI_API_KEY_ID }}
           KALSHI_PRIVATE_KEY: ${{ secrets.KALSHI_PRIVATE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}   # Mentions AI shadow score (optional)
         run: python bot.py trade -v
 
       - name: Save orders
         run: |
           git config user.name "weather-bot"
           git config user.email "weather-bot@users.noreply.github.com"
-          for f in data/trade_orders.csv data/orders data/trader_state.json data/digest_state.json data/quotes.json data/equity.csv data/marks.json data/bankroll.json data/exit_shadow.csv reports; do
+          for f in data/trade_orders.csv data/orders data/trader_state.json data/digest_state.json data/quotes.json data/equity.csv data/marks.json data/bankroll.json data/exit_shadow.csv data/mentions_ai.csv reports; do
             if [ -e "$f" ]; then git add "$f"; fi
           done
           if ! git diff --cached --quiet; then

@@ -25,6 +25,7 @@ from ..util import HttpError, parse_iso
 
 NAME = "mentions"
 log = logging.getLogger("wxbot")
+LAST_SCAN: dict = {}      # this run's market list, reused by the paper mentions_wide shadow
 
 
 def mentions_series(ctx) -> set[str]:
@@ -152,8 +153,12 @@ def propose(ctx) -> list[Intent]:
         return []
     # skip markets whose close we can't read
     markets = [m for m in markets if parse_iso(m.get("close_time"))]
+    LAST_SCAN.clear()
+    LAST_SCAN.update(at=ctx.now, markets=markets, series=series)
     out = candidates(markets, series, p, getattr(ctx.cfg, "bankroll", None),
                      held_by_event(ctx.orders, NAME, ctx.mode))
+    from .. import mentions_ai          # SHADOW: logs an AI "will it be said" score, changes nothing
+    mentions_ai.annotate(ctx, out, markets)
     band = sum(1 for m in markets if (ya := kalshi.price(m, "yes_ask")) and
                float(p.get("min_price", 0.75)) <= 1 - ya + 0.01 <= float(p.get("max_price", 0.90)))
     log.info("mentions: %d series (%d active), %d markets closing soon, %d near the price band, "

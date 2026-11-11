@@ -120,8 +120,9 @@ def test_paper_fill_and_grade(monkeypatch):
     path = m15.M15_DIR / f"markets-{b.day(CLOSE)}.csv"
     rows = list(csv.DictReader(open(path)))
     assert len(rows) == 1 and rows[0]["won"] == "1" and rows[0]["mode"] == "paper"
-    assert float(rows[0]["pnl"]) == pytest.approx(0.20 - 0.01)    # maker fee rounds up to 1c
-    assert b.state["pnl"]["paper_total"] == pytest.approx(0.19)
+    assert float(rows[0]["pnl"]) == pytest.approx(0.20)    # no fee: Kalshi charges none here
+    assert rows[0]["fills"] == "1@0.80"                           # each fill's own price
+    assert b.state["pnl"]["paper_total"] == pytest.approx(0.20)
 
 
 def test_requotes_up_when_favourite_firms(monkeypatch):
@@ -160,8 +161,8 @@ def test_live_order_kill_switch_and_pool(monkeypatch):
     w.result = "no"
     clk.t = CLOSE + 30
     b.step()
-    assert m["graded"] and m["pnl"] == pytest.approx(-0.81)
-    assert b.state["pnl"]["live_total"] == pytest.approx(-0.81)
+    assert m["graded"] and m["pnl"] == pytest.approx(-0.80)
+    assert b.state["pnl"]["live_total"] == pytest.approx(-0.80)
 
 
 def test_live_cancels_on_switch_to_paper(monkeypatch):
@@ -766,3 +767,346 @@ def test_socket_double_count_does_not_drop_or_overbook(monkeypatch):
     b.sync_live(force=True)
     assert m["order"] is None and m["filled"] == 1
     assert abs(m["cost"] - 0.8) < 1e-9
+
+
+def test_record_upgrades_an_old_header(monkeypatch):
+    """A day file written before the "fills" column keeps its rows and gains the column."""
+    World(monkeypatch)
+    clk = Clock()
+    b = bot(cfg(mode="paper"), clk)
+    path = m15.M15_DIR / f"markets-{b.day(CLOSE)}.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    old = [c for c in m15.COLS if c != "fills"]
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=old)
+        w.writeheader()
+        w.writerow({c: ("OLD-1" if c == "ticker" else "") for c in old})
+    m = {"ticker": TK, "series": "KXBTC15M", "mode": "paper", "close": CLOSE, "quotes": 1,
+         "filled": 2, "cost": 1.62, "fee": 0.02, "fills": ["1@0.77", "1@0.85"]}
+    b.record(m)
+    rows = list(csv.DictReader(open(path)))
+    assert list(rows[0].keys()) == m15.COLS
+    assert rows[0]["ticker"] == "OLD-1" and rows[0]["fills"] == ""
+    assert rows[1]["ticker"] == TK and rows[1]["fills"] == "1@0.77;1@0.85"
+
+
+
+class FillClient(Client):
+    """Client that also answers Kalshi's fills and positions endpoints."""
+    def __init__(self):
+        super().__init__()
+        self.kfills, self.held = [], 0.0
+
+    def fills(self, ticker=None, min_ts=None, max_pages=50):
+        return [f for f in self.kfills if ticker is None or f["ticker"] == ticker]
+
+    def position(self, ticker):
+        return self.held
+
+
+def test_fill_totals_reads_kalshi_fills():
+    fs = [{"ticker": TK, "side": "no", "count_fp": "2.00", "no_price_dollars": "0.8300", "fee_cost": "0.0000"},
+          {"ticker": TK, "side": "no", "count": 2, "no_price": 82},
+          {"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.9", "fee_cost": "0.01"}]
+    n, cost, fee = m15.kalshi_api.fill_totals(fs)[TK]
+    assert n == 5 and cost == pytest.approx(1.66 + 1.64 + 0.90) and fee == pytest.approx(0.01)
+
+
+def test_grading_uses_kalshi_fills(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    cl = FillClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 10
+    b.step()
+    m = b.state["markets"][TK]
+    assert m["filled"] == 1
+    # Kalshi really filled 2 (a fill the bot never saw)
+    cl.kfills = [{"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.80"},
+                 {"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.81"}]
+    w.result = "yes"
+    clk.t = CLOSE + 30
+    b.step()
+    assert m["filled"] == 2 and m["pnl"] == pytest.approx(2 - 1.61)
+    assert b.state["trued"] == 1
+
+
+def test_position_check_books_unseen_fill(monkeypatch):
+    World(monkeypatch, yb=0.82, ya=0.84)
+    clk = Clock()
+    cl = FillClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    cl.held = 2.0                                  # Kalshi says we already hold 2
+    b.step()
+    m = b.state["markets"][TK]
+    assert cl.placed == [] and m["filled"] == 2 and m["why"] == "caught unbooked fill"
+
+
+def test_history_true_up_rewrites_csv_and_state(monkeypatch):
+    World(monkeypatch)
+    clk = Clock()
+    cl = FillClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    path = m15.M15_DIR / "markets-2026-11-09.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    row = {k: "" for k in m15.COLS}
+    row.update(ticker=TK, series="KXBTC15M", mode="live", close=iso(CLOSE), fav_side="yes",
+               quotes=1, filled=2, cost=1.60, fee=0.03, result="no", won=0, pnl=-1.63)
+    with open(path, "w", newline="") as f:
+        wr = csv.DictWriter(f, fieldnames=m15.COLS)
+        wr.writeheader()
+        wr.writerow(row)
+    b.state["pnl"]["live_total"] = -1.63
+    cl.kfills = [{"ticker": TK, "side": "yes", "count": 1, "yes_price_dollars": "0.80"}]
+    sent = {}
+    b.uploader = lambda files: sent.update(files)
+    b.retrue_history()
+    r = list(csv.DictReader(open(path)))[0]
+    assert r["filled"] == "1" and float(r["pnl"]) == pytest.approx(-0.80)
+    assert b.state["pnl"]["live_total"] == pytest.approx(-0.80)
+    assert b.state["series"]["KXBTC15M"]["fills"] == 1
+    assert path.name in sent and b.state["retrued"] == 1
+    b.retrue_history()                              # runs once only
+class QClient(Client):
+    """Fake Kalshi that also answers queue-position requests."""
+
+    def __init__(self):
+        super().__init__()
+        self.queue = {}
+
+    def queue_positions(self, tickers):
+        return {"queue_positions": [{"order_id": k, "market_ticker": TK, "queue_position": v}
+                                    for k, v in self.queue.items()]}
+
+
+def fill_rows(b, ts):
+    path = m15.M15_DIR / f"fills-{b.day(ts)}.csv"
+    return list(csv.DictReader(open(path))) if path.exists() else []
+
+
+def test_fill_quality_log_moves_and_queue(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    cl = QClient()
+    b = bot(cfg(mode="live"), clk, cl)
+    cl.queue = {"o0": 7}
+    b.step()                                            # place at 80c, 7 contracts ahead
+    assert cl.placed == [(TK, "yes", 0.80, 1)]
+    clk.t += 6
+    cl.queue = {"o0": 2}
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    w.book = {"yes_bid": 0.78, "yes_ask": 0.80}         # filled as the bid dropped
+    clk.t += 6
+    b.step()
+    fill_t = clk.t
+    assert len(b.state["fillq"]) == 1
+    for dt, book in ((10, (0.76, 0.78)), (60, (0.83, 0.85)), (300, (0.90, 0.92))):
+        w.book = {"yes_bid": book[0], "yes_ask": book[1]}
+        clk.t = fill_t + dt
+        b.step()
+    assert fill_rows(b, fill_t) == []                    # waits for the settlement
+    w.result = "yes"
+    clk.t = CLOSE + 30
+    b.step()
+    rows = fill_rows(b, fill_t)
+    assert len(rows) == 1 and b.state["fillq"] == []
+    r = rows[0]
+    assert r["price"] == "0.8" and r["nth"] == "1" and r["bid"] == "0.8" and r["spread"] == "2"  # last book seen at the fill
+    assert r["queue_first"] == "7.0" and r["queue_last"] == "2.0"
+    assert float(r["move_10s"]) == pytest.approx(-3.0)   # mid 77c vs our 80c
+    assert float(r["move_60s"]) == pytest.approx(4.0)
+    assert float(r["move_300s"]) == pytest.approx(11.0)
+    assert r["settled_h"] == "" and r["won"] == "1" and float(r["pnl_ct"]) == pytest.approx(20.0)
+    assert r["rest_s"] == "12.0" and int(r["ttc_s"]) == int(CLOSE - fill_t) and r["src"] == "order"
+
+
+def test_fill_quality_late_fill_uses_settlement_and_no_queue_endpoint(monkeypatch):
+    w = World(monkeypatch, yb=0.88, ya=0.90)
+    clk = Clock(CLOSE - 100)
+    cl = Client()                                       # no queue endpoint: logging still works
+    b = bot(cfg(mode="live"), clk, cl)
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 5
+    b.step()
+    fill_t = clk.t
+    clk.t = fill_t + 10
+    b.step()
+    w.result = "no"
+    clk.t = CLOSE + 30
+    b.step()
+    r = fill_rows(b, fill_t)[0]
+    assert r["settled_h"] == "300" and r["queue_first"] == "" and r["move_60s"] == ""  # 60s mark missed
+    assert float(r["move_300s"]) == pytest.approx(-88.0) and r["won"] == "0"
+
+
+def test_fill_quality_skips_paper(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    b = bot(cfg(mode="paper"), clk)
+    b.step()
+    clk.t += 30
+    w.tape = [(clk.t - 5, 0.78, 10, "no")]
+    b.step()
+    assert b.state["markets"][TK]["filled"] == 1 and b.state["fillq"] == []
+
+
+def test_fill_quality_logs_fair_value_when_shadow_present(monkeypatch):
+    w = World(monkeypatch)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live"), clk, cl)
+
+    class FV:
+        def fair_value(self, m, now):
+            return {"fv_yes": 0.83, "index": 101234.5, "venues": 3, "sigma": 0.001}
+    b.fv = FV()
+    b.step()
+    cl.orders["o0"].update(fill_count=1, remaining_count=0, status="executed")
+    clk.t += 6
+    b.step()
+    fill_t = clk.t
+    w.result = "yes"
+    clk.t = CLOSE + 30
+    b.step()
+    r = fill_rows(b, fill_t)[0]
+    assert r["fv_yes"] == "0.83" and r["index_px"] == "101234.5"
+
+
+class FakeFV:
+    """Stand-in for m15_fv.FairShadow with a settable fair value for YES."""
+
+    def __init__(self, y):
+        self.y = y
+
+    def fair_value(self, m, now):
+        return None if self.y is None else {"fv_yes": self.y, "fv_cf": None, "index": 1, "venues": 3,
+                                            "sigma": 1e-4}
+
+    def step(self, bot, now):
+        pass
+
+    def files(self, now):
+        return {}
+
+
+def fv_bot(monkeypatch, y, **kw):
+    World(monkeypatch)                       # favourite = YES, bid 0.80
+    clk = Clock()
+    b = m15.Bot(cfg(mode="paper", **kw), http=None, clock=clk, fetch_json=lambda url: {},
+                fv=FakeFV(y))
+    return b, clk
+
+
+def test_fv_filter_off_by_default(monkeypatch):
+    b, _ = fv_bot(monkeypatch, 0.50)        # model hates it, but the filter is off
+    b.step()
+    assert b.state["markets"][TK]["order"]
+
+
+def test_fv_filter_skips_and_pulls_when_fair_below_bid(monkeypatch):
+    b, clk = fv_bot(monkeypatch, 0.90, fv_skip=True)
+    b.step()
+    m = b.state["markets"][TK]
+    assert m["order"]                        # fair 0.90 >= bid 0.80: bid as usual
+    b.fv.y = 0.70
+    clk.t += 5
+    b.step()
+    assert m["order"] is None and m["why"] == "fair value below bid" and m["fv_skips"] >= 1
+    b.fv.y = 0.85
+    clk.t += 5
+    b.step()
+    assert m["order"]                        # back above: bids again
+
+
+def test_fv_filter_fails_open_and_respects_scope(monkeypatch):
+    b, _ = fv_bot(monkeypatch, None, fv_skip=True)         # no fair value -> as before
+    b.step()
+    assert b.state["markets"][TK]["order"]
+    b2, _ = fv_bot(monkeypatch, 0.5, fv_skip=True, fv_skip_series=["KXETH15M"])
+    b2.step()
+    assert b2.state["markets"][TK]["order"]                # BTC not in scope
+    b3, clk = fv_bot(monkeypatch, 0.5, fv_skip=True, fv_skip_min_left_s=900)
+    b3.step()
+    assert b3.state["markets"][TK]["order"]                # 600 s left < min_left: too late to trust
+    b4, _ = fv_bot(monkeypatch, 0.78, fv_skip=True, fv_skip_margin=0.03)
+    b4.step()
+    assert b4.state["markets"][TK]["order"]                # 0.78 within the 3c margin of 0.80
+
+
+def test_fv_filter_switches_on_by_itself_at_n_contracts(monkeypatch):
+    b, clk = fv_bot(monkeypatch, 0.50, fv_skip=False, fv_skip_after_contracts=500,
+                    early_after_contracts=0)         # rule E has its own switch-on test
+    alerts = []
+    monkeypatch.setattr(b, "alert", lambda t, body, p=3: alerts.append(t))
+    b.state["series"] = {"KXBTC15M": {"fills": 499, "pnl": 0.0}}
+    b.step()
+    m = b.state["markets"][TK]
+    assert m["order"] and not alerts                 # 499 real contracts: still off
+    b.state["series"]["KXBTC15M"]["fills"] = 500
+    clk.t += 5
+    b.step()
+    assert m["order"] is None and m["why"] == "fair value below bid"
+    assert b.state["fv_skip_on"]["KXBTC15M"] and len(alerts) == 1
+    clk.t += 5
+    b.step()
+    assert len(alerts) == 1                          # alerts once
+
+
+def early_bot(monkeypatch, yb=0.82, ya=0.84, **kw):
+    w = World(monkeypatch, yb, ya)
+    clk = Clock(CLOSE - 800)                         # 13:20 left
+    cl = Client()
+    b = bot(cfg(mode="live", live_series=["KXBTC15M"], **kw), clk, cl)
+    return b, clk, cl, w
+
+
+def test_early_window_off_by_default_waits_for_last_ten_minutes(monkeypatch):
+    b, clk, cl, _ = early_bot(monkeypatch)
+    b.step()
+    assert cl.placed == []                           # today's rule: BTC bids only in the last 10 min
+
+
+def test_early_window_bids_14_to_10_min_left_80_95(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, extra_contracts=1, early_contracts=0)
+    b.step()
+    assert len(cl.placed) == 1 and cl.placed[0][3] == 1      # 1 contract, no extra at 82c
+    m = b.state["markets"][TK]
+    clk.t = CLOSE - 590                              # past 10 min left: pull, never bid again
+    b.step()
+    assert m["order"] is None and len(cl.placed) == 1
+
+
+def test_early_window_skips_window_without_80c_favourite(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, yb=0.75, ya=0.77, early_on=True)
+    b.step()
+    assert cl.placed == []                           # 75c: below the 80c floor
+    w.book.update(yes_bid=0.85, yes_ask=0.87)
+    clk.t = CLOSE - 500                              # too late for rule E
+    b.step()
+    assert cl.placed == []
+
+
+def test_early_window_switches_on_by_itself_at_n_contracts(monkeypatch):
+    b, clk, cl, _ = early_bot(monkeypatch, early_after_contracts=500)
+    alerts = []
+    monkeypatch.setattr(b, "alert", lambda t, body, p=3: alerts.append(t))
+    b.state["series"] = {"KXBTC15M": {"fills": 499, "pnl": 0.0}}
+    b.step()
+    assert cl.placed == [] and not alerts            # 499: still today's rule
+    b.state["series"]["KXBTC15M"]["fills"] = 500
+    clk.t += 5
+    b.step()
+    assert len(cl.placed) == 1 and b.state["early_on"]["KXBTC15M"] and len(alerts) == 1
+    clk.t += 5
+    b.step()
+    assert len(alerts) == 1
+
+
+def test_early_window_contracts_setting(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, early_contracts=3, extra_contracts=1)
+    b.step()
+    assert len(cl.placed) == 1 and cl.placed[0][3] == 3

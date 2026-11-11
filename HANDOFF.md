@@ -158,7 +158,7 @@ record earns it. Be candid about odds and risk; no hype.
   paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
   orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
-  GitHub variable TRADING_MODE=off.
+  GitHub variable TRADING_MODE=off. Since Nov 10 "off" also cancels the main bot's resting real-money orders (held positions stay).
 - **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
   and `[trading.locks] live = true`; every other strategy stays paper. The scan
   writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert
@@ -284,6 +284,88 @@ IP without a token). It never places, changes or cancels anything and needs no s
   mismatch, exposure above pool) when Opus agrees or is unreachable. Never for losses, never
   un-pauses, never changes caps/stops/sizes/code. Results: `m15/watch.json` on branch m15-data;
   the scheduled Claude check-ins read it and turn proposed fixes into PRs.
+
+## Copycat (built Nov 10, 2026; real money per account once its paper test passes)
+
+- Alex's idea and name: copy proven Kalshi winners' trades. `wxbot/copycat.py`, `python bot.py copycat`,
+  separate systemd service `kalshi-copycat` on the 15-min server (installed by the hourly update via
+  `deploy/m15/install-copycat.sh`; CPU 10%, 200 MB cap). Off: set `"mode": "off"` in
+  `copycat_control.json` on main (read every minute; also off if the file can't be read for 10 min,
+  if TRADING_MODE is off/paper or the main bot is halted). Whole service: `sudo systemctl disable --now
+  kalshi-copycat` and `sudo touch /var/lib/kalshi-copycat.disabled`.
+- Uses Kalshi's public social API (`api.elections.kalshi.com/v1/social`): every 12 h it rebuilds the
+  watch list (profit boards, public trades, >= $500 lifetime profit, max 1,000; saved in watch.json); every 10 min it scouts
+  every name seen in the global public trade feed. It reads that feed about once a second (one read
+  covers every account) and also polls accounts round-robin as a backstop (passing ones get
+  every other poll, so a few seconds apart). Feed delay measured Nov 10: median ~10 s.
+- PAPER record (every account): each of their fills is scored as if copied at the price ~10 s later,
+  after Kalshi's taker fee. Score 0-100 = 80 + 2.5 x the pessimistic (95% lower bound) cents per
+  contract, +/-3 for a hot/cold last 50; letters A+ 97 ... B- 80 ... F < 60. Judged at 100 paper copies
+  if it scores 87+ (B+), otherwise at 150 (Alex, Nov 10; the 7-day shortcut was dropped). 80+ = copied, while its last 50 average better than -leeway (5c, +1c per $1
+  it has made us, up to +5c for a high score); "slump" below that, back when it recovers. Size 1,
+  90+ = 2, 95+ with 300 settled = 3.
+  DROPS (Alex, Nov 10 10:31 PM ET): an account that fails at 150 copies (score under 80, e.g. a
+  market maker), or loses money over the last 30 days on two weekly re-checks in a row, is dropped:
+  no polls, snapshots or copies for 30 days, then it may be re-scouted and starts again from zero.
+  Kept in watch.json "dropped" and listed on the dashboard.
+- REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
+  account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
+  their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
+  bot's live series. Rails in `copycat_control.json`: open copies <= 15% of bankroll, an account is
+  benched after losing 10% of bankroll on real copies, Copycat halts at -25% total (reset: edit
+  live_state.json "halted" to null). Alex approved real money at the 100-copy threshold on Nov 10.
+- The boss (`wxbot/copycat_boss.py`): Claude Haiku triage every 15 min; Claude Opus full review every
+  2 h when something changed or when Haiku asks (max 16/day). Writes a plain-English note per
+  account and a summary (dashboard), can bench an account 24 h for a reason the numbers can't see
+  (style change, market maker, broken bot) and lift its own benches. Can't promote or raise sizes.
+  ~$0.20-0.70/day. Needs ANTHROPIC_API_KEY in /etc/kalshi-m15/env (already there for the watcher).
+- Dashboard COPYCAT tab: real P&L, at-risk vs pool, boss summary, per-account PAPER and REAL lines,
+  progress bar to the 100-copy test, list of real copies. Data: `copycat/status.json` on branch
+  `copycat-data` (every 5 min) plus hourly logs (fills, snaps, copy decisions, orders, settlements).
+- Don't copy market makers (their fills are flow, not views); the score fails them on its own. The top
+  ~50 accounts hide their trades. Background: Library analysis/leaderboard/RESULTS.md.
+
+## Source shadow logger (built Nov 10, 2026, logging only)
+
+- `wxbot/srclog.py`, `python bot.py srclog`. Separate systemd service `kalshi-srclog` on the 15-min
+  server (installed by the hourly update via `deploy/m15/install-srclog.sh`; CPU 20%, 300 MB cap).
+  Never loads the Kalshi key, never orders. Off: `sudo systemctl disable --now kalshi-srclog` and
+  `sudo touch /var/lib/kalshi-srclog.disabled`.
+- Polls the settlement pages of data-settled markets (RCP Trump approval, Arena no-style-control
+  leaderboard, Netflix Top 10 TSVs, TSA volumes, HF Arena dataset, each listed Rotten Tomatoes title),
+  logs every change with the raw page, and snapshots the linked Kalshi series at +0/10/30/60/300 s.
+  Hourly files on branch `srclog-data` (srclog/srclog-YYYY-MM-DD-HH.jsonl.gz).
+- Why: research_src/race.py (Mar-Nov 2026 tapes) shows the first ~3 s of each repricing is swept by a
+  faster bot, but stale prices keep trading for 3 s-5 min (Trump approval ~+20-39c/ct). Judge after
+  1-2 weeks: our detect time vs the first Kalshi move. Write-up: Library analysis/source-lag/RESULTS.md.
+
+## Scale-up kit (built Nov 10, 2026, switched OFF)
+`wxbot/scaleup.py` + `[scaleup]` in `config.toml` (`enabled = false`). Turn it on (with
+Alex's OK) after the 500-contract reviews and the Nov 17 checkpoint pass, before adding bankroll.
+While off, nothing changes; the 15-min server only keeps each coin's step record.
+- Bankroll tiers tighten limits, never loosen them (min of config and tier): $300+ main live cap
+  50%, daily 8%, halt 20%, 15-min 24h stop 15%, halt 25%, window guard on; $1k+ 6%/15% and
+  10%/15%; $5k+ 4%/10% and 6%/10%.
+- 15-min contracts step 1 -> 2 -> 4 per coin, one step at a time: needs the 500 review count,
+  300 real contracts at the current step at +1c or better, 3 days there, and bankroll $150 / $400.
+  Last 300 at a step below -2c -> back one step. The 80-87c extra contract scales with the step.
+- Push budget: after 40 routine trade pushes in an ET day the main bot stops pushing fills/sales
+  (one note says so); stops and warnings still push.
+
+## Tax ledger (built Nov 10, 2026)
+
+- `python bot.py tax` (wxbot/taxledger.py), run by `.github/workflows/tax-ledger.yml` on Mondays,
+  Jan 2 and on demand. READ-ONLY: GET /portfolio/fills + /portfolio/settlements (+ titles).
+- Builds LEDGER.md (by year, bot, month), fills-YYYY.csv, settlements-YYYY.csv,
+  markets-YYYY.csv (cost, proceeds, fees, net per market and bot), open-positions.csv.
+- PRIVATE (repo is public): Actions commits only the ENCRYPTED copy (reports/tax-ledger.tgz.enc +
+  .key.enc, encrypted to deploy/tax-ledger-public.pem). The private key is only in the project
+  Library (tax/keys/). Unpack with `tools/tax_decrypt.sh <private.pem> /mnt/project-files/tax/`.
+  Never commit the readable files (reports/tax/ is gitignored).
+- Kalshi's records are the truth. Fills are tagged main bot (order/client id in trade_orders.csv,
+  "wx-"), 15-min bot ("m15-" or a KX...15M series) or manual. data/my_trades.csv is shown on its
+  own and never added. Each settled market is checked against Kalshi's paid revenue.
+- Not tax advice: Kalshi's own year-end form is what gets filed; this backs it up.
 
 ## Expectations to keep honest
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong

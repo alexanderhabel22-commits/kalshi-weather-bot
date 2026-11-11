@@ -1,0 +1,428 @@
+import json
+
+from wxbot import copycat
+
+
+class Resp:
+    def __init__(self, js, status=200):
+        self._js = js
+        self.status_code = status
+
+    def json(self):
+        return self._js
+
+
+class FakeSession:
+    def __init__(self):
+        self.headers = {}
+        self.calls = []
+        self.trades = []
+
+    def get(self, url, params=None, timeout=None):
+        params = params or {}
+        self.calls.append((url, dict(params)))
+        if url.endswith("/leaderboard"):
+            return Resp({"rank_list": [{"nickname": "sharp", "is_anonymous": False},
+                                       {"nickname": "hidden", "is_anonymous": False},
+                                       {"nickname": "small", "is_anonymous": False}]})
+        if url.endswith("/social/trades"):
+            n = params.get("nickname")
+            if n == "sharp":
+                return Resp({"trades": self.trades[: params.get("limit", 50)]})
+            if n == "small":
+                return Resp({"trades": [{"trade_id": "x"}]})
+            return Resp({"trades": [], "visibility_state": "hidden"})
+        if url.endswith("/profile/metrics"):
+            pnl = 900_000 if params.get("nickname") == "sharp" else 50
+            return Resp({"metrics": {"pnl": pnl * 10_000, "volume": 5, "num_markets_traded": 3}})
+        if url.endswith("/profile"):
+            return Resp({"social_profile": {"top_categories": ["Sports"], "joined_at": "2024-01-01"}})
+        if "/series/" in url:
+            return Resp({"series": {"category": "Politics"}})
+        if "/markets/" in url:
+            return Resp({"market": {"yes_bid_dollars": "0.60", "yes_ask_dollars": "0.62",
+                                    "last_price_dollars": "0.61", "status": "active"}})
+        raise AssertionError(url)
+
+
+def trade(tid, taker=None, maker=None, side="yes", px="0.55", t="2026-11-10T20:00:00Z"):
+    return {"trade_id": tid, "ticker": "KXTEST-1", "price_dollars": px, "count_fp": "10.00",
+            "taker_side": side, "taker_action": "buy", "taker_nickname": taker or "",
+            "maker_nickname": maker or "", "create_date": t}
+
+
+def rows(tmp_path):
+    out = []
+    for p in sorted(tmp_path.glob("copycat-*.jsonl")):
+        out += [json.loads(x) for x in p.read_text().splitlines()]
+    return out
+
+
+def test_sharp_side_taker_and_maker():
+    assert copycat.sharp_side(trade("a", taker="s", side="yes"), "s") == ("taker", "yes")
+    assert copycat.sharp_side(trade("a", maker="s", side="yes"), "s") == ("maker", "no")
+    sell = dict(trade("a", taker="s", side="yes"), taker_action="sell")
+    assert copycat.sharp_side(sell, "s") == ("taker", "no")
+    assert copycat.sharp_side(trade("a", taker="x"), "s") == (None, None)
+
+
+def test_watch_keeps_only_public_and_profitable(tmp_path):
+    s = FakeSession()
+    s.trades = [trade("t1", taker="sharp")]
+    sl = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    sl.build_watch()
+    assert list(sl.watch) == ["sharp"]
+    assert sl.watch["sharp"]["pnl"] == 900_000
+
+
+def test_new_fill_logged_and_snapshotted_backfill_not(tmp_path):
+    now = [1_762_800_000.0]
+    s = FakeSession()
+    s.trades = [trade("old", taker="sharp")]
+    sl = copycat.Copycat(tmp_path, session=s, clock=lambda: now[0], req_gap=0)
+    sl.watch = {"sharp": {}}
+    sl.watch_next = 10 ** 12
+    sl.step()                                   # first poll: history is backfill, no snaps
+    assert not sl.snaps
+    s.trades = [trade("new", maker="sharp", side="no", px="0.40"), trade("old", taker="sharp")]
+    now[0] += 30
+    sl.step()
+    fills = [r for r in rows(tmp_path) if r["kind"] == "fill"]
+    assert [(f["trade_id"], f["backfill"]) for f in fills] == [("old", True), ("new", False)]
+    new = fills[1]
+    assert new["role"] == "maker" and new["side"] == "yes" and new["yes_price"] == 0.40
+    snaps = [r for r in rows(tmp_path) if r["kind"] == "snap"]
+    assert [x["delay"] for x in snaps] == [0]  # the +0 snapshot runs in the same step
+    assert len(sl.snaps) == len(copycat.SNAP_DELAYS) - 1
+    now[0] += 400
+    sl.step()
+    assert sorted(r["delay"] for r in rows(tmp_path) if r["kind"] == "snap") == [0, 60, 300]
+
+
+def test_never_touches_order_endpoints(tmp_path):
+    s = FakeSession()
+    s.trades = [trade("t1", taker="sharp")]
+    sl = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    sl.step()
+    assert not any("/portfolio" in u or "/orders" in u for u, _ in s.calls)
+    assert not hasattr(s, "post")
+
+
+def test_grade_follow_and_settle():
+    rows_ = [
+        {"kind": "fill", "trade_id": "a", "nick": "sharp", "ticker": "T", "side": "yes",
+         "yes_price": 0.50, "backfill": False, "lag_s": 20},
+        {"kind": "snap", "trade_id": "a", "ticker": "T", "delay": 0, "bid": 0.52, "ask": 0.54},
+        {"kind": "snap", "trade_id": "a", "ticker": "T", "delay": 300, "bid": 0.60, "ask": 0.62},
+        {"kind": "fill", "trade_id": "b", "nick": "sharp", "ticker": "T", "side": "no",
+         "yes_price": 0.50, "backfill": True},
+    ]
+    out = copycat.grade(rows_, {"T": "yes"})
+    o = out["sharp"]
+    assert len(o["lag"]) == 1                          # backfill ignored
+    assert round(o["move_300"][0], 1) == 11.0          # mid 0.61 - 0.50
+    assert round(o["follow_300"][0], 1) == 5.0         # mid 0.61 - ask 0.54 - 2c taker fee
+    assert round(o["settle"][0], 1) == 44.0            # 1.00 - 0.54 - 2c fee
+
+
+def test_status_verdicts(tmp_path):
+    rows_ = []
+    for i in range(120):
+        tid = f"t{i}"
+        rows_ += [{"kind": "fill", "trade_id": tid, "nick": "good", "ticker": f"T{i}", "side": "yes",
+                   "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
+                  {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
+    results = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(120)}   # 80% at 52c
+    s = copycat.build_status(rows_, results, {"good": {"pnl": 1}, "new": {"pnl": 2}}, now=2000.0)
+    acc = {a["nick"]: a for a in s["accounts"]}
+    assert acc["good"]["fills"] == 120 and acc["good"]["verdict"] == "passes"
+    assert acc["new"]["verdict"] == "watching"
+    assert len(s["recent"]) == 40
+    bad = {f"T{i}": ("yes" if i % 10 < 4 else "no") for i in range(120)}
+    s2 = copycat.build_status(rows_, bad, {"good": {}}, now=2000.0)
+    assert s2["accounts"][0]["verdict"] == "watching"   # weak at 120: tested until 150 (B+ fast-tracks at 100)
+
+
+def test_update_status_writes_file(tmp_path):
+    s = FakeSession()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.watch = {"sharp": {"pnl": 5}}
+    st_ = cc.update_status(1_000_000.0)
+    assert (tmp_path / "status.json").exists() and st_["mode"] == "paper only"
+
+
+def test_scout_adds_profitable_names_from_global_feed(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            s.calls.append((url, dict(params)))
+            return Resp({"trades": [trade("g1", taker="sharp", maker="small")], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.scout()
+    assert list(cc.watch) == ["sharp"] and cc.watch["sharp"]["src"] == "scout"
+    assert "small" in cc.checked
+    n_calls = len(s.calls)
+    cc.scout()                                   # already checked: no new lookups
+    assert len(s.calls) == n_calls + 1
+
+
+def test_rolling_window_drops_then_readmits(tmp_path):
+    def rows_for(outcomes):
+        out, res = [], {}
+        for i, win in enumerate(outcomes):
+            tid = f"t{i}"
+            out += [{"kind": "fill", "trade_id": tid, "nick": "a", "ticker": f"T{i}", "side": "yes",
+                     "yes_price": 0.50, "backfill": False, "ts": 1000.0 + i},
+                    {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.48, "ask": 0.50}]
+            res[f"T{i}"] = "yes" if win else "no"
+        return out, res
+    good = [i % 10 < 8 for i in range(200)]
+    bad = [i % 10 < 2 for i in range(50)]
+    v = lambda o: copycat.build_status(*rows_for(o), {"a": {}}, 2000.0)["accounts"][0]  # noqa: E731
+    a = v(good[:150])
+    assert a["score"] >= 90 and a["grade"].startswith("A") and a["verdict"] == "passes" and a["size"] == 2
+    a = v(good[:150] + bad)                      # strong record, awful last 50: benched as a slump
+    assert a["verdict"] == "slump" and a["size"] == 0
+    a = v(good[:150] + bad + good[:50])          # recovers: back in
+    assert a["verdict"] == "passes"
+    a = v(bad + bad)                             # bad at 100 copies: no fast track, still testing
+    assert a["verdict"] == "watching"
+    a = v(bad + bad + bad)                       # judged at 150: fails
+    assert a["grade"] == "F" and a["score"] < 60 and a["verdict"] == "fails"
+
+
+def test_leeway_grows_with_banked_profit_and_score():
+    assert copycat.leeway_c(0) == 5 and copycat.leeway_c(-3) == 5
+    assert copycat.leeway_c(8) == 13 and copycat.leeway_c(100) == 20
+    assert copycat.leeway_c(100, 99) == 25 and copycat.leeway_c(0, 70) == 5
+
+
+def test_score_letters():
+    assert copycat.score_grade([1.0] * 10) == (None, "-")
+    sc, lt = copycat.score_grade([0.0, 2.0] * 50)       # mean +1c, tight: low just under +1
+    assert 80 <= sc < 83 and lt == "B-"
+    sc, lt = copycat.score_grade([-20.0, 10.0] * 50)    # mean -5c
+    assert lt in ("D-", "F", "D", "D+") and sc < 70
+
+
+def test_taker_fee():
+    assert copycat.taker_fee_c(0.50) == 2.0
+    assert copycat.taker_fee_c(0.95) == 1.0
+    assert copycat.taker_fee_c(0.99) == 1.0
+
+
+def _fail_rows(cc, nick, n, t0):
+    for i in range(n):
+        tid = f"{nick}{i}"
+        cc.write({"kind": "fill", "v": copycat.ROW_V, "trade_id": tid, "nick": nick, "ticker": f"{nick}T{i}",
+                  "side": "yes", "yes_price": 0.50, "backfill": False, "lag_s": 5, "ts": t0 + i})
+        cc.write({"kind": "snap", "trade_id": tid, "nick": nick, "ticker": f"{nick}T{i}", "delay": 0,
+                  "bid": 0.48, "ask": 0.50, "ts": t0 + i})
+        cc.results[f"{nick}T{i}"] = "yes" if i % 10 < 2 else "no"
+
+
+def test_failed_test_drops_account_then_readmits_from_zero(tmp_path):
+    now = [1_000_000.0]
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now[0], req_gap=0)
+    cc.watch = {"loser": {"pnl": 500, "since": 0}, "sharp": {"pnl": 900_000, "since": 0}}
+    _fail_rows(cc, "loser", 150, now[0] - 5000)
+    st_ = cc.update_status(now[0])
+    assert "loser" not in cc.watch and cc.dropped["loser"]["reason"] == "failed its paper test"
+    assert all(a["nick"] != "loser" for a in st_["accounts"])
+    assert st_["scan"]["dropped"] == 1 and st_["dropped"][0]["grade"] == "F"
+    saved = json.loads((tmp_path / "watch.json").read_text())
+    assert "loser" in saved["dropped"]                       # survives a restart
+    cc.poll_feed(now[0])                                     # feed / scout never queue it again
+    assert "loser" not in cc.scout_queue and cc.is_dropped("loser")
+    now[0] += copycat.DROP_DAYS * 86400 + 1                  # 30 days later: eligible again
+    assert not cc.is_dropped("loser") and "loser" not in cc.dropped
+    cc.watch["loser"] = {"pnl": 500, "since": now[0]}        # re-scouted: old copies don't count
+    a = {x["nick"]: x for x in cc.update_status(now[0])["accounts"]}["loser"]
+    assert a["fills"] == 0 and a["verdict"] == "watching"
+
+
+def test_recheck_drops_long_run_losers(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/profile/metrics"):
+            s.calls.append((url, dict(params)))
+            pnl = -40 if params.get("since_day_before") == 30 else 5000
+            return Resp({"metrics": {"pnl": pnl * 10_000}})
+        return orig(url, params, timeout)
+    s.get = get
+    now = [1_000_000.0]
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: now[0], req_gap=0)
+    cc.watch = {"cold": {"pnl": 5000, "checked": now[0] - copycat.RECHECK_S - 1},
+                "fresh": {"pnl": 5000, "checked": now[0]}}
+    cc.recheck()
+    assert cc.watch["cold"]["strikes"] == 1 and cc.watch["cold"]["pnl_30d"] == -40   # one bad month: kept
+    assert "strikes" not in cc.watch["fresh"]                                        # not due yet
+    now[0] += copycat.RECHECK_S + 1
+    cc.recheck()                                                                     # still losing a week later
+    assert "cold" not in cc.watch and cc.dropped["cold"]["reason"] == "long-run loser"
+
+
+def test_status_keeps_posting_during_long_jobs(tmp_path):
+    now = [1_000_000.0]
+    ups = []
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now[0], req_gap=0,
+                         uploader=lambda path, data: ups.append(path))
+    cc.tick()
+    assert "copycat/status.json" in ups
+    st_ = json.loads((tmp_path / "status.json").read_text())
+    assert "scan" in st_ and "fresh_since" in st_
+    n = len(ups)
+    now[0] += 10
+    cc.tick()                                    # not again within 5 minutes
+    assert len(ups) == n
+
+
+def test_dropped_accounts_still_logged_from_feed_without_snapshots(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            return Resp({"trades": [trade("d1", taker="mm"), trade("d2", maker="mm")], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.drop("mm", "failed its paper test")
+    cc.feed_seen = {"older"}                     # past the boot read
+    cc.poll_feed(1_000_000.0)
+    fills = [r for r in rows(tmp_path) if r.get("kind") == "fill"]
+    assert {r["trade_id"] for r in fills} == {"d1", "d2"}
+    assert all(r["dropped"] and not r["snap"] and not r["backfill"] for r in fills)
+    assert not cc.snaps and "mm" not in cc.watch
+    assert all(a["nick"] != "mm" for a in cc.update_status(1_000_000.0)["accounts"])
+
+
+def test_feed_delay_stats_and_source(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            return Resp({"trades": [trade("f1", taker="sharp", t="2026-11-10T20:00:00Z")], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 10, 20, 0, 12, tzinfo=timezone.utc).timestamp()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: now, req_gap=0)
+    cc.watch = {"sharp": {"pnl": 5}}
+    cc.feed_seen = {"older"}
+    cc.poll_feed(now)
+    assert cc.feed_lags == [12.0]
+    f = [r for r in rows(tmp_path) if r.get("kind") == "fill"]
+    assert f[0]["src"] == "feed"
+    sc = cc.update_status(now)["scan"]
+    assert sc["feed_lag_s"]["p50"] == 12.0 and sc["copy_lag_s"]["feed"]["n"] == 1
+
+
+def test_feed_reads_each_snapshot_once_back_to_last_seen(tmp_path):
+    s = FakeSession()
+    orig = s.get
+    snap = {"pages": []}
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            s.calls.append((url, dict(params)))
+            i = int(params.get("cursor") or 0)
+            pages = snap["pages"]
+            return Resp({"trades": pages[i], "cursor": str(i + 1) if i + 1 < len(pages) else ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.watch = {"sharp": {}}
+    snap["pages"] = [[trade("o1", taker="sharp")], [trade("o0")]]
+    cc.poll_feed(1_000_000.0)                    # boot: remembered, not logged (may be minutes old)
+    assert not [r for r in rows(tmp_path) if r.get("kind") == "fill"]
+    n = len(s.calls)
+    cc.poll_feed(1_000_000.0)                    # snapshot unchanged: one cheap read
+    assert len(s.calls) == n + 1
+    snap["pages"] = [[trade("n3", taker="sharp")], [trade("n2"), trade("n1", maker="sharp")],
+                     [trade("o1", taker="sharp")], [trade("o0")]]
+    cc.poll_feed(1_000_000.0)                    # refreshed: reads new pages back to o1, then stops
+    assert len(s.calls) == n + 1 + 3
+    ids = [r["trade_id"] for r in rows(tmp_path) if r.get("kind") == "fill"]
+    assert sorted(ids) == ["n1", "n3"]
+
+
+def test_big_bets_by_new_accounts_logged_and_scored(tmp_path):
+    s = FakeSession()
+    orig = s.get
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/profile/metrics") and params.get("nickname") in ("newbie", "vet"):
+            return Resp({"metrics": {"pnl": 0, "num_markets_traded": 2 if params["nickname"] == "newbie" else 400}})
+        if url.endswith("/profile") and params.get("nickname") in ("newbie", "vet"):
+            return Resp({"social_profile": {"joined_at": "2024-01-01T00:00:00Z"}})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_780_000_000.0, req_gap=0)
+    big = dict(trade("w1", taker="newbie", side="no", px="0.30"), count_fp="1000.00")   # $700 on NO at 70c
+    vet = dict(trade("w2", taker="vet", px="0.60"), count_fp="1000.00", ticker="KXV-1")  # $600 on YES
+    small = trade("w3", taker="newbie", px="0.50")                                     # $5: ignored
+    for t in (big, vet, small):
+        cc.spot_whale(t, 1_780_000_000.0)
+    cc.run_whales()
+    w = {r["nick"]: r for r in rows(tmp_path) if r.get("kind") == "whale"}
+    assert set(w) == {"newbie", "vet"} and w["newbie"]["new"] and not w["vet"]["new"]
+    assert w["newbie"]["side"] == "no" and w["newbie"]["usd"] == 700
+    sm = copycat.whale_summary(list(w.values()), {"KXTEST-1": "no", "KXV-1": "no"}, 1_780_000_000.0)
+    assert sm["new_count"] == 1 and sm["new"]["settled"] == 1 and sm["new"]["avg_c"] > 25   # 100 - 70 - fee
+    assert sm["old"]["avg_c"] < -55
+    cc.spot_whale(big, 1_780_000_001.0)
+    n = len(s.calls)
+    cc.run_whales()                              # profile cached: no new lookups
+    assert len(s.calls) == n
+
+
+
+def test_big_anonymous_bets_logged_without_lookups(tmp_path):
+    s = FakeSession()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    big = dict(trade("a1", side="yes", px="0.80"), count_fp="3000.00")     # $2,400 anonymous YES
+    small = dict(trade("a2", side="yes", px="0.80"), count_fp="1000.00")   # $800 anonymous: under the bar
+    cc.spot_whale(big, 1_000_000.0)
+    cc.spot_whale(small, 1_000_000.0)
+    w = [r for r in rows(tmp_path) if r.get("kind") == "whale"]
+    assert len(w) == 1 and w[0]["anon"] and w[0]["usd"] == 2400 and not s.calls and not cc.whale_queue
+    sm = copycat.whale_summary(w, {"KXTEST-1": "yes"}, 1_000_000.0)
+    assert sm["anon_count"] == 1 and sm["anon"]["settled"] == 1 and sm["count"] == 0
+
+
+
+def test_full_feed_rolling_log(tmp_path):
+    import gzip as gz
+    s = FakeSession()
+    orig = s.get
+    page = {"t": []}
+
+    def get(url, params=None, timeout=None):
+        params = params or {}
+        if url.endswith("/social/trades") and "nickname" not in params:
+            return Resp({"trades": page["t"], "cursor": ""})
+        return orig(url, params, timeout)
+    s.get = get
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    page["t"] = [trade("b0")]
+    cc.poll_feed(1_000_000.0)                    # boot: not logged
+    page["t"] = [trade("b2", taker="x,y"), trade("b1"), trade("b0")]
+    cc.poll_feed(1_000_000.0)
+    cc.feed_fh.close()
+    f = list((tmp_path / "feed").glob("feed-*.csv.gz"))
+    lines = gz.open(f[0], "rt").read().splitlines()
+    assert [ln.split(",")[8] for ln in lines] == ["b1", "b2"] and "x y" in lines[1]

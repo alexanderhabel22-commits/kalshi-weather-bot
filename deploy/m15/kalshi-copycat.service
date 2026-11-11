@@ -1,0 +1,24 @@
+[Unit]
+Description=Copycat: grades public trades of proven Kalshi winners on paper; copies passing accounts with real money when copycat_control.json says live
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kalshi
+WorkingDirectory=/opt/kalshi-m15/app
+# Uses GITHUB_TOKEN (uploads), the Kalshi key (real copies, only when copycat_control.json on main says "live"),
+# NTFY_TOPIC (alerts) and ANTHROPIC_API_KEY (the boss). Kill: set mode "off" in copycat_control.json.
+EnvironmentFile=/etc/kalshi-m15/env
+ExecStart=/opt/kalshi-m15/venv/bin/python bot.py copycat -v
+Environment=COPYCAT_DIR=/var/lib/kalshi-copycat
+StateDirectory=kalshi-copycat
+Restart=always
+RestartSec=60
+Nice=10
+CPUQuota=10%
+MemoryMax=200M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

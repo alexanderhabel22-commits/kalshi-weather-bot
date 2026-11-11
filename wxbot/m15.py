@@ -49,7 +49,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import kalshi, notify
+from . import kalshi, kalshi_api, notify, scaleup
+from .m15_fillq import FillQuality
 from .kalshi_api import KalshiClient, OrderRejected, fill_qty
 from .util import DATA_DIR, Config, Http, HttpError, parse_iso, read_json, write_json
 
@@ -65,7 +66,9 @@ CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/m15_control.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
 COLS = ["ticker", "series", "mode", "close", "fav_side", "first_q", "last_q", "quotes",
         "contracts", "filled", "cost", "fee", "fill_at", "fill_ttc_s", "model_filled",
-        "touched", "pulls", "spot_bps", "result", "won", "pnl"]
+        "touched", "pulls", "spot_bps", "result", "won", "pnl", "fills", "fv_fill"]
+# "fills" (Nov 10): each fill as contracts@price, ';'-separated (e.g. "1@0.77;1@0.85"), so a
+# double's 1st and 2nd contract can be judged apart (the cost column only gives the blend).
 
 DEFAULTS = {
     "mode": "paper",
@@ -127,7 +130,7 @@ DEFAULTS = {
     "switch_stale_s": 1800,
     "summary_hour": 21,
     "upload_s": 900,
-    "maker_fee_rate": 0.0175,
+    "maker_fee_rate": 0.0,          # Kalshi charged $0 on every 15-min fill (ledger, Nov 10)
     "rest_quote_s": 5,          # REST best-bid refresh (the websocket fills in between)
     "rest_tape_s": 15,          # REST trade tape per market (truth for paper fills)
     "sync_s": 5,                # REST order sync (websocket fills arrive in between)
@@ -148,6 +151,31 @@ DEFAULTS = {
              "KXBRENT15M": "BCO_USD", "KXNATGAS15M": "NATGAS_USD"},
     # products that trip together: a jump in one pulls the bids on all (metals move as one)
     "guard_links": [["XAG_USD", "XAU_USD", "XCU_USD", "XPT_USD", "XPD_USD"]],
+    # SHADOW fair value (wxbot/m15_fv.py, Nov 10): logs only, never trades. Rebuilds the
+    # settlement index from free exchange feeds and logs fair value vs Kalshi's quotes.
+    "fv": True,
+    "fv_coins": {"KXBTC15M": "BTC", "KXETH15M": "ETH", "KXSOL15M": "SOL"},
+    "fv_every_s": 5,
+    # fair-value FILTER (changes trading when on): skip/pull the favourite bid when our side's
+    # fair value < bid - margin, with >= min_left seconds left. OFF until the market's 500 review.
+    "fv_skip": False,
+    "fv_skip_series": ["KXBTC15M"],
+    "fv_skip_margin": 0.0,
+    "fv_skip_min_left_s": 180,
+    "fv_skip_after_contracts": 0,     # >0: switch fv_skip on by itself at this many real contracts
+    # EARLY WINDOW (rule E, pre-registered Nov 10 in reports/reviews/m15-candidate-rules-2026-11-10.md):
+    # for early_series, bid only from early_start_s to early_end_s before close, favourite
+    # early_min-early_max, no extra contract; a window without such a favourite by early_end_s is
+    # skipped. 80-day replay: today's rule ~0c/ct since Oct 10, rule E +1.4c. Off unless early_on,
+    # or switched on by itself at early_after_contracts real contracts in that series.
+    "early_on": False,
+    "early_series": ["KXBTC15M"],
+    "early_start_s": 840,
+    "early_end_s": 600,
+    "early_min": 0.80,
+    "early_max": 0.95,
+    "early_after_contracts": 0,
+    "early_contracts": 0,             # >0: contracts per window under rule E (0 = the usual base)
 }
 
 
@@ -213,12 +241,16 @@ def qty_str(x) -> int | float:
 def target_contracts(q: float | None, s: dict, series: str | None = None) -> int:
     """Contracts wanted in a market while the favourite's bid is at q. Series in
     single_series never take the extra contract (new live tests, Nov 9)."""
-    n = int(s["contracts"])
+    base = int(s["contracts"])
+    n = int((s.get("series_contracts") or {}).get(series, base)) if series is not None else base
     if series is not None and series in (s.get("single_series") or []):
         return n
     if q is not None and s.get("extra_contracts") and \
             s["extra_min"] - 1e-9 <= q <= s["extra_max"] + 1e-9:
-        n += int(s["extra_contracts"])
+        extra = int(s["extra_contracts"])
+        if n != base and s.get("step_scales_extra", True) and base > 0:
+            extra = extra * n // base              # scale-up steps: 1+1 -> 2+2 -> 4+4
+        n += extra
     return n
 
 
@@ -240,11 +272,12 @@ def through(trades: list, side: str, q: float, after: float) -> tuple[float | No
     return None, touched
 
 
-class Bot:
+class Bot(FillQuality):
     def __init__(self, cfg: Config, http: Http, client: KalshiClient | None = None,
                  clock=time.time, fetch_json=None, uploader=None, kfeed=None, spot=None,
-                 wake=None):
+                 wake=None, fv=None):
         self.cfg = cfg
+        self.fv = fv                    # shadow fair value (logs only), m15_fv.FairShadow
         self.kfeed = kfeed
         self.spot = spot
         self.wake = wake
@@ -261,9 +294,11 @@ class Bot:
                       "summary_day": st.get("summary_day"), "started": st.get("started"),
                       "cut": st.get("cut", {}), "series": st.get("series", {}),
                       "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted"),
-                      "code_version": st.get("code_version"), "saved_at": st.get("saved_at")}
+                      "fv_skip_on": st.get("fv_skip_on", {}), "early_on": st.get("early_on", {}),
+                      "code_version": st.get("code_version"), "saved_at": st.get("saved_at"),
+                      "fillq": st.get("fillq", [])}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
-                     "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0}
+                     "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0, "queue": 0.0}
         self.switch = {"mode": None, "halted": False}
         self.control = None
         self.balance = None
@@ -276,6 +311,22 @@ class Bot:
     @property
     def s(self) -> dict:
         return settings(self.cfg)
+
+    def limits(self, now: float) -> dict:
+        """Settings with the scale-up kit applied (wxbot/scaleup.py): tighter stops by bankroll
+        tier and each live coin's contract step. While the kit is off this is just self.s."""
+        s = self.s
+        p = scaleup.params(self.cfg)
+        if not p["enabled"]:
+            return s
+        b = self.bankroll(now)
+        s, tr = scaleup.m15_limits(s, p, b)
+        s["scaleup_tier"] = (tr or {}).get("name")
+        s["series_contracts"] = {ser: scaleup.step_contracts(p, self.state.get("series", {}).get(ser), b,
+                                                             int(s["contracts"]))
+                                 for ser in s["live_series"]}
+        s["step_scales_extra"] = p["step_scales_extra"]
+        return s
 
     def alert(self, title: str, body: str, priority: int = 3) -> None:
         try:
@@ -307,6 +358,10 @@ class Bot:
             log.info("restarted for a code update %s -> %s (no push): %s", prev[:7], ver[:7], body)
             return
         self.alert("15-min bot started", body, 2)
+
+    @staticmethod
+    def fillq_dir() -> Path:
+        return M15_DIR
 
     def day(self, ts: float) -> str:
         return datetime.fromtimestamp(ts, self.tz).date().isoformat()
@@ -438,7 +493,7 @@ class Bot:
         return pnl.get("live_days", {}).get(self.day(now), 0.0)
 
     def check_stops(self, now: float) -> None:
-        s = self.s
+        s = self.limits(now)
         b = self.bankroll(now)
         if not b:
             return
@@ -491,7 +546,8 @@ class Bot:
                                              "order": None, "quotes": 0, "filled": 0,
                                              "cost": 0.0, "fee": 0.0, "trade_ts": 0,
                                              "model_filled": None, "touched": False,
-                                             "pulls": 0, "tape_at": 0}
+                                             "pulls": 0, "tape_at": 0,
+                                             "strike": mk.get("floor_strike")}
         if self.kfeed is not None:
             self.kfeed.watch([k for k, m in self.state["markets"].items() if m["close"] > now])
 
@@ -589,6 +645,9 @@ class Bot:
         self._book(m, o, None)
         self._remember(m, o)
         m["order"] = None
+        if m["mode"] == "live":
+            # give Kalshi's records a moment to settle before the next order on this market
+            m["retry_at"] = max(m.get("retry_at", 0), self.clock() + 2)
         return True
 
     @staticmethod
@@ -622,6 +681,7 @@ class Bot:
         o["booked"] = o.get("booked", 0) + new
         m["filled"] += new
         m["cost"] = round(m["cost"] + new * o["q"], 4)
+        m.setdefault("fills", []).append(f"{qty_str(new)}@{o['q']:.2f}")
         m["fee"] = round(m["fee"] + maker_fee(o["q"], new, self.s["maker_fee_rate"]), 4)
         if not m.get("fill_at"):
             m["fill_at"] = int(ts or self.clock())
@@ -631,6 +691,7 @@ class Bot:
                 if mv is not None:
                     # signed so that + = spot moved toward our side's win (assumes YES = up)
                     m["spot_bps"] = round(mv if m.get("fav_side") == "yes" else -mv, 1)
+        self.fillq_open(m, o, new, ts)           # shadow fill-quality log (never trades)
 
     def cancel_all(self, why: str) -> None:
         for m in self.state["markets"].values():
@@ -791,7 +852,7 @@ class Bot:
         return n
 
     def manage(self, m: dict, quote: dict | None, mode: str, now: float) -> None:
-        s = self.s
+        s = self.limits(now)
         left = m["close"] - now
         eligible = (mode == "live" and m["series"] in s["live_series"]
                     and m["series"] not in self.state.get("cut", {}))
@@ -805,13 +866,25 @@ class Bot:
             if o:
                 self._end_order(m)
             return
-        want = desired_quote(quote, s) if quote else None
+        early = self.early_active(m, now)
+        band = dict(s, min_fav=s["early_min"], max_fav=s["early_max"]) if early else s
+        want = desired_quote(quote, band) if quote else None
         m["why"] = "no quote" if not quote else ("out of band" if want is None else "ok")
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
-        target = target_contracts(want[1] if want else None, s, m["series"])
+        base_n = int((s.get("series_contracts") or {}).get(m["series"], s["contracts"]))
+        if early and int(s.get("early_contracts") or 0) > 0:
+            base_n = max(base_n, int(s["early_contracts"]))  # rule E size (Alex Nov 10: keep daily volume);
+                                                             # a bigger scale-up step still wins
+        target = base_n if early else target_contracts(want[1] if want else None, s, m["series"])
+        if m["mode"] == "live":
+            m["base"] = base_n
         room = target - m["filled"] - (o["n"] - o["filled"] if o else 0)
-        if left <= s["stop_quote_s"] or left > float((s.get("max_left_s") or {}).get(m["series"], 1e9)):
+        if early:
+            out = left < float(s["early_end_s"]) or left > float(s["early_start_s"])
+        else:
+            out = left > float((s.get("max_left_s") or {}).get(m["series"], 1e9))
+        if left <= s["stop_quote_s"] or out:
             if o:
                 self._end_order(m)
             return
@@ -832,6 +905,11 @@ class Bot:
             m["why"] = "spot feed down"
             if o:
                 self._end_order(m)
+            return
+        if self.fv_blocks(m, want, now):
+            m["why"] = "fair value below bid"
+            if o:
+                self._end_order(m)                      # pull a resting bid the model now dislikes
             return
         if o:
             if want is None:
@@ -866,8 +944,88 @@ class Bot:
             if s.get("stop_guard", True) and self.exposure("live") + q * n_new > room_to_stop - 0.01:
                 m["why"] = f"daily-stop guard (room ${room_to_stop:.2f})"
                 return
+        if m["mode"] == "live" and self.client is not None and hasattr(self.client, "position"):
+            # Kalshi's own position is the truth (Nov 10: fills the bot never saw left 3-4
+            # contracts where it booked 2). Book anything unseen and re-check room next step.
+            try:
+                held = self.client.position(m["ticker"])
+            except Exception as exc:
+                log.warning("position %s: %s", m["ticker"], exc)
+                m["why"] = "position check failed"
+                return
+            if held > m["filled"] + 0.01:
+                extra = round(held - m["filled"], 2)
+                log.warning("%s: Kalshi shows %.2f held, bot booked %.2f; booking the rest",
+                            m["ticker"], held, m["filled"])
+                self._book(m, {"q": m.get("last_q") or q, "n": extra, "filled": extra}, now)
+                m["why"] = "caught unbooked fill"
+                self.state["caught"] = round(float(self.state.get("caught", 0)) + extra, 2)
+                return
         m["trade_ts"] = max(m["trade_ts"], now - 2)
         self._place(m, side, q, n_new, now)
+
+    def early_active(self, m: dict, now: float) -> bool:
+        """Rule E (BTC early window) on for this market's series? On when early_on, or by itself
+        once the series reaches early_after_contracts real contracts (Alex Nov 10 7:56 PM ET:
+        "just make them go live at 500"). Pushes one alert when it switches on."""
+        s = self.s
+        if m["series"] not in (s.get("early_series") or []):
+            return False
+        if s.get("early_on"):
+            return True
+        on = self.state.setdefault("early_on", {})
+        if m["series"] in on:
+            return True
+        after = int(s.get("early_after_contracts") or 0)
+        done = float((self.state.get("series", {}).get(m["series"]) or {}).get("fills", 0))
+        if not after or done < after:
+            return False
+        if m.get("filled") or m.get("order"):
+            return False                     # never switch rules in the middle of a window
+        on[m["series"]] = int(now)
+        self.alert(f"15-min bot: early-window rule ON for {m['series']}",
+                   f"{done:.0f} real contracts reached (switch-on at {after}). Bids now only "
+                   f"{int(s['early_start_s']) // 60}-{int(s['early_end_s']) // 60} min before close, "
+                   f"favourite {s['early_min']:.2f}-{s['early_max']:.2f}, 1 contract per window.", 3)
+        return True
+
+    def fv_blocks(self, m: dict, want, now: float) -> bool:
+        """Fair-value filter (OFF by default; Alex Nov 10 "ok then do them", switch on only at a
+        market's 500 review). True = don't bid / pull our bid: our side's fair value (official CF
+        index when its feed is up, else the rebuilt one) is below the bid by more than the margin.
+        Only with >= fv_skip_min_left_s left (the model is worse than Kalshi's price late).
+        Fails OPEN: no fair value -> behave exactly as before."""
+        s = self.s
+        if self.fv is None or not want or m["series"] not in (s.get("fv_skip_series") or []):
+            return False
+        if not s.get("fv_skip"):
+            # auto switch-on at the market's Nth real contract (Alex Nov 10: "make them go live at 500")
+            after = int(s.get("fv_skip_after_contracts") or 0)
+            done = float((self.state.get("series", {}).get(m["series"]) or {}).get("fills", 0))
+            if not after or done < after:
+                return False
+            on = self.state.setdefault("fv_skip_on", {})
+            if m["series"] not in on:
+                on[m["series"]] = int(now)
+                self.alert(f"15-min bot: fair-value filter ON for {m['series']}",
+                           f"{done:.0f} real contracts reached (switch-on at {after}). Bids are now "
+                           "skipped when the fair price says they're overpriced (3+ min left).", 3)
+        if m["close"] - now < float(s.get("fv_skip_min_left_s", 180)):
+            return False
+        try:
+            fv = self.fv.fair_value(m, now)
+        except Exception as exc:
+            log.warning("fair value %s: %s", m["ticker"], exc)
+            return False
+        if not fv:
+            return False
+        y = fv["fv_cf"] if fv.get("fv_cf") is not None else fv["fv_yes"]
+        side, q = want
+        fair = y if side == "yes" else 1 - y
+        if fair < q - float(s.get("fv_skip_margin", 0.0)) - 1e-9:
+            m["fv_skips"] = int(m.get("fv_skips", 0)) + 1
+            return True
+        return False
 
     def group_full(self, m: dict) -> bool:
         """True when this market is in the correlated group, holds nothing yet, and enough
@@ -910,6 +1068,8 @@ class Bot:
                     r = "void"
                 else:
                     continue
+            if m["mode"] == "live" and m["quotes"]:
+                self.true_up(m)
             won = None
             pnl = 0.0
             if m["filled"] and r in ("yes", "no"):
@@ -934,6 +1094,91 @@ class Bot:
         self.state["markets"] = {k: v for k, v in self.state["markets"].items()
                                  if not (v.get("graded") and now - v["close"] > 86400)}
 
+    def true_up(self, m: dict) -> None:
+        """Replace the booked contracts/cost/fee with Kalshi's own fills for this market."""
+        if self.client is None or not hasattr(self.client, "fills"):
+            return
+        try:
+            t = kalshi_api.fill_totals(self.client.fills(ticker=m["ticker"])).get(m["ticker"])
+        except Exception as exc:
+            log.warning("true-up %s: %s", m["ticker"], exc)
+            m["unverified"] = True
+            return
+        n, cost, fee = t or (0.0, 0.0, 0.0)
+        if abs(n - m["filled"]) > 0.01 or abs(cost - m["cost"]) > 0.01 or abs(fee - m["fee"]) > 0.005:
+            log.warning("%s true-up: bot %.2f ct $%.2f fee %.2f -> Kalshi %.2f ct $%.2f fee %.2f",
+                        m["ticker"], m["filled"], m["cost"], m["fee"], n, cost, fee)
+            self.state["trued"] = int(self.state.get("trued", 0)) + 1
+        m.update({"filled": n, "cost": round(cost, 4), "fee": round(fee, 4)})
+
+    def retrue_history(self, version: int = 1) -> None:
+        """One-time rewrite of every local markets CSV (live rows) and the P&L state from
+        Kalshi's fills, then a full upload. Nov 10: the bot had booked a 1.75% fee Kalshi
+        never charged and miscounted 29 of 683 markets (about -$7 logged vs +$8 real)."""
+        if self.client is None or not hasattr(self.client, "fills") or self.state.get("retrued") == version:
+            return
+        try:
+            tot = kalshi_api.fill_totals(self.client.fills(min_ts=1794000000, max_pages=200))
+        except Exception as exc:
+            log.warning("history true-up: %s", exc)
+            return
+        series = tuple(self.s["series"])
+        p = self.state["pnl"]
+        live_total, days, log24, ser = 0.0, {}, [], {}
+        files = sorted(M15_DIR.glob("markets-*.csv"))
+        for path in files:
+            with open(path, newline="", encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            for r in rows:
+                if r.get("mode") != "live" or not r.get("ticker", "").startswith(series):
+                    continue
+                n, cost, fee = tot.get(r["ticker"], (0.0, 0.0, 0.0))
+                r["filled"], r["cost"], r["fee"] = qty_str(n), round(cost, 2), round(fee, 2)
+                res, side = r.get("result"), r.get("fav_side")
+                if n and res in ("yes", "no"):
+                    won = res == side
+                    pnl = round(n * (1.0 if won else 0.0) - cost - fee, 4)
+                    r["won"], r["pnl"] = int(won), round(pnl, 2)
+                    close = datetime.fromisoformat(r["close"]).timestamp()
+                    live_total += pnl
+                    d = self.day(close)
+                    days[d] = round(days.get(d, 0.0) + pnl, 4)
+                    log24.append([close, pnl])
+                    st = ser.setdefault(r["series"], {"fills": 0.0, "pnl": 0.0, "recent": []})
+                    st["fills"] += n
+                    st["pnl"] = round(st["pnl"] + pnl, 4)
+                    st["recent"].append([n, round(pnl, 4)])
+                elif not n:
+                    r["won"], r["pnl"] = "", 0.0
+            with open(path, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=COLS, extrasaction="ignore")
+                w.writeheader()
+                w.writerows([{k: r.get(k, "") if r.get(k) is not None else "" for k in COLS} for r in rows])
+        old = p.get("live_total", 0.0)
+        p["live_total"] = round(live_total, 4)
+        p["live_days"] = days
+        p["live_log"] = [e for e in log24 if e[0] > self.clock() - 86400]
+        p["halt_base"] = round(p.get("halt_base", 0.0) + (live_total - old), 4) if p.get("halt_base") else p.get("halt_base", 0.0)
+        win = int(self.s.get("decay_window", 300))
+        for k, v in ser.items():
+            st = self.state.setdefault("series", {}).setdefault(k, {})
+            rec = v["recent"]
+            while len(rec) > 1 and sum(x[0] for x in rec) - rec[0][0] >= win:
+                rec.pop(0)
+            st.update({"fills": round(v["fills"], 2), "pnl": v["pnl"], "recent": rec})
+        self.state["retrued"] = version
+        self.state["roll_stop"] = None                 # re-judged on the corrected numbers
+        log.warning("history true-up: live P&L $%.2f -> $%.2f over %d files", old, live_total, len(files))
+        self.alert("15-min bot books corrected",
+                   f"Re-read every real fill from Kalshi: all-time live P&L ${old:+.2f} -> ${live_total:+.2f} "
+                   "(the bot had assumed a fee Kalshi doesn't charge and miscounted some fills).", 3)
+        if self.uploader is not None:
+            up = {path.name: path.read_text(encoding="utf-8") for path in files}
+            try:
+                self.uploader(up)
+            except Exception as exc:
+                log.warning("history upload failed: %s", exc)
+
     def series_check(self, m: dict, pnl: float) -> None:
         """Pre-registered cut rule: below cut_below_ct per contract after cut_after_fills real fills."""
         st = self.state.setdefault("series", {}).setdefault(m["series"], {"fills": 0, "pnl": 0.0})
@@ -946,6 +1191,15 @@ class Bot:
         while len(rec) > 1 and sum(r[0] for r in rec) - rec[0][0] >= win:
             rec.pop(0)
         cut = self.state.setdefault("cut", {})
+        # scale-up kit: the coin's record at its contract step (kept even while the kit is off)
+        p = scaleup.params(self.cfg)
+        now = self.clock()
+        moved = scaleup.record_step(p, st, m["filled"], pnl, now, self.bankroll(now), m["series"] in cut)
+        if moved:
+            n = scaleup.step_contracts(p, st, self.bankroll(now), int(self.s["contracts"]))
+            self.alert(f"15-min bot: {m['series']} steps {moved} to {n} contracts",
+                       f"Scale-up kit: {'passed' if moved == 'up' else 'failed'} its step test "
+                       f"({st['fills']:.0f} real contracts all-time). Pool and stops unchanged.", 4)
         if m["series"] in cut or st["fills"] < int(self.s["cut_after_fills"]):
             return
         per = st["pnl"] / st["fills"]
@@ -978,7 +1232,7 @@ class Bot:
             "ticker": m["ticker"], "series": m["series"], "mode": m["mode"],
             "close": datetime.fromtimestamp(m["close"], timezone.utc).isoformat(timespec="seconds"),
             "fav_side": m.get("fav_side", ""), "first_q": m.get("first_q", ""),
-            "last_q": m.get("last_q", ""), "quotes": m["quotes"], "contracts": self.s["contracts"],
+            "last_q": m.get("last_q", ""), "quotes": m["quotes"], "contracts": m.get("base", self.s["contracts"]),
             "filled": qty_str(m["filled"]), "cost": round(m["cost"], 2), "fee": round(m["fee"], 2),
             "fill_at": m.get("fill_at") or "",
             "fill_ttc_s": (m["close"] - m["fill_at"]) if m.get("fill_at") else "",
@@ -986,7 +1240,20 @@ class Bot:
             "touched": 1 if m.get("touched") else 0, "pulls": m.get("pulls", 0),
             "spot_bps": m.get("spot_bps", ""),
             "result": m.get("result", ""), "won": "" if m.get("won") is None else int(m["won"]),
-            "pnl": round(m.get("pnl", 0.0), 2)}
+            "pnl": round(m.get("pnl", 0.0), 2), "fills": ";".join(m.get("fills") or []),
+            "fv_fill": m.get("fv_fill", "")}
+        if not new:
+            with open(path, newline="", encoding="utf-8") as f:
+                rd = csv.DictReader(f)
+                if rd.fieldnames != COLS:          # older header (e.g. before "fills"): upgrade in place
+                    old = list(rd)
+                else:
+                    old = None
+            if old is not None:
+                with open(path, "w", newline="", encoding="utf-8") as f:
+                    w = csv.DictWriter(f, fieldnames=COLS, extrasaction="ignore")
+                    w.writeheader()
+                    w.writerows([{k: r.get(k) or "" for k in COLS} for r in old])
         with open(path, "a", newline="", encoding="utf-8") as f:
             w = csv.DictWriter(f, fieldnames=COLS)
             if new:
@@ -1045,6 +1312,8 @@ class Bot:
                   "roll_stop": self.state.get("roll_stop"),
                   "pnl_24h": self.stop_pnl(now) if self.s.get("rolling_stop") else None, "cut": self.state.get("cut", {}), "series": self.state.get("series", {}),
                   "last_reject": self.state.get("last_reject"),
+                  "fv_skip_on": self.state.get("fv_skip_on", {}),
+                  "early_on": self.state.get("early_on", {}),
                   "shards": self.state.get("shards"), "fund_error": self.state.get("fund_error"),
                   "spot_ok": bool(self.spot is not None and self.spot.healthy()),
                   "live_now": {k: {"mode": m.get("mode"), "why": m.get("why"), "bid_ask": m.get("bid_ask"),
@@ -1056,11 +1325,21 @@ class Bot:
                   "live_exposure": round(self.exposure("live"), 2), "errors": self.errors}
         files = {"status.json": json.dumps(status, indent=1, sort_keys=True)}
         for d in {self.day(now), self.day(now - 86400)}:
-            p = M15_DIR / f"markets-{d}.csv"
-            if p.exists():
-                files[p.name] = p.read_text(encoding="utf-8")
+            for kind in ("markets", "fills"):
+                p = M15_DIR / f"{kind}-{d}.csv"
+                if p.exists():
+                    files[p.name] = p.read_text(encoding="utf-8")
+        fv_files = {}
+        if self.fv is not None:
+            try:
+                fv_files = self.fv.files(now)
+            except Exception as exc:
+                log.warning("fair-value files: %s", exc)
+        files.update(fv_files)
         try:
             self.uploader(files)
+            if fv_files:
+                self.fv.mark_uploaded(fv_files)
         except Exception as exc:
             log.warning("upload failed: %s", exc)
 
@@ -1112,13 +1391,21 @@ class Bot:
                 self.manage(m, self.quote(m["ticker"], now), mode, now)
             except Exception as exc:
                 log.warning("manage %s: %s", m["ticker"], exc)
+        if self.fv is not None:
+            try:
+                self.fv.step(self, now)          # shadow only: logs, never trades
+            except Exception as exc:
+                log.warning("fair-value shadow: %s", exc)
+        self.queue_check(now)                    # shadow fill-quality log (never trades)
         self.grade(now)
+        self.fillq_step(now)
         self.daily(now)
         self.upload(now)
         self.save()
 
     def run_forever(self) -> None:
         self.startup_cleanup()
+        self.retrue_history()
         self.startup_notice()
         while True:
             t0 = self.clock()
@@ -1215,8 +1502,17 @@ def main(cfg: Config, once: bool = False) -> int:
                 spot = Spots(feeds, s.get("guard_links") or [])
         except ImportError as exc:
             log.warning("websockets not installed, polling only: %s", exc)
+    fv = None
+    coins = {k: v for k, v in (s.get("fv_coins") or {}).items() if k in s["series"]}
+    if not once and s.get("fv") and coins:
+        try:
+            from .m15_fv import Composite, FairShadow
+            fv = FairShadow(Composite(coins.values()).start(client=client), coins, M15_DIR,
+                            every_s=float(s.get("fv_every_s", 5)))
+        except Exception as exc:               # shadow only: never stop the bot over it
+            log.warning("fair-value shadow off: %s", exc)
     bot = Bot(cfg, http, client, uploader=github_uploader(http, token) if token else None,
-              kfeed=kfeed, spot=spot, wake=wake)
+              kfeed=kfeed, spot=spot, wake=wake, fv=fv)
     if once:
         bot.step()
         bot.upload(time.time(), force=True)
