@@ -202,7 +202,20 @@ def gather(gh: GitHub, now: float, runner=subprocess.run) -> dict:
 
 # ---------------------------------------------------------------- rules
 
-def rules(f: dict, s: dict, m15cfg: dict | None = None) -> list[dict]:
+def overfills(f: dict, s: dict) -> dict:
+    """Live rows today with more contracts than allowed: {ticker: filled}."""
+    out = {}
+    for r in f.get("markets") or []:
+        try:
+            filled = float(r.get("filled") or 0)
+        except ValueError:
+            continue
+        if r.get("mode") == "live" and filled > s["max_filled_per_market"]:
+            out[r.get("ticker")] = filled
+    return out
+
+
+def rules(f: dict, s: dict, m15cfg: dict | None = None, over_seen: dict | None = None) -> list[dict]:
     """Fixed checks. Each flag: code, sev (info|warn|critical), malfunction (may justify a pause)."""
     out = []
     now = f["now"]
@@ -239,18 +252,14 @@ def rules(f: dict, s: dict, m15cfg: dict | None = None) -> list[dict]:
              f"the bot read control={seen} but still reports live", malfunction=True)
     elif ctl and seen and ctl != seen:
         flag("M15_CONTROL_LAG", "info", f"control file says {ctl}, bot last read {seen} (normal for ~20 min after a change)")
-    cap = s["max_filled_per_market"]
-    for r in f.get("markets") or []:
-        try:
-            filled = float(r.get("filled") or 0)
-        except ValueError:
+    # Flag each overfilled row once, when it first shows up or grows. Rows can be re-booked
+    # long after their window closes (Nov 10: a restart's reconciliation took BTC 5:30 PM ET
+    # from 2 to 4 contracts 85 min after close), so this is keyed on what was already seen.
+    for tk, filled in overfills(f, s).items():
+        if over_seen is not None and over_seen.get(tk, 0) >= filled:
             continue
-        close = _ts(r.get("close"))
-        if close is not None and now - close > 3600:      # only fresh windows (old ones were already seen)
-            continue
-        if r.get("mode") == "live" and filled > cap:
-            flag("M15_OVERFILL", "critical",
-                 f"{r.get('ticker')} filled {filled:g} contracts (max {cap})", malfunction=True)
+        flag("M15_OVERFILL", "critical",
+             f"{tk} filled {filled:g} contracts (max {s['max_filled_per_market']})", malfunction=True)
     br = (f.get("bankroll") or {}).get("total")
     pool = (m15cfg or {}).get("pool_pct", 0.25)
     exp = st.get("live_exposure") or 0
@@ -384,7 +393,12 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
         state.update({"day": day, "haiku": 0, "opus": 0, "tokens": {"haiku_in": 0, "haiku_out": 0,
                                                                      "opus_in": 0, "opus_out": 0}})
     f = gather(gh, now, runner)
-    flags = rules(f, s, cfg.raw.get("m15", {}) if hasattr(cfg, "raw") else {})
+    over = overfills(f, s)
+    if "over_seen" not in state:          # first run with this check: today's old rows are history
+        state["over_seen"] = dict(over)
+    flags = rules(f, s, cfg.raw.get("m15", {}) if hasattr(cfg, "raw") else {}, over_seen=state["over_seen"])
+    state["over_seen"] = {**({} if state.get("over_day") != day else state["over_seen"]), **over}
+    state["over_day"] = day
     text = digest(f, flags)
     rec = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
            "flags": flags, "haiku": None, "opus": None, "action": None}
