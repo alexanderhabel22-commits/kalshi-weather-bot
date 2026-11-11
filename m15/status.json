@@ -1,5 +1,5 @@
 {
- "at": "2026-11-11T04:17:00+00:00",
+ "at": "2026-11-11T04:21:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -8,17 +8,13 @@
  "fund_error": null,
  "fv_skip_on": {},
  "halted": null,
- "last_reject": {
-  "at": 1794370217,
-  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXSILVER15M-26NOV102315-15"
- },
- "live_exposure": 0.0,
+ "last_reject": null,
+ "live_exposure": 0.94,
  "live_now": {
   "KXBTC15M-26NOV102330-30": {
    "bid_ask": [
-    0.19,
-    0.2
+    0.053,
+    0.054
    ],
    "mode": "live",
    "order": false,
@@ -26,12 +22,12 @@
   },
   "KXSILVER15M-26NOV102330-30": {
    "bid_ask": [
-    0.34,
-    0.35
+    0.16,
+    0.17
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "ok"
   }
  },
  "mode": "live",
@@ -1142,35 +1138,35 @@
     0.18
    ],
    [
-    1794367800,
+    1794367800.0,
     0.43
    ],
    [
-    1794367800,
+    1794367800.0,
     0.42
    ],
    [
-    1794368700,
+    1794368700.0,
     -0.71
    ],
    [
-    1794368700,
+    1794368700.0,
     0.41
    ],
    [
-    1794369600,
+    1794369600.0,
     0.46
    ],
    [
-    1794369600,
+    1794369600.0,
     0.45
    ],
    [
-    1794370500,
+    1794370500.0,
     -1.74
    ],
    [
-    1794370500,
+    1794370500.0,
     -1.74
    ]
   ],
@@ -3815,7 +3811,7 @@
  "shards": {
   "0": 13.4635,
   "1": 0.0,
-  "2": 19.8115,
+  "2": 18.8715,
   "3": 0.0
  },
  "spot_ok": true,
