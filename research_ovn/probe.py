@@ -10,6 +10,7 @@ usage: python research_ovn/probe.py OUT_DIR
 4. mve_markets.jsonl.gz + mve_trades.jsonl.gz: settled combo (MVE) markets and a sample
    of their trade tapes (what do parlay sellers earn?).
 5. results.jsonl.gz: results of every market ticker seen in step 3.
+8. inc_books.jsonl.gz: order books of every market with an active liquidity incentive (3 sweeps).
 7. fast.jsonl.gz: 1-second KXBTC15M book + Coinbase spot + request round-trip times.
 6. mm_books.jsonl.gz + mm_trades.jsonl.gz: order books (~every 60 s) and trade tapes for
    ~150 active markets across categories (plus the live 15-min BTC/silver/ETH windows) for
@@ -100,6 +101,8 @@ def step_incentives():
                 break
         out[st] = rows
         log("incentives", st, len(rows))
+        if st == "active":
+            _inc_tickers.extend(sorted({r.get("market_ticker") for r in rows if r.get("market_ticker")}))
     json.dump(out, open(OUT / "incentives.json", "w"))
 
 
@@ -244,6 +247,27 @@ def step_fast():
             log("fast", n)
         time.sleep(max(0.0, 1.0 - (time.time() - t0)))
     f.close()
+
+
+_inc_tickers: list = []
+
+
+def step_incbooks():
+    """Order books of every market with an active liquidity incentive, 3 sweeps ~90 min apart
+    (how much resting size already competes for each reward pool)."""
+    for k in range(3):
+        f = gzw("inc_books.jsonl.gz")
+        for i, tk in enumerate(list(_inc_tickers)):
+            if left() < 1200:
+                break
+            ob = get(K + f"/markets/{tk}/orderbook", {"depth": 10})
+            if ob is not None:
+                f.write(json.dumps({"t": time.time(), "sweep": k, "ticker": tk, "ob": ob}) + "\n")
+            if i % 1000 == 0:
+                f.flush()
+        f.close()
+        log("inc books sweep", k, len(_inc_tickers))
+        time.sleep(5400)
 
 
 def step_events(snap):
@@ -422,6 +446,7 @@ if __name__ == "__main__":
     mm.start()
     fast = threading.Thread(target=step_fast, daemon=True)
     fast.start()
+    threading.Thread(target=step_incbooks, daemon=True).start()
     names, mve = step_feed()
     th = threading.Thread(target=lambda: step_mve(mve), daemon=True)
     th.start()
