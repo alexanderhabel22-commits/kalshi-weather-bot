@@ -1,5 +1,5 @@
 {
- "at": "2026-11-11T19:00:23+00:00",
+ "at": "2026-11-11T19:16:07+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.69,
+ "resting_cost": 19.68,
  "filled_cost": 0,
  "orders": {
   "KXEVERIFYLAW-26NOV": {
@@ -38,16 +38,6 @@
    "filled": 0.0,
    "at": 1794415773.9216497,
    "mid0": 0.015
-  },
-  "KXSOSRACE-WV-28-D": {
-   "id": "01a1cb8d-75c0-782f-a69c-60640abbed21",
-   "cid": "lip-4b3022604c0d4b6f",
-   "side": "yes",
-   "px": 0.03,
-   "n": 83,
-   "filled": 0.0,
-   "at": 1794416408.3379688,
-   "mid0": 0.0595
   },
   "KXAUDITORRACE-ND-28-R": {
    "id": "01a1cb8d-a4a0-7c10-9999-0da5bd188cc1",
@@ -88,6 +78,16 @@
    "filled": 0.0,
    "at": 1794419242.0647283,
    "mid0": 0.074
+  },
+  "KXSOSRACE-WV-28-D": {
+   "id": "01a1cc05-1aa8-7a92-91a9-06d37222a818",
+   "cid": "lip-64f32915f6b54cbc",
+   "side": "yes",
+   "px": 0.04,
+   "n": 62,
+   "filled": 0.0,
+   "at": 1794424249.419375,
+   "mid0": 0.063
   }
  },
  "positions": {},
@@ -314,9 +314,9 @@
     "share": 0.0394
    },
    "KXSOSRACE-WV-28-D": {
-    "ahead": 0,
+    "ahead": 5248.0,
     "others": 1000.0,
-    "share": 0.0766
+    "share": 0.0584
    },
    "KXAUDITORRACE-MS-27-D": {
     "ahead": 0,
@@ -731,6 +731,21 @@
    "kind": "cancel",
    "ticker": "KXSOSRACE-VT-28-D",
    "why": "up to 4c (reference price)"
+  },
+  {
+   "t": 1794424248,
+   "kind": "cancel",
+   "ticker": "KXSOSRACE-WV-28-D",
+   "why": "up to 4c (reference price)"
+  },
+  {
+   "t": 1794424249,
+   "kind": "place",
+   "ticker": "KXSOSRACE-WV-28-D",
+   "side": "yes",
+   "px": 0.04,
+   "n": 62,
+   "est_day": 3.6088
   }
  ]
 }
