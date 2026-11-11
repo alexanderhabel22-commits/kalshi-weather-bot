@@ -306,6 +306,9 @@ def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
 
 
 _ROW_CACHE: dict[str, tuple[list[dict], dict]] = {}
+KEEP_COPIES = 500           # newest copies per account held in memory for grading (verdicts come at 100-150;
+                            # everything stays on disk). Memory grew ~100 MB/day without it (crash Nov 11)
+WHALE_MEM_DAYS = 3          # big-bet rows held in memory (anonymous $2,000+ bets alone are ~1,000/hour)
 
 
 def _slim(r: dict) -> bool:
@@ -372,7 +375,32 @@ def load_rows(d: Path, cache_done_hours: bool = False, now: float | None = None)
             _ROW_CACHE[p.name] = (part, tids)
         rows += part
         prev = tids
+    if cache_done_hours and _trim_cache(rows, now):
+        return load_rows(d, cache_done_hours, now)
     return rows
+
+
+def _trim_cache(rows: list[dict], now: float | None) -> bool:
+    """Drops from the cached hours each account's fills beyond its newest KEEP_COPIES and big-bet
+    rows older than WHALE_MEM_DAYS. True if anything was dropped (the caller reloads from cache)."""
+    per: dict = defaultdict(int)
+    gone: set = set()
+    for r in reversed(rows):
+        if r.get("kind") == "fill":
+            per[r.get("nick")] += 1
+            if per[r.get("nick")] > KEEP_COPIES:
+                gone.add(id(r))
+        elif r.get("kind") == "whale" and now and (r.get("ts") or now) < now - WHALE_MEM_DAYS * 86400:
+            gone.add(id(r))
+    if not gone:
+        return False
+    hit = False
+    for name, (part, tids) in list(_ROW_CACHE.items()):
+        keep = [r for r in part if id(r) not in gone]
+        if len(keep) != len(part):
+            hit = True
+            _ROW_CACHE[name] = (keep, {k: v for k, v in tids.items() if id(v) not in gone})
+    return hit
 
 
 LETTERS = ((97, "A+"), (93, "A"), (90, "A-"), (87, "B+"), (83, "B"), (80, "B-"), (77, "C+"),
@@ -518,6 +546,7 @@ class Copycat:
             self.dropped = w.get("dropped") or {}
         except (OSError, ValueError):
             pass
+        self.logged_before = set(self.watch)     # their history is already on disk: a restart doesn't re-log it
         self._boss_busy = False
         self._in_status = False
         self.last_up = 0.0
@@ -924,6 +953,9 @@ class Copycat:
         account: logged for research (e.g. how market makers trade), never snapshotted or copied."""
         first = src == "poll" and nick not in self.based and not quiet   # its history = backfill
         seen = self.seen.setdefault(nick, set())
+        if first and nick in self.logged_before:  # after a restart: remember, don't re-log ~50 old fills
+            seen.update(t.get("trade_id") for t in trades if t.get("trade_id"))
+            return
         for t in reversed(trades):
             tid = t.get("trade_id")
             if not tid or tid in seen:

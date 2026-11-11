@@ -200,3 +200,17 @@ def test_reworded_note_replaces_old_one():
     watch.remember(st, "KXBTC15M decay_alert has recurred on every 2026-11-11 check; report it until it clears.", 8)
     assert len(st["notes"]) == 2 and "2026-11-11" in st["notes"][-1]
     assert st["notes"][0].startswith("Coinbase")
+
+
+def test_copycat_stuck_flagged(tmp_path, monkeypatch):
+    import os
+    p = tmp_path / "cc.json"
+    p.write_text("{}")
+    os.utime(p, (NOW - 3600, NOW - 3600))
+    monkeypatch.setattr(watch, "COPYCAT_STATUS", p)
+    c = FakeClient(opus={"severity": "alert", "title": "Copycat stuck", "message": "m",
+                         "diagnosis": "d", "proposed_fix": "f", "needs_alex": True})
+    rec, sent = go(tmp_path, monkeypatch, FakeGH(), c)
+    assert "COPYCAT_STALE" in {f["code"] for f in rec["flags"]} and sent and rec["action"] is None
+    os.utime(p, (NOW - 120, NOW - 120))
+    assert "COPYCAT_STALE" not in {f["code"] for f in watch.rules(watch.gather(FakeGH(), NOW, runner, cc_status=p), watch.settings(load_config()))}
