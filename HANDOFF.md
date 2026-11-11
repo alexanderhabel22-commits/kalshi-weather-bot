@@ -295,8 +295,8 @@ IP without a token). It never places, changes or cancels anything and needs no s
   kalshi-copycat` and `sudo touch /var/lib/kalshi-copycat.disabled`.
 - Uses Kalshi's public social API (`api.elections.kalshi.com/v1/social`): every 12 h it rebuilds the
   watch list (profit boards, public trades, >= $10K lifetime profit, max 100); every 10 min it scouts
-  the global public trade feed for new profitable names. Polls accounts round-robin (passing ones 3x
-  as often). Feed delay measured Nov 10: median ~10 s.
+  the global public trade feed for new profitable names. Polls accounts round-robin (passing ones get
+  every other poll, so a few seconds apart). Feed delay measured Nov 10: median ~10 s.
 - PAPER record (every account): each of their fills is scored as if copied at the price ~10 s later,
   after Kalshi's taker fee. Score 0-100 = 80 + 2.5 x the pessimistic (95% lower bound) cents per
   contract, +/-3 for a hot/cold last 50; letters A+ 97 ... B- 80 ... F < 60. Judged at 100 copies or

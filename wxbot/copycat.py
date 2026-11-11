@@ -12,7 +12,7 @@ How it works (one thread, polite polling of Kalshi's public social API):
     global public trade feed (every trader with a public profile) and add any new profitable name;
   - each account is scored on a rolling window of its last 50 settled copies: it passes while the
     pessimistic estimate is >= 0 (min 20 settled), fails when it isn't, and can pass again later;
-  - passing accounts are polled 3x as often;
+  - passing accounts get every other poll (each checked every few seconds);
   - poll each watched account's public trades round-robin (about every 30-60 s per account);
   - each new fill is logged with the sharp's side (yes/no), price, size, maker/taker, the trade's
     own timestamp and when we saw it (detection lag);
@@ -507,10 +507,13 @@ class Copycat:
                 self.scout()
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat scout: %s", exc)
-        names = list(self.watch) + [n for n in self.watch if n in self.hot] * 2
+        hot = [n for n in self.watch if n in self.hot]
+        names = list(self.watch)
         if names:
-            nick = names[self.rr % len(names)]
+            # every other poll goes to a passing (real-money) account, so each of them is checked
+            # every few seconds; Kalshi's own publishing delay (~2-20 s) is the floor
             self.rr += 1
+            nick = hot[(self.rr // 2) % len(hot)] if hot and self.rr % 2 else names[(self.rr // 2) % len(names)]
             try:
                 self.poll(nick, self.clock())
             except Exception as exc:  # noqa: BLE001
