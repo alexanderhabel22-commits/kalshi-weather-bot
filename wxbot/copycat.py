@@ -81,6 +81,7 @@ LOSER_STRIKES = 2           # dropped after 2 weekly checks in a row losing mone
 WHALE_USD = 500             # "big bet" scanner (Alex, Nov 11 12:23 AM ET): any named trade of $500+
 WHALE_NEW_DAYS = 30         # flagged NEW if the account joined within 30 days or has traded <= 10 markets;
 WHALE_FEW_MARKETS = 10      # paper only: we log the bet and score how it settles, never copy it
+WHALE_ANON_USD = 2000       # anonymous trades: no account to check, so only bigger bets ($2,000+, the taker's side)
 WHALE_CHECKS = 4            # profile lookups per loop (cached per account)
 CATEGORIES = ("Sports", "Politics", "Crypto", "Economics", "Climate and Weather", "Financials",
               "Entertainment", "Mentions", "Combos", "Commodities", "Elections", "Companies")
@@ -125,7 +126,7 @@ def side_value(side: str, yes_px: float) -> float:
 
 def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict:
     """Paper record of big single bets: per contract, after the taker fee, as if copied at their price."""
-    out = {"new": [], "old": []}
+    out = {"new": [], "old": [], "anon": []}
     recent = []
     for r in rows:
         if r.get("kind") != "whale":
@@ -134,17 +135,21 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
         c = None
         if res in ("yes", "no") and r.get("paid") is not None:
             c = round(100 * ((1.0 if r["side"] == res else 0.0) - r["paid"]) - taker_fee_c(r["paid"]), 1)
-            out["new" if r.get("new") else "old"].append(c)
+            out["anon" if r.get("anon") else "new" if r.get("new") else "old"].append(c)
         recent.append({**{k: r.get(k) for k in ("et", "nick", "ticker", "side", "paid", "count", "usd", "joined",
-                                                    "markets", "new", "role", "lag_s")}, "result_c": c})
+                                                    "markets", "new", "anon", "role", "lag_s")}, "result_c": c})
 
     def stats(v):
         m, lo = mean_low(v)
         return {"settled": len(v), "won": sum(1 for x in v if x > 0), "avg_c": m, "low_c": lo}
     nw = [x for x in recent if x["new"]]
-    return {"min_usd": WHALE_USD, "new_days": WHALE_NEW_DAYS, "count": len(recent), "new_count": len(nw),
-            "new": stats(out["new"]), "old": stats(out["old"]),
-            "recent_new": list(reversed(nw))[:40], "recent": list(reversed(recent))[:40]}
+    an = [x for x in recent if x.get("anon")]
+    named = [x for x in recent if not x.get("anon")]
+    return {"min_usd": WHALE_USD, "anon_min_usd": WHALE_ANON_USD, "new_days": WHALE_NEW_DAYS,
+            "count": len(named), "new_count": len(nw), "anon_count": len(an),
+            "new": stats(out["new"]), "old": stats(out["old"]), "anon": stats(out["anon"]),
+            "recent_new": list(reversed(nw))[:40], "recent_anon": sorted(an, key=lambda x: -(x["usd"] or 0))[:10],
+            "recent": list(reversed(named))[:40]}
 
 
 def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
@@ -723,6 +728,22 @@ class Copycat:
         except (TypeError, ValueError):
             return
         if px is None:
+            return
+        if not t.get("taker_nickname") and not t.get("maker_nickname"):
+            ts, act = t.get("taker_side"), t.get("taker_action", "buy")
+            if ts in ("yes", "no"):
+                side = ts if act == "buy" else ("no" if ts == "yes" else "yes")
+                paid = px if side == "yes" else 1 - px
+                if n * paid >= WHALE_ANON_USD:
+                    try:
+                        ct = datetime.fromisoformat(str(t.get("create_date")).replace("Z", "+00:00")).timestamp()
+                        lag = round(now - ct, 1)
+                    except ValueError:
+                        lag = None
+                    self.write({"kind": "whale", "nick": None, "anon": True, "trade_id": t.get("trade_id"),
+                                "ticker": t.get("ticker"), "role": "taker", "side": side, "paid": round(paid, 4),
+                                "count": n, "usd": round(n * paid), "trade_time": t.get("create_date"),
+                                "lag_s": lag, "new": False})
             return
         for k in ("taker_nickname", "maker_nickname"):
             nick = t.get(k)
