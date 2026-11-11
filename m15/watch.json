@@ -1,21 +1,21 @@
 {
  "last": {
-  "at": "2026-11-11T01:20:05+00:00",
+  "at": "2026-11-11T01:35:15+00:00",
   "flags": [],
   "haiku": {
    "level": "watch",
-   "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and losses (about -$9.37 today, -$2.53 over 24h) are well inside the stops. The KXBTC15M decay_alert dated 2026-11-10 is worth a look, and some fill counts are fractional, which may be a reporting quirk."
+   "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and the main bot's scans and trades are succeeding on schedule. The 15-min bot lost $9.03 today and shows a decay alert on KXBTC15M, which is inside its stops but worth a look."
   },
   "opus": null,
   "action": null
  },
  "today": {
   "day": "2026-11-10",
-  "haiku": 13,
+  "haiku": 14,
   "opus": 0,
   "tokens": {
-   "haiku_in": 19171,
-   "haiku_out": 3186,
+   "haiku_in": 20642,
+   "haiku_out": 3291,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -122,15 +122,25 @@
    "opus": null
   },
   {
+   "action": null,
    "at": "2026-11-11T01:20:05+00:00",
    "flags": [],
    "haiku": {
     "level": "watch",
     "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and losses (about -$9.37 today, -$2.53 over 24h) are well inside the stops. The KXBTC15M decay_alert dated 2026-11-10 is worth a look, and some fill counts are fractional, which may be a reporting quirk."
    },
+   "opus": null
+  },
+  {
+   "at": "2026-11-11T01:35:15+00:00",
+   "flags": [],
+   "haiku": {
+    "level": "watch",
+    "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and the main bot's scans and trades are succeeding on schedule. The 15-min bot lost $9.03 today and shows a decay alert on KXBTC15M, which is inside its stops but worth a look."
+   },
    "opus": null,
    "action": null
   }
  ],
- "digest": "Time: 8:20 PM ET Tue Nov 10\n15-MIN: service=active mode=live control=live status_at=2026-11-11T01:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-2.526 live_total=$6.3615\n15-MIN live P&L by day: 2026-11-07 $0.18, 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-9.37\n  KXBTC15M: fills=438.0 pnl=$5.76 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=248.97 pnl=$12.5092\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV101930-30 2 1.58 0.42\n  KXSILVER15M-26NOV101930-30 1 0.95 0.05\n  KXBTC15M-26NOV101945-45 2 1.54 -1.54\n  KXSILVER15M-26NOV101945-45 2 1.79 0.21\n  KXBTC15M-26NOV102000-00 2 1.51 0.49\n  KXSILVER15M-26NOV102000-00 2 1.82 0.18\n  KXBTC15M-26NOV102015-15 2 1.74 0.26\n  KXSILVER15M-26NOV102015-15 1.38 1.09 0.29\nMAIN: mode=live halted=False bankroll=$54.82 cash=$36.54 at=2026-11-11T01:16:11.789616+00:00\nRecent Actions runs: tests success 01:19Z; tests success 01:18Z; lb-research in_progress 01:17Z; trade success 01:15Z; tests success 01:15Z; weather-scan success 01:15Z; tests success 01:14Z; xv-research in_progress 01:12Z\nRULE FLAGS: none"
+ "digest": "Time: 8:35 PM ET Tue Nov 10\n15-MIN: service=active mode=live control=live status_at=2026-11-11T01:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-3.086 live_total=$6.7015\n15-MIN live P&L by day: 2026-11-07 $0.18, 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-9.03\n  KXBTC15M: fills=440.0 pnl=$6.1 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=248.97 pnl=$12.5092\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXSILVER15M-26NOV101930-30 1 0.95 0.05\n  KXBTC15M-26NOV101945-45 2 1.54 -1.54\n  KXSILVER15M-26NOV101945-45 2 1.79 0.21\n  KXBTC15M-26NOV102000-00 2 1.51 0.49\n  KXSILVER15M-26NOV102000-00 2 1.82 0.18\n  KXBTC15M-26NOV102015-15 2 1.74 0.26\n  KXSILVER15M-26NOV102015-15 1.38 1.09 0.29\n  KXBTC15M-26NOV102030-30 2 1.66 0.34\nMAIN: mode=live halted=False bankroll=$55.21 cash=$33.16 at=2026-11-11T01:32:13.370866+00:00\nRecent Actions runs: weather-scan in_progress 01:35Z; trade success 01:31Z; tests success 01:30Z; weather-scan success 01:30Z; trade success 01:25Z; weather-scan success 01:25Z; trade success 01:20Z; weather-scan success 01:20Z\nRULE FLAGS: none"
 }
