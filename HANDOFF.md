@@ -270,7 +270,7 @@ IP without a token). It never places, changes or cancels anything and needs no s
 - Plan: LIVE from the start (Alex, Nov 8: no paper run) on BTC/silver/copper at 1 contract. Cut a market below
   -5c/contract after 100 fills. Expect +2-4c live (stale-quote risk vs fast pros), not +7c.
 
-## AI ops watcher (built Nov 10, 2026)
+## AI ops watcher, "the Foreman" (built Nov 10, 2026)
 
 - `wxbot/watch.py`, `python bot.py watch`, settings in config.toml `[watch]`. Runs every 15 min on the
   15-min bot's server (systemd `kalshi-watch.timer`, installed by the hourly update via
@@ -366,6 +366,14 @@ While off, nothing changes; the 15-min server only keeps each coin's step record
   "wx-"), 15-min bot ("m15-" or a KX...15M series) or manual. data/my_trades.csv is shown on its
   own and never added. Each settled market is checked against Kalshi's paid revenue.
 - Not tax advice: Kalshi's own year-end form is what gets filed; this backs it up.
+
+- Nov 11: Alex named it "the Foreman": small persona in its pushes ("👷 Foreman: ..."), and a
+  memory: `journal` (last 30 notable events: flags appearing/clearing, escalations, pushes,
+  pauses) and `notes` (up to 8 standing facts Haiku/Opus chose to remember), both fed back into
+  every check so it spots repeats; flag streaks ("N checks in a row"). Kept in watch_state.json
+  on the server and shown in m15/watch.json. Also watches RAM: server >= 85% used, or kalshi-m15
+  >= 85% of its systemd MemoryMax. update.sh no longer restarts the 15-min bot for watcher-only
+  changes.
 
 ## Expectations to keep honest
 Likely 0–3 LOCK alerts a day, ~10–15¢ expected each at this bankroll; a wrong
