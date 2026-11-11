@@ -1038,7 +1038,8 @@ def test_fv_filter_fails_open_and_respects_scope(monkeypatch):
 
 
 def test_fv_filter_switches_on_by_itself_at_n_contracts(monkeypatch):
-    b, clk = fv_bot(monkeypatch, 0.50, fv_skip=False, fv_skip_after_contracts=500)
+    b, clk = fv_bot(monkeypatch, 0.50, fv_skip=False, fv_skip_after_contracts=500,
+                    early_after_contracts=0)         # rule E has its own switch-on test
     alerts = []
     monkeypatch.setattr(b, "alert", lambda t, body, p=3: alerts.append(t))
     b.state["series"] = {"KXBTC15M": {"fills": 499, "pnl": 0.0}}
@@ -1053,3 +1054,53 @@ def test_fv_filter_switches_on_by_itself_at_n_contracts(monkeypatch):
     clk.t += 5
     b.step()
     assert len(alerts) == 1                          # alerts once
+
+
+def early_bot(monkeypatch, yb=0.82, ya=0.84, **kw):
+    w = World(monkeypatch, yb, ya)
+    clk = Clock(CLOSE - 800)                         # 13:20 left
+    cl = Client()
+    b = bot(cfg(mode="live", live_series=["KXBTC15M"], **kw), clk, cl)
+    return b, clk, cl, w
+
+
+def test_early_window_off_by_default_waits_for_last_ten_minutes(monkeypatch):
+    b, clk, cl, _ = early_bot(monkeypatch)
+    b.step()
+    assert cl.placed == []                           # today's rule: BTC bids only in the last 10 min
+
+
+def test_early_window_bids_14_to_10_min_left_80_95(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, extra_contracts=1)
+    b.step()
+    assert len(cl.placed) == 1 and cl.placed[0][3] == 1      # 1 contract, no extra at 82c
+    m = b.state["markets"][TK]
+    clk.t = CLOSE - 590                              # past 10 min left: pull, never bid again
+    b.step()
+    assert m["order"] is None and len(cl.placed) == 1
+
+
+def test_early_window_skips_window_without_80c_favourite(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, yb=0.75, ya=0.77, early_on=True)
+    b.step()
+    assert cl.placed == []                           # 75c: below the 80c floor
+    w.book.update(yes_bid=0.85, yes_ask=0.87)
+    clk.t = CLOSE - 500                              # too late for rule E
+    b.step()
+    assert cl.placed == []
+
+
+def test_early_window_switches_on_by_itself_at_n_contracts(monkeypatch):
+    b, clk, cl, _ = early_bot(monkeypatch, early_after_contracts=500)
+    alerts = []
+    monkeypatch.setattr(b, "alert", lambda t, body, p=3: alerts.append(t))
+    b.state["series"] = {"KXBTC15M": {"fills": 499, "pnl": 0.0}}
+    b.step()
+    assert cl.placed == [] and not alerts            # 499: still today's rule
+    b.state["series"]["KXBTC15M"]["fills"] = 500
+    clk.t += 5
+    b.step()
+    assert len(cl.placed) == 1 and b.state["early_on"]["KXBTC15M"] and len(alerts) == 1
+    clk.t += 5
+    b.step()
+    assert len(alerts) == 1
