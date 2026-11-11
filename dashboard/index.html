@@ -445,7 +445,7 @@ function txPage(){
   if (!R) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
   else {
     h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">Parlay buyers lose ~28% per dollar (overnight study). We price each request whose legs are in different events (fair = product of the legs) and log a quote to sell YES at fair + margin. "Would win" = the parlay then traded above our quote. P&L per contract at settlement. ${R.rfqs_seen || 0} requests seen, ${R.cross_priced || 0} priced, ${R.settled || 0} settled${R.errors ? ` · <span class="neg">${R.errors} read errors</span>` : ""}. ${esc(ago(R.at))}.</div>`
-      + Object.entries(R.by_margin || {}).map(([m, v]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">fair + ${Math.round(num(m) * 100)}%</div><div class="s">would win ${v.would_win} · settled ${v.settled}</div></div><div class="r"><span class="${cls(num(v.pnl_c_per_ct))}">${v.pnl_c_per_ct == null ? "—" : c1(v.pnl_c_per_ct)}</span><small>per contract</small></div></div>`).join("");
+      + Object.entries(R.by_margin || {}).map(([m, v]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">fair + ${Math.round(num(m) * 100)}%</div><div class="s">would win ${v.would_win} · settled ${v.settled} · all requests ${v.pnl_c_per_ct == null ? "—" : c1(v.pnl_c_per_ct)}/ct</div></div><div class="r"><span class="${cls(num(v.won_pnl_c_per_ct))}">${v.won_pnl_c_per_ct == null ? "—" : c1(v.won_pnl_c_per_ct)}</span><small>on ${v.won_settled ?? 0} we'd win</small></div></div>`).join("");
   }
   return h + `</div>`;
 }
