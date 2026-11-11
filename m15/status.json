@@ -1,5 +1,5 @@
 {
- "at": "2026-11-11T15:32:00+00:00",
+ "at": "2026-11-11T15:45:04+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -7,22 +7,18 @@
   "KXBTC15M": 1794390360
  },
  "errors": 0,
- "fund_error": "HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}",
+ "fund_error": null,
  "fv_skip_on": {
   "KXBTC15M": 1794394096
  },
  "halted": null,
- "last_reject": {
-  "at": 1794409846,
-  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
-  "ticker": "KXSILVER15M-26NOV111015-15"
- },
- "live_exposure": 0.0,
+ "last_reject": null,
+ "live_exposure": 5.19,
  "live_now": {
   "KXBTC15M-26NOV111045-45": {
    "bid_ask": [
-    0.52,
-    0.53
+    0.999,
+    1.0
    ],
    "mode": "live",
    "order": false,
@@ -30,8 +26,8 @@
   },
   "KXGOLD15M-26NOV111045-45": {
    "bid_ask": [
-    0.21,
-    0.22
+    0.001,
+    0.002
    ],
    "mode": "live",
    "order": false,
@@ -39,8 +35,8 @@
   },
   "KXSILVER15M-26NOV111045-45": {
    "bid_ask": [
-    0.49,
-    0.5
+    0.999,
+    1.0
    ],
    "mode": "live",
    "order": false,
@@ -48,7 +44,7 @@
   }
  },
  "mode": "live",
- "open_markets": 17,
+ "open_markets": 8,
  "pnl": {
   "halt_base": 0.0,
   "live_days": {
@@ -59,22 +55,6 @@
    "2026-11-11": -7.2662
   },
   "live_log": [
-   [
-    1794325500.0,
-    0.06
-   ],
-   [
-    1794325500.0,
-    0.1
-   ],
-   [
-    1794325500.0,
-    0.46
-   ],
-   [
-    1794325500.0,
-    0.4448
-   ],
    [
     1794326400.0,
     0.38
@@ -856,39 +836,39 @@
     0.34
    ],
    [
-    1794407400,
+    1794407400.0,
     0.29
    ],
    [
-    1794407400,
+    1794407400.0,
     0.4
    ],
    [
-    1794408300,
+    1794408300.0,
     0.05
    ],
    [
-    1794409200,
+    1794409200.0,
     -1.64
    ],
    [
-    1794409200,
+    1794409200.0,
     -1.62
    ],
    [
-    1794410100,
+    1794410100.0,
     0.26
    ],
    [
-    1794410100,
+    1794410100.0,
     0.38
    ],
    [
-    1794411000,
+    1794411000.0,
     0.38
    ],
    [
-    1794411000,
+    1794411000.0,
     0.05
    ]
   ],
@@ -902,7 +882,7 @@
   },
   "paper_total": -161.74
  },
- "pnl_24h": -9.1612,
+ "pnl_24h": -10.226,
  "roll_stop": null,
  "series": {
   "KXBTC15M": {
@@ -4136,7 +4116,7 @@
  "shards": {
   "0": 25.3135,
   "1": 0.0,
-  "2": 10.8553,
+  "2": 10.6653,
   "3": 0.0
  },
  "spot_ok": true,
