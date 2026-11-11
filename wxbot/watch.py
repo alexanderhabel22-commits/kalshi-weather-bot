@@ -25,6 +25,7 @@ import io
 import json
 import logging
 import os
+import re
 import subprocess
 import time
 from datetime import datetime, timezone
@@ -559,13 +560,20 @@ def _similarity(a: str, b: str) -> float:
     return len(wa & wb) / max(1, len(wa | wb))
 
 
+def _idents(text: str) -> set[str]:
+    return {w.lower() for w in re.findall(r"[A-Za-z0-9]+(?:(?:_|::)[A-Za-z0-9]+)+", text)}
+
+
 def remember(state: dict, note: str | None, keep: int) -> None:
     note = (note or "").strip()
     if not note:
         return
     # a reworded version of a note it already has replaces it (Nov 11: Haiku re-noted the same
     # BTC decay alert every check and filled all 8 slots with one fact)
-    notes = [n for n in state.get("notes", []) if _similarity(n, note) < 0.5]
+    # same topic = reworded (word overlap) or names the same identifier (M15_FUND,
+    # insufficient_scope, decay_alert...): Nov 11 it filled 5 slots with one 403
+    ids = _idents(note)
+    notes = [n for n in state.get("notes", []) if _similarity(n, note) < 0.5 and not (ids & _idents(n))]
     state["notes"] = (notes + [note[:200]])[-keep:]
 
 
