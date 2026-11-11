@@ -1,21 +1,21 @@
 {
  "last": {
-  "at": "2026-11-11T03:35:25+00:00",
+  "at": "2026-11-11T03:50:28+00:00",
   "flags": [],
   "haiku": {
    "level": "watch",
-   "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and the 24h P&L of -$1.42 is well inside the 15-min bot's stops. KXBTC15M has a decay_alert dated 2026-11-10 that is worth a look, but it isn't urgent."
+   "summary": "Both bots are running within their limits with no rule flags, and the main bot's scans and trade runs are succeeding. The 15-MIN bot lost $6.34 today and shows a KXBTC15M decay alert, so it's worth keeping an eye on, but that's ordinary P&L movement inside its stops."
   },
   "opus": null,
   "action": null
  },
  "today": {
   "day": "2026-11-10",
-  "haiku": 22,
+  "haiku": 23,
   "opus": 0,
   "tokens": {
-   "haiku_in": 32377,
-   "haiku_out": 6275,
+   "haiku_in": 33845,
+   "haiku_out": 6390,
    "opus_in": 0,
    "opus_out": 0
   }
@@ -192,15 +192,25 @@
    "opus": null
   },
   {
+   "action": null,
    "at": "2026-11-11T03:35:25+00:00",
    "flags": [],
    "haiku": {
     "level": "watch",
     "summary": "Both bots are running in live mode with no errors, halts, or rule flags, and the 24h P&L of -$1.42 is well inside the 15-min bot's stops. KXBTC15M has a decay_alert dated 2026-11-10 that is worth a look, but it isn't urgent."
    },
+   "opus": null
+  },
+  {
+   "at": "2026-11-11T03:50:28+00:00",
+   "flags": [],
+   "haiku": {
+    "level": "watch",
+    "summary": "Both bots are running within their limits with no rule flags, and the main bot's scans and trade runs are succeeding. The 15-MIN bot lost $6.34 today and shows a KXBTC15M decay alert, so it's worth keeping an eye on, but that's ordinary P&L movement inside its stops."
+   },
    "opus": null,
    "action": null
   }
  ],
- "digest": "Time: 10:35 PM ET Tue Nov 10\n15-MIN: service=active mode=live control=live status_at=2026-11-11T03:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-1.415 live_total=$9.6815\n15-MIN live P&L by day: 2026-11-07 $0.18, 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-6.04\n  KXBTC15M: fills=456.0 pnl=$9.76 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=258.97 pnl=$11.8292\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV102145-45 2 1.56 0.44\n  KXSILVER15M-26NOV102145-45 1 0.94 0.06\n  KXBTC15M-26NOV102200-00 2 1.52 0.48\n  KXSILVER15M-26NOV102200-00 1 0.95 0.05\n  KXBTC15M-26NOV102215-15 2 1.59 0.41\n  KXSILVER15M-26NOV102215-15 2 1.82 0.18\n  KXBTC15M-26NOV102230-30 2 1.57 0.43\n  KXSILVER15M-26NOV102230-30 2 1.58 0.42\nMAIN: mode=live halted=False bankroll=$57.41 cash=$36.14 at=2026-11-11T03:31:52.091640+00:00\nRecent Actions runs: weather-scan in_progress 03:35Z; trade success 03:31Z; weather-scan success 03:30Z; tests success 03:28Z; tests success 03:26Z; dashboard success 03:26Z; trade success 03:25Z; tests success 03:25Z\nRULE FLAGS: none"
+ "digest": "Time: 10:50 PM ET Tue Nov 10\n15-MIN: service=active mode=live control=live status_at=2026-11-11T03:47:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-2.595 live_total=$9.3815\n15-MIN live P&L by day: 2026-11-07 $0.18, 2026-11-08 $4.33, 2026-11-09 $11.22, 2026-11-10 $-6.34\n  KXBTC15M: fills=457.0 pnl=$9.05 decay_alert=2026-11-10\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=260.97 pnl=$12.2392\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV102200-00 2 1.52 0.48\n  KXSILVER15M-26NOV102200-00 1 0.95 0.05\n  KXBTC15M-26NOV102215-15 2 1.59 0.41\n  KXSILVER15M-26NOV102215-15 2 1.82 0.18\n  KXBTC15M-26NOV102230-30 2 1.57 0.43\n  KXSILVER15M-26NOV102230-30 2 1.58 0.42\n  KXBTC15M-26NOV102245-45 1 0.71 -0.71\n  KXSILVER15M-26NOV102245-45 2 1.59 0.41\nMAIN: mode=live halted=False bankroll=$57.12 cash=$35.84 at=2026-11-11T03:46:10.405757+00:00\nRecent Actions runs: weather-scan in_progress 03:50Z; trade success 03:45Z; weather-scan success 03:45Z; trade success 03:40Z; weather-scan success 03:40Z; dashboard success 03:38Z; tests success 03:38Z; tests success 03:37Z\nRULE FLAGS: none"
 }
