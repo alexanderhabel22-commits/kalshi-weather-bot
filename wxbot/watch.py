@@ -49,8 +49,8 @@ DEFAULTS = {
     "opus_model": "claude-haiku-5-5",   # escalations too since Nov 12 (Opus key spend: $24 on Nov 11)
     "max_haiku_per_day": 120,
     "max_opus_per_day": 6,
-    "daily_cap_usd": 0.55,         # hard cap for the Foreman's own calls (ai_budget.py)
-    "spend_alert_usd": 0.70,       # push Alex when the server AI spend passes this (all caps total $0.80)
+    "daily_cap_usd": 0.70,         # hard cap for the Foreman's own calls (ai_budget.py)
+    "spend_alert_usd": 0.90,       # push Alex when the server AI spend passes this (all caps total $0.95)
     "realert_hours": 6,
     "status_stale_min": 35,        # m15 uploads every 15 min
     "copycat_stale_min": 20,
@@ -525,7 +525,11 @@ def ai_spend(gh, budget: Budget, now: float) -> dict:
     day = datetime.fromtimestamp(now, timezone.utc).date().isoformat()
     by = {"foreman": round(budget.spent(), 4)}
     try:
-        cc = ((gh.json("copycat/status.json", ref="copycat-data") or {}).get("boss") or {}).get("spend") or {}
+        # same server and user: read the boss's ledger file directly (copycat/status.json is >1 MB,
+        # too big for the contents API, so the Nov 12 morning total missed the boss)
+        cc = read_json(COPYCAT_STATUS.with_name("boss_spend.json"), None)
+        if cc is None:
+            cc = ((gh.json("copycat/status.json", ref="copycat-data") or {}).get("boss") or {}).get("spend") or {}
         if cc.get("day") == day:
             by["copycat_boss"] = round(float(cc.get("usd") or 0), 4)
     except Exception as exc:
