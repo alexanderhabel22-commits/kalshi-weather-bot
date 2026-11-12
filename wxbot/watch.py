@@ -49,8 +49,8 @@ DEFAULTS = {
     "opus_model": "claude-haiku-5-5",   # escalations too since Nov 12 (Opus key spend: $24 on Nov 11)
     "max_haiku_per_day": 120,
     "max_opus_per_day": 6,
-    "daily_cap_usd": 0.75,         # hard cap for the Foreman's own calls (ai_budget.py)
-    "spend_alert_usd": 1.0,        # push Alex when the droplet's AI spend passes this in a UTC day
+    "daily_cap_usd": 0.55,         # hard cap for the Foreman's own calls (ai_budget.py)
+    "spend_alert_usd": 0.70,       # push Alex when the server AI spend passes this (all caps total $0.80)
     "realert_hours": 6,
     "status_stale_min": 35,        # m15 uploads every 15 min
     "copycat_stale_min": 20,

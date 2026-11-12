@@ -3,7 +3,7 @@
 Every hour Claude Haiku looks over the report card (cheap triage). A full review (also Haiku since
 Nov 12) runs every 6 hours when anything changed, or when triage asks for it, at most 4 a day.
 Nov 11 the old setup (Opus reviews of the whole report card) cost $24 in one day, so every call
-now goes through a hard daily dollar cap (ai_budget.py, $0.30/day by default) and the report card
+now goes through a hard daily dollar cap (ai_budget.py, $0.25/day; with the Foreman $0.80/day total) and the report card
 sent to the model is trimmed to the busiest accounts. The boss:
   - writes a short note per account (shown on the dashboard), in plain words;
   - can BENCH an account for 24 hours (renewable) when something looks wrong that the numbers
@@ -30,7 +30,7 @@ REVIEW_MODEL = os.environ.get("COPYCAT_BOSS_MODEL", HAIKU)   # was Opus until No
 TRIAGE_EVERY_S = 3600
 DEEP_EVERY_S = 6 * 3600
 MAX_DEEP_PER_DAY = 4
-DAILY_CAP_USD = float(os.environ.get("COPYCAT_BOSS_CAP_USD", "0.30"))
+DAILY_CAP_USD = float(os.environ.get("COPYCAT_BOSS_CAP_USD", "0.25"))
 MAX_ACCOUNTS = 25                      # busiest accounts only in the model's report card
 MAX_DIGEST_CHARS = 12000
 BENCH_S = 24 * 3600

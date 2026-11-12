@@ -268,7 +268,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -384,8 +384,24 @@ async function loadCopycat(){
 const TEST_START = Date.parse("2026-11-11T13:30:00Z");
 async function loadTests(){
   const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${f}?t=${Date.now()}`, {cache:"no-store"}); return r.ok ? await r.json() : null; } catch(e){ return null; } };
-  const [lip, mm, rfq] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json")]);
-  S.tx = {lip, mm, rfq};
+  const [lip, mm, rfq, field] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json")]);
+  let late = [];
+  try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
+  S.tx = {lip, mm, rfq, late, field};
+}
+// Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
+function lateCard(rows){
+  let h = `<h2>Late-day weather <span class="sub">lows trade REAL money · the rest is paper</span></h2><div class="card">`;
+  h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">From midday on, a city has usually recorded its low. The market then pays too much for brackets that need it to get even colder before midnight. The rule buys NO on those (1¢ inside the offer, spreads of 4¢+) and holds. Backtest on lows: +5.7¢ per contract Oct 2025 to Aug 2026, +3.7¢ in Sep to Nov 2026. This card is the full paper log (lows and highs). The first row also trades real money at 1 contract (strategy Late-day lows on the MAIN tab).</div>`;
+  const fills = (rows || []).filter(r => r.status === "filled"), open = (rows || []).filter(r => r.status === "open").length;
+  if (!(rows || []).length) return h + `<div class="mute" style="font-size:12px">No paper orders yet. The first ones are written around midday ET.</div></div>`;
+  const groups = [["low","need","Lows · sell colder brackets"],["low","holds","Lows · buy the bracket holding the low"],["high","need","Highs · sell hotter brackets"],["high","holds","Highs · buy the bracket holding the high"]];
+  for (const [m, k, lbl] of groups){
+    const g = fills.filter(r => r.metric === m && r.kind === k), pnl = g.reduce((a, r) => a + num(r.pnl), 0), won = g.filter(r => num(r.pnl) > 0).length;
+    const per = g.length ? 100 * pnl / g.length : null;
+    h += `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${lbl}</div><div class="s">${g.length} fills · won ${won} · ${money(pnl)}${m === "low" && k === "need" ? ` · also REAL money` : ""}</div></div><div class="r"><span class="${cls(per || 0)}">${per == null ? "—" : (per > 0 ? "+" : per < 0 ? "−" : "") + Math.abs(per).toFixed(1) + "¢"}</span><small>per contract</small></div></div>`;
+  }
+  return h + `<div class="mute" style="font-size:11px;margin-top:6px">${rows.length} orders written · ${open} waiting for their market to settle.</div></div>`;
 }
 function txPage(){
   const T = S.tx || {}, L = T.lip;
@@ -413,6 +429,7 @@ function txPage(){
     h += `<h2>Our bids <span class="sub">${orders.length} resting · ${pos.length} filled</span></h2><div class="card">` + (orders.length + pos.length ? orders.map(bidRow).join("") + pos.map(posRow).join("")
       : `<div class="mute" style="font-size:12px">No bids yet.</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px">Share = our part of the resting size Kalshi scores on that side (our estimate).</div></div>`;
   }
+  h += lateCard(T.late);
   const M = T.mm;
   h += `<h2>Market making <span class="sub">PAPER · wide-spread markets</span></h2><div class="card">`;
   if (!M) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
@@ -421,6 +438,20 @@ function txPage(){
     h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">Paper 1-contract bids 1¢ inside the spread in ${Object.keys(M.markets || {}).length} markets (Mentions first). A fill made money if the price 30 min later is above what we paid, minus the maker fee (shown). Needs 100+ fills per category before it means anything. ${esc(ago(M.at))}.</div>`
       + (cats.length ? cats.map(([k, s]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(k)}</div><div class="s">${s.fills} fills · ${s.fills_per_market_hour ?? "—"}/market-hour · fee ${c1(s.maker_fee_c)}</div></div><div class="r"><span class="${cls(num(s.markout_30m_c) - num(s.maker_fee_c))}">${c1(s.markout_30m_c)}</span><small>30 min · 5 min ${c1(s.markout_5m_c)}</small></div></div>`).join("")
         : `<div class="mute" style="font-size:12px">No paper fills scored yet.</div>`);
+    const FL = {under20: "few small traders (<20%)", "20to50": "mixed (20-50%)", "50plus": "mostly small traders (50%+)", unknown: "not enough trades yet"};
+    const fl = Object.entries(M.by_flow || {});
+    if (fl.length) h += `<div class="mute" style="font-size:11px;line-height:1.5;margin:10px 0 6px">Same fills split by how much of the market's trading comes from small orders ($25 or less) and which side we bought. History says the NO side in markets with mostly small traders should do best. Right column = result at settlement.</div>`
+      + fl.map(([k, v]) => { const [b, side] = k.split("|"); return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(String(side).toUpperCase())} · ${esc(FL[b] || b)}</div><div class="s">${v.fills} fills · 30 min ${c1(v.markout_30m_c)}</div></div><div class="r"><span class="${cls(num(v.settled_c))}">${v.settled_c == null ? "—" : c1(v.settled_c)}</span><small>${v.settled} settled</small></div></div>`; }).join("");
+  }
+  h += `</div>`;
+  const F = T.field;
+  h += `<h2>Selling the field <span class="sub">PAPER · many-candidate events</span></h2><div class="card">`;
+  if (!F) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
+  else {
+    const A = F.all || {};
+    h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">In events with many candidates and one winner (top artist, person of the year, first song), small traders pile into YES. We log a paper NO on every candidate priced 10-50¢, bought at the asking price, and score it at settlement after the fee. ${F.open || 0} open in ${F.open_events || 0} events. Needs 20+ settled events before it means anything. ${esc(ago(F.at))}.</div>`
+      + (A.n ? [["All events", A]].concat(Object.entries(F.by_category || {})).map(([k, v]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(k)}</div><div class="s">${v.n} candidates · ${v.events} events (${v.events_positive} positive) · NO won ${v.no_won}</div></div><div class="r"><span class="${cls(num(v.taker_c_event_avg))}">${c1(v.taker_c_event_avg)}</span><small>per contract, by event</small></div></div>`).join("")
+        : `<div class="mute" style="font-size:12px">Nothing settled yet.</div>`);
   }
   h += `</div>`;
   const R = T.rfq;
@@ -428,7 +459,7 @@ function txPage(){
   if (!R) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
   else {
     h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">Parlay buyers lose ~28% per dollar (overnight study). We price each request whose legs are in different events (fair = product of the legs) and log a quote to sell YES at fair + margin. "Would win" = the parlay then traded above our quote. P&L per contract at settlement. ${R.rfqs_seen || 0} requests seen, ${R.cross_priced || 0} priced, ${R.settled || 0} settled${R.errors ? ` · <span class="neg">${R.errors} read errors</span>` : ""}. ${esc(ago(R.at))}.</div>`
-      + Object.entries(R.by_margin || {}).map(([m, v]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">fair + ${Math.round(num(m) * 100)}%</div><div class="s">would win ${v.would_win} · settled ${v.settled}</div></div><div class="r"><span class="${cls(num(v.pnl_c_per_ct))}">${v.pnl_c_per_ct == null ? "—" : c1(v.pnl_c_per_ct)}</span><small>per contract</small></div></div>`).join("");
+      + Object.entries(R.by_margin || {}).map(([m, v]) => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">fair + ${Math.round(num(m) * 100)}%</div><div class="s">would win ${v.would_win} · settled ${v.settled} · all requests ${v.pnl_c_per_ct == null ? "—" : c1(v.pnl_c_per_ct)}/ct</div></div><div class="r"><span class="${cls(num(v.won_pnl_c_per_ct))}">${v.won_pnl_c_per_ct == null ? "—" : c1(v.won_pnl_c_per_ct)}</span><small>on ${v.won_settled ?? 0} we'd win</small></div></div>`).join("");
   }
   return h + `</div>`;
 }
@@ -457,7 +488,7 @@ function ccPage(){
     const realTxt = R.copies ? `${R.copies} real copies (${R.open} open) · won ${R.won}/${R.settled} · <span class="${cls(R.pnl)}">${money(R.pnl)}</span>` : (a.verdict === "passes" ? "no real copies yet" : "none");
     return `<div class="item" data-ccn="${esc(a.nick)}" style="padding:9px 0;align-items:flex-start;cursor:pointer"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:10px;font-weight:700">${lbl}</span></div>
       <div class="s" style="white-space:normal">${(a.cats || []).length ? esc(a.cats.join("/")) + " · " : ""}${a.pnl ? "lifetime " + money(a.pnl).replace(".00", "") + " · " : ""}${a.lag_s != null ? "we see trades after " + a.lag_s + "s" : ""}</div>
-      <div class="s" style="white-space:normal"><b style="color:#94a3c8">PAPER</b> ${a.fills || 0} copies · ${a.settled || 0} settled · last ${a.window || 0}: ${ct(a.settle_c)}/ct (worst case ${ct(a.settle_low_c)})${a.verdict !== "watching" ? " · leeway " + a.leeway_c + "¢" : ""}</div>
+      <div class="s" style="white-space:normal"><b style="color:#94a3c8">PAPER</b> ${a.fills || 0} copies · ${a.settled || 0} settled · last ${a.window || 0}: ${ct(a.settle_c)}/ct (worst case ${ct(a.settle_low_c)})${a.verdict !== "watching" ? " · leeway " + a.leeway_c + "¢" : ""}${a.retest_at ? ` · <b style="color:#fbbf24">failed once or more: ${a.chances_left} chance${a.chances_left === 1 ? "" : "s"} left, re-test at ${a.retest_at} copies</b>` : ""}</div>
       ${a.verdict === "watching" ? `<div style="height:4px;background:rgba(148,163,200,.18);border-radius:2px;margin:4px 0 2px;max-width:220px"><div style="height:4px;width:${prog.toFixed(0)}%;background:#22d3ee;border-radius:2px"></div></div><div class="s" style="white-space:normal">${Math.round(prog)}% of the way to its test (${a.fills || 0} of ${need} copies${need === 100 ? ", fast track for B+" : ""})</div>` : ""}
       <div class="s" style="white-space:normal"><b style="color:#34d399">REAL</b> ${realTxt}${a.size ? " · size " + a.size + " ct" : ""}</div>
       ${a.boss_note ? `<div class="s" style="white-space:normal;color:#c4b5fd">Boss: ${esc(a.boss_note)}</div>` : ""}</div>

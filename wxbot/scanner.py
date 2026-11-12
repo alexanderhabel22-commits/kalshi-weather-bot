@@ -7,7 +7,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from . import daybefore, kalshi, launches, ledger, moneysum, notify, rain, report as reportmod, strategy, tracking, trader
+from . import daybefore, kalshi, latepaper, launches, ledger, moneysum, notify, rain, report as reportmod, strategy, tracking, trader
 from .model import build_day_model
 from .stations import (SeriesInfo, Station, cli_window, climate_day_of,
                        default_catalog, series_from_kalshi)
@@ -169,6 +169,7 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
     lock_signals: list[dict] = []     # every LOCK this scan, for the trader (data/lock_signals.json)
     shadow_logged = 0
     tomorrow: dict[str, tuple] = {}
+    today_events: dict[str, tuple] = {}   # for the late-day paper test
 
     for si in catalog:
         st = si.station
@@ -218,6 +219,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
                 station_nws[st.icao] = fetch_nws_extremes(http, st)
 
             obs, ens = station_obs[st.icao], station_ens[st.icao]
+            if ahead == 0 and obs is not None:
+                today_events[ev] = (si, ms, obs, ws)
             if ens is None and ahead > 0:
                 continue
             nws_val = (station_nws.get(st.icao) or {}).get(d.isoformat(), {}).get(si.metric)
@@ -319,6 +322,19 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
         except Exception as exc:  # never let the test break the scan
             log.warning("paper trading failed: %s", exc)
 
+    # paper test: late-day orders on today's markets (no money, never alerts)
+    late = None
+    if cfg.get("markets", "paper_late", True):
+        late = latepaper.load_orders()
+        try:
+            n_late = latepaper.place(late, today_events, now, cfg.raw.get("paper_late"))
+            if n_late:
+                log.info("late-day paper orders written: %d", n_late)
+            if now.minute % 30 < 5:
+                latepaper.settle(http, late, now)
+        except Exception as exc:  # never let the test break the scan
+            log.warning("late-day paper test failed: %s", exc)
+
     # silent rain census (no alerts), every 15 minutes
     rain_census = None
     if cfg.get("markets", "rain_census", True) and now.minute % 15 < 5:
@@ -404,6 +420,8 @@ def run_scan(cfg: Config, *, now: datetime | None = None, dry_run: bool = False,
             launches.save(launch_db)
         if paper is not None:
             daybefore.save_orders(paper)
+        if late is not None:
+            latepaper.save_orders(late)
     write_json(RUNTIME, runtime)
     write_json(LAST_SCAN, {"at": now.isoformat(), "events": report, "problems": problems})
     log.info("scan done: %d series, %d events, %d alerts, %d silent EDGE logged, problems=%s",

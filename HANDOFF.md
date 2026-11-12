@@ -156,12 +156,30 @@ record earns it. Be candid about odds and risk; no hype.
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
 - **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
-  live = true for mentions, favorites, macro_fade, and weather day-before (small test,
-  15% cap). LOCKs stay
+  live = true for mentions, favorites, macro_fade and weather_late (late-day lows, Nov 11;
+  weather day-before was a small test until Nov 11, now paper). LOCKs stay
   paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
   orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
   GitHub variable TRADING_MODE=off. Since Nov 10 "off" also cancels the main bot's resting real-money orders (held positions stay).
+- **Weather day-before: back to PAPER since Nov 11** (`[trading.weather] live = false`). The
+  real-money test (Nov 5-11) lost $3.95 on 43 contracts and the paper record was -2.0c per
+  contract on 162 fills. Cause (research_wx/RESULTS.md): since September the market's own
+  implied forecast misses by 1.31F at 36h, our model mix by 1.60F, so the model has almost
+  nothing the price doesn't. Re-check in Jan-Feb; it keeps logging on paper.
+- **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
+  `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
+  beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES
+  on the bracket holding it. Backtest for lows: +5.7c per contract Oct 2025-Aug 2026, +3.7c
+  Sep-Nov 2026, about 7 fills a day. Review at 300 filled low orders; real money needs Alex's
+  OK. Switch off with `[markets] paper_late = false`.
+- **Late-day lows: REAL MONEY since Nov 11** (Alex, 2:18 PM ET: "implement the strategy you
+  mentioned with real money, it can replace the strategy you got rid of"). Strategy
+  `weather_late` (`wxbot/strats/weather_late.py`, `[trading.weather_late]`) mirrors the
+  paper orders in `data/paper_late.csv` that are lows + kind "need": 1 contract, NO 1c inside
+  the offer, hold to settlement, 15% of bankroll cap, 8% per city-day, own loss stop at -10% of
+  bankroll, never crosses the spread. Highs and "holds" orders stay paper. Reviews at
+  100/300/500 contracts; the freeze applies until 500. Back to paper: `live = false`.
 - **LOCK auto-buying, PAPER (real money paused Nov 5 PM after a false Philly LOCK from a bad 6-hour METAR group; 6-hour groups no longer make LOCKs):** to go live set `[trading] mode = "live"`
   and `[trading.locks] live = true`; every other strategy stays paper. The scan
   writes every LOCK it sees to `data/lock_signals.json` (quiet hours/alert
@@ -311,6 +329,9 @@ IP without a token). It never places, changes or cancels anything and needs no s
   market maker), or loses money over the last 30 days on two weekly re-checks in a row, is dropped:
   no polls, snapshots or copies for 30 days, then it may be re-scouted and starts again from zero.
   Kept in watch.json "dropped" and listed on the dashboard.
+  CHANCES (Alex, Nov 11 6:10 PM ET, "don't disqualify someone for a bad day"): the score uses the
+  LAST 150 copies; a fail at 150 is re-tested at 200 and 250 (TEST_CHANCES=3, RETEST_EVERY=50), and
+  only 3 fails in a row drop it; a pass in between resets the count (watch.json fails_in_row/retest_at).
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
   account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
   their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
@@ -355,6 +376,15 @@ IP without a token). It never places, changes or cancels anything and needs no s
 - Parlays: polls GET /communications/rfqs every 20 s. For combos whose legs are all in different events,
   fair = product of leg mids; logs the YES-selling quote at margins 0/5/10/20%, whether the combo then
   traded above it (we'd likely have won), and paper P&L at settlement. Status `m15/paper-rfq.json`.
+- **Casual-flow tags (Nov 11):** each paper maker fill records the market's casual share (share of
+  taker contracts from orders of $25 or less) and is scored again at settlement; `by_flow` in
+  `m15/paper-mm.json` splits results by casual share and side. Research: `research_casual/RESULTS.md`
+  (small orders lose ~3c/ct everywhere; rest NO bids only, never YES).
+- **Sell the field (paper, Nov 11):** `FieldPaper` logs a paper NO on every 10-50c candidate of each
+  open one-winner event with 5+ candidates (Entertainment, Social, Companies, Sci/Tech, World, Health),
+  bought at the NO ask, scored at settlement after the taker fee. Status `m15/paper-field.json`.
+  Target events and dates: `research_casual/CALENDAR.md` (Spotify Wrapped ~Dec 2, TIME and Google
+  ~Dec 8-11, Super Bowl ~Feb 14). Real money needs Alex's OK.
 
 ## Source shadow logger (built Nov 10, 2026, logging only)
 

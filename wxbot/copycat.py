@@ -77,6 +77,9 @@ DROP_DAYS = 30              # dropped accounts (failed the 150-copy test, or lon
                             # and start again from zero (Alex, Nov 10 10:31 PM ET)
 RECHECK_S = 7 * 86400       # re-check each watched account's Kalshi profit weekly ...
 RECHECK_PER_SCOUT = 15      # ... a few per scout run, oldest check first
+TEST_CHANCES = 3            # Alex (Nov 11): "don't disqualify someone for a bad day". An account that fails
+RETEST_EVERY = 50           # its paper test (150 copies) is re-tested after each further 50 copies, judged on
+                            # its LAST 150 copies (so a bad day rolls off); dropped only after 3 fails in a row
 LOSER_STRIKES = 2           # dropped after 2 weekly checks in a row losing money over the last 30 days
 FEED_KEEP_DAYS = 7          # every public trade (anonymous too) kept on the server, rolling (Alex, Nov 11):
 FEED_MIN_FREE_GB = 3.0      # ~300 trades/s, ~0.5 GB/day gzipped; oldest files go first if disk runs low
@@ -453,7 +456,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         settle, settle_low = mean_low(window)
         f300, _ = mean_low(o.get("follow_300", []))
         f1800, _ = mean_low(o.get("follow_1800", []))
-        score, gl = score_grade(settle_all)
+        score, gl = score_grade(settle_all[-GO_LIVE_SLOW_FILLS:])   # rolling: the last 150 copies
         due = n >= GO_LIVE_SLOW_FILLS or (n >= GO_LIVE_FILLS and (score or 0) >= GO_LIVE_FAST_SCORE)
         banked = sum(settle_all) / 100            # $ a 1-contract copy would have made, all-time
         leeway = leeway_c(banked, score)
@@ -479,7 +482,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
-            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}. Score 0-100 from every copy so far "
+            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}. Score 0-100 from its last 150 copies "
             "(after fees; 80 = break-even even in the pessimistic case). Copied at 80+ (B- or better) while its "
             f"last {ROLL_WINDOW} copies average better than -leeway (5c, +1c per $1 it has made us, +up to 5c "
             "for a high score); benched below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3",
@@ -651,6 +654,28 @@ class Copycat:
         self.dropped.pop(n, None)                 # time served: may be scouted again, from zero
         self.checked.discard(n)
         return False
+
+    def judge(self, a: dict) -> None:
+        """Paper test with chances: a fail at 150 copies (then at each further RETEST_EVERY) uses one
+        of TEST_CHANCES; a pass resets them; dropped for DROP_DAYS only when all are used up."""
+        v = self.watch.get(a["nick"])
+        if v is None:
+            return
+        due_at = v.get("retest_at") or GO_LIVE_SLOW_FILLS
+        if a["verdict"] == "passes" and v.get("fails_in_row"):
+            v["fails_in_row"], v["retest_at"] = 0, None
+        elif a["verdict"] == "fails" and a["fills"] >= due_at:
+            v["fails_in_row"] = (v.get("fails_in_row") or 0) + 1
+            if v["fails_in_row"] >= TEST_CHANCES:
+                self.drop(a["nick"], f"failed its paper test {TEST_CHANCES} times", fills=a["fills"],
+                          score=a["score"], grade=a["grade"], real_pnl=(a.get("real") or {}).get("pnl"))
+                return
+            v["retest_at"] = a["fills"] + RETEST_EVERY
+            self.write({"kind": "strike", "nick": a["nick"], "fills": a["fills"], "score": a["score"],
+                        "fails_in_row": v["fails_in_row"], "retest_at": v["retest_at"]})
+            self.save_watch()
+        a["chances_left"] = TEST_CHANCES - (v.get("fails_in_row") or 0)
+        a["retest_at"] = v.get("retest_at")
 
     def drop(self, n: str, reason: str, **extra) -> None:
         """Stops watching an account (no polls, snapshots or copies) for DROP_DAYS."""
@@ -1106,9 +1131,7 @@ class Copycat:
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes)
         add_real(status, self.live.state if self.live else None)
         for a in status["accounts"]:
-            if a["verdict"] == "fails" and a["fills"] >= GO_LIVE_SLOW_FILLS:
-                self.drop(a["nick"], "failed its paper test", fills=a["fills"], score=a["score"],
-                          grade=a["grade"], real_pnl=(a.get("real") or {}).get("pnl"))
+            self.judge(a)
         if any(a["nick"] in self.dropped for a in status["accounts"]):
             status["accounts"] = [a for a in status["accounts"] if a["nick"] not in self.dropped]
             self.save_watch()

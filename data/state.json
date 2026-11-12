@@ -1,31 +1,31 @@
 {
  "alerted": {
-  "KXHIGHTSEA-26NOV07-B61.5|no": {
-   "at": "2026-11-08T00:40:22+00:00",
-   "edge": 0.105,
+  "KXHIGHAUS-26NOV11-B75.5|yes": {
+   "at": "2026-11-11T21:45:29+00:00",
+   "edge": 0.0388,
    "kind": "near",
-   "price": 0.81,
+   "price": 0.9,
    "shadow": true
   },
-  "KXHIGHTSEA-26NOV07-B63.5|no": {
-   "at": "2026-11-08T01:40:20+00:00",
-   "edge": 0.0258,
+  "KXHIGHAUS-26NOV11-B77.5|no": {
+   "at": "2026-11-11T21:40:38+00:00",
+   "edge": 0.0274,
    "kind": "near",
-   "price": 0.96,
+   "price": 0.92,
    "shadow": true
   },
-  "KXHIGHTSEA-26NOV07-B65.5|no": {
-   "at": "2026-11-08T02:30:24+00:00",
-   "edge": 0.0301,
+  "KXHIGHDEN-26NOV11-B63.5|yes": {
+   "at": "2026-11-11T22:35:27+00:00",
+   "edge": 0.053,
    "kind": "near",
-   "price": 0.95,
+   "price": 0.9,
    "shadow": true
   },
-  "KXHIGHTSEA-26NOV07-T61|yes": {
-   "at": "2026-11-08T00:45:20+00:00",
-   "edge": 0.1046,
+  "KXHIGHDEN-26NOV11-B65.5|no": {
+   "at": "2026-11-11T22:50:24+00:00",
+   "edge": 0.0338,
    "kind": "near",
-   "price": 0.81,
+   "price": 0.93,
    "shadow": true
   },
   "KXHIGHTSFO-26NOV08-B71.5|no": {
@@ -76,33 +76,29 @@
    "kind": "near",
    "price": 0.95,
    "shadow": true
-  },
-  "KXLOWTMIA-26NOV07-B71.5|no": {
-   "at": "2026-11-07T23:15:24+00:00",
-   "edge": 0.0241,
-   "kind": "near",
-   "price": 0.92,
-   "shadow": true
-  },
-  "KXLOWTMIA-26NOV07-B73.5|yes": {
-   "at": "2026-11-07T23:30:23+00:00",
-   "edge": 0.0462,
-   "kind": "near",
-   "price": 0.87,
-   "shadow": true
   }
  },
  "catalog": {
-  "date": "2026-11-11",
+  "date": "2026-11-12",
   "series": [
    {
-    "city": "New Orleans",
-    "icao": "KMSY",
-    "lat": 29.9934,
-    "lon": -90.258,
+    "city": "Chicago",
+    "icao": "KMDW",
+    "lat": 41.786,
+    "lon": -87.7524,
     "metric": "high",
-    "name": "New Orleans Intl",
-    "ticker": "KXHIGHTNOLA",
+    "name": "Chicago Midway",
+    "ticker": "KXHIGHCHI",
+    "tz": "America/Chicago"
+   },
+   {
+    "city": "San Antonio",
+    "icao": "KSAT",
+    "lat": 29.5443,
+    "lon": -98.4839,
+    "metric": "high",
+    "name": "San Antonio Intl",
+    "ticker": "KXHIGHTSATX",
     "tz": "America/Chicago"
    },
    {
@@ -116,13 +112,23 @@
     "tz": "America/Los_Angeles"
    },
    {
+    "city": "Seattle",
+    "icao": "KSEA",
+    "lat": 47.4447,
+    "lon": -122.3136,
+    "metric": "high",
+    "name": "Seattle-Tacoma",
+    "ticker": "KXHIGHTSEA",
+    "tz": "America/Los_Angeles"
+   },
+   {
     "city": "Houston",
     "icao": "KHOU",
     "lat": 29.6375,
     "lon": -95.2825,
     "metric": "high",
     "name": "Houston Hobby",
-    "ticker": "KXHIGHTHOU",
+    "ticker": "KXHIGHHOU",
     "tz": "America/Chicago"
    },
    {
@@ -146,14 +152,54 @@
     "tz": "America/Los_Angeles"
    },
    {
-    "city": "Phoenix",
-    "icao": "KPHX",
-    "lat": 33.4277,
-    "lon": -112.0038,
+    "city": "Denver",
+    "icao": "KDEN",
+    "lat": 39.8466,
+    "lon": -104.6562,
     "metric": "high",
-    "name": "Phoenix Sky Harbor",
-    "ticker": "KXHIGHTPHX",
-    "tz": "America/Phoenix"
+    "name": "Denver Intl",
+    "ticker": "KXHIGHDEN",
+    "tz": "America/Denver"
+   },
+   {
+    "city": "Austin",
+    "icao": "KAUS",
+    "lat": 30.1831,
+    "lon": -97.6799,
+    "metric": "high",
+    "name": "Austin-Bergstrom",
+    "ticker": "KXHIGHAUS",
+    "tz": "America/Chicago"
+   },
+   {
+    "city": "Chicago",
+    "icao": "KMDW",
+    "lat": 41.786,
+    "lon": -87.7524,
+    "metric": "low",
+    "name": "Chicago Midway",
+    "ticker": "KXLOWTCHI",
+    "tz": "America/Chicago"
+   },
+   {
+    "city": "Oklahoma City",
+    "icao": "KOKC",
+    "lat": 35.3889,
+    "lon": -97.6006,
+    "metric": "high",
+    "name": "Oklahoma City",
+    "ticker": "KXHIGHTOKC",
+    "tz": "America/Chicago"
+   },
+   {
+    "city": "Houston",
+    "icao": "KHOU",
+    "lat": 29.6375,
+    "lon": -95.2825,
+    "metric": "high",
+    "name": "Houston Hobby",
+    "ticker": "KXHIGHTHOU",
+    "tz": "America/Chicago"
    },
    {
     "city": "Boston",
@@ -166,34 +212,24 @@
     "tz": "America/New_York"
    },
    {
+    "city": "Minneapolis",
+    "icao": "KMSP",
+    "lat": 44.8831,
+    "lon": -93.2289,
+    "metric": "high",
+    "name": "Minneapolis-St Paul",
+    "ticker": "KXHIGHTMIN",
+    "tz": "America/Chicago"
+   },
+   {
     "city": "Houston",
     "icao": "KHOU",
     "lat": 29.6375,
     "lon": -95.2825,
     "metric": "high",
     "name": "Houston Hobby",
-    "ticker": "KXHIGHHOU",
+    "ticker": "KXHIGHOU",
     "tz": "America/Chicago"
-   },
-   {
-    "city": "NYC",
-    "icao": "KNYC",
-    "lat": 40.7789,
-    "lon": -73.9692,
-    "metric": "high",
-    "name": "Central Park",
-    "ticker": "KXHIGHNY",
-    "tz": "America/New_York"
-   },
-   {
-    "city": "Seattle",
-    "icao": "KSEA",
-    "lat": 47.4447,
-    "lon": -122.3136,
-    "metric": "high",
-    "name": "Seattle-Tacoma",
-    "ticker": "KXHIGHTSEA",
-    "tz": "America/Los_Angeles"
    },
    {
     "city": "Miami",
@@ -206,14 +242,74 @@
     "tz": "America/New_York"
    },
    {
-    "city": "Dallas",
-    "icao": "KDFW",
-    "lat": 32.8998,
-    "lon": -97.0403,
+    "city": "NYC",
+    "icao": "KNYC",
+    "lat": 40.7789,
+    "lon": -73.9692,
+    "metric": "low",
+    "name": "Central Park",
+    "ticker": "KXLOWTNYC",
+    "tz": "America/New_York"
+   },
+   {
+    "city": "Denver",
+    "icao": "KDEN",
+    "lat": 39.8466,
+    "lon": -104.6562,
+    "metric": "low",
+    "name": "Denver Intl",
+    "ticker": "KXLOWTDEN",
+    "tz": "America/Denver"
+   },
+   {
+    "city": "San Francisco",
+    "icao": "KSFO",
+    "lat": 37.6197,
+    "lon": -122.3656,
     "metric": "high",
-    "name": "Dallas/Fort Worth",
-    "ticker": "KXHIGHTDAL",
-    "tz": "America/Chicago"
+    "name": "San Francisco Intl",
+    "ticker": "KXHIGHTSFO",
+    "tz": "America/Los_Angeles"
+   },
+   {
+    "city": "Atlanta",
+    "icao": "KATL",
+    "lat": 33.6301,
+    "lon": -84.4418,
+    "metric": "high",
+    "name": "Atlanta Hartsfield",
+    "ticker": "KXHIGHTATL",
+    "tz": "America/New_York"
+   },
+   {
+    "city": "LA",
+    "icao": "KLAX",
+    "lat": 33.9382,
+    "lon": -118.3866,
+    "metric": "low",
+    "name": "Los Angeles Intl",
+    "ticker": "KXLOWTLAX",
+    "tz": "America/Los_Angeles"
+   },
+   {
+    "city": "NYC",
+    "icao": "KNYC",
+    "lat": 40.7789,
+    "lon": -73.9692,
+    "metric": "high",
+    "name": "Central Park",
+    "ticker": "KXHIGHNY",
+    "tz": "America/New_York"
+   },
+   {
+    "city": "Washington DC",
+    "icao": "KDCA",
+    "lat": 38.8483,
+    "lon": -77.0342,
+    "metric": "high",
+    "name": "Washington National",
+    "ticker": "KXHIGHTDC",
+    "tz": "America/New_York"
    },
    {
     "city": "Philadelphia",
@@ -230,109 +326,19 @@
     "icao": "KAUS",
     "lat": 30.1831,
     "lon": -97.6799,
-    "metric": "high",
-    "name": "Austin-Bergstrom",
-    "ticker": "KXHIGHAUS",
-    "tz": "America/Chicago"
-   },
-   {
-    "city": "Washington DC",
-    "icao": "KDCA",
-    "lat": 38.8483,
-    "lon": -77.0342,
-    "metric": "high",
-    "name": "Washington National",
-    "ticker": "KXHIGHTDC",
-    "tz": "America/New_York"
-   },
-   {
-    "city": "LA",
-    "icao": "KLAX",
-    "lat": 33.9382,
-    "lon": -118.3866,
-    "metric": "low",
-    "name": "Los Angeles Intl",
-    "ticker": "KXLOWTLAX",
-    "tz": "America/Los_Angeles"
-   },
-   {
-    "city": "San Francisco",
-    "icao": "KSFO",
-    "lat": 37.6197,
-    "lon": -122.3656,
-    "metric": "high",
-    "name": "San Francisco Intl",
-    "ticker": "KXHIGHTSFO",
-    "tz": "America/Los_Angeles"
-   },
-   {
-    "city": "Denver",
-    "icao": "KDEN",
-    "lat": 39.8466,
-    "lon": -104.6562,
-    "metric": "high",
-    "name": "Denver Intl",
-    "ticker": "KXHIGHDEN",
-    "tz": "America/Denver"
-   },
-   {
-    "city": "Oklahoma City",
-    "icao": "KOKC",
-    "lat": 35.3889,
-    "lon": -97.6006,
-    "metric": "high",
-    "name": "Oklahoma City",
-    "ticker": "KXHIGHTOKC",
-    "tz": "America/Chicago"
-   },
-   {
-    "city": "Atlanta",
-    "icao": "KATL",
-    "lat": 33.6301,
-    "lon": -84.4418,
-    "metric": "high",
-    "name": "Atlanta Hartsfield",
-    "ticker": "KXHIGHTATL",
-    "tz": "America/New_York"
-   },
-   {
-    "city": "Austin",
-    "icao": "KAUS",
-    "lat": 30.1831,
-    "lon": -97.6799,
     "metric": "low",
     "name": "Austin-Bergstrom",
     "ticker": "KXLOWTAUS",
     "tz": "America/Chicago"
    },
    {
-    "city": "Minneapolis",
-    "icao": "KMSP",
-    "lat": 44.8831,
-    "lon": -93.2289,
+    "city": "New Orleans",
+    "icao": "KMSY",
+    "lat": 29.9934,
+    "lon": -90.258,
     "metric": "high",
-    "name": "Minneapolis-St Paul",
-    "ticker": "KXHIGHTMIN",
-    "tz": "America/Chicago"
-   },
-   {
-    "city": "Denver",
-    "icao": "KDEN",
-    "lat": 39.8466,
-    "lon": -104.6562,
-    "metric": "low",
-    "name": "Denver Intl",
-    "ticker": "KXLOWTDEN",
-    "tz": "America/Denver"
-   },
-   {
-    "city": "Chicago",
-    "icao": "KMDW",
-    "lat": 41.786,
-    "lon": -87.7524,
-    "metric": "high",
-    "name": "Chicago Midway",
-    "ticker": "KXHIGHCHI",
+    "name": "New Orleans Intl",
+    "ticker": "KXHIGHTNOLA",
     "tz": "America/Chicago"
    },
    {
@@ -346,44 +352,24 @@
     "tz": "America/New_York"
    },
    {
-    "city": "Houston",
-    "icao": "KHOU",
-    "lat": 29.6375,
-    "lon": -95.2825,
+    "city": "Dallas",
+    "icao": "KDFW",
+    "lat": 32.8998,
+    "lon": -97.0403,
     "metric": "high",
-    "name": "Houston Hobby",
-    "ticker": "KXHIGHOU",
+    "name": "Dallas/Fort Worth",
+    "ticker": "KXHIGHTDAL",
     "tz": "America/Chicago"
    },
    {
-    "city": "NYC",
-    "icao": "KNYC",
-    "lat": 40.7789,
-    "lon": -73.9692,
-    "metric": "low",
-    "name": "Central Park",
-    "ticker": "KXLOWTNYC",
-    "tz": "America/New_York"
-   },
-   {
-    "city": "Chicago",
-    "icao": "KMDW",
-    "lat": 41.786,
-    "lon": -87.7524,
-    "metric": "low",
-    "name": "Chicago Midway",
-    "ticker": "KXLOWTCHI",
-    "tz": "America/Chicago"
-   },
-   {
-    "city": "San Antonio",
-    "icao": "KSAT",
-    "lat": 29.5443,
-    "lon": -98.4839,
+    "city": "Phoenix",
+    "icao": "KPHX",
+    "lat": 33.4277,
+    "lon": -112.0038,
     "metric": "high",
-    "name": "San Antonio Intl",
-    "ticker": "KXHIGHTSATX",
-    "tz": "America/Chicago"
+    "name": "Phoenix Sky Harbor",
+    "ticker": "KXHIGHTPHX",
+    "tz": "America/Phoenix"
    }
   ]
  },
@@ -426,9 +412,9 @@
   "KXHIGHDEN-26NOV10": "2026-11-09T18:30:26+00:00",
   "KXHIGHDEN-26NOV11": "2026-11-10T18:30:24+00:00",
   "KXHIGHDEN-26NOV12": "2026-11-11T18:30:30+00:00",
-  "KXHIGHLAX-26NOV09": "2026-11-08T19:30:26+00:00",
   "KXHIGHLAX-26NOV10": "2026-11-09T19:30:24+00:00",
   "KXHIGHLAX-26NOV11": "2026-11-10T19:30:28+00:00",
+  "KXHIGHLAX-26NOV12": "2026-11-11T19:30:28+00:00",
   "KXHIGHMIA-26NOV10": "2026-11-09T16:30:28+00:00",
   "KXHIGHMIA-26NOV11": "2026-11-10T16:30:24+00:00",
   "KXHIGHMIA-26NOV12": "2026-11-11T16:30:32+00:00",
@@ -453,9 +439,9 @@
   "KXHIGHTHOU-26NOV10": "2026-11-09T17:30:25+00:00",
   "KXHIGHTHOU-26NOV11": "2026-11-10T17:30:25+00:00",
   "KXHIGHTHOU-26NOV12": "2026-11-11T17:30:28+00:00",
-  "KXHIGHTLV-26NOV09": "2026-11-08T19:30:26+00:00",
   "KXHIGHTLV-26NOV10": "2026-11-09T19:30:24+00:00",
   "KXHIGHTLV-26NOV11": "2026-11-10T19:30:28+00:00",
+  "KXHIGHTLV-26NOV12": "2026-11-11T19:30:28+00:00",
   "KXHIGHTMIN-26NOV10": "2026-11-09T17:30:25+00:00",
   "KXHIGHTMIN-26NOV11": "2026-11-10T17:30:25+00:00",
   "KXHIGHTMIN-26NOV12": "2026-11-11T17:30:28+00:00",
@@ -471,12 +457,12 @@
   "KXHIGHTSATX-26NOV10": "2026-11-09T17:30:25+00:00",
   "KXHIGHTSATX-26NOV11": "2026-11-10T17:30:25+00:00",
   "KXHIGHTSATX-26NOV12": "2026-11-11T17:30:28+00:00",
-  "KXHIGHTSEA-26NOV09": "2026-11-08T19:30:26+00:00",
   "KXHIGHTSEA-26NOV10": "2026-11-09T19:30:24+00:00",
   "KXHIGHTSEA-26NOV11": "2026-11-10T19:30:28+00:00",
-  "KXHIGHTSFO-26NOV09": "2026-11-08T19:30:26+00:00",
+  "KXHIGHTSEA-26NOV12": "2026-11-11T19:30:28+00:00",
   "KXHIGHTSFO-26NOV10": "2026-11-09T19:30:24+00:00",
   "KXHIGHTSFO-26NOV11": "2026-11-10T19:30:28+00:00",
+  "KXHIGHTSFO-26NOV12": "2026-11-11T19:30:28+00:00",
   "KXLOWTAUS-26NOV10": "2026-11-09T17:30:25+00:00",
   "KXLOWTAUS-26NOV11": "2026-11-10T17:30:25+00:00",
   "KXLOWTAUS-26NOV12": "2026-11-11T17:30:28+00:00",
@@ -486,9 +472,9 @@
   "KXLOWTDEN-26NOV10": "2026-11-09T18:30:26+00:00",
   "KXLOWTDEN-26NOV11": "2026-11-10T18:30:24+00:00",
   "KXLOWTDEN-26NOV12": "2026-11-11T18:30:30+00:00",
-  "KXLOWTLAX-26NOV09": "2026-11-08T19:30:26+00:00",
   "KXLOWTLAX-26NOV10": "2026-11-09T19:30:24+00:00",
   "KXLOWTLAX-26NOV11": "2026-11-10T19:30:28+00:00",
+  "KXLOWTLAX-26NOV12": "2026-11-11T19:30:28+00:00",
   "KXLOWTMIA-26NOV10": "2026-11-09T16:30:28+00:00",
   "KXLOWTMIA-26NOV11": "2026-11-10T16:30:24+00:00",
   "KXLOWTMIA-26NOV12": "2026-11-11T16:30:32+00:00",
@@ -499,7 +485,7 @@
   "KXLOWTPHIL-26NOV11": "2026-11-10T16:30:24+00:00",
   "KXLOWTPHIL-26NOV12": "2026-11-11T16:30:32+00:00"
  },
- "last_summary": "2026-11-10",
+ "last_summary": "2026-11-11",
  "rain_catalog": {
   "date": "2026-11-11",
   "series": {

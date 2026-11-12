@@ -15,6 +15,7 @@ skip_cities = []                 # e.g. ["Denver"]
 auto_discover = true             # pick up new/renamed weather series from Kalshi daily
 rain_census = false              # silent test Nov 4-11, 2026: all 14 passed thresholds were already $1.00; off
 paper_daybefore = true           # paper-trade day-before limit orders (no money, no alerts)
+paper_late = true                # paper test: late-day orders on today's lows/highs (no money; wxbot/latepaper.py)
 launch_watch = true              # watch for brand-new Kalshi series/categories (data/launches.json)
 
 [strategy]
@@ -81,7 +82,8 @@ spread_inflation = 1.15
 # New edge = a module in wxbot/strats/ (NAME + propose) + a [trading.<NAME>] table.
 mode = "live"                    # REAL money since Nov 5 7 PM ET (Alex's OK) for the strategies
                                  # whose table says live = true: mentions, favorites, macro_fade,
-                                 # weather (15% cap test). LOCKs stay paper. KILL SWITCH: set the GitHub
+                                 # weather_late (late-day lows, Nov 11). Weather day-before back
+                                 # to paper Nov 11. LOCKs stay paper. KILL SWITCH: set the GitHub
                                  # variable TRADING_MODE to off (Settings > Secrets and variables
                                  # > Actions > Variables), or paper to go back to paper.
 max_contracts_per_order = 10     # hard per-order size limit (each strategy's own size is smaller)
@@ -203,17 +205,37 @@ max_market_contracts = 50
 max_event_pct = 0.20             # at most 20% of the bankroll on one city-day
 
 [trading.weather]
-# Day-before weather limit orders (mirrors the paper orders). Live as a small
-# test from Nov 5 (Alex: "test money"), capped at 15% of the bankroll.
+# Day-before weather limit orders (mirrors the paper orders). Real-money test
+# Nov 5-11: 43 contracts settled, -$3.95. BACK TO PAPER Nov 11 (research_wx/RESULTS.md):
+# the market's own forecast is now more accurate than the model, so the edge is ~0.
+# Orders already resting or filled finish on their own. Re-check Jan-Feb.
 max_week_contracts = 4000        # fair share of the flow (scale study)
 max_market_contracts = 50        # per-market ceiling (scale study)
 enabled = true
-live = true                      # REAL money as a small test (Nov 5 7 PM ET): real fill rates
+live = false                     # paper since Nov 11 (was a real-money test Nov 5-11)
 contracts = 1
 max_open_pct = 0.15             # small test: at most 15% of the bankroll (~$7.50)
 max_event_pct = 0.15
 exit = "model"                   # sell ~12h before close only if the fresh forecast says the bid is worth 8c+ more than holding
 exit_margin = 0.08
+
+[trading.weather_late]
+# Late-day lows (wxbot/strats/weather_late.py, research_wx/RESULTS.md): from about noon on,
+# buy NO 1c inside the offer on LOW brackets below the low already recorded (spread 4c+),
+# hold to settlement. Backtest +5.7c per contract (Oct 2025-Aug 2026), +3.7c (Sep-Nov 2026).
+# REAL money since Nov 11 (Alex's OK), replacing the day-before weather test.
+# Reviews at 100/300/500 contracts like every live market; freeze applies until 500.
+enabled = true
+live = true
+contracts = 1                    # per order; raise only at a review
+metrics = ["low"]                # highs stay on paper (only worked in the cool season)
+kinds = ["need"]                 # "holds" orders stay on paper (noisier)
+max_open_pct = 0.15              # at most 15% of the bankroll at once (about 7 orders a day at ~75c)
+max_event_pct = 0.08             # one city-day
+max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
+exit = "hold"                    # the tested rule holds to settlement
+max_week_contracts = 4000
+max_market_contracts = 50
 
 [allocator]
 # Grades every strategy on profit per $1 risked (settled REAL-money results only,
@@ -239,7 +261,7 @@ paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for n
 mode = "live"                    # off | paper | live. LIVE from the start (Alex, Nov 8: "this is the
                                  # test", no paper run). Without a Kalshi key on the server it stays
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
-live_series = ["KXBTC15M", "KXSILVER15M", "KXGOLD15M"]   # real money only on these. GOLD live Nov 11 12:50 AM ET (Alex OK, 1 ct + same 2nd-contract rule; review at 100 fills, paper if < -5c). Nov 10 12:15 PM ET (Alex, trim
+live_series = ["KXBTC15M", "KXSILVER15M"]   # real money only on these. GOLD back to PAPER Nov 11 3:40 PM ET (Alex: "find a profitable way or cut it"; live -3.8c/ct on 84 ct, no gold rule with an honest edge). Was: GOLD live Nov 11 12:50 AM ET (Alex OK, 1 ct + same 2nd-contract rule; review at 100 fills, paper if < -5c). Nov 10 12:15 PM ET (Alex, trim
                                  # decision): copper, palladium, platinum, WTI back to PAPER, all red
                                  # all-time (-$18.59 on 469 ct) vs BTC+silver +$14.23. They keep logging.
                                  # platinum + WTI live Nov 9 ~1:30 PM ET (Alex OK), 1 contract, last 5 min,
@@ -291,12 +313,12 @@ early_contracts = 2              # MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET):
 # clear malfunction only; it never changes caps, stops, sizes or code, and never un-pauses.
 haiku_model = "claude-haiku-5-5"
 # Nov 12: escalations on Haiku too, and a hard daily dollar cap per AI job (Nov 11 the Copycat
-# boss spent $24 on Opus in one day). Push to Alex when the server's AI spend passes $1/day.
+# boss spent $24 on Opus in one day). Alex, Nov 11 9:57 PM ET: everything together under $1/day.
 opus_model = "claude-haiku-5-5"
 max_haiku_per_day = 120
 max_opus_per_day = 6
-daily_cap_usd = 0.75            # Foreman ~$0.35/day at list price (~96 Haiku checks)
-spend_alert_usd = 1.0
+daily_cap_usd = 0.55            # Foreman ~$0.35/day at list price; + Copycat boss $0.25 = $0.80 max (Alex: under $1)
+spend_alert_usd = 0.70
 realert_hours = 6
 auto_pause = true
 
