@@ -35,6 +35,7 @@ from .mentions import _series_markets
 NAME = "favorites"
 log = logging.getLogger("wxbot")
 DEFAULT_CATS = ("Elections", "Politics", "Entertainment")
+LAST_SCAN: dict = {}      # this run's open events, reused by the paper favorites_wide shadow
 
 
 def _vol(m: dict) -> float:
@@ -162,6 +163,8 @@ def propose(ctx) -> list[Intent]:
     except HttpError as exc:
         log.warning("favorites scan: %s", exc)
         return []
+    LAST_SCAN.clear()
+    LAST_SCAN.update(at=ctx.now, events=events)
     out = candidates(events, ctx.now, p, held_by_event(ctx.orders, NAME, ctx.mode))
     big = sum(1 for e in events if sum(_vol(m) for m in e["markets"]) >=
               float(p.get("min_event_volume", 1_000_000)))

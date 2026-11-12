@@ -177,6 +177,11 @@ record earns it. Be candid about odds and risk; no hype.
   days up, about 8 fills a month. Proposed to Alex Nov 12: Mentions to paper, Fed/CPI 1 -> 3
   contracts. Re-run: push research_main/fetch.py on the research branch (workflow
   main-audit-research, output on branch main-audit-data), then replay.py and analyze.py.
+- **Favorites decision-date shadow (PAPER, Nov 12):** `wxbot/strats/favorites_wide.py`,
+  `[trading.favorites_wide]`. Logs 1-contract paper orders on big-event favorites whose listed
+  close is far out but whose `expected_expiration_time` is within 7 days (mostly elections, which
+  the live 7-day close rule skips; replay Elections +6.5c). Reuses the live favorites scan, no
+  extra Kalshi calls, never places a market the live rule places. Real money needs Alex's OK.
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES
