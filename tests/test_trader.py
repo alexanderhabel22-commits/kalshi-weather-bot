@@ -824,3 +824,41 @@ def test_mentions_wide_paper_mode_even_when_trading_live():
     c = cfg(mode="live")
     sp = trader.strategy_settings(c, "mentions_wide", trader.settings(c))
     assert trader.strategy_mode("live", sp) == "paper"
+
+
+def test_favorites_wide_logs_decision_date_markets_on_paper():
+    from wxbot.strats import favorites, favorites_wide
+    c = cfg()
+    live, wide = c.raw["trading"]["favorites"], c.raw["trading"]["favorites_wide"]
+    assert wide["live"] is False
+    far = "2030-11-05T15:00:00Z"
+    soon = (NOW + timedelta(days=3)).isoformat().replace("+00:00", "Z")
+
+    def m(tk, close, exp=None, yb=0.90, ya=0.93):
+        d = {"ticker": tk, "event_ticker": tk.rsplit("-", 1)[0], "close_time": close,
+             "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": 900_000,
+             "title": tk}
+        if exp:
+            d["expected_expiration_time"] = exp
+        return d
+    events = [
+        {"event_ticker": "KXGOV-A", "category": "Elections",
+         "markets": [m("KXGOV-A-X", far, soon), m("KXGOV-A-Y", far, soon, 0.04, 0.06)]},
+        {"event_ticker": "KXRT-B", "category": "Entertainment",
+         "markets": [m("KXRT-B-X", soon, soon), m("KXRT-B-Y", soon, soon, 0.05, 0.07)]},
+        {"event_ticker": "KXGOV-C", "category": "Elections",
+         "markets": [m("KXGOV-C-X", far, far), m("KXGOV-C-Y", far, None, 0.05, 0.07)]},
+    ]
+    live_pick = {i.ticker for i in favorites.candidates(events, NOW, live, None)}
+    out = favorites_wide.extra(events, NOW, wide, live, None, None)
+    assert {i.ticker for i in out} == {"KXGOV-A-X", "KXGOV-A-Y"}
+    assert not ({i.ticker for i in out} & live_pick)
+    assert all(i.strategy == "favorites_wide" and i.count == 1 and i.close == far for i in out)
+    sides = {i.ticker: (i.side, i.price) for i in out}
+    assert sides["KXGOV-A-X"] == ("yes", 0.91) and sides["KXGOV-A-Y"] == ("no", 0.95)
+
+
+def test_favorites_wide_paper_mode_even_when_trading_live():
+    c = cfg(mode="live")
+    sp = trader.strategy_settings(c, "favorites_wide", trader.settings(c))
+    assert trader.strategy_mode("live", sp) == "paper"
