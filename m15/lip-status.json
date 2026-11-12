@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T23:10:59+00:00",
+ "at": "2026-11-12T23:26:43+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.97,
+ "resting_cost": 20.0,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -41,36 +41,6 @@
    "at": 1794524409.6977384,
    "mid0": 0.06
   },
-  "KXINSCOMMRACE-ND-28-D": {
-   "id": "01a1d202-3f08-708f-8aa2-e7ed440e4c6e",
-   "cid": "lip-d5caf911d9524a9b",
-   "side": "yes",
-   "px": 0.05,
-   "n": 50,
-   "filled": 0.0,
-   "at": 1794524725.970371,
-   "mid0": 0.062
-  },
-  "KXINSCOMMRACE-DE-28-R": {
-   "id": "01a1d202-5290-7bb3-9ea0-c0ecec43f99d",
-   "cid": "lip-78ce9482b6b34029",
-   "side": "yes",
-   "px": 0.06,
-   "n": 41,
-   "filled": 0.0,
-   "at": 1794524730.943275,
-   "mid0": 0.0735
-  },
-  "KXINSCOMMRACE-ND-28-R": {
-   "id": "01a1d202-6618-78a6-916c-d59860968ff5",
-   "cid": "lip-dee583d3cd98435a",
-   "side": "no",
-   "px": 0.06,
-   "n": 36,
-   "filled": 0.0,
-   "at": 1794524735.9432461,
-   "mid0": 0.9275
-  },
   "KXNASHVILLEMAYOR-27-JSTY": {
    "id": "01a1d202-79a0-7a17-acb1-9152a4f5d553",
    "cid": "lip-999cbc237d8e4abe",
@@ -100,6 +70,36 @@
    "filled": 0.0,
    "at": 1794525055.2598493,
    "mid0": 0.075
+  },
+  "KXINSCOMMRACE-ND-28-D": {
+   "id": "01a1d20c-0ec0-71e8-bdd6-7217ee2aa622",
+   "cid": "lip-763971897fe34ead",
+   "side": "yes",
+   "px": 0.06,
+   "n": 41,
+   "filled": 0.0,
+   "at": 1794525368.3871698,
+   "mid0": 0.0675
+  },
+  "KXINSCOMMRACE-DE-28-R": {
+   "id": "01a1d20c-2248-728b-8e04-a1c8651c6204",
+   "cid": "lip-64e27b06722943c5",
+   "side": "yes",
+   "px": 0.07,
+   "n": 35,
+   "filled": 0.0,
+   "at": 1794525373.3858414,
+   "mid0": 0.079
+  },
+  "KXINSCOMMRACE-ND-28-R": {
+   "id": "01a1d20c-35d0-76bf-a141-2333e8629702",
+   "cid": "lip-3e6b7bc9f4574ccf",
+   "side": "no",
+   "px": 0.07,
+   "n": 32,
+   "filled": 0.0,
+   "at": 1794525378.3904324,
+   "mid0": 0.9225
   }
  },
  "positions": {},
@@ -425,9 +425,9 @@
     "share": 0.0301
    },
    "KXINSCOMMRACE-ND-28-D": {
-    "ahead": 26303.0,
+    "ahead": 3257.2,
     "others": 1000.0,
-    "share": 0.0476
+    "share": 0.0394
    },
    "KXNASHVILLEMAYOR-27-LWIL": {
     "ahead": 509.1,
@@ -435,9 +435,9 @@
     "share": 0.0431
    },
    "KXINSCOMMRACE-DE-28-R": {
-    "ahead": 48833.0,
+    "ahead": 8992.4,
     "others": 1000.0,
-    "share": 0.0394
+    "share": 0.0338
    },
    "KXAUDITORRACE-UT-28-R": {
     "ahead": 0,
@@ -450,17 +450,17 @@
     "share": 0.0467
    },
    "KXINSCOMMRACE-ND-28-R": {
-    "ahead": 18918.0,
+    "ahead": 9218.0,
     "others": 1000.0,
-    "share": 0.0347
+    "share": 0.031
    },
    "KXNASHVILLEMAYOR-27-JSTY": {
-    "ahead": 11065.0,
+    "ahead": 4122.03,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXAUDITORRACE-UT-28-D": {
-    "ahead": 62995.0,
+    "ahead": 8210.65,
     "others": 1000.0,
     "share": 0.0234
    },
@@ -470,9 +470,9 @@
     "share": 0.0394
    },
    "KXAGRACE-UT-28-D": {
-    "ahead": 20601.55,
+    "ahead": 27047.96,
     "others": 1000.0,
-    "share": 0.0206
+    "share": 0.0177
    },
    "KXTREASRACE-UT-28-D": {
     "ahead": 0,
@@ -483,51 +483,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794449658,
-   "kind": "place",
-   "ticker": "KXTREASRACE-WA-28-D",
-   "side": "no",
-   "px": 0.08,
-   "n": 31,
-   "est_day": 2.4892
-  },
-  {
-   "t": 1794449661,
-   "kind": "cancel",
-   "ticker": "KXTREASRACE-VT-28-D",
-   "why": "up to 6c (reference price)"
-  },
-  {
-   "t": 1794449662,
-   "kind": "place",
-   "ticker": "KXTREASRACE-VT-28-D",
-   "side": "no",
-   "px": 0.06,
-   "n": 41,
-   "est_day": 2.4892
-  },
-  {
-   "t": 1794449668,
-   "kind": "cancel",
-   "ticker": "KXSOSRACE-WV-28-D",
-   "why": "up to 8c (reference price)"
-  },
-  {
-   "t": 1794449669,
-   "kind": "place",
-   "ticker": "KXSOSRACE-WV-28-D",
-   "side": "yes",
-   "px": 0.08,
-   "n": 31,
-   "est_day": 3.6088
-  },
-  {
-   "t": 1794450289,
-   "kind": "cancel",
-   "ticker": "KXTREASRACE-VT-28-D",
-   "why": "up to 7c (reference price)"
-  },
   {
    "t": 1794450290,
    "kind": "place",
@@ -1130,6 +1085,51 @@
    "side": "yes",
    "px": 0.07,
    "n": 18,
+   "est_day": 1.2792
+  },
+  {
+   "t": 1794525367,
+   "kind": "cancel",
+   "ticker": "KXINSCOMMRACE-ND-28-D",
+   "why": "up to 6c (reference price)"
+  },
+  {
+   "t": 1794525368,
+   "kind": "place",
+   "ticker": "KXINSCOMMRACE-ND-28-D",
+   "side": "yes",
+   "px": 0.06,
+   "n": 41,
+   "est_day": 1.5466
+  },
+  {
+   "t": 1794525372,
+   "kind": "cancel",
+   "ticker": "KXINSCOMMRACE-DE-28-R",
+   "why": "up to 7c (reference price)"
+  },
+  {
+   "t": 1794525373,
+   "kind": "place",
+   "ticker": "KXINSCOMMRACE-DE-28-R",
+   "side": "yes",
+   "px": 0.07,
+   "n": 35,
+   "est_day": 1.2792
+  },
+  {
+   "t": 1794525377,
+   "kind": "cancel",
+   "ticker": "KXINSCOMMRACE-ND-28-R",
+   "why": "up to 7c (reference price)"
+  },
+  {
+   "t": 1794525378,
+   "kind": "place",
+   "ticker": "KXINSCOMMRACE-ND-28-R",
+   "side": "no",
+   "px": 0.07,
+   "n": 32,
    "est_day": 1.2792
   }
  ]
