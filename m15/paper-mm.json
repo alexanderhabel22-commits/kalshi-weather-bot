@@ -46,7 +46,7 @@
    "cat": "Politics",
    "event": "KXHUANGTESTIFY-27JUL",
    "vol24": 65508.28,
-   "casual": 0.062
+   "casual": 0.052
   },
   "KXINXU-26NOV12H1200-T7639.9999": {
    "cat": "Financials",
@@ -58,13 +58,13 @@
    "cat": "Economics",
    "event": "KXAAAGASD-26NOV13",
    "vol24": 45201.4,
-   "casual": 0.069
+   "casual": 0.048
   },
   "KXRAIN-26NOV12-WPB": {
    "cat": "Climate and Weather",
    "event": "KXRAIN-26NOV12",
    "vol24": 41754.47,
-   "casual": 0.08
+   "casual": 0.087
   },
   "KXNASDAQ100U-26NOV12H1200-T28399.99": {
    "cat": "Financials",
@@ -82,25 +82,25 @@
    "cat": "Climate and Weather",
    "event": "KXHIGHNY-26NOV12",
    "vol24": 37476.96,
-   "casual": 0.553
+   "casual": 0.764
   },
   "KXGPT-ASTRA61-26NOV13": {
    "cat": "Science and Technology",
    "event": "KXGPT-ASTRA61",
    "vol24": 29656.14,
-   "casual": 0.053
+   "casual": 0.042
   },
   "KXRT-EBE-45": {
    "cat": "Entertainment",
    "event": "KXRT-EBE",
    "vol24": 28430.37,
-   "casual": 0.059
+   "casual": 0.066
   },
   "KXMIDTERMMOV-MSSEND-P0.6": {
    "cat": "Elections",
    "event": "KXMIDTERMMOV-MSSEND",
    "vol24": 26824.08,
-   "casual": 0.102
+   "casual": 0.126
   },
   "KXHUANGTESTIFY-27JUL-26DEC": {
    "cat": "Politics",
@@ -112,13 +112,13 @@
    "cat": "Entertainment",
    "event": "KXRT-EBE",
    "vol24": 23297.27,
-   "casual": 0.083
+   "casual": 0.086
   },
   "KXRAIN-26NOV12-LEX": {
    "cat": "Climate and Weather",
    "event": "KXRAIN-26NOV12",
    "vol24": 19113.54,
-   "casual": 0.183
+   "casual": 0.254
   }
  },
  "by_category": {
@@ -141,31 +141,31 @@
    "maker_fee_c": 0.38
   },
   "Science and Technology": {
-   "fills": 29,
+   "fills": 30,
    "market_hours": 0.4,
-   "fills_per_market_hour": 66.7,
-   "edge_at_fill_c": 0.03,
-   "markout_5m_c": -0.55,
-   "markout_30m_c": 0.11,
+   "fills_per_market_hour": 69.0,
+   "edge_at_fill_c": 0.0,
+   "markout_5m_c": -0.68,
+   "markout_30m_c": -0.05,
    "maker_fee_c": 0.2
   },
   "Mentions": {
-   "fills": 44,
+   "fills": 45,
    "market_hours": 3.5,
-   "fills_per_market_hour": 12.65,
-   "edge_at_fill_c": -3.01,
+   "fills_per_market_hour": 12.94,
+   "edge_at_fill_c": -2.94,
    "markout_5m_c": -2.39,
    "markout_30m_c": -1.95,
    "maker_fee_c": 0.39
   },
   "Entertainment": {
-   "fills": 14,
+   "fills": 16,
    "market_hours": 0.4,
-   "fills_per_market_hour": 32.2,
-   "edge_at_fill_c": -1.57,
-   "markout_5m_c": -1.43,
-   "markout_30m_c": -4.14,
-   "maker_fee_c": 0.37
+   "fills_per_market_hour": 36.8,
+   "edge_at_fill_c": -2.12,
+   "markout_5m_c": -1.87,
+   "markout_30m_c": -3.8,
+   "maker_fee_c": 0.38
   },
   "Economics": {
    "fills": 4,
@@ -177,13 +177,13 @@
    "maker_fee_c": 0.36
   },
   "Politics": {
-   "fills": 13,
+   "fills": 16,
    "market_hours": 0.9,
-   "fills_per_market_hour": 14.95,
-   "edge_at_fill_c": -0.46,
-   "markout_5m_c": -0.42,
-   "markout_30m_c": -0.62,
-   "maker_fee_c": 0.37
+   "fills_per_market_hour": 18.4,
+   "edge_at_fill_c": -0.28,
+   "markout_5m_c": -0.3,
+   "markout_30m_c": -0.47,
+   "maker_fee_c": 0.36
   },
   "Financials": {
    "fills": 25,
@@ -197,11 +197,11 @@
  },
  "by_flow": {
   "20to50|no": {
-   "fills": 14,
+   "fills": 15,
    "settled": 5,
    "markout_30m_c": 0.05,
    "settled_c": 7.6,
-   "maker_fee_c": 0.35
+   "maker_fee_c": 0.36
   },
   "20to50|yes": {
    "fills": 9,
@@ -225,21 +225,21 @@
    "maker_fee_c": 0.23
   },
   "under20|no": {
-   "fills": 13,
+   "fills": 16,
    "settled": 1,
-   "markout_30m_c": -6.63,
+   "markout_30m_c": -5.52,
    "settled_c": -18.0,
-   "maker_fee_c": 0.32
-  },
-  "under20|yes": {
-   "fills": 12,
-   "settled": 0,
-   "markout_30m_c": -5.5,
-   "settled_c": null,
    "maker_fee_c": 0.33
   },
+  "under20|yes": {
+   "fills": 14,
+   "settled": 0,
+   "markout_30m_c": -5.15,
+   "settled_c": null,
+   "maker_fee_c": 0.31
+  },
   "unknown|no": {
-   "fills": 21,
+   "fills": 22,
    "settled": 0,
    "markout_30m_c": -1.85,
    "settled_c": null,
@@ -262,7 +262,7 @@
   "candidates": 1171
  },
  "pending": 9,
- "held": 94,
+ "held": 101,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -294,24 +294,24 @@
   "KXLLM1-26NOV16-GOOG": -4,
   "KXTRUMPSAYCOMPANY-26DEC01-TIKT": -1,
   "KXNVDACEO-29JAN-CKRE": -1,
-  "KXMIDTERMMOV-MSSEND-P0.6": -1,
+  "KXMIDTERMMOV-MSSEND-P0.6": -2,
   "KXMIDTERMMOV-MSSEND-P0.5": 0,
   "KXRT-EBE-50": -4,
   "KXBABELMANDEBWEEKLY-26NOV15-T180": -1,
   "KXCAWEALTHTAXMOVD-CAWEALTHTAX26NO-NO-P4": 2,
-  "KXRT-EBE-40": 1,
+  "KXRT-EBE-40": 0,
   "KXTRUMPSAY-26NOV16-DIES": -1,
   "KXNVDACEO-29JAN-IBUC": -1,
   "KXHEGSETHOUT-26APR-27FEB01": 1,
-  "KXGPT-ASTRA61-26NOV13": 3,
-  "KXRT-EBE-45": 0,
+  "KXGPT-ASTRA61-26NOV13": 4,
+  "KXRT-EBE-45": 1,
   "KXEARNINGSMENTIONNVDA-26NOV18-RESI": 0,
-  "KXHUANGTESTIFY-27JUL-27JAN": -1,
+  "KXHUANGTESTIFY-27JUL-27JAN": 0,
   "KXNASDAQ100U-26NOV12H1600-T28389.99": 2,
   "KXHUANGTESTIFY-27JUL-26DEC": -2,
   "KXAAAGASD-26NOV13-3.8700": -1,
   "KXRAIN-26NOV12-WPB": 1,
   "KXRAIN-26NOV12-LEX": -1
  },
- "at": "2026-11-12T22:06:13+00:00"
+ "at": "2026-11-12T23:14:13+00:00"
 }
