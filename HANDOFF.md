@@ -179,11 +179,11 @@ record earns it. Be candid about odds and risk; no hype.
   Mentions to paper, Fed/CPI 1 -> 3 contracts. Late-day lows 1 -> 2 after its ~Nov 26 review if it holds. Re-run: push research_main/fetch.py on the research branch (workflow
   main-audit-research, output on branch main-audit-data), then replay.py and analyze.py.
 - **Fed/CPI fade on weekly gas + jobless claims (PAPER, Nov 12):** `wxbot/strats/macro_wide.py`,
-  `[trading.macro_wide]`. Same rule as macro_fade on KXAAAGASW and KXJOBLESSCLAIMS. Replay of 11
+  `[trading.macro_wide]` (REAL 1-contract test since Nov 12, Alex OK). Same rule as macro_fade on KXAAAGASW and KXJOBLESSCLAIMS. Replay of 11
   extra scheduled-number series (Nov 2025-Nov 2026): these two +6.6c +- 2.7 per fill over 90 weekly
   events; payrolls -33c (left out), TSA/diesel ~0. Picked 2 of 11, so paper first.
 - **Favorites decision-date shadow (PAPER, Nov 12):** `wxbot/strats/favorites_wide.py`,
-  `[trading.favorites_wide]`. Logs 1-contract paper orders on big-event favorites whose listed
+  `[trading.favorites_wide]` (REAL 1-contract test since Nov 12, Alex OK). Places 1-contract orders on big-event favorites whose listed
   close is far out but whose `expected_expiration_time` is within 7 days (mostly elections, which
   the live 7-day close rule skips; replay Elections +6.5c). Reuses the live favorites scan, no
   extra Kalshi calls, never places a market the live rule places. Real money needs Alex's OK.
