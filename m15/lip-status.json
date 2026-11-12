@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T00:03:40+00:00",
+ "at": "2026-11-12T00:19:19+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.88,
+ "resting_cost": 19.87,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -30,16 +30,6 @@
    "filled": 0.0,
    "at": 1794424876.6815882,
    "mid0": 0.068
-  },
-  "KXSENATENOM-SCD-28-BWEB": {
-   "id": "01a1ccd7-8da8-7abe-9dc3-596aeb0e543a",
-   "cid": "lip-b6dc4e761b534d0f",
-   "side": "yes",
-   "px": 0.03,
-   "n": 83,
-   "filled": 0.0,
-   "at": 1794438041.099724,
-   "mid0": 0.0545
   },
   "KXTREASRACE-VT-28-D": {
    "id": "01a1cce1-5d60-7213-b144-ab05d5606259",
@@ -90,6 +80,16 @@
    "filled": 0.0,
    "at": 1794439946.5463912,
    "mid0": 0.0785
+  },
+  "KXSENATENOM-SCD-28-BWEB": {
+   "id": "01a1cd15-ee68-75dc-a841-e5ef3d8f0ec3",
+   "cid": "lip-b6668c8765ba4932",
+   "side": "yes",
+   "px": 0.04,
+   "n": 62,
+   "filled": 0.0,
+   "at": 1794442129.4742072,
+   "mid0": 0.0595
   }
  },
  "positions": {},
@@ -387,7 +387,7 @@
    "KXSENATENOM-SCD-28-BWEB": {
     "ahead": 0,
     "others": 1000.0,
-    "share": 0.0766
+    "share": 0.0584
    },
    "KXTREASRACE-WA-28-R": {
     "ahead": 0,
@@ -418,24 +418,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794408375,
-   "kind": "place",
-   "ticker": "KXBRCHAMBERPRES-27FEB01-SCAV",
-   "side": "yes",
-   "px": 0.03,
-   "n": 80,
-   "est_day": 1.7859
-  },
-  {
-   "t": 1794408377,
-   "kind": "place",
-   "ticker": "KXBRCHAMBERPRES-27FEB01-ACOR",
-   "side": "yes",
-   "px": 0.03,
-   "n": 80,
-   "est_day": 1.7859
-  },
   {
    "t": 1794408379,
    "kind": "place",
@@ -1049,6 +1031,21 @@
    "px": 0.07,
    "n": 35,
    "est_day": 3.6088
+  },
+  {
+   "t": 1794442128,
+   "kind": "cancel",
+   "ticker": "KXSENATENOM-SCD-28-BWEB",
+   "why": "up to 4c (reference price)"
+  },
+  {
+   "t": 1794442129,
+   "kind": "place",
+   "ticker": "KXSENATENOM-SCD-28-BWEB",
+   "side": "yes",
+   "px": 0.04,
+   "n": 62,
+   "est_day": 3.6874
   }
  ]
 }
