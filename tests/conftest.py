@@ -18,3 +18,9 @@ def clean_dirs():
         shutil.rmtree(d, ignore_errors=True)
         os.makedirs(d, exist_ok=True)
     yield
+
+
+@pytest.fixture(autouse=True)
+def no_aicost_network(monkeypatch):
+    from wxbot import aicost
+    monkeypatch.setattr(aicost, "_get", lambda path: None)   # reports never hit GitHub in tests

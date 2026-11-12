@@ -720,6 +720,9 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
             state.setdefault("alerted", {})[key] = now
     spend = ai_spend(gh, budget, now)
     rec["ai_spend"] = spend
+    hist = state.setdefault("ai_history", {})
+    hist[spend["day"]] = max(spend["total"], hist.get(spend["day"], 0.0))
+    state["ai_history"] = dict(sorted(hist.items())[-400:])
     if spend["total"] > s["spend_alert_usd"] and state.get("spend_alerted") != spend["day"]:
         state["spend_alerted"] = spend["day"]
         parts = ", ".join(f"{k} ${v:.2f}" for k, v in spend["by"].items())
@@ -736,7 +739,7 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
     write_json(state_path, state)
     try:
         out = {"last": rec, "today": {k: state.get(k) for k in ("day", "haiku", "opus", "tokens")},
-               "ai_spend": spend, "spend_history": budget.summary().get("history", {}),
+               "ai_spend": spend, "ai_history": state["ai_history"],
                "notes": state.get("notes", []), "journal": state.get("journal", []),
                "log": state["log"], "digest": text}
         gh.put("m15/watch.json", json.dumps(out, indent=1, default=str),

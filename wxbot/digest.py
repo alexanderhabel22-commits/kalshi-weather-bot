@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import daybefore, ledger, notify, trader
+from . import aicost, daybefore, ledger, notify, trader
 from .util import BANKROLL_FILE, DATA_DIR, parse_iso, read_json, write_json
 
 REPORTS = DATA_DIR.parent / "reports"     # repo/reports (next to data/)
@@ -144,7 +144,7 @@ def _money(x):
     return f"{'+' if x >= 0 else '-'}${abs(x):.2f}"
 
 
-def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tuple[str, str]:
+def build(kind: str, start: date, end: date, results: list[Result], cfg, ai: dict | None = None) -> tuple[str, str]:
     """Markdown report for [start, end] and a 1-3 line phone summary."""
     period = [r for r in results if start <= r.day <= end]
     groups = defaultdict(list)
@@ -163,7 +163,13 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tupl
     bal = f" Balance now **${float(bank['total']):.2f}**." if bank.get("total") is not None else ""
     lines = [f"# {title}", "",
              f"Real money (the bot's live orders): **{_money(tot['pnl'])}** on "
-             f"{tot['trades']} results.{bal} Practice and old-alert results are not money.", "",
+             f"{tot['trades']} results.{bal} Practice and old-alert results are not money.", ""]
+    net = aicost.period(ai, start, end) if ai else None
+    if net:
+        n = tot["pnl"] + net["m15"] - net["ai"]
+        lines += [f"**After AI cost:** main bot {_money(tot['pnl'])} + 15-min bot {_money(net['m15'])} "
+                  f"- Claude API {_money(net['ai'])[1:]} = **{_money(n)}** net.", ""]
+    lines += [
              "| Strategy | Mode | Results | Won | P&L | Return | Per contract | All-time P&L |",
              "|---|---|---|---|---|---|---|---|"]
     keys = sorted(set(groups) | set(alltime))
@@ -194,7 +200,11 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg) -> tupl
     if kind in ("weekly", "monthly"):
         lines += _detail(period, start, end, kind)
     lines += ["", "_Generated automatically by the bot._", ""]
-    return "\n".join(lines), phone_text(groups, alltime, tot, rows, bank)
+    phone = phone_text(groups, alltime, tot, rows, bank)
+    if net:
+        phone += (f"\nAI cost {_money(net['ai'])[1:]} · net after AI (main + 15-min) "
+                  f"{_money(tot['pnl'] + net['m15'] - net['ai'])}")
+    return "\n".join(lines), phone
 
 
 def phone_text(groups, alltime, tot, rows, bank) -> str:
@@ -312,8 +322,9 @@ def run_due(cfg, now: datetime, http, dry_run: bool = False) -> list[Path]:
         return []
     results = collect(tz, str(cfg.get("alerts", "edge_alerts", "off")).lower() == "shadow")
     written = []
+    ai = aicost.load()
     for kind, start, end, tag in todo:
-        text, phone = build(kind, start, end, results, cfg)
+        text, phone = build(kind, start, end, results, cfg, ai)
         path = REPORTS / kind / f"{tag}.md"
         if not dry_run:
             path.parent.mkdir(parents=True, exist_ok=True)
