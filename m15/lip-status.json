@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T05:04:16+00:00",
+ "at": "2026-11-12T05:20:02+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.37,
+ "resting_cost": 19.99,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -61,16 +61,6 @@
    "at": 1794459533.5200064,
    "mid0": 0.064
   },
-  "KXAUDITORRACE-UT-28-R": {
-   "id": "01a1ce1f-8698-7cd5-9e60-21db113c4186",
-   "cid": "lip-c9cff1a6367a4896",
-   "side": "no",
-   "px": 0.04,
-   "n": 45,
-   "filled": 0.0,
-   "at": 1794459535.5253046,
-   "mid0": 0.9275
-  },
   "KXNASHVILLEMAYOR-27-LWIL": {
    "id": "01a1ce24-4958-7634-810a-ec61164ba05b",
    "cid": "lip-7965371b1ef84df3",
@@ -81,16 +71,6 @@
    "at": 1794459847.758105,
    "mid0": 0.0535
   },
-  "KXINSCOMMRACE-MS-27-R": {
-   "id": "01a1ce24-58f8-7124-9e75-733e1967b74f",
-   "cid": "lip-c48c90e535bc4a5e",
-   "side": "no",
-   "px": 0.04,
-   "n": 57,
-   "filled": 0.0,
-   "at": 1794459851.7896893,
-   "mid0": 0.933
-  },
   "KXINSCOMMRACE-ND-28-R": {
    "id": "01a1ce24-60c8-7ee5-9a53-992620b4f20f",
    "cid": "lip-276fa973498544cf",
@@ -100,6 +80,26 @@
    "filled": 0.0,
    "at": 1794459853.756753,
    "mid0": 0.9385
+  },
+  "KXINSCOMMRACE-MS-27-R": {
+   "id": "01a1ce2d-fdb8-78f5-b53f-cd7725da09a0",
+   "cid": "lip-661934540aa94523",
+   "side": "no",
+   "px": 0.05,
+   "n": 46,
+   "filled": 0.0,
+   "at": 1794460483.3881016,
+   "mid0": 0.93
+  },
+  "KXAUDITORRACE-UT-28-R": {
+   "id": "01a1ce32-c848-77b8-8685-31808c5aa3ec",
+   "cid": "lip-2d30c73050194d4a",
+   "side": "no",
+   "px": 0.06,
+   "n": 40,
+   "filled": 0.0,
+   "at": 1794460797.6384294,
+   "mid0": 0.9195
   }
  },
  "positions": {},
@@ -430,9 +430,9 @@
     "share": 0.0766
    },
    "KXNASHVILLEMAYOR-27-LWIL": {
-    "ahead": 15052.0,
+    "ahead": 0,
     "others": 1000.0,
-    "share": 0.0366
+    "share": 0.0539
    },
    "KXINSCOMMRACE-DE-28-R": {
     "ahead": 0,
@@ -440,53 +440,24 @@
     "share": 0.0431
    },
    "KXAUDITORRACE-UT-28-R": {
-    "ahead": 99779.0,
+    "ahead": 92425.0,
     "others": 1000.0,
-    "share": 0.0431
+    "share": 0.0458
+   },
+   "KXINSCOMMRACE-MS-27-R": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.044
+   },
+   "KXINSCOMMRACE-ND-28-R": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.0319
    }
   }
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794437397,
-   "kind": "cancel",
-   "ticker": "KXEVERIFYLAW-26NOV",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794437399,
-   "kind": "cancel",
-   "ticker": "KXBRCHAMBERPRES-27FEB01-LPOB",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794437401,
-   "kind": "cancel",
-   "ticker": "KXAUDITORRACE-ND-28-R",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794437403,
-   "kind": "cancel",
-   "ticker": "KXAUDITORRACE-MS-27-D",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794437405,
-   "kind": "cancel",
-   "ticker": "KXAGCOMMRACE-WV-28-R",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794437408,
-   "kind": "place",
-   "ticker": "KXSENATENOM-SCD-28-BBRO",
-   "side": "yes",
-   "px": 0.02,
-   "n": 125,
-   "est_day": 3.6874
-  },
   {
    "t": 1794437410,
    "kind": "place",
@@ -1059,6 +1030,51 @@
    "side": "no",
    "px": 0.04,
    "n": 33,
+   "est_day": 1.8961
+  },
+  {
+   "t": 1794460167,
+   "kind": "cancel",
+   "ticker": "KXAUDITORRACE-UT-28-R",
+   "why": "up to 5c (reference price)"
+  },
+  {
+   "t": 1794460168,
+   "kind": "place",
+   "ticker": "KXAUDITORRACE-UT-28-R",
+   "side": "no",
+   "px": 0.05,
+   "n": 48,
+   "est_day": 1.8961
+  },
+  {
+   "t": 1794460482,
+   "kind": "cancel",
+   "ticker": "KXINSCOMMRACE-MS-27-R",
+   "why": "up to 5c (reference price)"
+  },
+  {
+   "t": 1794460483,
+   "kind": "place",
+   "ticker": "KXINSCOMMRACE-MS-27-R",
+   "side": "no",
+   "px": 0.05,
+   "n": 46,
+   "est_day": 1.8961
+  },
+  {
+   "t": 1794460797,
+   "kind": "cancel",
+   "ticker": "KXAUDITORRACE-UT-28-R",
+   "why": "up to 6c (reference price)"
+  },
+  {
+   "t": 1794460798,
+   "kind": "place",
+   "ticker": "KXAUDITORRACE-UT-28-R",
+   "side": "no",
+   "px": 0.06,
+   "n": 40,
    "est_day": 1.8961
   }
  ]
