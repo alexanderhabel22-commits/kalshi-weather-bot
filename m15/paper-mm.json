@@ -52,19 +52,19 @@
    "cat": "Entertainment",
    "event": "KXRT-HOWT",
    "vol24": 28669.09,
-   "casual": 0.045
+   "casual": 0.272
   },
   "KXRAIN-26NOV11-LEX": {
    "cat": "Climate and Weather",
    "event": "KXRAIN-26NOV11",
    "vol24": 27807.3,
-   "casual": 0.464
+   "casual": 0.606
   },
   "KXLAGOVISITCOUNT-26NOV-5": {
    "cat": "Politics",
    "event": "KXLAGOVISITCOUNT-26NOV",
    "vol24": 27326.66,
-   "casual": 0.0
+   "casual": 0.007
   },
   "KXHOUSETURNOUT-26NOV03-115": {
    "cat": "Elections",
@@ -100,7 +100,7 @@
    "cat": "Elections",
    "event": "KXMIDTERMMOV-MSSEND",
    "vol24": 10948.02,
-   "casual": 0.459
+   "casual": 0.416
   },
   "KXCPI-26NOV-T0.0": {
    "cat": "Economics",
@@ -123,12 +123,12 @@
  },
  "by_category": {
   "Elections": {
-   "fills": 16,
+   "fills": 21,
    "market_hours": 0.9,
-   "fills_per_market_hour": 18.4,
-   "edge_at_fill_c": -1.5,
-   "markout_5m_c": 0.78,
-   "markout_30m_c": 0.47,
+   "fills_per_market_hour": 24.15,
+   "edge_at_fill_c": -2.38,
+   "markout_5m_c": -1.27,
+   "markout_30m_c": -0.76,
    "maker_fee_c": 0.33
   },
   "Climate and Weather": {
@@ -141,20 +141,20 @@
    "maker_fee_c": 0.4
   },
   "Science and Technology": {
-   "fills": 14,
+   "fills": 16,
    "market_hours": 0.4,
-   "fills_per_market_hour": 32.2,
-   "edge_at_fill_c": 0.39,
-   "markout_5m_c": 0.43,
-   "markout_30m_c": 0.18,
+   "fills_per_market_hour": 36.8,
+   "edge_at_fill_c": 0.41,
+   "markout_5m_c": 0.12,
+   "markout_30m_c": -0.09,
    "maker_fee_c": 0.18
   },
   "Mentions": {
-   "fills": 29,
+   "fills": 30,
    "market_hours": 3.5,
-   "fills_per_market_hour": 8.34,
-   "edge_at_fill_c": -2.97,
-   "markout_5m_c": -3.57,
+   "fills_per_market_hour": 8.62,
+   "edge_at_fill_c": -2.73,
+   "markout_5m_c": -3.3,
    "markout_30m_c": -3.24,
    "maker_fee_c": 0.39
   },
@@ -177,13 +177,13 @@
    "maker_fee_c": 0.42
   },
   "Politics": {
-   "fills": 4,
+   "fills": 6,
    "market_hours": 0.9,
-   "fills_per_market_hour": 4.6,
-   "edge_at_fill_c": -1.12,
-   "markout_5m_c": -0.75,
-   "markout_30m_c": -0.75,
-   "maker_fee_c": 0.39
+   "fills_per_market_hour": 6.9,
+   "edge_at_fill_c": -0.75,
+   "markout_5m_c": -0.5,
+   "markout_30m_c": -0.58,
+   "maker_fee_c": 0.4
   },
   "Financials": {
    "fills": 14,
@@ -197,32 +197,32 @@
  },
  "by_flow": {
   "20to50|no": {
-   "fills": 4,
+   "fills": 5,
    "settled": 0,
-   "markout_30m_c": 0.38,
+   "markout_30m_c": 3.12,
    "settled_c": null,
-   "maker_fee_c": 0.39
+   "maker_fee_c": 0.36
   },
   "20to50|yes": {
-   "fills": 1,
+   "fills": 3,
    "settled": 0,
-   "markout_30m_c": -10.5,
+   "markout_30m_c": -16.03,
    "settled_c": null,
-   "maker_fee_c": 0.37
+   "maker_fee_c": 0.35
   },
   "50plus|no": {
-   "fills": 4,
+   "fills": 6,
    "settled": 0,
-   "markout_30m_c": -5.0,
+   "markout_30m_c": -3.42,
    "settled_c": null,
-   "maker_fee_c": 0.33
+   "maker_fee_c": 0.36
   },
   "50plus|yes": {
-   "fills": 2,
+   "fills": 4,
    "settled": 0,
-   "markout_30m_c": 12.0,
+   "markout_30m_c": 5.0,
    "settled_c": null,
-   "maker_fee_c": 0.24
+   "maker_fee_c": 0.22
   },
   "under20|yes": {
    "fills": 1,
@@ -232,22 +232,22 @@
    "maker_fee_c": 0.34
   },
   "unknown|no": {
-   "fills": 12,
+   "fills": 13,
    "settled": 0,
    "markout_30m_c": -0.3,
    "settled_c": null,
    "maker_fee_c": 0.34
   },
   "unknown|yes": {
-   "fills": 13,
+   "fills": 15,
    "settled": 0,
-   "markout_30m_c": -0.5,
+   "markout_30m_c": -0.25,
    "settled_c": null,
    "maker_fee_c": 0.29
   }
  },
- "pending": 7,
- "held": 24,
+ "pending": 4,
+ "held": 31,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -3,
   "KXRAIN-26NOV11-CMH": 0,
@@ -255,7 +255,7 @@
   "KXRAIN-26NOV11-MKE": 1,
   "KXNASDAQ100U-26NOV11H1000-T28189.99": 2,
   "KXINXU-26NOV11H1000-T7579.9999": -1,
-  "KXLLM1-26NOV16-ANTH": -3,
+  "KXLLM1-26NOV16-ANTH": -1,
   "KXHOUSETURNOUT-26NOV03-115": -3,
   "KXEARNINGSMENTIONKR-26DEC03-SHRI": -1,
   "KXTRUMPSAY-26NOV16-CEAS": -2,
@@ -268,11 +268,12 @@
   "KXTRUMPSAYCOMPANY-26DEC01-ABNB": 1,
   "KXWORLDNEWSMENTION-26NOV11-HEGS": -3,
   "KXWORLDNEWSMENTION-26NOV11-BESS": -1,
-  "KXHEGSETHOUT-26APR-27APR01": -3,
-  "KXRAIN-26NOV11-LEX": 1,
+  "KXHEGSETHOUT-26APR-27APR01": -4,
+  "KXRAIN-26NOV11-LEX": 0,
   "KXMIDTERMMOV-MSSEND-P0.7": 0,
   "KXCPI-26NOV-T0.0": -1,
-  "SENATENC-28-R": 1
+  "SENATENC-28-R": 1,
+  "KXLEADERSALL-27JAN15": 1
  },
- "at": "2026-11-12T01:06:34+00:00"
+ "at": "2026-11-12T03:05:03+00:00"
 }
