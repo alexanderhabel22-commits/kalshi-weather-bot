@@ -503,7 +503,9 @@ def test_only_approved_strategies_trade_real_money():
             if trader.strategy_mode(c.raw["trading"]["mode"], c.raw["trading"].get(n, {})) == "live"}
     # Alex, Nov 11 2:18 PM ET: late-day lows (weather_late) live in its place, 1 contract.
     # Alex, Nov 12 2:34 PM ET: Mentions back to paper (no edge in the audit), Fed/CPI 1 -> 3.
-    assert live == {"favorites", "macro_fade", "weather_late"}
+    # Alex, Nov 12 2:38 PM ET ("ok testing with real money"): the two new rules at 1 contract.
+    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide"}
+    assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 1
     assert c.raw["trading"]["macro_fade"]["contracts"] == 3
     wl = c.raw["trading"]["weather_late"]
     assert wl["contracts"] == 1 and wl["max_open_pct"] <= 0.15 and wl["metrics"] == ["low"] and wl["kinds"] == ["need"]
@@ -832,7 +834,6 @@ def test_favorites_wide_logs_decision_date_markets_on_paper():
     from wxbot.strats import favorites, favorites_wide
     c = cfg()
     live, wide = c.raw["trading"]["favorites"], c.raw["trading"]["favorites_wide"]
-    assert wide["live"] is False
     far = "2030-11-05T15:00:00Z"
     soon = (NOW + timedelta(days=3)).isoformat().replace("+00:00", "Z")
 
@@ -860,18 +861,9 @@ def test_favorites_wide_logs_decision_date_markets_on_paper():
     assert sides["KXGOV-A-X"] == ("yes", 0.91) and sides["KXGOV-A-Y"] == ("no", 0.95)
 
 
-def test_favorites_wide_paper_mode_even_when_trading_live():
-    c = cfg(mode="live")
-    sp = trader.strategy_settings(c, "favorites_wide", trader.settings(c))
-    assert trader.strategy_mode("live", sp) == "paper"
-
-
 def test_macro_wide_is_paper_and_relabels_macro_fade_picks():
     from wxbot.strats import macro_fade, macro_wide
     c = cfg(mode="live")
-    sp = trader.strategy_settings(c, "macro_wide", trader.settings(c))
-    assert c.raw["trading"]["macro_wide"]["live"] is False
-    assert trader.strategy_mode("live", sp) == "paper"
     close = (NOW + timedelta(days=3)).isoformat().replace("+00:00", "Z")
     ms = [{"ticker": f"KXJOBLESSCLAIMS-26NOV19-{k}", "event_ticker": "KXJOBLESSCLAIMS-26NOV19",
            "close_time": close, "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}",
