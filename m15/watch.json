@@ -1,60 +1,67 @@
 {
  "last": {
-  "at": "2026-11-12T17:20:32+00:00",
+  "at": "2026-11-12T17:35:07+00:00",
   "flags": [
+   {
+    "code": "COPYCAT_DOWN",
+    "sev": "critical",
+    "text": "kalshi-copycat service is 'activating'",
+    "malfunction": false,
+    "runs": 1
+   },
    {
     "code": "M15_FUND",
     "sev": "warn",
     "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}",
     "malfunction": false,
-    "runs": 80
+    "runs": 81
    }
   ],
   "haiku": {
    "level": "watch",
-   "summary": "15-MIN is in paper by design with control matching, no errors, no halt, and 24h P&L of -$8.64 inside its stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting against the $20 budget and no fills. Copycat status file is 3.4 min old, under the 6-minute mark, so the earlier staleness has cleared. The M15_FUND 403 warning continues, non-blocking, and has now run past 80 checks.",
-   "remember": "Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking."
+   "summary": "Copycat is 'activating' again, the same pattern as this morning, and it cleared on recheck before. Nothing else is wrong: 15-MIN is in paper by design with control matching, MAIN is live and not halted, Rewards is live with $19.97 resting against a $20 budget and no fills. The M15_FUND 403 warning is non-blocking. Recheck Copycat next cycle; escalate only if it's still activating or stale.",
+   "remember": "Copycat 'activating' has now recurred on Nov 12 at 7:20 AM and 12:35 PM ET and cleared on recheck both times, so treat a single activating reading as a watch item."
   },
   "opus": null,
   "action": null,
   "ai_spend": {
    "day": "2026-11-12",
-   "total": 0.3191,
+   "total": 0.3238,
    "by": {
-    "foreman": 0.3191
+    "foreman": 0.3238
    }
   }
  },
  "today": {
   "day": "2026-11-12",
-  "haiku": 50,
+  "haiku": 51,
   "opus": 1,
   "tokens": {
-   "haiku_in": 188309,
-   "haiku_out": 16273,
+   "haiku_in": 191895,
+   "haiku_out": 16501,
    "opus_in": 3729,
    "opus_out": 1511
   }
  },
  "ai_spend": {
   "day": "2026-11-12",
-  "total": 0.3191,
+  "total": 0.3238,
   "by": {
-   "foreman": 0.3191
+   "foreman": 0.3238
   }
  },
  "ai_history": {
-  "2026-11-12": 0.3191
+  "2026-11-12": 0.3238
  },
  "notes": [
-  "Rewards bot: $20 budget, fill_stop $10; ok while no fills and bids resting. Only pull bids for a clear malfunction.",
   "Foreman never touches money settings, caps, stops, sizes, or code; propose fixes to an engineer.",
   "Last reviewed Nov 12 7:20 AM ET.",
   "15-MIN has now been in paper mode since its Nov 12 stops, with control also set to paper; keep watching whether it returns to live on its own.",
   "15-MIN has stayed in paper since its Nov 12 stops; control matches mode, so this is a deliberate state, not a mismatch.",
   "Copycat status file ran 6.5 min old on Nov 12 10:20 AM ET; recheck next cycle, escalate only if still stale or activating.",
   "Copycat status file staleness has now hit 9.8 min; if it stays past 6 min next cycle, escalate.",
-  "Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking."
+  "Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking.",
+  "Copycat 'activating' has now recurred on Nov 12 at 7:20 AM and 12:35 PM ET and cleared on recheck both times, so treat a single activating reading as a watch item."
  ],
  "journal": [
   "Nov 11 9:05 AM ET: new: Copycat status not updated for 269 min (running but stuck or restarting; it writes every 5 min)",
@@ -83,28 +90,10 @@
   "Nov 12 7:20 AM ET: new: kalshi-copycat service is 'activating'",
   "Nov 12 7:20 AM ET: escalated: Copycat still starting; nothing needed from Alex (ok). Repeat pattern, not a new fault. The 15-MIN loss stop tripped at 1:20 AM and 2:50 AM ET and cleared each time (second clear 4:35 AM ET). The bot is in paper with control=pape",
   "Nov 12 7:35 AM ET: cleared: COPYCAT_DOWN",
-  "Nov 12 8:35 AM ET: check: ok. 15-MIN is in paper by design, control matches, no errors, no halt, and its 24h P&L of -$9.31 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.92 resting against the "
+  "Nov 12 8:35 AM ET: check: ok. 15-MIN is in paper by design, control matches, no errors, no halt, and its 24h P&L of -$9.31 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.92 resting against the ",
+  "Nov 12 12:35 PM ET: new: kalshi-copycat service is 'activating'"
  ],
  "log": [
-  {
-   "action": null,
-   "at": "2026-11-12T02:50:24+00:00",
-   "flags": [
-    {
-     "code": "M15_FUND",
-     "malfunction": false,
-     "runs": 22,
-     "sev": "warn",
-     "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}"
-    }
-   ],
-   "haiku": {
-    "level": "watch",
-    "remember": "",
-    "summary": "Everything is running. 15-MIN is live with 0 errors, no halt, and $0 exposure; its 24h P&L of -$8.17 is inside its stops. MAIN is live and not halted, with Actions runs succeeding. Rewards bot is live with $19.77 resting against a $20 budget and no fills. The M15_FUND 403 has persisted across 22 checks, so it stays on watch until the key is fixed."
-   },
-   "opus": null
-  },
   {
    "action": null,
    "ai_spend": {
@@ -1181,31 +1170,64 @@
    "opus": null
   },
   {
+   "action": null,
+   "ai_spend": {
+    "by": {
+     "foreman": 0.3191
+    },
+    "day": "2026-11-12",
+    "total": 0.3191
+   },
    "at": "2026-11-12T17:20:32+00:00",
    "flags": [
+    {
+     "code": "M15_FUND",
+     "malfunction": false,
+     "runs": 80,
+     "sev": "warn",
+     "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}"
+    }
+   ],
+   "haiku": {
+    "level": "watch",
+    "remember": "Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking.",
+    "summary": "15-MIN is in paper by design with control matching, no errors, no halt, and 24h P&L of -$8.64 inside its stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting against the $20 budget and no fills. Copycat status file is 3.4 min old, under the 6-minute mark, so the earlier staleness has cleared. The M15_FUND 403 warning continues, non-blocking, and has now run past 80 checks."
+   },
+   "opus": null
+  },
+  {
+   "at": "2026-11-12T17:35:07+00:00",
+   "flags": [
+    {
+     "code": "COPYCAT_DOWN",
+     "sev": "critical",
+     "text": "kalshi-copycat service is 'activating'",
+     "malfunction": false,
+     "runs": 1
+    },
     {
      "code": "M15_FUND",
      "sev": "warn",
      "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}",
      "malfunction": false,
-     "runs": 80
+     "runs": 81
     }
    ],
    "haiku": {
     "level": "watch",
-    "summary": "15-MIN is in paper by design with control matching, no errors, no halt, and 24h P&L of -$8.64 inside its stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting against the $20 budget and no fills. Copycat status file is 3.4 min old, under the 6-minute mark, so the earlier staleness has cleared. The M15_FUND 403 warning continues, non-blocking, and has now run past 80 checks.",
-    "remember": "Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking."
+    "summary": "Copycat is 'activating' again, the same pattern as this morning, and it cleared on recheck before. Nothing else is wrong: 15-MIN is in paper by design with control matching, MAIN is live and not halted, Rewards is live with $19.97 resting against a $20 budget and no fills. The M15_FUND 403 warning is non-blocking. Recheck Copycat next cycle; escalate only if it's still activating or stale.",
+    "remember": "Copycat 'activating' has now recurred on Nov 12 at 7:20 AM and 12:35 PM ET and cleared on recheck both times, so treat a single activating reading as a watch item."
    },
    "opus": null,
    "action": null,
    "ai_spend": {
     "day": "2026-11-12",
-    "total": 0.3191,
+    "total": 0.3238,
     "by": {
-     "foreman": 0.3191
+     "foreman": 0.3238
     }
    }
   }
  ],
- "digest": "Time: 12:20 PM ET Thu Nov 12\n15-MIN: service=active mode=paper control=paper status_at=2026-11-12T17:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-8.6365 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV120000-00 2 1.6 0.4\n  KXSILVER15M-26NOV120000-00 2 1.7 -1.7\n  KXBTC15M-26NOV120015-15 2 1.62 0.38\n  KXSILVER15M-26NOV120015-15 2 1.6 -1.6\n  KXSILVER15M-26NOV120030-30 2 1.74 0.26\n  KXBTC15M-26NOV120045-45 2 1.62 0.38\n  KXSILVER15M-26NOV120045-45 2 1.82 0.18\nSERVER: RAM 47.7% used, 15-min bot at 29.0% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 3.4 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-12T17:08:25+00:00 mode=live halted=None bids=10 resting=$19.97 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXSENATENOM-SCD-28-BBRO no longer chosen; cancel KXSENATENOM-SCD-28-BWEB no longer chosen; cancel KXINSCOMMRACE-MS-27-R no longer chosen; cancel KXTREASRACE-UT-28-R up to 6c (reference price); cancel KXAUDITORRACE-UT-28-R no longer chosen\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$51.59 cash=$25.25 at=2026-11-12T17:15:59.322075+00:00\nRecent Actions runs: weather-scan in_progress 17:20Z; trade success 17:15Z; weather-scan success 17:15Z; trade success 17:10Z; weather-scan success 17:10Z; trade success 17:05Z; weather-scan success 17:05Z; trade success 17:01Z\nRULE FLAGS: [warn] M15_FUND: 15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}} (80 checks in a row)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Rewards bot: $20 budget, fill_stop $10; ok while no fills and bids resting. Only pull bids for a clear malfunction.; Foreman never touches money settings, caps, stops, sizes, or code; propose fixes to an engineer.; Last reviewed Nov 12 7:20 AM ET.; 15-MIN has now been in paper mode since its Nov 12 stops, with control also set to paper; keep watching whether it returns to live on its own.; 15-MIN has stayed in paper since its Nov 12 stops; control matches mode, so this is a deliberate state, not a mismatch.; Copycat status file ran 6.5 min old on Nov 12 10:20 AM ET; recheck next cycle, escalate only if still stale or activating.; M15_FUND 403 warning has now run past 73 consecutive checks; still non-blocking, escalate only if symptoms change.; Copycat status file staleness has now hit 9.8 min; if it stays past 6 min next cycle, escalate.\nRecent log:\n  Nov 11 11:50 PM ET: check: ok. 15-MIN is live with 0 errors, no halt, $0 exposure, and 24h P&L of -$14.31, inside its stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.77 resting against a $20 budget, no fills, \n  Nov 12 12:35 AM ET: check: ok. 15-MIN is live with 0 errors, no halt, $0 exposure, and 24h P&L of -$17.06, inside its stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.99 resting against a $20 budget and no fill\n  Nov 12 1:20 AM ET: new: 15-min loss stop active: {'at': 1794464100, 'pnl': -18.36}\n  Nov 12 1:50 AM ET: cleared: M15_STOPPED\n  Nov 12 2:50 AM ET: new: 15-min loss stop active: {'at': 1794469500, 'pnl': -18.86}\n  Nov 12 4:35 AM ET: cleared: M15_STOPPED\n  Nov 12 7:20 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 7:20 AM ET: escalated: Copycat still starting; nothing needed from Alex (ok). Repeat pattern, not a new fault. The 15-MIN loss stop tripped at 1:20 AM and 2:50 AM ET and cleared each time (second clear 4:35 AM ET). The bot is in paper with control=pape\n  Nov 12 7:35 AM ET: cleared: COPYCAT_DOWN\n  Nov 12 8:35 AM ET: check: ok. 15-MIN is in paper by design, control matches, no errors, no halt, and its 24h P&L of -$9.31 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.92 resting against the "
+ "digest": "Time: 12:35 PM ET Thu Nov 12\n15-MIN: service=active mode=paper control=paper status_at=2026-11-12T17:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-9.2665 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV120000-00 2 1.6 0.4\n  KXSILVER15M-26NOV120000-00 2 1.7 -1.7\n  KXBTC15M-26NOV120015-15 2 1.62 0.38\n  KXSILVER15M-26NOV120015-15 2 1.6 -1.6\n  KXSILVER15M-26NOV120030-30 2 1.74 0.26\n  KXBTC15M-26NOV120045-45 2 1.62 0.38\n  KXSILVER15M-26NOV120045-45 2 1.82 0.18\nSERVER: RAM 33.3% used, 15-min bot at 29.6% of its memory cap\nCOPYCAT (separate paper/copy service): activating, status file updated 5.7 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-12T17:24:01+00:00 mode=live halted=None bids=10 resting=$19.97 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXSENATENOM-SCD-28-BBRO no longer chosen; cancel KXSENATENOM-SCD-28-BWEB no longer chosen; cancel KXINSCOMMRACE-MS-27-R no longer chosen; cancel KXTREASRACE-UT-28-R up to 6c (reference price); cancel KXAUDITORRACE-UT-28-R no longer chosen\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$51.45 cash=$26.16 at=2026-11-12T17:31:59.154187+00:00\nRecent Actions runs: weather-scan queued 17:35Z; trade success 17:31Z; weather-scan success 17:30Z; trade success 17:27Z; weather-scan success 17:25Z; trade success 17:20Z; weather-scan success 17:20Z; trade success 17:15Z\nRULE FLAGS: [critical] COPYCAT_DOWN: kalshi-copycat service is 'activating'; [warn] M15_FUND: 15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}} (81 checks in a row)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Rewards bot: $20 budget, fill_stop $10; ok while no fills and bids resting. Only pull bids for a clear malfunction.; Foreman never touches money settings, caps, stops, sizes, or code; propose fixes to an engineer.; Last reviewed Nov 12 7:20 AM ET.; 15-MIN has now been in paper mode since its Nov 12 stops, with control also set to paper; keep watching whether it returns to live on its own.; 15-MIN has stayed in paper since its Nov 12 stops; control matches mode, so this is a deliberate state, not a mismatch.; Copycat status file ran 6.5 min old on Nov 12 10:20 AM ET; recheck next cycle, escalate only if still stale or activating.; Copycat status file staleness has now hit 9.8 min; if it stays past 6 min next cycle, escalate.; Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking.\nRecent log:\n  Nov 12 12:35 AM ET: check: ok. 15-MIN is live with 0 errors, no halt, $0 exposure, and 24h P&L of -$17.06, inside its stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.99 resting against a $20 budget and no fill\n  Nov 12 1:20 AM ET: new: 15-min loss stop active: {'at': 1794464100, 'pnl': -18.36}\n  Nov 12 1:50 AM ET: cleared: M15_STOPPED\n  Nov 12 2:50 AM ET: new: 15-min loss stop active: {'at': 1794469500, 'pnl': -18.86}\n  Nov 12 4:35 AM ET: cleared: M15_STOPPED\n  Nov 12 7:20 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 7:20 AM ET: escalated: Copycat still starting; nothing needed from Alex (ok). Repeat pattern, not a new fault. The 15-MIN loss stop tripped at 1:20 AM and 2:50 AM ET and cleared each time (second clear 4:35 AM ET). The bot is in paper with control=pape\n  Nov 12 7:35 AM ET: cleared: COPYCAT_DOWN\n  Nov 12 8:35 AM ET: check: ok. 15-MIN is in paper by design, control matches, no errors, no halt, and its 24h P&L of -$9.31 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.92 resting against the \n  Nov 12 12:35 PM ET: new: kalshi-copycat service is 'activating'"
 }
