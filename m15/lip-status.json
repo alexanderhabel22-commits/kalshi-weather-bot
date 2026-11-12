@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T02:24:54+00:00",
+ "at": "2026-11-12T02:40:32+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.74,
+ "resting_cost": 19.77,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -82,14 +82,14 @@
    "mid0": 0.0855
   },
   "KXTREASRACE-VT-28-D": {
-   "id": "01a1cd92-7550-7cd4-bb5a-9cbcf712bd5f",
-   "cid": "lip-854dee95f1ee4425",
+   "id": "01a1cd9c-0688-7c69-8054-ae8579bedbc0",
+   "cid": "lip-610400dde35c45d7",
    "side": "no",
-   "px": 0.07,
-   "n": 35,
+   "px": 0.08,
+   "n": 31,
    "filled": 0.0,
-   "at": 1794450290.2161462,
-   "mid0": 0.92
+   "at": 1794450917.619347,
+   "mid0": 0.9165
   }
  },
  "positions": {},
@@ -380,37 +380,37 @@
     "share": 0.2
    },
    "KXSENATENOM-SCD-28-BBRO": {
-    "ahead": 8126.0,
+    "ahead": 13551.3,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXSENATENOM-SCD-28-BWEB": {
-    "ahead": 5730.0,
+    "ahead": 19865.5,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXTREASRACE-WA-28-R": {
-    "ahead": 14189.0,
+    "ahead": 44584.0,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXTREASRACE-WA-28-D": {
-    "ahead": 7105.0,
+    "ahead": 20692.0,
     "others": 1000.0,
     "share": 0.0301
    },
    "KXTREASRACE-VT-28-D": {
-    "ahead": 11918.0,
+    "ahead": 0,
     "others": 1000.0,
-    "share": 0.0394
+    "share": 0.0301
    },
    "KXSOSRACE-MS-27-D": {
-    "ahead": 29203.0,
+    "ahead": 42179.0,
     "others": 1000.0,
     "share": 0.0301
    },
    "KXSOSRACE-WV-28-D": {
-    "ahead": 2949.0,
+    "ahead": 20473.0,
     "others": 1000.0,
     "share": 0.0301
    }
@@ -418,21 +418,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794417361,
-   "kind": "place",
-   "ticker": "KXSOSRACE-MS-27-D",
-   "side": "yes",
-   "px": 0.03,
-   "n": 83,
-   "est_day": 3.6088
-  },
-  {
-   "t": 1794417986,
-   "kind": "cancel",
-   "ticker": "KXSOSRACE-MS-27-D",
-   "why": "up to 4c (reference price)"
-  },
   {
    "t": 1794417987,
    "kind": "place",
@@ -1029,6 +1014,21 @@
    "side": "no",
    "px": 0.07,
    "n": 35,
+   "est_day": 2.4892
+  },
+  {
+   "t": 1794450917,
+   "kind": "cancel",
+   "ticker": "KXTREASRACE-VT-28-D",
+   "why": "up to 8c (reference price)"
+  },
+  {
+   "t": 1794450918,
+   "kind": "place",
+   "ticker": "KXTREASRACE-VT-28-D",
+   "side": "no",
+   "px": 0.08,
+   "n": 31,
    "est_day": 2.4892
   }
  ]
