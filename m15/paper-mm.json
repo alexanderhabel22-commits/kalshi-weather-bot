@@ -40,13 +40,13 @@
    "cat": "Economics",
    "event": "KXAAAGASW-26NOV16",
    "vol24": 74646.23,
-   "casual": 0.005
+   "casual": 0.035
   },
   "KXHUANGTESTIFY-27JUL-27JAN": {
    "cat": "Politics",
    "event": "KXHUANGTESTIFY-27JUL",
    "vol24": 65508.28,
-   "casual": 0.027
+   "casual": 0.062
   },
   "KXINXU-26NOV12H1200-T7639.9999": {
    "cat": "Financials",
@@ -58,13 +58,13 @@
    "cat": "Economics",
    "event": "KXAAAGASD-26NOV13",
    "vol24": 45201.4,
-   "casual": 0.068
+   "casual": 0.069
   },
   "KXRAIN-26NOV12-WPB": {
    "cat": "Climate and Weather",
    "event": "KXRAIN-26NOV12",
    "vol24": 41754.47,
-   "casual": 0.077
+   "casual": 0.08
   },
   "KXNASDAQ100U-26NOV12H1200-T28399.99": {
    "cat": "Financials",
@@ -82,19 +82,19 @@
    "cat": "Climate and Weather",
    "event": "KXHIGHNY-26NOV12",
    "vol24": 37476.96,
-   "casual": 0.538
+   "casual": 0.553
   },
   "KXGPT-ASTRA61-26NOV13": {
    "cat": "Science and Technology",
    "event": "KXGPT-ASTRA61",
    "vol24": 29656.14,
-   "casual": 0.057
+   "casual": 0.053
   },
   "KXRT-EBE-45": {
    "cat": "Entertainment",
    "event": "KXRT-EBE",
    "vol24": 28430.37,
-   "casual": 0.087
+   "casual": 0.059
   },
   "KXMIDTERMMOV-MSSEND-P0.6": {
    "cat": "Elections",
@@ -106,19 +106,19 @@
    "cat": "Politics",
    "event": "KXHUANGTESTIFY-27JUL",
    "vol24": 26076.19,
-   "casual": 0.083
+   "casual": 0.091
   },
   "KXRT-EBE-40": {
    "cat": "Entertainment",
    "event": "KXRT-EBE",
    "vol24": 23297.27,
-   "casual": 0.082
+   "casual": 0.083
   },
   "KXRAIN-26NOV12-LEX": {
    "cat": "Climate and Weather",
    "event": "KXRAIN-26NOV12",
    "vol24": 19113.54,
-   "casual": 0.287
+   "casual": 0.183
   }
  },
  "by_category": {
@@ -132,12 +132,12 @@
    "maker_fee_c": 0.33
   },
   "Climate and Weather": {
-   "fills": 19,
+   "fills": 20,
    "market_hours": 0.9,
-   "fills_per_market_hour": 21.85,
-   "edge_at_fill_c": -0.58,
-   "markout_5m_c": -0.26,
-   "markout_30m_c": -0.28,
+   "fills_per_market_hour": 23.0,
+   "edge_at_fill_c": -1.15,
+   "markout_5m_c": -0.85,
+   "markout_30m_c": -1.61,
    "maker_fee_c": 0.38
   },
   "Science and Technology": {
@@ -168,22 +168,22 @@
    "maker_fee_c": 0.37
   },
   "Economics": {
-   "fills": 3,
+   "fills": 4,
    "market_hours": 0.4,
-   "fills_per_market_hour": 6.9,
-   "edge_at_fill_c": 0.83,
-   "markout_5m_c": 2.5,
-   "markout_30m_c": -4.33,
+   "fills_per_market_hour": 9.2,
+   "edge_at_fill_c": -1.88,
+   "markout_5m_c": -0.62,
+   "markout_30m_c": -4.62,
    "maker_fee_c": 0.36
   },
   "Politics": {
-   "fills": 12,
+   "fills": 13,
    "market_hours": 0.9,
-   "fills_per_market_hour": 13.8,
-   "edge_at_fill_c": -0.21,
-   "markout_5m_c": -0.17,
-   "markout_30m_c": -0.46,
-   "maker_fee_c": 0.38
+   "fills_per_market_hour": 14.95,
+   "edge_at_fill_c": -0.46,
+   "markout_5m_c": -0.42,
+   "markout_30m_c": -0.62,
+   "maker_fee_c": 0.37
   },
   "Financials": {
    "fills": 25,
@@ -225,18 +225,18 @@
    "maker_fee_c": 0.23
   },
   "under20|no": {
-   "fills": 11,
+   "fills": 13,
    "settled": 1,
-   "markout_30m_c": -7.11,
+   "markout_30m_c": -6.63,
    "settled_c": -18.0,
    "maker_fee_c": 0.32
   },
   "under20|yes": {
-   "fills": 11,
+   "fills": 12,
    "settled": 0,
-   "markout_30m_c": -3.69,
+   "markout_30m_c": -5.5,
    "settled_c": null,
-   "maker_fee_c": 0.32
+   "maker_fee_c": 0.33
   },
   "unknown|no": {
    "fills": 21,
@@ -261,8 +261,8 @@
   "done": true,
   "candidates": 1171
  },
- "pending": 6,
- "held": 88,
+ "pending": 9,
+ "held": 94,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -303,14 +303,15 @@
   "KXTRUMPSAY-26NOV16-DIES": -1,
   "KXNVDACEO-29JAN-IBUC": -1,
   "KXHEGSETHOUT-26APR-27FEB01": 1,
-  "KXGPT-ASTRA61-26NOV13": 2,
-  "KXRT-EBE-45": 1,
+  "KXGPT-ASTRA61-26NOV13": 3,
+  "KXRT-EBE-45": 0,
   "KXEARNINGSMENTIONNVDA-26NOV18-RESI": 0,
   "KXHUANGTESTIFY-27JUL-27JAN": -1,
-  "KXNASDAQ100U-26NOV12H1600-T28389.99": 1,
+  "KXNASDAQ100U-26NOV12H1600-T28389.99": 2,
   "KXHUANGTESTIFY-27JUL-26DEC": -2,
   "KXAAAGASD-26NOV13-3.8700": -1,
-  "KXRAIN-26NOV12-WPB": 1
+  "KXRAIN-26NOV12-WPB": 1,
+  "KXRAIN-26NOV12-LEX": -1
  },
- "at": "2026-11-12T20:52:54+00:00"
+ "at": "2026-11-12T22:06:13+00:00"
 }
