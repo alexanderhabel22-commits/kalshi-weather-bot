@@ -1130,6 +1130,7 @@ class Copycat:
         if self.boss is not None:
             status["boss"] = {"summary": self.boss.state.get("summary"), "usage": self.boss.state.get("usage"),
                               "reviews_today": self.boss.state.get("deep_n"),
+                              "spend": self.boss.budget.summary(), "model": getattr(self.boss, "model", None),
                               "benches": self.boss.benches(now)}
         self.acct = {a["nick"]: a for a in status["accounts"]}
         self.hot = {a["nick"] for a in status["accounts"] if a["verdict"] == "passes"}

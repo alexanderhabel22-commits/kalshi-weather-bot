@@ -290,9 +290,13 @@ early_contracts = 2              # MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET):
 # escalations (max per day below, ~$0.05-0.10 each). It may pause the 15-min bot to paper on a
 # clear malfunction only; it never changes caps, stops, sizes or code, and never un-pauses.
 haiku_model = "claude-haiku-5-5"
-opus_model = "claude-opus-5-5"
+# Nov 12: escalations on Haiku too, and a hard daily dollar cap per AI job (Nov 11 the Copycat
+# boss spent $24 on Opus in one day). Push to Alex when the server's AI spend passes $1/day.
+opus_model = "claude-haiku-5-5"
 max_haiku_per_day = 120
 max_opus_per_day = 6
+daily_cap_usd = 0.75            # Foreman ~$0.35/day at list price (~96 Haiku checks)
+spend_alert_usd = 1.0
 realert_hours = 6
 auto_pause = true
 

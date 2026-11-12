@@ -1,8 +1,10 @@
 """Copycat's boss (Nov 10, 2026): an AI manager for the accounts Copycat follows.
 
-Every 15 minutes Claude Haiku looks over the report card (cheap triage). Claude Opus does the
-real review every 2 hours when anything changed, and right away when Haiku asks for it (max 16
-Opus reviews a day). The boss:
+Every hour Claude Haiku looks over the report card (cheap triage). A full review (also Haiku since
+Nov 12) runs every 6 hours when anything changed, or when triage asks for it, at most 4 a day.
+Nov 11 the old setup (Opus reviews of the whole report card) cost $24 in one day, so every call
+now goes through a hard daily dollar cap (ai_budget.py, $0.30/day by default) and the report card
+sent to the model is trimmed to the busiest accounts. The boss:
   - writes a short note per account (shown on the dashboard), in plain words;
   - can BENCH an account for 24 hours (renewable) when something looks wrong that the numbers
     can't see yet: a style change (new market type, much bigger or smaller bets, different prices),
@@ -10,7 +12,7 @@ Opus reviews a day). The boss:
     fills is pointless), a bot that went haywire;
   - can lift a bench it set itself.
 It can't promote anyone, raise sizes or change the money rails: those come from the score formula
-and copycat_control.json. Cost: about $0.20-0.70/day on the Anthropic API.
+and copycat_control.json. Cost: a few cents a day, never more than the cap.
 """
 from __future__ import annotations
 
@@ -20,12 +22,17 @@ import os
 import time
 from collections import Counter
 
+from wxbot.ai_budget import Budget, estimate
+
 log = logging.getLogger("wxbot")
 HAIKU = "claude-haiku-5-5"
-OPUS = "claude-opus-5-5"
-TRIAGE_EVERY_S = 900
-DEEP_EVERY_S = 7200
-MAX_DEEP_PER_DAY = 16
+REVIEW_MODEL = os.environ.get("COPYCAT_BOSS_MODEL", HAIKU)   # was Opus until Nov 12 ($24/day)
+TRIAGE_EVERY_S = 3600
+DEEP_EVERY_S = 6 * 3600
+MAX_DEEP_PER_DAY = 4
+DAILY_CAP_USD = float(os.environ.get("COPYCAT_BOSS_CAP_USD", "0.30"))
+MAX_ACCOUNTS = 25                      # busiest accounts only in the model's report card
+MAX_DIGEST_CHARS = 12000
 BENCH_S = 24 * 3600
 
 SYSTEM = """You are the boss of Copycat, a small bot that copies the public trades of profitable \
@@ -77,9 +84,11 @@ def digest(status: dict, rows: list[dict], live: dict | None, benches: dict) -> 
         lines.append(f"Real money: total P&L ${live.get('total_pnl', 0):.2f}, open ${live.get('open_cost', 0):.2f} "
                      f"of ${live.get('pool', 0):.2f} pool, own-stop benches: {list((live.get('benched') or {}))}.")
     lines.append("Boss benches in force: " + (", ".join(f"{k} ({v['reason']})" for k, v in benches.items()) or "none"))
-    for a in status.get("accounts", []):
-        if not a.get("fills"):
-            continue
+    accts = sorted((a for a in status.get("accounts", []) if a.get("fills")),
+                   key=lambda a: (a["nick"] not in benches, -(a.get("fills") or 0)))
+    if len(accts) > MAX_ACCOUNTS:
+        lines.append(f"({len(accts) - MAX_ACCOUNTS} quieter accounts left out.)")
+    for a in accts[:MAX_ACCOUNTS]:
         f = by.get(a["nick"], [])[-60:]
         ser = Counter(x["ticker"].split("-")[0] for x in f if x.get("ticker"))
         sizes = sorted(float(x.get("count") or 0) for x in f)
@@ -95,7 +104,7 @@ def digest(status: dict, rows: list[dict], live: dict | None, benches: dict) -> 
             f"${(live or {}).get('pnl', {}).get(a['nick'], 0):.2f}. Recent {len(f)} fills: markets "
             f"{dict(ser.most_common(4))}, median size {med(sizes)}, price range {prices[:1]}-{prices[-1:]}c "
             f"(median {med(prices)}c), maker/taker {dict(roles)}.")
-    return "\n".join(lines)
+    return "\n".join(lines)[:MAX_DIGEST_CHARS]
 
 
 class Boss:
@@ -119,6 +128,8 @@ class Boss:
         self.state.setdefault("deep_n", 0)
         self.state.setdefault("last_fp", "")
         self.state.setdefault("usage", {"in": 0, "out": 0})
+        self.model = REVIEW_MODEL
+        self.budget = Budget(out_dir / "boss_spend.json", DAILY_CAP_USD, clock=clock)
 
     def save(self) -> None:
         (self.out / "boss.json").write_text(json.dumps(self.state, indent=1))
@@ -129,7 +140,10 @@ class Boss:
         return b
 
     def ask(self, model: str, text: str, schema: dict, effort: str, max_tokens: int) -> dict:
+        if not self.budget.allow(estimate(model, SYSTEM, text, max_tokens=max_tokens)):
+            raise RuntimeError(f"daily AI cap ${self.budget.cap:.2f} reached")
         if self._ask:
+            self.budget.charge(model, len(text) / 3, 200)
             return self._ask(model, text, schema)
         r = self.client.messages.create(
             model=model, max_tokens=max_tokens, system=SYSTEM,
@@ -140,6 +154,7 @@ class Boss:
         u = self.state["usage"]
         u["in"] += getattr(r.usage, "input_tokens", 0)
         u["out"] += getattr(r.usage, "output_tokens", 0)
+        self.budget.charge(model, getattr(r.usage, "input_tokens", 0), getattr(r.usage, "output_tokens", 0))
         return json.loads(next(b.text for b in r.content if b.type == "text"))
 
     def step(self, status: dict, rows: list[dict], live: dict | None) -> bool:
@@ -169,14 +184,15 @@ class Boss:
         if not deep:
             self.save()
             return False
+        # count the review before the call: a failed call is still billed (Nov 11 lesson)
+        self.state.update(deep_at=now, deep_n=self.state["deep_n"] + 1)
         try:
-            r = self.ask(OPUS, "FULL REVIEW.\n" + text, REVIEW_SCHEMA, "high", 6000)
+            r = self.ask(self.model, "FULL REVIEW.\n" + text, REVIEW_SCHEMA, "medium", 3000)
         except Exception as exc:  # noqa: BLE001
             log.warning("boss review: %s", exc)
             self.save()
             return False
-        self.state.update(deep_at=now, deep_n=self.state["deep_n"] + 1, last_fp=fp,
-                          summary=r.get("summary", "")[:600])
+        self.state.update(last_fp=fp, summary=r.get("summary", "")[:600])
         for a in r.get("accounts", []):
             n = a.get("nick")
             if not n:
@@ -200,4 +216,4 @@ def make_client():
         import anthropic
     except ImportError:
         return None
-    return anthropic.Anthropic(api_key=key, max_retries=2, timeout=180)
+    return anthropic.Anthropic(api_key=key, max_retries=0, timeout=120)

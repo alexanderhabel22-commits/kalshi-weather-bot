@@ -53,6 +53,8 @@ class FakeClient:
         self.messages = SimpleNamespace(create=self.create)
 
     def create(self, model, **kw):
+        # escalations run on Haiku since Nov 12; "claude-opus-5-5" here labels the escalation step
+        model = "claude-opus-5-5" if kw.get("system") == watch.OPUS_SYSTEM else model
         self.calls.append(model)
         body = json.dumps(self.answers[model])
         return SimpleNamespace(stop_reason="end_turn", usage=SimpleNamespace(input_tokens=1000, output_tokens=50),
@@ -271,3 +273,24 @@ def test_same_identifier_note_replaces_old_one():
     watch.remember(st, "M15_FUND 403 insufficient_scope recurred again at 1:35 PM ET Nov 11 (fifth time that day).", 8)
     watch.remember(st, "M15_FUND has recurred four times on Nov 11; it stays a key-scope fix for Alex.", 8)
     assert len(st["notes"]) == 2 and st["notes"][0].startswith("Coinbase") and "four times" in st["notes"][1]
+
+
+def test_escalation_defaults_to_haiku_and_spend_is_capped(tmp_path, monkeypatch):
+    assert watch.settings(load_config())["opus_model"] == "claude-haiku-5-5"
+    seen = []
+    c = FakeClient()
+    orig = c.create
+    c.messages.create = lambda model, **kw: (seen.append(model), orig(model, **kw))[1]
+    (tmp_path / "watch_spend.json").write_text(json.dumps({"day": "2026-11-10", "usd": 0.7499}))
+    rec, sent = go(tmp_path, monkeypatch, FakeGH(), c)
+    assert seen == [] and "cap" in rec["haiku"]["error"]          # over the cap: no API call at all
+
+
+def test_spend_alert_once_a_day(tmp_path, monkeypatch):
+    gh = FakeGH()
+    gh.files[("copycat/status.json", "copycat-data")] = json.dumps(
+        {"boss": {"spend": {"day": "2026-11-10", "usd": 1.4}}})
+    rec, sent = go(tmp_path, monkeypatch, gh, FakeClient())
+    assert rec["ai_spend"]["total"] > 1 and any("AI spend" in t for t, _ in sent)
+    rec, sent = go(tmp_path, monkeypatch, gh, FakeClient())
+    assert not sent

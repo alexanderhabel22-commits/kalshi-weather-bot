@@ -29,6 +29,8 @@ import re
 import subprocess
 import time
 from datetime import datetime, timezone
+
+from wxbot.ai_budget import Budget, estimate
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -44,9 +46,11 @@ STATE = Path(os.environ.get("M15_DATA_DIR") or "data/m15") / "watch_state.json"
 
 DEFAULTS = {
     "haiku_model": "claude-haiku-5-5",
-    "opus_model": "claude-opus-5-5",
+    "opus_model": "claude-haiku-5-5",   # escalations too since Nov 12 (Opus key spend: $24 on Nov 11)
     "max_haiku_per_day": 120,
     "max_opus_per_day": 6,
+    "daily_cap_usd": 0.75,         # hard cap for the Foreman's own calls (ai_budget.py)
+    "spend_alert_usd": 1.0,        # push Alex when the droplet's AI spend passes this in a UTC day
     "realert_hours": 6,
     "status_stale_min": 35,        # m15 uploads every 15 min
     "copycat_stale_min": 20,
@@ -512,7 +516,21 @@ def make_client():
     if not key:
         return None
     import anthropic
-    return anthropic.Anthropic(api_key=key, max_retries=3, timeout=120)
+    return anthropic.Anthropic(api_key=key, max_retries=1, timeout=120)
+
+
+def ai_spend(gh, budget: Budget, now: float) -> dict:
+    """Today's (UTC) Claude spend by every AI job on the server that shares the key: the Foreman
+    (its own ledger) and the Copycat boss (its ledger, published in copycat/status.json)."""
+    day = datetime.fromtimestamp(now, timezone.utc).date().isoformat()
+    by = {"foreman": round(budget.spent(), 4)}
+    try:
+        cc = ((gh.json("copycat/status.json", ref="copycat-data") or {}).get("boss") or {}).get("spend") or {}
+        if cc.get("day") == day:
+            by["copycat_boss"] = round(float(cc.get("usd") or 0), 4)
+    except Exception as exc:
+        log.warning("copycat spend: %s", exc)
+    return {"day": day, "total": round(sum(by.values()), 4), "by": by}
 
 
 # ---------------------------------------------------------------- actions
@@ -599,6 +617,19 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
     if state.get("day") != day:
         state.update({"day": day, "haiku": 0, "opus": 0, "tokens": {"haiku_in": 0, "haiku_out": 0,
                                                                      "opus_in": 0, "opus_out": 0}})
+    budget = Budget(Path(state_path).with_name("watch_spend.json"), s["daily_cap_usd"], clock=lambda: now)
+
+    def ask(model, system, text, schema, effort, max_tokens):
+        if not budget.allow(estimate(model, system, text, max_tokens=max_tokens)):
+            raise RuntimeError(f"daily AI cap ${budget.cap:.2f} reached")
+        try:
+            out, u = _ask(client, model, system, text, schema, effort, max_tokens)
+        except Exception:
+            budget.charge(model, (len(system) + len(text)) / 3, 0)   # failed calls can still bill
+            raise
+        budget.charge(model, u["in"], u["out"])
+        return out, u
+
     f = gather(gh, now, runner)
     over = overfills(f, s)
     if "over_seen" not in state:          # first run with this check: today's old rows are history
@@ -624,7 +655,7 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
     level = "ok"
     if state["haiku"] < s["max_haiku_per_day"]:
         try:
-            h, u = _ask(client, s["haiku_model"], HAIKU_SYSTEM, text, HAIKU_SCHEMA, "low", 2000)
+            h, u = ask(s["haiku_model"], HAIKU_SYSTEM, text, HAIKU_SCHEMA, "low", 2000)
             state["haiku"] += 1
             state["tokens"]["haiku_in"] += u["in"]
             state["tokens"]["haiku_out"] += u["out"]
@@ -647,7 +678,7 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
         o = None
         if fresh and state["opus"] < s["max_opus_per_day"]:
             try:
-                o, u = _ask(client, s["opus_model"], OPUS_SYSTEM,
+                o, u = ask(s["opus_model"], OPUS_SYSTEM,
                             text + f"\n\nWatcher's note: {(rec['haiku'] or {}).get('summary', '')}",
                             OPUS_SCHEMA, "medium", 8000)
                 state["opus"] += 1
@@ -687,6 +718,16 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
                             tags=["construction_worker"])
                 jot(f"pushed Alex: {title[11:]}")
             state.setdefault("alerted", {})[key] = now
+    spend = ai_spend(gh, budget, now)
+    rec["ai_spend"] = spend
+    if spend["total"] > s["spend_alert_usd"] and state.get("spend_alerted") != spend["day"]:
+        state["spend_alerted"] = spend["day"]
+        parts = ", ".join(f"{k} ${v:.2f}" for k, v in spend["by"].items())
+        notify.send(http, cfg, "👷 Foreman: AI spend over ${:.2f} today".format(s["spend_alert_usd"]),
+                    f"Claude API spend on the server today (UTC) is ${spend['total']:.2f} ({parts}). "
+                    f"Each job has a hard daily cap, so it should stop here.\n({et(now)})",
+                    priority=4, tags=["construction_worker", "money_with_wings"])
+        jot(f"pushed Alex: AI spend ${spend['total']:.2f} today")
     state["last"] = rec
     log_ = state.setdefault("log", [])
     if rec["opus"] or rec["action"] or (rec["haiku"] or {}).get("level") in ("watch", "escalate"):
@@ -695,6 +736,7 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
     write_json(state_path, state)
     try:
         out = {"last": rec, "today": {k: state.get(k) for k in ("day", "haiku", "opus", "tokens")},
+               "ai_spend": spend, "spend_history": budget.summary().get("history", {}),
                "notes": state.get("notes", []), "journal": state.get("journal", []),
                "log": state["log"], "digest": text}
         gh.put("m15/watch.json", json.dumps(out, indent=1, default=str),
