@@ -72,5 +72,5 @@ def propose(ctx) -> list[Intent]:
             continue
         out.append(Intent(NAME, o["ticker"], o["event"], o["side"], price, count, o.get("close") or "",
                           f"{o['city']} {o['metric']} {o['date']} {o['bracket']}",
-                          f"late-day {o['kind']}: low so far {o.get('extreme')}, {o.get('hours_left')}h left"))
+                          f"late-day {o['kind']}: {o.get('metric', 'low')} so far {o.get('extreme')}, {o.get('hours_left')}h left"))
     return out
