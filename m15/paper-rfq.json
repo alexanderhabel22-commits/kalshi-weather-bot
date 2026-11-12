@@ -1,55 +1,55 @@
 {
- "polls": 35,
- "errors": 0,
- "last_error": null,
- "rfqs_seen": 8700,
- "cross_priced": 6502,
- "settled": 4904,
+ "polls": 37,
+ "errors": 1,
+ "last_error": "HTTP 503 for https://api.elections.kalshi.com/trade-api/v2/communications/rfqs: {\"error\":{\"code\":\"service_unavailable\",\"message\":\"service_unavailable\"}}",
+ "rfqs_seen": 9200,
+ "cross_priced": 6913,
+ "settled": 4944,
  "by_margin": {
   "0.0": {
-   "would_win": 855,
-   "settled": 4904,
-   "pnl_c_per_ct": -3.91,
-   "won_settled": 743,
-   "won_pnl_c_per_ct": -8.6,
-   "won_wins": 464,
-   "capped_pnl_dollars": -277.01,
+   "would_win": 903,
+   "settled": 4944,
+   "pnl_c_per_ct": -3.86,
+   "won_settled": 751,
+   "won_pnl_c_per_ct": -8.32,
+   "won_wins": 472,
+   "capped_pnl_dollars": -271.91,
    "capped_worst_dollars": -3.0
   },
   "0.05": {
-   "would_win": 606,
-   "settled": 4904,
-   "pnl_c_per_ct": -3.04,
-   "won_settled": 549,
-   "won_pnl_c_per_ct": -9.02,
-   "won_wins": 356,
-   "capped_pnl_dollars": -209.45,
+   "would_win": 634,
+   "settled": 4944,
+   "pnl_c_per_ct": -2.99,
+   "won_settled": 555,
+   "won_pnl_c_per_ct": -8.66,
+   "won_wins": 362,
+   "capped_pnl_dollars": -204.36,
    "capped_worst_dollars": -3.0
   },
   "0.1": {
-   "would_win": 496,
-   "settled": 4904,
-   "pnl_c_per_ct": -2.17,
-   "won_settled": 456,
-   "won_pnl_c_per_ct": -8.06,
-   "won_wins": 305,
-   "capped_pnl_dollars": -153.37,
+   "would_win": 523,
+   "settled": 4944,
+   "pnl_c_per_ct": -2.12,
+   "won_settled": 461,
+   "won_pnl_c_per_ct": -7.68,
+   "won_wins": 310,
+   "capped_pnl_dollars": -148.5,
    "capped_worst_dollars": -3.0
   },
   "0.2": {
-   "would_win": 396,
-   "settled": 4904,
-   "pnl_c_per_ct": -0.48,
-   "won_settled": 374,
-   "won_pnl_c_per_ct": -6.51,
-   "won_wins": 259,
-   "capped_pnl_dollars": -112.13,
+   "would_win": 420,
+   "settled": 4944,
+   "pnl_c_per_ct": -0.44,
+   "won_settled": 375,
+   "won_pnl_c_per_ct": -6.39,
+   "won_wins": 260,
+   "capped_pnl_dollars": -110.13,
    "capped_worst_dollars": -3.0
   },
   "0.3": {
-   "would_win": 303,
-   "settled": 3461,
-   "pnl_c_per_ct": -1.2,
+   "would_win": 325,
+   "settled": 3493,
+   "pnl_c_per_ct": -1.02,
    "won_settled": 287,
    "won_pnl_c_per_ct": -7.98,
    "won_wins": 197,
@@ -57,9 +57,9 @@
    "capped_worst_dollars": -3.0
   },
   "0.5": {
-   "would_win": 235,
-   "settled": 3461,
-   "pnl_c_per_ct": 1.77,
+   "would_win": 255,
+   "settled": 3493,
+   "pnl_c_per_ct": 1.94,
    "won_settled": 223,
    "won_pnl_c_per_ct": -6.57,
    "won_wins": 151,
@@ -67,9 +67,9 @@
    "capped_worst_dollars": -3.0
   },
   "1.0": {
-   "would_win": 157,
-   "settled": 3461,
-   "pnl_c_per_ct": 8.18,
+   "would_win": 171,
+   "settled": 3493,
+   "pnl_c_per_ct": 8.35,
    "won_settled": 148,
    "won_pnl_c_per_ct": -6.25,
    "won_wins": 100,
@@ -79,7 +79,7 @@
  },
  "by_band": {
   "0-2c": {
-   "settled": 1404,
+   "settled": 1414,
    "0.0": {
     "won": 67,
     "pnl_c_per_ct": -4.31
@@ -110,10 +110,10 @@
    }
   },
   "2-5c": {
-   "settled": 585,
+   "settled": 588,
    "0.0": {
-    "won": 62,
-    "pnl_c_per_ct": 1.06
+    "won": 64,
+    "pnl_c_per_ct": 1.16
    },
    "0.05": {
     "won": 61,
@@ -141,18 +141,18 @@
    }
   },
   "5-10c": {
-   "settled": 558,
+   "settled": 559,
    "0.0": {
-    "won": 66,
-    "pnl_c_per_ct": 2.3
+    "won": 67,
+    "pnl_c_per_ct": 2.43
    },
    "0.05": {
-    "won": 55,
-    "pnl_c_per_ct": 3.27
+    "won": 56,
+    "pnl_c_per_ct": 3.41
    },
    "0.1": {
-    "won": 50,
-    "pnl_c_per_ct": 3.06
+    "won": 51,
+    "pnl_c_per_ct": 3.24
    },
    "0.2": {
     "won": 44,
@@ -172,18 +172,18 @@
    }
   },
   "10-20c": {
-   "settled": 733,
+   "settled": 747,
    "0.0": {
-    "won": 123,
-    "pnl_c_per_ct": -2.24
+    "won": 125,
+    "pnl_c_per_ct": -1.99
    },
    "0.05": {
-    "won": 98,
-    "pnl_c_per_ct": -3.77
+    "won": 100,
+    "pnl_c_per_ct": -3.41
    },
    "0.1": {
-    "won": 87,
-    "pnl_c_per_ct": -3.28
+    "won": 88,
+    "pnl_c_per_ct": -3.07
    },
    "0.2": {
     "won": 67,
@@ -203,22 +203,22 @@
    }
   },
   "20-40c": {
-   "settled": 884,
+   "settled": 893,
    "0.0": {
-    "won": 230,
-    "pnl_c_per_ct": -18.2
+    "won": 233,
+    "pnl_c_per_ct": -17.53
    },
    "0.05": {
-    "won": 154,
-    "pnl_c_per_ct": -21.66
+    "won": 157,
+    "pnl_c_per_ct": -20.58
    },
    "0.1": {
-    "won": 116,
-    "pnl_c_per_ct": -22.24
+    "won": 119,
+    "pnl_c_per_ct": -20.76
    },
    "0.2": {
-    "won": 96,
-    "pnl_c_per_ct": -18.56
+    "won": 97,
+    "pnl_c_per_ct": -17.96
    },
    "0.3": {
     "won": 73,
@@ -234,7 +234,7 @@
    }
   },
   "40-100c": {
-   "settled": 740,
+   "settled": 743,
    "0.0": {
     "won": 195,
     "pnl_c_per_ct": -9.54
@@ -305,26 +305,26 @@
    }
   },
   "settle_under_1h": {
-   "settled": 56,
+   "settled": 83,
    "0.0": {
-    "won": 14,
-    "pnl_c_per_ct": -40.29,
-    "capped_dollars": -18.63
+    "won": 22,
+    "pnl_c_per_ct": -19.0,
+    "capped_dollars": -13.53
    },
    "0.05": {
-    "won": 14,
-    "pnl_c_per_ct": -39.14,
-    "capped_dollars": -17.7
+    "won": 20,
+    "pnl_c_per_ct": -20.2,
+    "capped_dollars": -12.61
    },
    "0.1": {
-    "won": 13,
-    "pnl_c_per_ct": -39.85,
-    "capped_dollars": -16.62
+    "won": 18,
+    "pnl_c_per_ct": -21.22,
+    "capped_dollars": -11.75
    },
    "0.2": {
-    "won": 12,
-    "pnl_c_per_ct": -41.17,
-    "capped_dollars": -16.24
+    "won": 13,
+    "pnl_c_per_ct": -34.92,
+    "capped_dollars": -14.24
    },
    "0.3": {
     "won": 12,
@@ -343,26 +343,26 @@
    }
   },
   "all_sports_cross": {
-   "settled": 12,
+   "settled": 39,
    "0.0": {
-    "won": 0,
-    "pnl_c_per_ct": null,
-    "capped_dollars": 0
+    "won": 8,
+    "pnl_c_per_ct": 18.25,
+    "capped_dollars": 5.1
    },
    "0.05": {
-    "won": 0,
-    "pnl_c_per_ct": null,
-    "capped_dollars": 0
+    "won": 6,
+    "pnl_c_per_ct": 24.0,
+    "capped_dollars": 5.09
    },
    "0.1": {
-    "won": 0,
-    "pnl_c_per_ct": null,
-    "capped_dollars": 0
+    "won": 5,
+    "pnl_c_per_ct": 27.2,
+    "capped_dollars": 4.87
    },
    "0.2": {
-    "won": 0,
-    "pnl_c_per_ct": null,
-    "capped_dollars": 0
+    "won": 1,
+    "pnl_c_per_ct": 40.0,
+    "capped_dollars": 2.0
    },
    "0.3": {
     "won": 0,
@@ -381,734 +381,12 @@
    }
   }
  },
- "sized": 5085,
+ "sized": 5496,
  "caps": {
   "cap_ct": 25,
   "max_loss": 3.0
  },
  "settled_rows": [
-  {
-   "id": "0f57d030-a664-494c-9861-6ef5a84a680d",
-   "t": 1794445655.952578,
-   "n_legs": 10,
-   "contracts": 932.69,
-   "target_cost": null,
-   "fair": 0.0023,
-   "quotes": {
-    "0.0": 0.01,
-    "0.05": 0.01,
-    "0.1": 0.01,
-    "0.2": 0.01,
-    "0.3": 0.01,
-    "0.5": 0.01,
-    "1.0": 0.01
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "90420adc-5d8e-4d26-b4e8-d1fea04994d4",
-   "t": 1794445655.952578,
-   "n_legs": 9,
-   "contracts": 0.0,
-   "target_cost": 15.0,
-   "fair": 0.4156,
-   "quotes": {
-    "0.0": 0.43,
-    "0.05": 0.45,
-    "0.1": 0.47,
-    "0.2": 0.51,
-    "0.3": 0.55,
-    "0.5": 0.63,
-    "1.0": 0.84
-   },
-   "traded": [
-    0.9999,
-    0.951,
-    0.71,
-    0.83,
-    0.678,
-    0.923,
-    0.957,
-    0.918,
-    0.908,
-    0.915
-   ],
-   "result": "yes",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "587d909e-89d8-4a24-82f5-7d35f0beeab5",
-   "t": 1794445655.952578,
-   "n_legs": 5,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.049,
-   "quotes": {
-    "0.0": 0.06,
-    "0.05": 0.06,
-    "0.1": 0.06,
-    "0.2": 0.07,
-    "0.3": 0.07,
-    "0.5": 0.08,
-    "1.0": 0.11
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "39cc5783-37c2-48cf-bc5b-33a51a750fe6",
-   "t": 1794445655.952578,
-   "n_legs": 4,
-   "contracts": 103.35,
-   "target_cost": null,
-   "fair": 0.5936,
-   "quotes": {
-    "0.0": 0.6,
-    "0.05": 0.63,
-    "0.1": 0.66,
-    "0.2": 0.72,
-    "0.3": 0.78,
-    "0.5": 0.9,
-    "1.0": 0.99
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "61009c3e-cb36-497c-9280-7650077ab724",
-   "t": 1794445655.952578,
-   "n_legs": 11,
-   "contracts": 0.0,
-   "target_cost": 100.0,
-   "fair": 0.0894,
-   "quotes": {
-    "0.0": 0.1,
-    "0.05": 0.1,
-    "0.1": 0.11,
-    "0.2": 0.12,
-    "0.3": 0.13,
-    "0.5": 0.14,
-    "1.0": 0.19
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "25dfa513-9a95-45ad-94e7-50ab3e38b006",
-   "t": 1794445655.952578,
-   "n_legs": 5,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.1707,
-   "quotes": {
-    "0.0": 0.18,
-    "0.05": 0.19,
-    "0.1": 0.2,
-    "0.2": 0.21,
-    "0.3": 0.23,
-    "0.5": 0.27,
-    "1.0": 0.35
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "84e81e87-8019-4846-a328-0234be6de936",
-   "t": 1794445655.952578,
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.1451,
-   "quotes": {
-    "0.0": 0.16,
-    "0.05": 0.16,
-    "0.1": 0.17,
-    "0.2": 0.18,
-    "0.3": 0.2,
-    "0.5": 0.23,
-    "1.0": 0.3
-   },
-   "traded": [
-    0.688,
-    0.69,
-    0.69,
-    0.679,
-    0.676,
-    0.64,
-    0.564,
-    0.595,
-    0.593,
-    0.562
-   ],
-   "result": "yes",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "e54eef66-9c62-4f4f-bfc9-2a9381293a76",
-   "t": 1794445655.952578,
-   "n_legs": 13,
-   "contracts": 0.0,
-   "target_cost": 0.5,
-   "fair": 0.0183,
-   "quotes": {
-    "0.0": 0.03,
-    "0.05": 0.03,
-    "0.1": 0.03,
-    "0.2": 0.03,
-    "0.3": 0.03,
-    "0.5": 0.04,
-    "1.0": 0.05
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "f94a84b9-674c-42c1-8aca-52b89e30e568",
-   "t": 1794445655.952578,
-   "n_legs": 10,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.0126,
-   "quotes": {
-    "0.0": 0.02,
-    "0.05": 0.02,
-    "0.1": 0.02,
-    "0.2": 0.03,
-    "0.3": 0.03,
-    "0.5": 0.03,
-    "1.0": 0.04
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "daf216b1-0400-48c1-bd37-6cbe244f7df0",
-   "t": 1794445655.952578,
-   "n_legs": 10,
-   "contracts": 892.85,
-   "target_cost": null,
-   "fair": 0.0012,
-   "quotes": {
-    "0.0": 0.01,
-    "0.05": 0.01,
-    "0.1": 0.01,
-    "0.2": 0.01,
-    "0.3": 0.01,
-    "0.5": 0.01,
-    "1.0": 0.01
-   },
-   "traded": [
-    0.0008,
-    0.0009,
-    0.0009,
-    0.001,
-    0.001,
-    0.001,
-    0.0011,
-    0.0011,
-    0.001,
-    0.0011
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "48eeaaf9-14d7-4d64-aca9-cdfe36c121ee",
-   "t": 1794445655.952578,
-   "n_legs": 10,
-   "contracts": 1550.38,
-   "target_cost": null,
-   "fair": 0.0022,
-   "quotes": {
-    "0.0": 0.01,
-    "0.05": 0.01,
-    "0.1": 0.01,
-    "0.2": 0.01,
-    "0.3": 0.01,
-    "0.5": 0.01,
-    "1.0": 0.01
-   },
-   "traded": [
-    0.0012,
-    0.0049,
-    0.0043,
-    0.0045,
-    0.0047,
-    0.0042,
-    0.0041,
-    0.0024,
-    0.0017,
-    0.0018
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "0c98ff87-79b1-47fe-b413-24eb384d1f7f",
-   "t": 1794445655.952578,
-   "n_legs": 5,
-   "contracts": 252.98,
-   "target_cost": null,
-   "fair": 0.1149,
-   "quotes": {
-    "0.0": 0.12,
-    "0.05": 0.13,
-    "0.1": 0.14,
-    "0.2": 0.15,
-    "0.3": 0.16,
-    "0.5": 0.18,
-    "1.0": 0.24
-   },
-   "traded": [
-    0.068,
-    0.071,
-    0.072,
-    0.069,
-    0.069,
-    0.067,
-    0.066,
-    0.07,
-    0.082,
-    0.082
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "e9bd7dc1-c5ee-4af0-8510-f46b3724149c",
-   "t": 1794445655.952578,
-   "n_legs": 6,
-   "contracts": 193.0,
-   "target_cost": null,
-   "fair": 0.1733,
-   "quotes": {
-    "0.0": 0.18,
-    "0.05": 0.19,
-    "0.1": 0.2,
-    "0.2": 0.22,
-    "0.3": 0.24,
-    "0.5": 0.27,
-    "1.0": 0.36
-   },
-   "traded": [
-    0.054,
-    0.111,
-    0.099,
-    0.12,
-    0.157,
-    0.151,
-    0.17,
-    0.177,
-    0.178,
-    0.182
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "5b5b35d4-b5e9-4a45-a12a-2c0160dcc9c4",
-   "t": 1794445655.952578,
-   "n_legs": 19,
-   "contracts": 168.45,
-   "target_cost": null,
-   "fair": 0.0448,
-   "quotes": {
-    "0.0": 0.05,
-    "0.05": 0.06,
-    "0.1": 0.06,
-    "0.2": 0.06,
-    "0.3": 0.07,
-    "0.5": 0.08,
-    "1.0": 0.1
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "95f568f1-e898-4549-83d6-e23fe5669b05",
-   "t": 1794445655.952578,
-   "n_legs": 10,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.1153,
-   "quotes": {
-    "0.0": 0.13,
-    "0.05": 0.13,
-    "0.1": 0.14,
-    "0.2": 0.15,
-    "0.3": 0.16,
-    "0.5": 0.18,
-    "1.0": 0.24
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "b3a803e4-b0e6-4c96-8f4a-2308b3b5c472",
-   "t": 1794445655.952578,
-   "n_legs": 5,
-   "contracts": 600000.0,
-   "target_cost": null,
-   "fair": 0.0001,
-   "quotes": {
-    "0.0": 0.01,
-    "0.05": 0.01,
-    "0.1": 0.01,
-    "0.2": 0.01,
-    "0.3": 0.01,
-    "0.5": 0.01,
-    "1.0": 0.01
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "742bdb5a-6c1a-468e-ac3b-e11a7d0efb8c",
-   "t": 1794445655.952578,
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.1357,
-   "quotes": {
-    "0.0": 0.15,
-    "0.05": 0.15,
-    "0.1": 0.16,
-    "0.2": 0.17,
-    "0.3": 0.19,
-    "0.5": 0.21,
-    "1.0": 0.28
-   },
-   "traded": [
-    0.229,
-    0.163
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "c5161c98-1bc8-4370-b4a5-39da6916f832",
-   "t": 1794445655.952578,
-   "n_legs": 8,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.0399,
-   "quotes": {
-    "0.0": 0.05,
-    "0.05": 0.05,
-    "0.1": 0.05,
-    "0.2": 0.06,
-    "0.3": 0.06,
-    "0.5": 0.07,
-    "1.0": 0.09
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "7acef07b-8116-47b4-9136-d20a49b0c84e",
-   "t": 1794445655.952578,
-   "n_legs": 7,
-   "contracts": 0.0,
-   "target_cost": 1364.3,
-   "fair": 0.1605,
-   "quotes": {
-    "0.0": 0.17,
-    "0.05": 0.18,
-    "0.1": 0.19,
-    "0.2": 0.2,
-    "0.3": 0.22,
-    "0.5": 0.25,
-    "1.0": 0.33
-   },
-   "traded": [],
-   "result": "yes",
-   "sports_legs": null,
-   "settle_h": 5.73
-  },
-  {
-   "id": "3969b0d7-e269-44bf-ac4a-83bb4dda4f58",
-   "t": 1794445655.952578,
-   "n_legs": 8,
-   "contracts": 634.51,
-   "target_cost": null,
-   "fair": 0.0208,
-   "quotes": {
-    "0.0": 0.03,
-    "0.05": 0.03,
-    "0.1": 0.03,
-    "0.2": 0.03,
-    "0.3": 0.04,
-    "0.5": 0.04,
-    "1.0": 0.05
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "a565a37a-090e-479d-bcbd-add62ffb4eb3",
-   "t": 1794445655.952578,
-   "n_legs": 3,
-   "contracts": 0.0,
-   "target_cost": 700.0,
-   "fair": 0.245,
-   "quotes": {
-    "0.0": 0.26,
-    "0.05": 0.27,
-    "0.1": 0.28,
-    "0.2": 0.3,
-    "0.3": 0.33,
-    "0.5": 0.38,
-    "1.0": 0.5
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "e206e7bc-215b-494b-8dbf-a6e3d329b4ef",
-   "t": 1794445655.952578,
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 2.0,
-   "fair": 0.2734,
-   "quotes": {
-    "0.0": 0.28,
-    "0.05": 0.3,
-    "0.1": 0.31,
-    "0.2": 0.34,
-    "0.3": 0.37,
-    "0.5": 0.42,
-    "1.0": 0.56
-   },
-   "traded": [
-    0.456,
-    0.483,
-    0.39,
-    0.384,
-    0.379,
-    0.379,
-    0.378,
-    0.32,
-    0.217,
-    0.249
-   ],
-   "result": "yes",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "ded7021f-5e0f-47f9-87fc-8dd16e596397",
-   "t": 1794445655.952578,
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "fair": 0.4611,
-   "quotes": {
-    "0.0": 0.47,
-    "0.05": 0.49,
-    "0.1": 0.52,
-    "0.2": 0.56,
-    "0.3": 0.61,
-    "0.5": 0.7,
-    "1.0": 0.93
-   },
-   "traded": [
-    0.119,
-    0.173,
-    0.17,
-    0.169,
-    0.186,
-    0.169,
-    0.227,
-    0.224,
-    0.217,
-    0.238
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "7c9409c2-0e58-40fb-a5a3-a01a340fb6b0",
-   "t": 1794445655.952578,
-   "n_legs": 10,
-   "contracts": 1818.18,
-   "target_cost": null,
-   "fair": 0.0012,
-   "quotes": {
-    "0.0": 0.01,
-    "0.05": 0.01,
-    "0.1": 0.01,
-    "0.2": 0.01,
-    "0.3": 0.01,
-    "0.5": 0.01,
-    "1.0": 0.01
-   },
-   "traded": [
-    0.0008,
-    0.0009,
-    0.0009,
-    0.001,
-    0.001,
-    0.001,
-    0.0011,
-    0.0011,
-    0.001,
-    0.0011
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "e7f1033a-3198-4ed5-b6bf-687970501c4e",
-   "t": 1794445655.952578,
-   "n_legs": 3,
-   "contracts": 3.65,
-   "target_cost": null,
-   "fair": 0.4641,
-   "quotes": {
-    "0.0": 0.47,
-    "0.05": 0.5,
-    "0.1": 0.52,
-    "0.2": 0.57,
-    "0.3": 0.61,
-    "0.5": 0.71,
-    "1.0": 0.94
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "9dc6aacc-a422-4c2a-90d8-d829f733d776",
-   "t": 1794445655.952578,
-   "n_legs": 7,
-   "contracts": 0.0,
-   "target_cost": 50.0,
-   "fair": 0.3421,
-   "quotes": {
-    "0.0": 0.35,
-    "0.05": 0.37,
-    "0.1": 0.39,
-    "0.2": 0.42,
-    "0.3": 0.45,
-    "0.5": 0.52,
-    "1.0": 0.69
-   },
-   "traded": [],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "6cca1f66-0f8c-4f1b-902e-9e885e828eb0",
-   "t": 1794445655.952578,
-   "n_legs": 4,
-   "contracts": 150.6,
-   "target_cost": null,
-   "fair": 0.3457,
-   "quotes": {
-    "0.0": 0.36,
-    "0.05": 0.37,
-    "0.1": 0.39,
-    "0.2": 0.42,
-    "0.3": 0.46,
-    "0.5": 0.53,
-    "1.0": 0.7
-   },
-   "traded": [],
-   "result": "yes",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "c1cfe666-492e-4273-84e3-7aca69b30fa1",
-   "t": 1794445655.952578,
-   "n_legs": 4,
-   "contracts": 53.92,
-   "target_cost": null,
-   "fair": 0.184,
-   "quotes": {
-    "0.0": 0.19,
-    "0.05": 0.2,
-    "0.1": 0.21,
-    "0.2": 0.23,
-    "0.3": 0.25,
-    "0.5": 0.29,
-    "1.0": 0.38
-   },
-   "traded": [],
-   "result": "yes",
-   "sports_legs": null,
-   "settle_h": null
-  },
-  {
-   "id": "71514891-04a1-4441-b4f7-666502c50101",
-   "t": 1794445655.952578,
-   "n_legs": 5,
-   "contracts": 0.0,
-   "target_cost": 2.0,
-   "fair": 0.1739,
-   "quotes": {
-    "0.0": 0.18,
-    "0.05": 0.19,
-    "0.1": 0.2,
-    "0.2": 0.22,
-    "0.3": 0.24,
-    "0.5": 0.27,
-    "1.0": 0.36
-   },
-   "traded": [
-    0.047,
-    0.065,
-    0.083,
-    0.09,
-    0.121,
-    0.121,
-    0.121,
-    0.147,
-    0.158,
-    0.165
-   ],
-   "result": "no",
-   "sports_legs": null,
-   "settle_h": null
-  },
   {
    "id": "67ca2624-4e15-4342-9d06-336d57ab1d6d",
    "t": 1794445655.952578,
@@ -33595,6 +32873,29 @@
    "settle_h": null
   },
   {
+   "id": "50d99f8a-6cb0-4f70-8547-78d487605494",
+   "t": 1794461933.1980643,
+   "n_legs": 3,
+   "contracts": 0.0,
+   "target_cost": 9.0,
+   "fair": 0.198,
+   "quotes": {
+    "0.0": 0.21,
+    "0.05": 0.22,
+    "0.1": 0.23,
+    "0.2": 0.25,
+    "0.3": 0.27,
+    "0.5": 0.31,
+    "1.0": 0.41
+   },
+   "traded": [
+    0.091
+   ],
+   "result": "no",
+   "sports_legs": null,
+   "settle_h": 2.14
+  },
+  {
    "id": "06577f1f-cc1f-4326-b081-9020c3978d3c",
    "t": 1794461933.1980643,
    "n_legs": 2,
@@ -34231,6 +33532,29 @@
    "settle_h": 1.67
   },
   {
+   "id": "936eba2b-9319-4942-9f68-4821a0599e5f",
+   "t": 1794461933.1980643,
+   "n_legs": 11,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.0043,
+   "quotes": {
+    "0.0": 0.01,
+    "0.05": 0.01,
+    "0.1": 0.01,
+    "0.2": 0.02,
+    "0.3": 0.02,
+    "0.5": 0.02,
+    "1.0": 0.02
+   },
+   "traded": [
+    0.0035
+   ],
+   "result": "no",
+   "sports_legs": null,
+   "settle_h": 1.98
+  },
+  {
    "id": "60c7e458-a7e6-40fa-9b9e-5f0c8a3f8e8a",
    "t": 1794461933.1980643,
    "n_legs": 2,
@@ -34768,6 +34092,78 @@
    "settle_h": 0.18
   },
   {
+   "id": "6eb0910b-2d32-4e00-ae78-c370760e36a4",
+   "t": 1794467061.5786684,
+   "n_legs": 5,
+   "contracts": 5956.0,
+   "target_cost": null,
+   "fair": 0.1237,
+   "quotes": {
+    "0.0": 0.13,
+    "0.05": 0.14,
+    "0.1": 0.15,
+    "0.2": 0.16,
+    "0.3": 0.17,
+    "0.5": 0.2,
+    "1.0": 0.26
+   },
+   "traded": [
+    0.142
+   ],
+   "result": "no",
+   "sports_legs": 5,
+   "settle_h": 0.82
+  },
+  {
+   "id": "d13f9f0e-7e8a-42c2-a49b-a8023f631c71",
+   "t": 1794467061.5786684,
+   "n_legs": 25,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.0004,
+   "quotes": {
+    "0.0": 0.01,
+    "0.05": 0.01,
+    "0.1": 0.01,
+    "0.2": 0.01,
+    "0.3": 0.01,
+    "0.5": 0.01,
+    "1.0": 0.01
+   },
+   "traded": [
+    0.0007
+   ],
+   "result": "no",
+   "sports_legs": 25,
+   "settle_h": 0.82
+  },
+  {
+   "id": "2551b992-1921-46a2-99c8-ae1f1f92ba84",
+   "t": 1794467061.5786684,
+   "n_legs": 4,
+   "contracts": 0.0,
+   "target_cost": 408.23,
+   "fair": 0.1034,
+   "quotes": {
+    "0.0": 0.11,
+    "0.05": 0.12,
+    "0.1": 0.12,
+    "0.2": 0.13,
+    "0.3": 0.14,
+    "0.5": 0.17,
+    "1.0": 0.22
+   },
+   "traded": [
+    0.063,
+    0.063,
+    0.081,
+    0.081
+   ],
+   "result": "no",
+   "sports_legs": 4,
+   "settle_h": 0.82
+  },
+  {
    "id": "6ca294a2-799a-4b15-82fe-5b4ba9ef70c3",
    "t": 1794467061.5786684,
    "n_legs": 10,
@@ -34874,6 +34270,31 @@
    "settle_h": 0.18
   },
   {
+   "id": "d4d1d22f-01cf-4fed-8b6c-27f7cc9fde36",
+   "t": 1794467061.5786684,
+   "n_legs": 5,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.3224,
+   "quotes": {
+    "0.0": 0.33,
+    "0.05": 0.35,
+    "0.1": 0.36,
+    "0.2": 0.4,
+    "0.3": 0.43,
+    "0.5": 0.49,
+    "1.0": 0.65
+   },
+   "traded": [
+    0.422,
+    0.344,
+    0.37
+   ],
+   "result": "no",
+   "sports_legs": 5,
+   "settle_h": 0.82
+  },
+  {
    "id": "7d38b38e-e67b-4fb8-889e-9aacd841732a",
    "t": 1794467061.5786684,
    "n_legs": 2,
@@ -34893,6 +34314,29 @@
    "result": "no",
    "sports_legs": 0,
    "settle_h": 0.19
+  },
+  {
+   "id": "5e0ca110-3807-43e9-9e86-fef7a568dd77",
+   "t": 1794467061.5786684,
+   "n_legs": 18,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.0243,
+   "quotes": {
+    "0.0": 0.03,
+    "0.05": 0.04,
+    "0.1": 0.04,
+    "0.2": 0.04,
+    "0.3": 0.04,
+    "0.5": 0.05,
+    "1.0": 0.06
+   },
+   "traded": [
+    0.032
+   ],
+   "result": "no",
+   "sports_legs": 18,
+   "settle_h": 0.82
   },
   {
    "id": "91b7dd2a-ab33-4b1a-a62c-b3376c9b7033",
@@ -34960,6 +34404,55 @@
    "result": "no",
    "sports_legs": 5,
    "settle_h": 0.18
+  },
+  {
+   "id": "79f36d5f-6f0d-4e71-88c1-de023f69653b",
+   "t": 1794467061.5786684,
+   "n_legs": 5,
+   "contracts": 436.04,
+   "target_cost": null,
+   "fair": 0.1394,
+   "quotes": {
+    "0.0": 0.15,
+    "0.05": 0.16,
+    "0.1": 0.16,
+    "0.2": 0.18,
+    "0.3": 0.19,
+    "0.5": 0.22,
+    "1.0": 0.29
+   },
+   "traded": [
+    0.142
+   ],
+   "result": "no",
+   "sports_legs": 5,
+   "settle_h": 0.82
+  },
+  {
+   "id": "c2f08b94-bf5a-408e-ba49-3def1608de07",
+   "t": 1794467061.5786684,
+   "n_legs": 4,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.1006,
+   "quotes": {
+    "0.0": 0.11,
+    "0.05": 0.12,
+    "0.1": 0.12,
+    "0.2": 0.13,
+    "0.3": 0.14,
+    "0.5": 0.16,
+    "1.0": 0.21
+   },
+   "traded": [
+    0.063,
+    0.063,
+    0.081,
+    0.081
+   ],
+   "result": "no",
+   "sports_legs": 4,
+   "settle_h": 0.82
   },
   {
    "id": "e6b928ca-f6f4-4edd-a56d-5ad6e937254c",
@@ -35038,6 +34531,31 @@
    "settle_h": 0.19
   },
   {
+   "id": "b18b401c-9711-44bc-93b9-ca68efec6afa",
+   "t": 1794467061.5786684,
+   "n_legs": 6,
+   "contracts": 0.0,
+   "target_cost": 1.0,
+   "fair": 0.1304,
+   "quotes": {
+    "0.0": 0.14,
+    "0.05": 0.15,
+    "0.1": 0.15,
+    "0.2": 0.17,
+    "0.3": 0.18,
+    "0.5": 0.21,
+    "1.0": 0.27
+   },
+   "traded": [
+    0.047,
+    0.116,
+    0.104
+   ],
+   "result": "no",
+   "sports_legs": 6,
+   "settle_h": 0.82
+  },
+  {
    "id": "363eb649-5ee7-41c1-869e-28dd76a7113c",
    "t": 1794467061.5786684,
    "n_legs": 6,
@@ -35059,6 +34577,29 @@
    "result": "no",
    "sports_legs": 0,
    "settle_h": 0.19
+  },
+  {
+   "id": "1681f2b3-cbaf-442e-8198-3d2661c07b2b",
+   "t": 1794467061.5786684,
+   "n_legs": 9,
+   "contracts": 6549.48,
+   "target_cost": null,
+   "fair": 0.0127,
+   "quotes": {
+    "0.0": 0.02,
+    "0.05": 0.02,
+    "0.1": 0.02,
+    "0.2": 0.03,
+    "0.3": 0.03,
+    "0.5": 0.03,
+    "1.0": 0.04
+   },
+   "traded": [
+    0.0098
+   ],
+   "result": "no",
+   "sports_legs": 9,
+   "settle_h": 0.82
   },
   {
    "id": "396aa1f4-b613-4c3c-9d61-244fc75cd2ba",
@@ -35126,6 +34667,27 @@
    "settle_h": 0.19
   },
   {
+   "id": "54693f99-d696-4361-9f6b-93d7c7c43543",
+   "t": 1794467061.5786684,
+   "n_legs": 4,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.1347,
+   "quotes": {
+    "0.0": 0.14,
+    "0.05": 0.15,
+    "0.1": 0.16,
+    "0.2": 0.17,
+    "0.3": 0.19,
+    "0.5": 0.21,
+    "1.0": 0.28
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 4,
+   "settle_h": 0.92
+  },
+  {
    "id": "87db804e-fdb5-41b7-97ee-874f291da0a7",
    "t": 1794467061.5786684,
    "n_legs": 2,
@@ -35166,6 +34728,29 @@
    "result": "yes",
    "sports_legs": 0,
    "settle_h": 0.28
+  },
+  {
+   "id": "e47554fb-4132-4184-8ece-196f827876f6",
+   "t": 1794467061.5786684,
+   "n_legs": 8,
+   "contracts": 188.19,
+   "target_cost": null,
+   "fair": 0.044,
+   "quotes": {
+    "0.0": 0.05,
+    "0.05": 0.06,
+    "0.1": 0.06,
+    "0.2": 0.06,
+    "0.3": 0.07,
+    "0.5": 0.08,
+    "1.0": 0.1
+   },
+   "traded": [
+    0.054
+   ],
+   "result": "no",
+   "sports_legs": 8,
+   "settle_h": 0.82
   },
   {
    "id": "182cd50d-520a-498f-93df-80ff161bd309",
@@ -35455,6 +35040,29 @@
    "settle_h": 0.18
   },
   {
+   "id": "d02847ec-3ef8-46f4-ba28-90156fbd6bb1",
+   "t": 1794467061.5786684,
+   "n_legs": 3,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.6096,
+   "quotes": {
+    "0.0": 0.62,
+    "0.05": 0.65,
+    "0.1": 0.68,
+    "0.2": 0.74,
+    "0.3": 0.8,
+    "0.5": 0.92,
+    "1.0": 0.99
+   },
+   "traded": [
+    0.345
+   ],
+   "result": "no",
+   "sports_legs": 3,
+   "settle_h": 0.82
+  },
+  {
    "id": "eaa6a8d2-df42-4345-b182-a9d76c1d474e",
    "t": 1794467061.5786684,
    "n_legs": 18,
@@ -35476,6 +35084,38 @@
    "settle_h": 0.28
   },
   {
+   "id": "5a6f274e-6f0c-4b99-8224-a143b5ddba83",
+   "t": 1794467061.5786684,
+   "n_legs": 10,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.012,
+   "quotes": {
+    "0.0": 0.02,
+    "0.05": 0.02,
+    "0.1": 0.02,
+    "0.2": 0.02,
+    "0.3": 0.03,
+    "0.5": 0.03,
+    "1.0": 0.03
+   },
+   "traded": [
+    0.016,
+    0.015,
+    0.015,
+    0.016,
+    0.011,
+    0.013,
+    0.014,
+    0.014,
+    0.014,
+    0.015
+   ],
+   "result": "no",
+   "sports_legs": 10,
+   "settle_h": 0.82
+  },
+  {
    "id": "f02522ae-94db-4e88-960e-d1fad1bd52c2",
    "t": 1794467061.5786684,
    "n_legs": 21,
@@ -35495,6 +35135,30 @@
    "result": "no",
    "sports_legs": 21,
    "settle_h": 0.65
+  },
+  {
+   "id": "4d3e9a9c-42ba-4d1b-87b2-8defe078ac7a",
+   "t": 1794467061.5786684,
+   "n_legs": 11,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.015,
+   "quotes": {
+    "0.0": 0.03,
+    "0.05": 0.03,
+    "0.1": 0.03,
+    "0.2": 0.03,
+    "0.3": 0.03,
+    "0.5": 0.03,
+    "1.0": 0.04
+   },
+   "traded": [
+    0.024,
+    0.02
+   ],
+   "result": "no",
+   "sports_legs": 11,
+   "settle_h": 0.82
   },
   {
    "id": "b8f78136-a07b-4a1d-9147-766a76c9cdfb",
@@ -35539,6 +35203,48 @@
    "settle_h": 0.18
   },
   {
+   "id": "29094ff6-a7ac-4db4-968a-f298f5c1a01f",
+   "t": 1794467061.5786684,
+   "n_legs": 24,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.0006,
+   "quotes": {
+    "0.0": 0.01,
+    "0.05": 0.01,
+    "0.1": 0.01,
+    "0.2": 0.01,
+    "0.3": 0.01,
+    "0.5": 0.01,
+    "1.0": 0.01
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 24,
+   "settle_h": 0.92
+  },
+  {
+   "id": "7eb5b7ca-6754-462e-800e-5e9f42c39b4e",
+   "t": 1794467061.5786684,
+   "n_legs": 19,
+   "contracts": 411.11,
+   "target_cost": null,
+   "fair": 0.0011,
+   "quotes": {
+    "0.0": 0.01,
+    "0.05": 0.01,
+    "0.1": 0.01,
+    "0.2": 0.01,
+    "0.3": 0.01,
+    "0.5": 0.01,
+    "1.0": 0.01
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 19,
+   "settle_h": 0.82
+  },
+  {
    "id": "a44676a1-47b6-421d-8dfc-ec32ce649e2a",
    "t": 1794467061.5786684,
    "n_legs": 2,
@@ -35558,6 +35264,29 @@
    "result": "no",
    "sports_legs": 2,
    "settle_h": 0.23
+  },
+  {
+   "id": "5c720671-474d-4a60-9101-e40a57bc4480",
+   "t": 1794467061.5786684,
+   "n_legs": 5,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.3128,
+   "quotes": {
+    "0.0": 0.32,
+    "0.05": 0.34,
+    "0.1": 0.35,
+    "0.2": 0.39,
+    "0.3": 0.42,
+    "0.5": 0.48,
+    "1.0": 0.64
+   },
+   "traded": [
+    0.366
+   ],
+   "result": "no",
+   "sports_legs": 5,
+   "settle_h": 0.82
   },
   {
    "id": "ab83fd6c-d23d-468e-8d4a-9988624e2983",
@@ -35631,6 +35360,27 @@
    "settle_h": 0.18
   },
   {
+   "id": "27543e83-70e6-4ca4-8e7e-e2b48f4eb8a4",
+   "t": 1794467061.5786684,
+   "n_legs": 9,
+   "contracts": 303.03,
+   "target_cost": null,
+   "fair": 0.0017,
+   "quotes": {
+    "0.0": 0.01,
+    "0.05": 0.01,
+    "0.1": 0.01,
+    "0.2": 0.01,
+    "0.3": 0.01,
+    "0.5": 0.01,
+    "1.0": 0.01
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 9,
+   "settle_h": 0.82
+  },
+  {
    "id": "c6014e7b-865e-48da-94a8-ad457aebe390",
    "t": 1794467061.5786684,
    "n_legs": 9,
@@ -35652,6 +35402,27 @@
    "settle_h": 0.28
   },
   {
+   "id": "7680ee84-a516-44e6-ac98-9edc4e09b878",
+   "t": 1794467061.5786684,
+   "n_legs": 5,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "fair": 0.2595,
+   "quotes": {
+    "0.0": 0.27,
+    "0.05": 0.28,
+    "0.1": 0.3,
+    "0.2": 0.32,
+    "0.3": 0.35,
+    "0.5": 0.4,
+    "1.0": 0.53
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 5,
+   "settle_h": 0.92
+  },
+  {
    "id": "eb4bfb74-aa4c-44ca-b773-00b517d2279a",
    "t": 1794467061.5786684,
    "n_legs": 2,
@@ -35671,6 +35442,33 @@
    "result": "yes",
    "sports_legs": 2,
    "settle_h": 0.07
+  },
+  {
+   "id": "fcd5479f-9833-4f83-a841-d98bfb69f909",
+   "t": 1794467061.5786684,
+   "n_legs": 8,
+   "contracts": 0.0,
+   "target_cost": 20.0,
+   "fair": 0.0974,
+   "quotes": {
+    "0.0": 0.11,
+    "0.05": 0.11,
+    "0.1": 0.12,
+    "0.2": 0.13,
+    "0.3": 0.14,
+    "0.5": 0.16,
+    "1.0": 0.2
+   },
+   "traded": [
+    0.095,
+    0.098,
+    0.095,
+    0.118,
+    0.126
+   ],
+   "result": "no",
+   "sports_legs": 8,
+   "settle_h": 0.82
   },
   {
    "id": "3fa661eb-43a7-4bd3-9544-09c971829b6e",
@@ -35703,6 +35501,71 @@
    "result": "yes",
    "sports_legs": 0,
    "settle_h": 0.18
+  },
+  {
+   "id": "3dd522c5-2418-458a-8530-2ba3f29f5593",
+   "t": 1794467061.5786684,
+   "n_legs": 8,
+   "contracts": 0.0,
+   "target_cost": 0.15,
+   "fair": 0.1262,
+   "quotes": {
+    "0.0": 0.14,
+    "0.05": 0.14,
+    "0.1": 0.15,
+    "0.2": 0.16,
+    "0.3": 0.17,
+    "0.5": 0.2,
+    "1.0": 0.26
+   },
+   "traded": [
+    0.157
+   ],
+   "result": "no",
+   "sports_legs": 8,
+   "settle_h": 0.82
+  },
+  {
+   "id": "38db8755-9ac9-4f47-8f68-96645bc11215",
+   "t": 1794467061.5786684,
+   "n_legs": 5,
+   "contracts": 3544.0,
+   "target_cost": null,
+   "fair": 0.1956,
+   "quotes": {
+    "0.0": 0.21,
+    "0.05": 0.22,
+    "0.1": 0.23,
+    "0.2": 0.24,
+    "0.3": 0.26,
+    "0.5": 0.3,
+    "1.0": 0.4
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 5,
+   "settle_h": 0.82
+  },
+  {
+   "id": "e6eb5378-2802-4f5f-941c-8ac0495f6ea3",
+   "t": 1794467061.5786684,
+   "n_legs": 15,
+   "contracts": 10526.31,
+   "target_cost": null,
+   "fair": 0.0133,
+   "quotes": {
+    "0.0": 0.02,
+    "0.05": 0.02,
+    "0.1": 0.02,
+    "0.2": 0.03,
+    "0.3": 0.03,
+    "0.5": 0.03,
+    "1.0": 0.04
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 15,
+   "settle_h": 0.82
   },
   {
    "id": "f6b51590-2926-464d-a713-dbe399c20164",
@@ -35791,6 +35654,50 @@
    "settle_h": 0.18
   },
   {
+   "id": "92729b31-d3e3-462e-989d-f12a80d6ffb5",
+   "t": 1794467061.5786684,
+   "n_legs": 5,
+   "contracts": 221.43,
+   "target_cost": null,
+   "fair": 0.1793,
+   "quotes": {
+    "0.0": 0.19,
+    "0.05": 0.2,
+    "0.1": 0.21,
+    "0.2": 0.23,
+    "0.3": 0.24,
+    "0.5": 0.28,
+    "1.0": 0.37
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 5,
+   "settle_h": 0.82
+  },
+  {
+   "id": "f7173898-c485-4a17-9bb8-53f0b0f9c21b",
+   "t": 1794467061.5786684,
+   "n_legs": 4,
+   "contracts": 0.0,
+   "target_cost": 5.0,
+   "fair": 0.3376,
+   "quotes": {
+    "0.0": 0.35,
+    "0.05": 0.36,
+    "0.1": 0.38,
+    "0.2": 0.42,
+    "0.3": 0.45,
+    "0.5": 0.52,
+    "1.0": 0.69
+   },
+   "traded": [
+    0.41
+   ],
+   "result": "no",
+   "sports_legs": 4,
+   "settle_h": 0.82
+  },
+  {
    "id": "17a78229-6712-444b-98e7-798a7198ffcb",
    "t": 1794467061.5786684,
    "n_legs": 3,
@@ -35857,6 +35764,27 @@
    "settle_h": 0.28
   },
   {
+   "id": "aa70cc40-8eb8-4ac9-9cab-6363bf33bdf2",
+   "t": 1794467061.5786684,
+   "n_legs": 30,
+   "contracts": 11910.0,
+   "target_cost": null,
+   "fair": 0.0008,
+   "quotes": {
+    "0.0": 0.01,
+    "0.05": 0.01,
+    "0.1": 0.01,
+    "0.2": 0.01,
+    "0.3": 0.01,
+    "0.5": 0.01,
+    "1.0": 0.01
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 30,
+   "settle_h": 0.82
+  },
+  {
    "id": "1e16156e-da2d-4301-801b-5bf3987df17a",
    "t": 1794467061.5786684,
    "n_legs": 6,
@@ -35876,232 +35804,185 @@
    "result": "yes",
    "sports_legs": 0,
    "settle_h": 0.28
+  },
+  {
+   "id": "329aa664-85e8-409e-b598-76075c1b265d",
+   "t": 1794469843.5251753,
+   "n_legs": 4,
+   "contracts": 595.37,
+   "target_cost": null,
+   "fair": 0.2455,
+   "quotes": {
+    "0.0": 0.26,
+    "0.05": 0.27,
+    "0.1": 0.28,
+    "0.2": 0.3,
+    "0.3": 0.33,
+    "0.5": 0.38,
+    "1.0": 0.5
+   },
+   "traded": [],
+   "result": "no",
+   "sports_legs": 4,
+   "settle_h": 0.05
   }
  ],
  "recent": [
   {
-   "id": "869639fa-a95c-4095-845a-168c6c15152a",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S20265YMKJJBPFJ4JEAHJ-VHGPBFIKY",
-   "n_legs": 6,
+   "id": "d32b5d58-a255-47f2-8a4b-70952593d6ce",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S202643X2CPHV5IIAXTLT-E3DANBTTF",
+   "n_legs": 5,
    "contracts": 0.0,
-   "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.460258Z",
-   "cross": false
-  },
-  {
-   "id": "e69affe6-8fb2-4af7-8ac1-0eabf110ca55",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026Q76ZFSDXXPPFUBNO-2QBFOYXPJ",
-   "n_legs": 24,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.459067Z",
+   "target_cost": 250.0,
+   "created": "2026-11-12T07:50:44.412587Z",
    "cross": true,
-   "fair": 0.0124,
-   "sports_legs": 24,
+   "fair": 0.4864,
+   "sports_legs": 5,
    "quotes": {
-    "0.0": 0.02,
-    "0.05": 0.02,
-    "0.1": 0.02,
-    "0.2": 0.02,
-    "0.3": 0.03,
-    "0.5": 0.03,
-    "1.0": 0.03
-   },
-   "traded": []
-  },
-  {
-   "id": "5469ffd4-64ee-4a34-aa64-bdd5446ed2eb",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026P53XAMWFUWCZ3TF7-AZ2VDC2AY",
-   "n_legs": 4,
-   "contracts": 0.0,
-   "target_cost": 10.33,
-   "created": "2026-11-12T07:04:22.456917Z",
-   "cross": true,
-   "fair": 0.2535,
-   "sports_legs": 4,
-   "quotes": {
-    "0.0": 0.26,
-    "0.05": 0.28,
-    "0.1": 0.29,
-    "0.2": 0.31,
-    "0.3": 0.34,
-    "0.5": 0.39,
-    "1.0": 0.52
-   },
-   "traded": []
-  },
-  {
-   "id": "bedbe234-976b-4286-b7b7-b6c207fa06f1",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026SHGOBVD27QKX7R2G-R2O7VJ6ZE",
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.456377Z",
-   "cross": true,
-   "fair": 0.6883,
-   "sports_legs": 2,
-   "quotes": {
-    "0.0": 0.7,
-    "0.05": 0.73,
-    "0.1": 0.77,
-    "0.2": 0.84,
-    "0.3": 0.9,
-    "0.5": 0.99,
-    "1.0": 0.99
-   },
-   "traded": []
-  },
-  {
-   "id": "567fc8f3-966c-48c9-b023-a2bf18be4c2b",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026ZRY42725UXZRYAXD-PGP46YS4T",
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 4.0,
-   "created": "2026-11-12T07:04:22.455905Z",
-   "cross": false
-  },
-  {
-   "id": "11b67d66-6a21-4b7b-8250-c3928a9c9a82",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026YCJWBEK3CVRPS2I5-HOFFY37ER",
-   "n_legs": 8,
-   "contracts": 0.0,
-   "target_cost": 100.0,
-   "created": "2026-11-12T07:04:22.454655Z",
-   "cross": true,
-   "fair": 0.067,
-   "sports_legs": 8,
-   "quotes": {
-    "0.0": 0.08,
-    "0.05": 0.08,
-    "0.1": 0.08,
-    "0.2": 0.09,
-    "0.3": 0.1,
-    "0.5": 0.11,
-    "1.0": 0.14
-   },
-   "traded": []
-  },
-  {
-   "id": "e18dd979-33a3-437c-9bc0-96118fe2b5ea",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026FZPAYBDDBAETKZ3V-5X5Y57Y2E",
-   "n_legs": 12,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.454593Z",
-   "cross": true,
-   "fair": 0.0013,
-   "sports_legs": 12,
-   "quotes": {
-    "0.0": 0.01,
-    "0.05": 0.01,
-    "0.1": 0.01,
-    "0.2": 0.01,
-    "0.3": 0.01,
-    "0.5": 0.01,
-    "1.0": 0.01
-   },
-   "traded": []
-  },
-  {
-   "id": "934b2364-87cf-47bc-b769-ff916f46f1bf",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S20263Q6WL2NVMTGXAVCW-RAMG6AJ4Q",
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.453594Z",
-   "cross": true,
-   "fair": 0.3879,
-   "sports_legs": 0,
-   "quotes": {
-    "0.0": 0.4,
-    "0.05": 0.42,
-    "0.1": 0.44,
-    "0.2": 0.48,
-    "0.3": 0.51,
-    "0.5": 0.59,
-    "1.0": 0.79
+    "0.0": 0.5,
+    "0.05": 0.52,
+    "0.1": 0.55,
+    "0.2": 0.59,
+    "0.3": 0.64,
+    "0.5": 0.74,
+    "1.0": 0.98
    },
    "traded": [
-    0.532,
-    0.52
-   ],
-   "result": "yes",
-   "settle_h": 0.19,
-   "pnl_c": {
-    "0.0": -60.0,
-    "0.05": -58.0,
-    "0.1": -56.0,
-    "0.2": -52.0,
-    "0.3": -49.0,
-    "0.5": -41.0,
-    "1.0": -21.0
-   }
-  },
-  {
-   "id": "51a69057-cbeb-4036-919b-4a8a37c5e50b",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026B5POL5OELP2TVSF2-TYYAYESBQ",
-   "n_legs": 2,
-   "contracts": 0.0,
-   "target_cost": 1.21,
-   "created": "2026-11-12T07:04:22.453578Z",
-   "cross": true,
-   "fair": 0.5381,
-   "sports_legs": 1,
-   "quotes": {
-    "0.0": 0.55,
-    "0.05": 0.58,
-    "0.1": 0.6,
-    "0.2": 0.66,
-    "0.3": 0.71,
-    "0.5": 0.82,
-    "1.0": 0.99
-   },
-   "traded": []
-  },
-  {
-   "id": "b5045506-7c97-43b1-a825-52a0b91c2b28",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026LVFR4DR47MS3BRH2-7BLZDUJQQ",
-   "n_legs": 6,
-   "contracts": 0.0,
-   "target_cost": 42.0,
-   "created": "2026-11-12T07:04:22.453296Z",
-   "cross": true,
-   "fair": 0.116,
-   "sports_legs": 6,
-   "quotes": {
-    "0.0": 0.13,
-    "0.05": 0.13,
-    "0.1": 0.14,
-    "0.2": 0.15,
-    "0.3": 0.16,
-    "0.5": 0.18,
-    "1.0": 0.24
-   },
-   "traded": [
-    0.122
+    0.516
    ]
   },
   {
-   "id": "fb86617c-0184-4a43-85ef-e9f0d669ee2b",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026B7BHZOPPO553ZPJO-THEC5FNZ4",
-   "n_legs": 24,
-   "contracts": 11111.11,
-   "target_cost": null,
-   "created": "2026-11-12T07:04:22.452799Z",
+   "id": "d23b5006-4a2f-427f-a43b-264dde16d3c3",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026QTOSO5LQIRRKK4JZ-D2ANNG227",
+   "n_legs": 2,
+   "contracts": 0.0,
+   "target_cost": 55.0,
+   "created": "2026-11-12T07:50:44.41162Z",
    "cross": true,
-   "fair": 0.0004,
-   "sports_legs": 24,
+   "fair": 0.4412,
+   "sports_legs": 2,
+   "quotes": {
+    "0.0": 0.45,
+    "0.05": 0.47,
+    "0.1": 0.5,
+    "0.2": 0.54,
+    "0.3": 0.58,
+    "0.5": 0.67,
+    "1.0": 0.89
+   },
+   "traded": []
+  },
+  {
+   "id": "71e87c47-2f84-4437-8a48-47ee332ffbbc",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026GLR4KUH6PC2BGIUX-VTJ56BAFP",
+   "n_legs": 4,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "created": "2026-11-12T07:50:44.410908Z",
+   "cross": true,
+   "fair": 0.2407,
+   "sports_legs": 4,
+   "quotes": {
+    "0.0": 0.25,
+    "0.05": 0.26,
+    "0.1": 0.27,
+    "0.2": 0.3,
+    "0.3": 0.32,
+    "0.5": 0.37,
+    "1.0": 0.49
+   },
+   "traded": [
+    0.25
+   ]
+  },
+  {
+   "id": "547d0e8c-21f9-4b7e-b1f5-6f1510870eb8",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S20263NL23ZE34K7YP6UJ-KAHI3LALU",
+   "n_legs": 5,
+   "contracts": 0.0,
+   "target_cost": 101.0,
+   "created": "2026-11-12T07:50:44.409258Z",
+   "cross": true,
+   "fair": 0.0296,
+   "sports_legs": 5,
+   "quotes": {
+    "0.0": 0.04,
+    "0.05": 0.04,
+    "0.1": 0.04,
+    "0.2": 0.05,
+    "0.3": 0.05,
+    "0.5": 0.05,
+    "1.0": 0.07
+   },
+   "traded": [
+    0.03
+   ]
+  },
+  {
+   "id": "a89d144a-e209-43b0-b6d2-5df4f16b09ba",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026PLAMOSYMNGKNNMZ3-I53O5Q7FZ",
+   "n_legs": 11,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "created": "2026-11-12T07:50:44.407966Z",
+   "cross": true,
+   "fair": 0.0173,
+   "sports_legs": 10,
+   "quotes": {
+    "0.0": 0.03,
+    "0.05": 0.03,
+    "0.1": 0.03,
+    "0.2": 0.03,
+    "0.3": 0.03,
+    "0.5": 0.04,
+    "1.0": 0.04
+   },
+   "traded": [
+    0.022,
+    0.022,
+    0.022
+   ]
+  },
+  {
+   "id": "505bbb47-f3bb-4e2e-85f0-f0a4564a2415",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026RNNCYBPRZ5HJEJAR-UWJFYHAXV",
+   "n_legs": 9,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "created": "2026-11-12T07:50:44.407395Z",
+   "cross": true,
+   "fair": 0.2023,
+   "sports_legs": 9,
+   "quotes": {
+    "0.0": 0.21,
+    "0.05": 0.22,
+    "0.1": 0.23,
+    "0.2": 0.25,
+    "0.3": 0.27,
+    "0.5": 0.31,
+    "1.0": 0.41
+   },
+   "traded": [
+    0.212
+   ]
+  },
+  {
+   "id": "880e89a9-30cd-4b44-adb5-09b1e5aadeba",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY0-S2026QJYVQETSBYD3QH2I-UHN2MEDJW",
+   "n_legs": 22,
+   "contracts": 0.0,
+   "target_cost": 2.0,
+   "created": "2026-11-12T07:50:44.407012Z",
+   "cross": true,
+   "fair": 0.0008,
+   "sports_legs": 22,
    "quotes": {
     "0.0": 0.01,
     "0.05": 0.01,
@@ -36111,94 +35992,105 @@
     "0.5": 0.01,
     "1.0": 0.01
    },
+   "traded": [
+    0.0095,
+    0.0095,
+    0.0095,
+    0.0095,
+    0.0095,
+    0.0095,
+    0.0095,
+    0.0094,
+    0.0094,
+    0.0094
+   ]
+  },
+  {
+   "id": "49bda7ce-bb8b-4ed0-9f7a-17e8247574b2",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S20267Q2LRJNPTQUIXJXX-5GANYATJF",
+   "n_legs": 5,
+   "contracts": 0.0,
+   "target_cost": 5.5,
+   "created": "2026-11-12T07:50:44.406424Z",
+   "cross": false
+  },
+  {
+   "id": "9bd02dff-0c02-41a2-99a7-b1f7987ed2d8",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026L72HX7L5PDVV4RQF-KSWHF24WS",
+   "n_legs": 9,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "created": "2026-11-12T07:50:44.403292Z",
+   "cross": true,
+   "fair": 0.1963,
+   "sports_legs": 9,
+   "quotes": {
+    "0.0": 0.21,
+    "0.05": 0.22,
+    "0.1": 0.23,
+    "0.2": 0.25,
+    "0.3": 0.27,
+    "0.5": 0.3,
+    "1.0": 0.4
+   },
    "traded": []
   },
   {
-   "id": "ad468407-f02e-4f6b-a97d-47edf6677fb3",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY0-S2026XPIT5UVC3N4LQGUH-B7Q7IOCPF",
+   "id": "421c7673-4996-43f0-b020-229e7828583a",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026QTOSO5LQIRRKK4JZ-D2ANNG227",
+   "n_legs": 2,
+   "contracts": 0.0,
+   "target_cost": 550.0,
+   "created": "2026-11-12T07:50:44.402891Z",
+   "cross": true,
+   "fair": 0.4412,
+   "sports_legs": 2,
+   "quotes": {
+    "0.0": 0.45,
+    "0.05": 0.47,
+    "0.1": 0.5,
+    "0.2": 0.54,
+    "0.3": 0.58,
+    "0.5": 0.67,
+    "1.0": 0.89
+   },
+   "traded": []
+  },
+  {
+   "id": "e50ab17f-79fd-4f4a-9f88-6542a82d5bc6",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S20262AHFMNBK523VQCBX-WDPZWMDNR",
    "n_legs": 3,
    "contracts": 0.0,
-   "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.45131Z",
+   "target_cost": 10000.0,
+   "created": "2026-11-12T07:50:44.402611Z",
    "cross": true,
-   "fair": 0.1879,
+   "fair": 0.1942,
    "sports_legs": 3,
    "quotes": {
     "0.0": 0.2,
     "0.05": 0.21,
     "0.1": 0.22,
     "0.2": 0.24,
-    "0.3": 0.25,
-    "0.5": 0.29,
-    "1.0": 0.39
+    "0.3": 0.26,
+    "0.5": 0.3,
+    "1.0": 0.4
    },
    "traded": []
   },
   {
-   "id": "5a5144f8-44dd-4b61-88cf-20053edcaff8",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026ZZQEMOGBELQACTZU-XSC3SAMHH",
-   "n_legs": 19,
-   "contracts": 538.46,
-   "target_cost": null,
-   "created": "2026-11-12T07:04:22.450921Z",
-   "cross": true,
-   "fair": 0.0108,
-   "sports_legs": 19,
-   "quotes": {
-    "0.0": 0.02,
-    "0.05": 0.02,
-    "0.1": 0.02,
-    "0.2": 0.02,
-    "0.3": 0.02,
-    "0.5": 0.03,
-    "1.0": 0.03
-   },
-   "traded": []
-  },
-  {
-   "id": "0e51e5e1-58e7-451e-86ed-7292430534d4",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026HDTRJLKJC2BRBQ5P-W2I4FYRQZ",
-   "n_legs": 8,
-   "contracts": 0.0,
-   "target_cost": 340.57,
-   "created": "2026-11-12T07:04:22.449747Z",
-   "cross": false
-  },
-  {
-   "id": "fbcc4456-bc2f-4882-bc40-b7cc8b976b9f",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026TB6JYZD4ITMACLWZ-PN72NRVJ6",
-   "n_legs": 6,
-   "contracts": 0.0,
-   "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.449312Z",
-   "cross": true,
-   "fair": 0.0104,
-   "sports_legs": 6,
-   "quotes": {
-    "0.0": 0.02,
-    "0.05": 0.02,
-    "0.1": 0.02,
-    "0.2": 0.02,
-    "0.3": 0.02,
-    "0.5": 0.03,
-    "1.0": 0.03
-   },
-   "traded": []
-  },
-  {
-   "id": "115949df-8705-4d19-a0f0-16f2ae8b3bc3",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026OUK3GFBQOYO6VUND-Y5S5RHZI2",
+   "id": "d32959f8-e67b-4330-a986-287970daf641",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026GDDPXCO4TKIG3O4V-Q4PEQMAGQ",
    "n_legs": 21,
-   "contracts": 0.0,
-   "target_cost": 1.0,
-   "created": "2026-11-12T07:04:22.448792Z",
+   "contracts": 23833.33,
+   "target_cost": null,
+   "created": "2026-11-12T07:50:44.402261Z",
    "cross": true,
-   "fair": 0.0003,
+   "fair": 0.0011,
    "sports_legs": 21,
    "quotes": {
     "0.0": 0.01,
@@ -36209,52 +36101,134 @@
     "0.5": 0.01,
     "1.0": 0.01
    },
-   "traded": [
-    0.0009,
-    0.0008,
-    0.0008,
-    0.0008,
-    0.0007,
-    0.0007,
-    0.0007,
-    0.0007,
-    0.0007,
-    0.0007
-   ]
+   "traded": []
   },
   {
-   "id": "ce30d97c-20fa-4af0-be8f-cf111a733d60",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S20263LJRS7CPZOPFPDNI-YNADKRETS",
-   "n_legs": 7,
-   "contracts": 249.15,
-   "target_cost": null,
-   "created": "2026-11-12T07:04:22.448315Z",
+   "id": "b6db404e-d8fc-4de6-9bb7-2e1444e0d523",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S20264NICQHMXWVNSO2B5-5LVQWTYBG",
+   "n_legs": 3,
+   "contracts": 0.0,
+   "target_cost": 7.0,
+   "created": "2026-11-12T07:50:44.398928Z",
    "cross": true,
-   "fair": 0.1061,
-   "sports_legs": 7,
+   "fair": 0.571,
+   "sports_legs": 3,
    "quotes": {
-    "0.0": 0.12,
-    "0.05": 0.12,
-    "0.1": 0.13,
-    "0.2": 0.14,
-    "0.3": 0.15,
-    "0.5": 0.17,
-    "1.0": 0.22
+    "0.0": 0.58,
+    "0.05": 0.61,
+    "0.1": 0.64,
+    "0.2": 0.7,
+    "0.3": 0.75,
+    "0.5": 0.87,
+    "1.0": 0.99
    },
    "traded": []
   },
   {
-   "id": "e15a8ff4-2e3a-4a5a-adb0-8a23752cd449",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026S3CDPV3YSCMM6UGR-K7BHZMEGO",
-   "n_legs": 23,
+   "id": "a4233e80-b15f-45aa-b17d-3a9bb39cd2f8",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026NHK6KE7DQ65T4MIM-UNW3UEKUY",
+   "n_legs": 9,
    "contracts": 0.0,
    "target_cost": 10.0,
-   "created": "2026-11-12T07:04:22.448098Z",
+   "created": "2026-11-12T07:50:44.398188Z",
+   "cross": true,
+   "fair": 0.0205,
+   "sports_legs": 0,
+   "quotes": {
+    "0.0": 0.03,
+    "0.05": 0.03,
+    "0.1": 0.03,
+    "0.2": 0.03,
+    "0.3": 0.04,
+    "0.5": 0.04,
+    "1.0": 0.05
+   },
+   "traded": []
+  },
+  {
+   "id": "0ab47e61-3e43-4e6c-9aae-292c88814f6c",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026BAK7HVDAGQU5Z74D-RW25P6NP4",
+   "n_legs": 3,
+   "contracts": 2.0,
+   "target_cost": null,
+   "created": "2026-11-12T07:50:44.397135Z",
+   "cross": true,
+   "fair": 0.0681,
+   "sports_legs": 0,
+   "quotes": {
+    "0.0": 0.08,
+    "0.05": 0.08,
+    "0.1": 0.08,
+    "0.2": 0.09,
+    "0.3": 0.1,
+    "0.5": 0.11,
+    "1.0": 0.15
+   },
+   "traded": []
+  },
+  {
+   "id": "af150115-65b7-4da7-9403-6ee49f0a51fd",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026UGQSMOWB7ZB5XQCT-WMXCJWG7Q",
+   "n_legs": 2,
+   "contracts": 1.0,
+   "target_cost": null,
+   "created": "2026-11-12T07:50:44.396404Z",
+   "cross": true,
+   "fair": 0.483,
+   "sports_legs": 2,
+   "quotes": {
+    "0.0": 0.49,
+    "0.05": 0.52,
+    "0.1": 0.54,
+    "0.2": 0.59,
+    "0.3": 0.64,
+    "0.5": 0.73,
+    "1.0": 0.98
+   },
+   "traded": [
+    0.712,
+    0.52
+   ]
+  },
+  {
+   "id": "d3492a1e-d16f-4213-b8ad-c8cfcdb4f0e9",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026NQ54TDGMAXBJLES2-HC3KUYIO7",
+   "n_legs": 14,
+   "contracts": 0.0,
+   "target_cost": 30.8,
+   "created": "2026-11-12T07:50:44.396251Z",
+   "cross": true,
+   "fair": 0.0158,
+   "sports_legs": 14,
+   "quotes": {
+    "0.0": 0.03,
+    "0.05": 0.03,
+    "0.1": 0.03,
+    "0.2": 0.03,
+    "0.3": 0.03,
+    "0.5": 0.03,
+    "1.0": 0.04
+   },
+   "traded": [
+    0.019
+   ]
+  },
+  {
+   "id": "ab3cf41f-e8c7-41f6-aeb8-ee484953ab3f",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026L2JN7SBDGLUFXMMI-2TL7OXOZS",
+   "n_legs": 16,
+   "contracts": 0.0,
+   "target_cost": 10.0,
+   "created": "2026-11-12T07:50:44.394865Z",
    "cross": true,
    "fair": 0.0393,
-   "sports_legs": 23,
+   "sports_legs": 16,
    "quotes": {
     "0.0": 0.05,
     "0.05": 0.05,
@@ -36267,25 +36241,49 @@
    "traded": []
   },
   {
-   "id": "48aae2ce-d8e1-447f-a214-cec3c49e0927",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026E7N4NL2CXISRNZ4P-7IRIMSIZD",
-   "n_legs": 3,
-   "contracts": 0.0,
-   "target_cost": 20.0,
-   "created": "2026-11-12T07:04:22.448076Z",
-   "cross": false
+   "id": "8d356401-cf59-4145-ad69-1e8f0108544d",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026J46LZNEIM5FTYEH3-7264VW5KF",
+   "n_legs": 5,
+   "contracts": 1223.0,
+   "target_cost": null,
+   "created": "2026-11-12T07:50:44.392518Z",
+   "cross": true,
+   "fair": 0.0056,
+   "sports_legs": 5,
+   "quotes": {
+    "0.0": 0.02,
+    "0.05": 0.02,
+    "0.1": 0.02,
+    "0.2": 0.02,
+    "0.3": 0.02,
+    "0.5": 0.02,
+    "1.0": 0.02
+   },
+   "traded": []
   },
   {
-   "id": "c553bc24-e801-4089-a003-1c796a9c0ef9",
-   "t": 1794467061.5786684,
-   "ticker": "KXMVECROSSCATEGORY-S2026ILKUN7CBY7TLPX4F-EWYCVKVM6",
-   "n_legs": 6,
+   "id": "ba0ab332-9ab2-4e0f-95b9-15b455802bbd",
+   "t": 1794469843.5251753,
+   "ticker": "KXMVECROSSCATEGORY-S2026SECO3NTB7ZPMGPLF-G3GPJAWKJ",
+   "n_legs": 18,
    "contracts": 0.0,
-   "target_cost": 100.0,
-   "created": "2026-11-12T07:04:22.447834Z",
-   "cross": false
+   "target_cost": 10.0,
+   "created": "2026-11-12T07:50:44.391978Z",
+   "cross": true,
+   "fair": 0.1254,
+   "sports_legs": 18,
+   "quotes": {
+    "0.0": 0.14,
+    "0.05": 0.14,
+    "0.1": 0.15,
+    "0.2": 0.16,
+    "0.3": 0.17,
+    "0.5": 0.2,
+    "1.0": 0.26
+   },
+   "traded": []
   }
  ],
- "at": "2026-11-12T07:49:40+00:00"
+ "at": "2026-11-12T09:04:53+00:00"
 }
