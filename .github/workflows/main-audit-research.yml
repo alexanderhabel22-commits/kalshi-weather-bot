@@ -1,0 +1,71 @@
+name: main-audit-research
+
+# Research only (audit of the main bot's Mentions / favorites / Fed-CPI strategies,
+# Nov 11 2026): downloads settled markets with hourly bid/ask candles and trade tapes.
+# Read-only public data; never trades, never alerts. Runs only on push to this research
+# branch. Output goes to the main-audit-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-gag98r"]
+    paths: ["research_main/fetch.py", "research_main/sections.txt", ".github/workflows/main-audit-research.yml"]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: main-audit-research
+  cancel-in-progress: false
+
+jobs:
+  # one research job at a time across the repo: wait for any other *research run to finish
+  wait:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Wait for other research runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # first come, first served: only runs created before this one count (no deadlock)
+          me=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}" --jq .created_at)
+          for i in $(seq 1 170); do
+            n=$(gh api "repos/${{ github.repository }}/actions/runs?status=in_progress&per_page=100" \
+                  --jq "[.workflow_runs[] | select((.name | endswith(\"research\")) and .id != ${{ github.run_id }} and .created_at < \"$me\")] | length")
+            [ "$n" = "0" ] && exit 0
+            echo "other research runs in progress: $n"; sleep 120
+          done
+          exit 1
+  run:
+    needs: wait
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Run
+        run: python research_main/fetch.py out $(cat research_main/sections.txt)
+      - name: Save to main-audit-data branch
+        if: always() && hashFiles('out/log.txt') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d-%H%M)"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          for i in 1 2 3 4 5 6; do
+            if git fetch origin main-audit-data 2>/dev/null; then
+              git checkout -q -f -B data origin/main-audit-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p runs && rm -rf "runs/$stamp" && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+            git add runs
+            git commit -qm "research output $stamp [skip ci]" || exit 0
+            git push origin HEAD:main-audit-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1

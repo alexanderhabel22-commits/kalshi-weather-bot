@@ -167,6 +167,16 @@ record earns it. Be candid about odds and risk; no hype.
   contract on 162 fills. Cause (research_wx/RESULTS.md): since September the market's own
   implied forecast misses by 1.31F at 36h, our model mix by 1.60F, so the model has almost
   nothing the price doesn't. Re-check in Jan-Feb; it keeps logging on paper.
+- **Audit of Mentions / favorites / Fed-CPI (Nov 12, research_main/RESULTS.md):** an exact
+  replay of each live rule on hourly bid/ask and trade tapes (one fixed-size order per
+  market, fill only when a later trade prints at our price). Mentions NO: +0.9c ± 0.9 per
+  filled order Jun-Nov 2026, -0.4c ± 1.3 in the last 90 days: no measurable edge at our
+  size (the earlier +4 to +6c was weighted by contracts). Favorites: +3.2c ± 0.9, about
+  +2.0c ± 1.5 on the markets the 7-day rule can reach (election markets close early and
+  are mostly skipped). Fed/CPI fade: +9.4c ± 2.1 (+8.7c after maker fees), 45 of 52 release
+  days up, about 8 fills a month. Proposed to Alex Nov 12: Mentions to paper, Fed/CPI 1 -> 3
+  contracts. Re-run: push research_main/fetch.py on the research branch (workflow
+  main-audit-research, output on branch main-audit-data), then replay.py and analyze.py.
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES
