@@ -1,42 +1,42 @@
 {
  "last": {
-  "at": "2026-11-12T18:35:32+00:00",
+  "at": "2026-11-12T18:50:22+00:00",
   "flags": [],
   "haiku": {
    "level": "ok",
-   "summary": "15-MIN is in paper with control matching, no errors, no halt, and its 24h P&L of about -$12.21 sits inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting against the $20 budget and no fills. Copycat status is 4.8 min old, under the 6-minute line. Nothing needs Alex.",
+   "summary": "15-MIN is in paper with control matching, no errors, no halt, and 24h P&L of about -$13 inside its -35% stop. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting against the $20 budget, $0 filled, and no credits yet, which is normal before the period ends. Copycat is active and its status file is fresh. Nothing needs Alex.",
    "remember": ""
   },
   "opus": null,
   "action": null,
   "ai_spend": {
    "day": "2026-11-12",
-   "total": 0.3412,
+   "total": 0.3454,
    "by": {
-    "foreman": 0.3412
+    "foreman": 0.3454
    }
   }
  },
  "today": {
   "day": "2026-11-12",
-  "haiku": 55,
+  "haiku": 56,
   "opus": 1,
   "tokens": {
-   "haiku_in": 205769,
-   "haiku_out": 17197,
+   "haiku_in": 209191,
+   "haiku_out": 17357,
    "opus_in": 3729,
    "opus_out": 1511
   }
  },
  "ai_spend": {
   "day": "2026-11-12",
-  "total": 0.3412,
+  "total": 0.3454,
   "by": {
-   "foreman": 0.3412
+   "foreman": 0.3454
   }
  },
  "ai_history": {
-  "2026-11-12": 0.3412
+  "2026-11-12": 0.3454
  },
  "notes": [
   "Foreman never touches money settings, caps, stops, sizes, or code; propose fixes to an engineer.",
@@ -1216,5 +1216,5 @@
    "opus": null
   }
  ],
- "digest": "Time: 1:35 PM ET Thu Nov 12\n15-MIN: service=active mode=paper control=paper status_at=2026-11-12T18:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-12.2065 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV120000-00 2 1.6 0.4\n  KXSILVER15M-26NOV120000-00 2 1.7 -1.7\n  KXBTC15M-26NOV120015-15 2 1.62 0.38\n  KXSILVER15M-26NOV120015-15 2 1.6 -1.6\n  KXSILVER15M-26NOV120030-30 2 1.74 0.26\n  KXBTC15M-26NOV120045-45 2 1.62 0.38\n  KXSILVER15M-26NOV120045-45 2 1.82 0.18\nSERVER: RAM 42.6% used, 15-min bot at 23.6% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 4.8 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-12T18:26:25+00:00 mode=live halted=None bids=10 resting=$19.97 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXSENATENOM-SCD-28-BBRO no longer chosen; cancel KXSENATENOM-SCD-28-BWEB no longer chosen; cancel KXINSCOMMRACE-MS-27-R no longer chosen; cancel KXTREASRACE-UT-28-R up to 6c (reference price); cancel KXAUDITORRACE-UT-28-R no longer chosen\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$50.99 cash=$24.87 at=2026-11-12T18:32:04.499768+00:00\nRecent Actions runs: weather-scan in_progress 18:35Z; ent-log in_progress 18:34Z; trade success 18:31Z; weather-scan success 18:30Z; trade success 18:25Z; weather-scan success 18:25Z; trade success 18:21Z; weather-scan success 18:20Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Foreman never touches money settings, caps, stops, sizes, or code; propose fixes to an engineer.; Last reviewed Nov 12 7:20 AM ET.; 15-MIN has now been in paper mode since its Nov 12 stops, with control also set to paper; keep watching whether it returns to live on its own.; 15-MIN has stayed in paper since its Nov 12 stops; control matches mode, so this is a deliberate state, not a mismatch.; Copycat status file ran 6.5 min old on Nov 12 10:20 AM ET; recheck next cycle, escalate only if still stale or activating.; Copycat status file staleness has now hit 9.8 min; if it stays past 6 min next cycle, escalate.; Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking.; Copycat 'activating' has now recurred on Nov 12 at 7:20 AM and 12:35 PM ET and cleared on recheck both times, so treat a single activating reading as a watch item.\nRecent log:\n  Nov 12 2:50 AM ET: new: 15-min loss stop active: {'at': 1794469500, 'pnl': -18.86}\n  Nov 12 4:35 AM ET: cleared: M15_STOPPED\n  Nov 12 7:20 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 7:20 AM ET: escalated: Copycat still starting; nothing needed from Alex (ok). Repeat pattern, not a new fault. The 15-MIN loss stop tripped at 1:20 AM and 2:50 AM ET and cleared each time (second clear 4:35 AM ET). The bot is in paper with control=pape\n  Nov 12 7:35 AM ET: cleared: COPYCAT_DOWN\n  Nov 12 8:35 AM ET: check: ok. 15-MIN is in paper by design, control matches, no errors, no halt, and its 24h P&L of -$9.31 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.92 resting against the \n  Nov 12 12:35 PM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 12:50 PM ET: cleared: COPYCAT_DOWN\n  Nov 12 12:50 PM ET: check: ok. 15-MIN is in paper by design with control matching, no errors, no halt, and its 24h P&L of about -$10 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting aga\n  Nov 12 1:20 PM ET: cleared: M15_FUND"
+ "digest": "Time: 1:50 PM ET Thu Nov 12\n15-MIN: service=active mode=paper control=paper status_at=2026-11-12T18:47:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-13.0565 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV120000-00 2 1.6 0.4\n  KXSILVER15M-26NOV120000-00 2 1.7 -1.7\n  KXBTC15M-26NOV120015-15 2 1.62 0.38\n  KXSILVER15M-26NOV120015-15 2 1.6 -1.6\n  KXSILVER15M-26NOV120030-30 2 1.74 0.26\n  KXBTC15M-26NOV120045-45 2 1.62 0.38\n  KXSILVER15M-26NOV120045-45 2 1.82 0.18\nSERVER: RAM 48.1% used, 15-min bot at 23.8% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 0.0 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-12T18:42:02+00:00 mode=live halted=None bids=10 resting=$19.97 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXSENATENOM-SCD-28-BBRO no longer chosen; cancel KXSENATENOM-SCD-28-BWEB no longer chosen; cancel KXINSCOMMRACE-MS-27-R no longer chosen; cancel KXTREASRACE-UT-28-R up to 6c (reference price); cancel KXAUDITORRACE-UT-28-R no longer chosen\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$50.91 cash=$23.31 at=2026-11-12T18:45:56.119862+00:00\nRecent Actions runs: weather-scan in_progress 18:50Z; trade success 18:45Z; weather-scan success 18:45Z; tests success 18:43Z; trade success 18:41Z; weather-scan success 18:40Z; trade success 18:35Z; weather-scan success 18:35Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Foreman never touches money settings, caps, stops, sizes, or code; propose fixes to an engineer.; Last reviewed Nov 12 7:20 AM ET.; 15-MIN has now been in paper mode since its Nov 12 stops, with control also set to paper; keep watching whether it returns to live on its own.; 15-MIN has stayed in paper since its Nov 12 stops; control matches mode, so this is a deliberate state, not a mismatch.; Copycat status file ran 6.5 min old on Nov 12 10:20 AM ET; recheck next cycle, escalate only if still stale or activating.; Copycat status file staleness has now hit 9.8 min; if it stays past 6 min next cycle, escalate.; Copycat status file staleness has resolved on recheck; M15_FUND 403 warning now at 80 consecutive checks, still non-blocking.; Copycat 'activating' has now recurred on Nov 12 at 7:20 AM and 12:35 PM ET and cleared on recheck both times, so treat a single activating reading as a watch item.\nRecent log:\n  Nov 12 2:50 AM ET: new: 15-min loss stop active: {'at': 1794469500, 'pnl': -18.86}\n  Nov 12 4:35 AM ET: cleared: M15_STOPPED\n  Nov 12 7:20 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 7:20 AM ET: escalated: Copycat still starting; nothing needed from Alex (ok). Repeat pattern, not a new fault. The 15-MIN loss stop tripped at 1:20 AM and 2:50 AM ET and cleared each time (second clear 4:35 AM ET). The bot is in paper with control=pape\n  Nov 12 7:35 AM ET: cleared: COPYCAT_DOWN\n  Nov 12 8:35 AM ET: check: ok. 15-MIN is in paper by design, control matches, no errors, no halt, and its 24h P&L of -$9.31 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.92 resting against the \n  Nov 12 12:35 PM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 12:50 PM ET: cleared: COPYCAT_DOWN\n  Nov 12 12:50 PM ET: check: ok. 15-MIN is in paper by design with control matching, no errors, no halt, and its 24h P&L of about -$10 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting aga\n  Nov 12 1:20 PM ET: cleared: M15_FUND"
 }
