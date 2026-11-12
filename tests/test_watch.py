@@ -281,7 +281,7 @@ def test_escalation_defaults_to_haiku_and_spend_is_capped(tmp_path, monkeypatch)
     c = FakeClient()
     orig = c.create
     c.messages.create = lambda model, **kw: (seen.append(model), orig(model, **kw))[1]
-    (tmp_path / "watch_spend.json").write_text(json.dumps({"day": "2026-11-10", "usd": 0.5499}))
+    (tmp_path / "watch_spend.json").write_text(json.dumps({"day": "2026-11-10", "usd": 0.6999}))
     rec, sent = go(tmp_path, monkeypatch, FakeGH(), c)
     assert seen == [] and "cap" in rec["haiku"]["error"]          # over the cap: no API call at all
 
@@ -289,8 +289,16 @@ def test_escalation_defaults_to_haiku_and_spend_is_capped(tmp_path, monkeypatch)
 def test_spend_alert_once_a_day(tmp_path, monkeypatch):
     gh = FakeGH()
     gh.files[("copycat/status.json", "copycat-data")] = json.dumps(
-        {"boss": {"spend": {"day": "2026-11-10", "usd": 0.9}}})
+        {"boss": {"spend": {"day": "2026-11-10", "usd": 1.0}}})
     rec, sent = go(tmp_path, monkeypatch, gh, FakeClient())
-    assert rec["ai_spend"]["total"] > 0.7 and any("AI spend" in t for t, _ in sent)
+    assert rec["ai_spend"]["total"] > 0.9 and any("AI spend" in t for t, _ in sent)
     rec, sent = go(tmp_path, monkeypatch, gh, FakeClient())
     assert not sent
+
+
+def test_spend_reads_local_boss_ledger(tmp_path, monkeypatch):
+    led = tmp_path / "boss_spend.json"
+    led.write_text(json.dumps({"day": "2026-11-10", "usd": 0.12}))
+    monkeypatch.setattr(watch, "COPYCAT_STATUS", tmp_path / "status.json")
+    rec, _ = go(tmp_path, monkeypatch, FakeGH(), FakeClient())
+    assert rec["ai_spend"]["by"]["copycat_boss"] == 0.12
