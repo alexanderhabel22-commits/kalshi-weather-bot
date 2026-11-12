@@ -202,6 +202,7 @@ def test_rfq_prices_cross_combos_and_scores(tmp_path):
     assert st["by_margin"]["0.1"]["won_pnl_c_per_ct"] == 45.0
     assert st["by_margin"]["0.1"]["capped_pnl_dollars"] == 2.25   # loss cap: $3 / 55c risk = 5 contracts x 45c
     assert len(st["settled_rows"]) == 1
+    assert "non_sports_cross" in st["niches"] and "settle_under_1h" in st["niches"]
 
 
 def test_capped_size_uses_dollar_size_and_loss_cap():

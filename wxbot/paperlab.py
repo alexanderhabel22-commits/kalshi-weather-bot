@@ -582,9 +582,23 @@ class RfqPaper:
                     row["price_error"] = str(exc)[:200]
                 if fair is not None:
                     row["fair"] = round(fair, 4)
+                    row["sports_legs"] = self.sports_legs(legs)
                     row["quotes"] = {str(m): round(min(0.99, fair * (1 + m) + 0.01), 2) for m in RFQ["margins"]}
             self.st["rfqs"][rid] = row
             self.lab.write("rfq", dict(row, kind="rfq", legs=legs))
+
+    def series_category(self, series: str) -> str:
+        cache = self.st.setdefault("series_cat", {})
+        if series not in cache:
+            try:
+                cache[series] = str((self.lab.get(f"/series/{series}").get("series") or {}).get("category") or "?")
+            except Exception:  # noqa: BLE001
+                return "?"
+        return cache[series]
+
+    def sports_legs(self, legs: list[dict]) -> int:
+        """How many legs are sports (by series category, cached; one call per new series)."""
+        return sum(1 for lg in legs if self.series_category(lg["ev"].split("-")[0]) == "Sports")
 
     def check(self) -> None:
         """Did the combo trade after the request, at what price, and how did it settle?"""
@@ -608,6 +622,8 @@ class RfqPaper:
                 res = str(m.get("result") or "").lower()
                 if res in ("yes", "no"):
                     row["result"] = res
+                    st = _ts(m.get("settlement_ts") or m.get("close_time"))
+                    row["settle_h"] = round((st - row["t"]) / 3600, 2) if st else None
                     win = 1.0 if res == "yes" else 0.0
                     # paper P&L per contract if we had sold YES at each quote
                     row["pnl_c"] = {k: round((q - win) * 100, 1) for k, q in row["quotes"].items()}
@@ -649,10 +665,27 @@ class RfqPaper:
                 row[m] = {"won": len(ww), "pnl_c_per_ct": round(sum(r["pnl_c"][m] for r in ww) / len(ww), 2)
                           if ww else None}
             out["by_band"][f"{round(lo * 100)}-{round(min(hi, 1) * 100)}c"] = row
+        # niches the 9-week history flagged (Nov 12); judged ONLY on requests we would have won
+        niches = {"non_sports_cross": lambda r: r.get("sports_legs") == 0,
+                  "settle_under_1h": lambda r: r.get("settle_h") is not None and r["settle_h"] < 1,
+                  "all_sports_cross": lambda r: r.get("sports_legs") is not None and r["sports_legs"] == r["n_legs"]}
+        out["niches"] = {}
+        for name, fn in niches.items():
+            sub = [r for r in done if fn(r)]
+            row = {"settled": len(sub)}
+            for m in map(str, RFQ["margins"]):
+                ww = [r for r in sub if m in (r.get("pnl_c") or {}) and r.get("traded")
+                      and any(p > r["quotes"][m] for p in r["traded"])]
+                row[m] = {"won": len(ww), "pnl_c_per_ct": round(sum(r["pnl_c"][m] for r in ww) / len(ww), 2)
+                          if ww else None,
+                          "capped_dollars": round(sum(capped_size(r, r["quotes"][m]) * r["pnl_c"][m] / 100
+                                                      for r in ww), 2)}
+            out["niches"][name] = row
         out["sized"] = sum(1 for r in cross if (r.get("contracts") or 0) > 0 or r.get("target_cost"))
         out["caps"] = {"cap_ct": RFQ["cap_ct"], "max_loss": RFQ["max_loss"]}
         # compact rows for offline grading (settled first, newest last)
-        keep = ("id", "t", "n_legs", "contracts", "target_cost", "fair", "quotes", "traded", "result")
+        keep = ("id", "t", "n_legs", "contracts", "target_cost", "fair", "quotes", "traded", "result",
+                "sports_legs", "settle_h")
         out["settled_rows"] = [{k: r.get(k) for k in keep} for r in sorted(done, key=lambda r: r["t"])][-1500:]
         out["recent"] = sorted(rows, key=lambda r: -r["t"])[:20]
         return out
