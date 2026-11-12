@@ -108,24 +108,27 @@ def test_boss_benches_and_unbenches(tmp_path):
     t = [100000.0]
     calls = []
 
+    texts = []
+
     def ask(model, text, schema):
         calls.append(model)
+        texts.append(text)
         if "TRIAGE" in text:
             return {"review_now": True, "why": "x"}
-        n = calls.count("claude-opus-5-5")
+        n = sum("FULL REVIEW" in x for x in texts)
         act = {1: "bench", 2: "none"}.get(n, "unbench")
         return {"summary": "ok", "alert": "", "accounts": [
             {"nick": "ace", "note": "Trades weather; fine.", "action": act, "reason": "market maker"}]}
 
     b = Boss(tmp_path, ask=ask, clock=lambda: t[0])
-    assert b.step(boss_status(), [], None)            # first: changed -> straight to Opus
-    assert calls == ["claude-opus-5-5"]
+    assert b.step(boss_status(), [], None)            # first: changed -> straight to a review
+    assert calls == ["claude-haiku-5-5"]              # Haiku since Nov 12 (Opus cost $24/day)
     assert "ace" in b.benches(t[0]) and b.state["notes"]["ace"].startswith("Trades")
     assert not b.step(boss_status(), [], None)        # too soon
-    t[0] += 1000
+    t[0] += 4000
     assert b.step(boss_status(), [], None)            # unchanged -> Haiku triage asks for review
-    assert calls[1] == "claude-haiku-5-5" and "ace" in b.benches(t[0])
-    t[0] += 1000
+    assert "TRIAGE" in texts[1] and "ace" in b.benches(t[0])
+    t[0] += 4000
     b.step(boss_status(), [], None)
     assert "ace" not in b.benches(t[0])
     assert json.loads((tmp_path / "boss.json").read_text())["deep_n"] == 3
@@ -241,3 +244,26 @@ def test_fresh_start_ignores_old_fills(tmp_path):
     cc.watch = {"sharp": {}}
     st_ = cc.update_status(now)
     assert {a["nick"]: a["fills"] for a in st_["accounts"]}["sharp"] == 1
+
+
+def test_boss_hard_daily_cap_and_failed_review_counts(tmp_path, monkeypatch):
+    from wxbot import copycat_boss
+    t = [100000.0]
+    b = Boss(tmp_path, ask=lambda m, x, s: (_ for _ in ()).throw(RuntimeError("timeout")), clock=lambda: t[0])
+    assert not b.step(boss_status(), [], None)
+    assert b.state["deep_n"] == 1                     # a failed (billed) review still counts
+    assert b.budget.spent() > 0
+    b2 = Boss(tmp_path / "x" if (tmp_path / "x").mkdir() is None else None, ask=lambda m, x, s: {"review_now": True},
+              clock=lambda: t[0])
+    b2.budget.cap = 0.0001
+    monkeypatch.setattr(copycat_boss, "MAX_DEEP_PER_DAY", 99)
+    assert not b2.step(boss_status(), [], None)       # over the cap: no call at all
+    assert b2.budget.state["refused"] >= 1 and b2.budget.state["calls"] == 0
+
+
+def test_boss_digest_is_trimmed():
+    from wxbot import copycat_boss
+    st = {"accounts": [{"nick": f"a{i}", "fills": i + 1} for i in range(200)]}
+    txt = digest(st, [], None, {})
+    assert len(txt) <= copycat_boss.MAX_DIGEST_CHARS and "175 quieter accounts left out" in txt
+    assert "- a199:" in txt and "- a0:" not in txt
