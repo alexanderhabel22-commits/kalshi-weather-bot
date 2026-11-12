@@ -862,3 +862,20 @@ def test_favorites_wide_paper_mode_even_when_trading_live():
     c = cfg(mode="live")
     sp = trader.strategy_settings(c, "favorites_wide", trader.settings(c))
     assert trader.strategy_mode("live", sp) == "paper"
+
+
+def test_macro_wide_is_paper_and_relabels_macro_fade_picks():
+    from wxbot.strats import macro_fade, macro_wide
+    c = cfg(mode="live")
+    sp = trader.strategy_settings(c, "macro_wide", trader.settings(c))
+    assert c.raw["trading"]["macro_wide"]["live"] is False
+    assert trader.strategy_mode("live", sp) == "paper"
+    close = (NOW + timedelta(days=3)).isoformat().replace("+00:00", "Z")
+    ms = [{"ticker": f"KXJOBLESSCLAIMS-26NOV19-{k}", "event_ticker": "KXJOBLESSCLAIMS-26NOV19",
+           "close_time": close, "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}",
+           "volume": 2000} for k, yb, ya in (("A", 0.10, 0.14), ("B", 0.50, 0.55))]
+    p = c.raw["trading"]["macro_wide"]
+    base = macro_fade.candidates(ms, p, NOW)
+    out = macro_wide.candidates(ms, p, NOW)
+    assert [i.ticker for i in out] == [i.ticker for i in base] == ["KXJOBLESSCLAIMS-26NOV19-A"]
+    assert out[0].strategy == "macro_wide" and out[0].price == 0.87 and out[0].count == 1
