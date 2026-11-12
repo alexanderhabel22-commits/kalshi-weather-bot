@@ -123,6 +123,7 @@ def test_field_paper_sells_the_field_once_and_scores(tmp_path):
     fp.consider(dict(ev, event_ticker="X3", category="Sports"), T0)
     fp.consider(dict(ev, event_ticker="X4", markets=ev["markets"][:3]), T0)
     assert len(fp.st["open"]) == 3
+    assert fp.st["seen"] == {"entered": 1, "not_one_winner": 1, "under_5_candidates": 1}
     http.markets = {"A": {"result": "yes"}, "B": {"result": "no"}}
     fp.settle()
     assert [r["tk"] for r in fp.st["open"]] == ["C"]
@@ -139,8 +140,36 @@ def test_maker_scan_feeds_field_paper(tmp_path):
     fp = FieldPaper(lb)
     seen = []
     fp.consider = lambda e, now: seen.append(e["event_ticker"])
-    MakerPaper(lb, fp).cycle()
+    mm = MakerPaper(lb, fp)
+    mm.cycle()
     assert seen == ["KXMEN-1", "KXNFL-1"]
+    assert mm.status()["last_scan"]["events"] == 2 and mm.status()["last_scan"]["done"]
+
+
+def test_maker_rescans_soon_after_a_failed_scan_and_on_first_run_of_new_version(tmp_path):
+    http, clock = Http(), [T0]
+    mm = MakerPaper(lab(tmp_path, http, clock))
+    mm.cycle()
+    mm.st.pop("select_info")                      # state saved by the older version
+    calls = []
+    orig = http.get_json
+
+    def failing(url, params=None, headers=None):
+        if url.endswith("/events"):
+            calls.append(clock[0])
+            raise RuntimeError("HTTP 429")
+        return orig(url, params, headers)
+    http.get_json = failing
+    clock[0] += 60
+    mm.cycle()                                    # scans at once, fails, keeps the old markets
+    assert len(calls) == 1 and list(mm.st["markets"]) == ["KXMEN-1-A"]
+    assert mm.status()["last_scan"]["error"] == "HTTP 429"
+    clock[0] += 300
+    mm.cycle()
+    assert len(calls) == 1                        # not yet
+    clock[0] += 400
+    mm.cycle()
+    assert len(calls) == 2                        # retried ~10 minutes later, not 6 hours
 
 
 def test_rfq_prices_cross_combos_and_scores(tmp_path):

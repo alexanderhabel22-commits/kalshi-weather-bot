@@ -123,8 +123,11 @@ class FieldPaper:
             self.st = json.loads((lab.out / "field_state.json").read_text())
         except (OSError, ValueError):
             self.st = {}
-        for k, v in (("open", []), ("done", []), ("events", {})):
+        for k, v in (("open", []), ("done", []), ("events", {}), ("seen", {})):
             self.st.setdefault(k, v)
+
+    def count(self, why: str) -> None:
+        self.st["seen"][why] = self.st["seen"].get(why, 0) + 1
 
     def save(self):
         (self.lab.out / "field_state.json").write_text(json.dumps(self.st))
@@ -132,22 +135,28 @@ class FieldPaper:
     def consider(self, e: dict, now: float) -> None:
         """Called for every open event the maker's scan pages through. Enters each event once."""
         ev = e.get("event_ticker") or ""
-        if not ev or ev in self.st["events"] or (e.get("category") or "") not in FIELD_CATS \
-                or not e.get("mutually_exclusive") or len(self.st["open"]) >= FIELD["max_open"]:
+        if not ev or ev in self.st["events"] or (e.get("category") or "") not in FIELD_CATS:
             return
+        if not e.get("mutually_exclusive"):
+            return self.count("not_one_winner")
+        if len(self.st["open"]) >= FIELD["max_open"]:
+            return self.count("book_full")
         quoted = []
         for m in e.get("markets") or []:
             b, a = _f(m.get("yes_bid_dollars")), _f(m.get("yes_ask_dollars"))
             if m.get("status") not in ("active", "open") or a is None or not a:
                 continue
             quoted.append((m.get("ticker") or "", b or 0.0, a, _f(m.get("volume_24h_fp"), 0.0) or 0.0))
-        if len(quoted) < FIELD["min_markets"] or sum(q[3] for q in quoted) < FIELD["min_vol24"]:
-            return
+        if len(quoted) < FIELD["min_markets"]:
+            return self.count("under_5_candidates")
+        if sum(q[3] for q in quoted) < FIELD["min_vol24"]:
+            return self.count("too_quiet")
         ask_sum, bid_sum = round(sum(q[2] for q in quoted), 3), round(sum(q[1] for q in quoted), 3)
         picks = [q for q in quoted if q[1] > 0 and FIELD["yes_lo"] <= (q[1] + q[2]) / 2 <= FIELD["yes_hi"]]
         picks = sorted(picks, key=lambda q: -q[3])[:FIELD["per_event"]]
         if not picks:
-            return
+            return self.count("no_candidate_10_50c")
+        self.count("entered")
         self.st["events"][ev] = {"t": round(now), "cat": e.get("category"), "markets": len(quoted),
                                  "ask_sum": ask_sum, "bid_sum": bid_sum, "picks": len(picks)}
         for tk, b, a, v in picks:
@@ -201,7 +210,7 @@ class FieldPaper:
         done = self.st["done"]
         cats = sorted({r["cat"] for r in done})
         return {"what": "paper NO on every 10-50c candidate in many-candidate, one-winner events",
-                "open": len(self.st["open"]), "open_events": len({r["event"] for r in self.st["open"]}),
+                "scan_counts": self.st["seen"], "open": len(self.st["open"]), "open_events": len({r["event"] for r in self.st["open"]}),
                 "all": summ(done), "by_category": {c: summ([r for r in done if r["cat"] == c]) for c in cats},
                 "events": dict(sorted(self.st["events"].items(), key=lambda kv: -kv[1]["t"])[:60]),
                 "recent": done[-40:]}
@@ -227,6 +236,7 @@ class MakerPaper:
     def select(self) -> None:
         now = self.lab.clock()
         cands, cur = [], None
+        info = {"t": round(now), "pages": 0, "events": 0, "error": None, "done": False}
         for _ in range(MM["event_pages"]):
             p = {"status": "open", "with_nested_markets": "true", "limit": 200}
             if cur:
@@ -235,7 +245,10 @@ class MakerPaper:
                 js = self.lab.get("/events", p)
             except Exception as exc:  # noqa: BLE001
                 log.info("paper mm events: %s", exc)
+                info["error"] = str(exc)[:200]
                 break
+            info["pages"] += 1
+            info["events"] += len(js.get("events") or [])
             for e in js.get("events") or []:
                 cat = e.get("category") or ""
                 if self.field is not None:
@@ -260,7 +273,10 @@ class MakerPaper:
                     cands.append((v, tk, e.get("event_ticker"), cat))
             cur = js.get("cursor")
             if not cur:
+                info["done"] = True
                 break
+        info["candidates"] = len(cands)
+        self.st["select_info"] = info
         cands.sort(reverse=True)
         # Mentions first (the lead from the overnight replay: ~6c spreads), up to 8 of the slots
         ment = [c for c in cands if c[3] == "Mentions"][:8]
@@ -276,8 +292,9 @@ class MakerPaper:
         if chosen:
             self.st["markets"] = chosen
             self.st["orders"] = {k: v for k, v in self.st["orders"].items() if k.split("|")[0] in chosen}
-        self.st["selected_at"] = now
-        self.lab.write("mm", {"t": round(now), "kind": "select", "candidates": len(cands),
+        # a scan that failed before reading anything is tried again in 10 minutes, not in 6 hours
+        self.st["selected_at"] = now if info["events"] else now - MM["select_s"] + 600
+        self.lab.write("mm", {"t": round(now), "kind": "select", "info": info, "candidates": len(cands),
                               "chosen": {k: v["cat"] for k, v in chosen.items()}})
 
     @staticmethod
@@ -418,7 +435,8 @@ class MakerPaper:
 
     def cycle(self) -> None:
         now = self.lab.clock()
-        if now - self.st["selected_at"] > MM["select_s"] or not self.st["markets"]:
+        if now - self.st["selected_at"] > MM["select_s"] or not self.st["markets"] \
+                or "select_info" not in self.st:              # first run of this version: scan now
             self.select()
             try:
                 self.settle()
@@ -486,6 +504,7 @@ class MakerPaper:
         for tk, info in self.st["markets"].items():
             info["casual"] = self.casual_share(tk)
         return {"markets": self.st["markets"], "by_category": out, "by_flow": flow,
+                "last_scan": self.st.get("select_info"),
                 "pending": len(self.st["pending"]), "held": len(self.st["held"]), "inventory": self.st["inv"]}
 
 
