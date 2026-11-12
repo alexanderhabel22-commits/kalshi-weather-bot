@@ -163,6 +163,26 @@ min_volume = 500
 max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
 max_event_pct = 0.10             # at most 10% on one release / one Fed meeting
 
+[trading.macro_wide]
+# PAPER SHADOW ONLY (Nov 12, 2026): the macro_fade rule on weekly gas prices and weekly jobless
+# claims (replay Nov 2025-Nov 2026: +6.6c +- 2.7 per fill, ~8 events a month; see
+# wxbot/strats/macro_wide.py). Never live without Alex's OK.
+max_week_contracts = 1000
+max_market_contracts = 100
+enabled = true
+live = false                     # keep false: paper only
+series = ["KXAAAGASW", "KXJOBLESSCLAIMS"]
+contracts = 1
+max_contracts = 1
+max_markets_per_event = 3
+min_price = 0.71
+max_price = 0.95
+min_hours = 1
+max_hours = 504
+min_volume = 500
+max_open_pct = 0.20
+max_event_pct = 0.05
+
 [trading.favorites]
 # Resting bids on the 85-96c favorite in BIG Elections / Politics / Entertainment
 # events (research: about +3.7c per filled contract in events with 1M+ contracts
