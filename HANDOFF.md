@@ -156,7 +156,8 @@ record earns it. Be candid about odds and risk; no hype.
   `data/trade_orders.csv`. Reports: `wxbot/digest.py` writes
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
 - **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
-  live = true for mentions, favorites, macro_fade and weather_late (late-day lows, Nov 11;
+  live = true for favorites, macro_fade (3 contracts since Nov 12) and weather_late (late-day lows, Nov 11;
+  Mentions moved to paper Nov 12 after the audit;
   weather day-before was a small test until Nov 11, now paper). LOCKs stay
   paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
@@ -174,8 +175,8 @@ record earns it. Be candid about odds and risk; no hype.
   size (the earlier +4 to +6c was weighted by contracts). Favorites: +3.2c ± 0.9, about
   +2.0c ± 1.5 on the markets the 7-day rule can reach (election markets close early and
   are mostly skipped). Fed/CPI fade: +9.4c ± 2.1 (+8.7c after maker fees), 45 of 52 release
-  days up, about 8 fills a month. Proposed to Alex Nov 12: Mentions to paper, Fed/CPI 1 -> 3
-  contracts. Re-run: push research_main/fetch.py on the research branch (workflow
+  days up, about 8 fills a month. Done Nov 12 2:34 PM ET (Alex: "whatever you recommend"):
+  Mentions to paper, Fed/CPI 1 -> 3 contracts. Late-day lows 1 -> 2 after its ~Nov 26 review if it holds. Re-run: push research_main/fetch.py on the research branch (workflow
   main-audit-research, output on branch main-audit-data), then replay.py and analyze.py.
 - **Fed/CPI fade on weekly gas + jobless claims (PAPER, Nov 12):** `wxbot/strats/macro_wide.py`,
   `[trading.macro_wide]`. Same rule as macro_fade on KXAAAGASW and KXJOBLESSCLAIMS. Replay of 11

@@ -502,7 +502,9 @@ def test_only_approved_strategies_trade_real_money():
     live = {n for n in trader.strategies()
             if trader.strategy_mode(c.raw["trading"]["mode"], c.raw["trading"].get(n, {})) == "live"}
     # Alex, Nov 11 2:18 PM ET: late-day lows (weather_late) live in its place, 1 contract.
-    assert live == {"mentions", "favorites", "macro_fade", "weather_late"}
+    # Alex, Nov 12 2:34 PM ET: Mentions back to paper (no edge in the audit), Fed/CPI 1 -> 3.
+    assert live == {"favorites", "macro_fade", "weather_late"}
+    assert c.raw["trading"]["macro_fade"]["contracts"] == 3
     wl = c.raw["trading"]["weather_late"]
     assert wl["contracts"] == 1 and wl["max_open_pct"] <= 0.15 and wl["metrics"] == ["low"] and wl["kinds"] == ["need"]
     assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
