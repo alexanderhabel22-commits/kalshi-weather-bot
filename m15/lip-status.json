@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T11:06:34+00:00",
+ "at": "2026-11-12T11:22:12+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.96,
+ "resting_cost": 19.92,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -91,16 +91,6 @@
    "at": 1794480965.7161622,
    "mid0": 0.065
   },
-  "KXTREASRACE-UT-28-R": {
-   "id": "01a1cf6b-5018-7eb8-9829-6255bd1d40ae",
-   "cid": "lip-f294859ccc1f4db3",
-   "side": "no",
-   "px": 0.05,
-   "n": 50,
-   "filled": 0.0,
-   "at": 1794481279.0370154,
-   "mid0": 0.9275
-  },
   "KXAGRACE-UT-28-D": {
    "id": "01a1cf6b-57e8-7c20-81e6-74cd6f34d07b",
    "cid": "lip-5e599f3b79604db3",
@@ -110,6 +100,16 @@
    "filled": 0.0,
    "at": 1794481281.0222397,
    "mid0": 0.063
+  },
+  "KXTREASRACE-UT-28-R": {
+   "id": "01a1cf74-e538-7d2b-b7ba-e3a9a9dcb700",
+   "cid": "lip-e91df4555ae049bf",
+   "side": "no",
+   "px": 0.06,
+   "n": 41,
+   "filled": 0.0,
+   "at": 1794481907.4675498,
+   "mid0": 0.9265
   }
  },
  "positions": {},
@@ -475,9 +475,9 @@
     "share": 0.0319
    },
    "KXTREASRACE-UT-28-R": {
-    "ahead": 39166.4,
+    "ahead": 0,
     "others": 1000.0,
-    "share": 0.0476
+    "share": 0.0394
    },
    "KXAGRACE-UT-28-D": {
     "ahead": 0,
@@ -488,21 +488,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794438679,
-   "kind": "cancel",
-   "ticker": "KXTREASRACE-WA-28-D",
-   "why": "up to 5c (reference price)"
-  },
-  {
-   "t": 1794438680,
-   "kind": "place",
-   "ticker": "KXTREASRACE-WA-28-D",
-   "side": "no",
-   "px": 0.05,
-   "n": 50,
-   "est_day": 2.4892
-  },
   {
    "t": 1794438683,
    "kind": "cancel",
@@ -1112,6 +1097,21 @@
    "side": "yes",
    "px": 0.05,
    "n": 11,
+   "est_day": 1.5466
+  },
+  {
+   "t": 1794481906,
+   "kind": "cancel",
+   "ticker": "KXTREASRACE-UT-28-R",
+   "why": "up to 6c (reference price)"
+  },
+  {
+   "t": 1794481907,
+   "kind": "place",
+   "ticker": "KXTREASRACE-UT-28-R",
+   "side": "no",
+   "px": 0.06,
+   "n": 41,
    "est_day": 1.5466
   }
  ]
