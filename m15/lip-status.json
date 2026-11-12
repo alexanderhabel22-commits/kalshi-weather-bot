@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T00:19:19+00:00",
+ "at": "2026-11-12T00:34:58+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.87,
+ "resting_cost": 19.89,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -61,16 +61,6 @@
    "at": 1794439314.031313,
    "mid0": 0.928
   },
-  "KXSENATENOM-SCD-28-BBRO": {
-   "id": "01a1ccf4-7800-7e8d-9bc9-2236e871c093",
-   "cid": "lip-3d59b37ee23d4291",
-   "side": "yes",
-   "px": 0.04,
-   "n": 62,
-   "filled": 0.0,
-   "at": 1794439936.5414941,
-   "mid0": 0.0555
-  },
   "KXSOSRACE-MS-27-D": {
    "id": "01a1ccf4-9f10-7018-b36c-eb9190b466eb",
    "cid": "lip-ab6f61b5826d4a53",
@@ -90,6 +80,16 @@
    "filled": 0.0,
    "at": 1794442129.4742072,
    "mid0": 0.0595
+  },
+  "KXSENATENOM-SCD-28-BBRO": {
+   "id": "01a1cd24-3e78-7b86-b20b-17083e2ddf7c",
+   "cid": "lip-743102d8d3d14a5a",
+   "side": "yes",
+   "px": 0.05,
+   "n": 50,
+   "filled": 0.0,
+   "at": 1794443067.4069977,
+   "mid0": 0.0605
   }
  },
  "positions": {},
@@ -382,7 +382,7 @@
    "KXSENATENOM-SCD-28-BBRO": {
     "ahead": 0,
     "others": 1000.0,
-    "share": 0.0584
+    "share": 0.0476
    },
    "KXSENATENOM-SCD-28-BWEB": {
     "ahead": 0,
@@ -418,24 +418,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794408379,
-   "kind": "place",
-   "ticker": "KXMANDERSSONOUT-28-27JAN01",
-   "side": "no",
-   "px": 0.05,
-   "n": 48,
-   "est_day": 1.2518
-  },
-  {
-   "t": 1794408381,
-   "kind": "place",
-   "ticker": "KXEPOCHSCORE-01JUL27-T185-B01JUL27",
-   "side": "no",
-   "px": 0.04,
-   "n": 60,
-   "est_day": 1.1439
-  },
   {
    "t": 1794408383,
    "kind": "place",
@@ -1045,6 +1027,21 @@
    "side": "yes",
    "px": 0.04,
    "n": 62,
+   "est_day": 3.6874
+  },
+  {
+   "t": 1794443066,
+   "kind": "cancel",
+   "ticker": "KXSENATENOM-SCD-28-BBRO",
+   "why": "up to 5c (reference price)"
+  },
+  {
+   "t": 1794443067,
+   "kind": "place",
+   "ticker": "KXSENATENOM-SCD-28-BBRO",
+   "side": "yes",
+   "px": 0.05,
+   "n": 50,
    "est_day": 3.6874
   }
  ]
