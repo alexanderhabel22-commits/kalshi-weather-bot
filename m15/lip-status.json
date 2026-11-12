@@ -1,5 +1,5 @@
 {
- "at": "2026-11-12T10:00:53+00:00",
+ "at": "2026-11-12T10:16:34+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 19.99,
+ "resting_cost": 19.96,
  "filled_cost": 0,
  "orders": {
   "KXONIONACT-30JAN01-27JAN01": {
@@ -61,16 +61,6 @@
    "at": 1794459533.5200064,
    "mid0": 0.064
   },
-  "KXNASHVILLEMAYOR-27-LWIL": {
-   "id": "01a1ce24-4958-7634-810a-ec61164ba05b",
-   "cid": "lip-7965371b1ef84df3",
-   "side": "yes",
-   "px": 0.04,
-   "n": 57,
-   "filled": 0.0,
-   "at": 1794459847.758105,
-   "mid0": 0.0535
-  },
   "KXINSCOMMRACE-ND-28-R": {
    "id": "01a1ce24-60c8-7ee5-9a53-992620b4f20f",
    "cid": "lip-276fa973498544cf",
@@ -91,15 +81,25 @@
    "at": 1794460483.3881016,
    "mid0": 0.93
   },
-  "KXAUDITORRACE-UT-28-R": {
-   "id": "01a1cf33-e880-76ff-a7ce-d59763b741b3",
-   "cid": "lip-c6369587d3404540",
-   "side": "no",
-   "px": 0.04,
-   "n": 60,
+  "KXNASHVILLEMAYOR-27-LWIL": {
+   "id": "01a1cf38-b310-780a-9020-c22db4966264",
+   "cid": "lip-5adfa2c5c96b4d76",
+   "side": "yes",
+   "px": 0.05,
+   "n": 45,
    "filled": 0.0,
-   "at": 1794477648.3977132,
-   "mid0": 0.9275
+   "at": 1794477962.5013766,
+   "mid0": 0.058
+  },
+  "KXAUDITORRACE-UT-28-R": {
+   "id": "01a1cf3d-8570-76ba-8ad2-26dcbae1074e",
+   "cid": "lip-19042a953ba4438d",
+   "side": "no",
+   "px": 0.06,
+   "n": 40,
+   "filled": 0.0,
+   "at": 1794478278.7806756,
+   "mid0": 0.9205
   }
  },
  "positions": {},
@@ -390,12 +390,12 @@
     "share": 0.2
    },
    "KXSENATENOM-SCD-28-BBRO": {
-    "ahead": 35203.0,
+    "ahead": 80503.0,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXSENATENOM-SCD-28-BWEB": {
-    "ahead": 31520.0,
+    "ahead": 77240.0,
     "others": 1000.0,
     "share": 0.0338
    },
@@ -432,7 +432,7 @@
    "KXNASHVILLEMAYOR-27-LWIL": {
     "ahead": 0,
     "others": 1000.0,
-    "share": 0.0539
+    "share": 0.0431
    },
    "KXINSCOMMRACE-DE-28-R": {
     "ahead": 0,
@@ -458,39 +458,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794437414,
-   "kind": "place",
-   "ticker": "KXTREASRACE-WA-28-D",
-   "side": "no",
-   "px": 0.03,
-   "n": 83,
-   "est_day": 2.4892
-  },
-  {
-   "t": 1794437416,
-   "kind": "place",
-   "ticker": "KXTREASRACE-VT-28-D",
-   "side": "no",
-   "px": 0.03,
-   "n": 83,
-   "est_day": 2.4892
-  },
-  {
-   "t": 1794438036,
-   "kind": "cancel",
-   "ticker": "KXSENATENOM-SCD-28-BBRO",
-   "why": "up to 3c (reference price)"
-  },
-  {
-   "t": 1794438037,
-   "kind": "place",
-   "ticker": "KXSENATENOM-SCD-28-BBRO",
-   "side": "yes",
-   "px": 0.03,
-   "n": 83,
-   "est_day": 3.6874
-  },
   {
    "t": 1794438040,
    "kind": "cancel",
@@ -1072,6 +1039,36 @@
    "side": "no",
    "px": 0.04,
    "n": 60,
+   "est_day": 1.8961
+  },
+  {
+   "t": 1794477962,
+   "kind": "cancel",
+   "ticker": "KXNASHVILLEMAYOR-27-LWIL",
+   "why": "up to 5c (reference price)"
+  },
+  {
+   "t": 1794477963,
+   "kind": "place",
+   "ticker": "KXNASHVILLEMAYOR-27-LWIL",
+   "side": "yes",
+   "px": 0.05,
+   "n": 45,
+   "est_day": 2.4892
+  },
+  {
+   "t": 1794478278,
+   "kind": "cancel",
+   "ticker": "KXAUDITORRACE-UT-28-R",
+   "why": "up to 6c (reference price)"
+  },
+  {
+   "t": 1794478279,
+   "kind": "place",
+   "ticker": "KXAUDITORRACE-UT-28-R",
+   "side": "no",
+   "px": 0.06,
+   "n": 40,
    "est_day": 1.8961
   }
  ]
