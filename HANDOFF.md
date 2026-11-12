@@ -193,6 +193,8 @@ record earns it. Be candid about odds and risk; no hype.
   on the bracket holding it. Backtest for lows: +5.7c per contract Oct 2025-Aug 2026, +3.7c
   Sep-Nov 2026, about 7 fills a day. Review at 300 filled low orders; real money needs Alex's
   OK. Switch off with `[markets] paper_late = false`.
+- **Late-day highs and "holds": REAL MONEY since Nov 12** (Alex 2:45 PM ET "Switch them on", PR #221):
+  `[trading.weather_late]` metrics low+high, kinds need+holds, still 1 contract, same caps.
 - **Late-day lows: REAL MONEY since Nov 11** (Alex, 2:18 PM ET: "implement the strategy you
   mentioned with real money, it can replace the strategy you got rid of"). Strategy
   `weather_late` (`wxbot/strats/weather_late.py`, `[trading.weather_late]`) mirrors the
