@@ -1,5 +1,5 @@
 {
- "at": "2026-11-13T07:17:31+00:00",
+ "at": "2026-11-13T07:34:20+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -103,6 +103,7 @@
   }
  },
  "positions": {},
+ "exits": {},
  "chosen": {
   "KXONIONACT-30JAN01-27JAN01": {
    "side": "yes",
@@ -487,12 +488,12 @@
     "share": 0.2
    },
    "KXTREASRACE-UT-28-D": {
-    "ahead": 35359.8,
+    "ahead": 34743.38,
     "others": 1000.0,
     "share": 0.0476
    },
    "KXINSCOMMRACE-ND-28-D": {
-    "ahead": 23807.48,
+    "ahead": 22112.82,
     "others": 1000.0,
     "share": 0.0394
    },
@@ -502,40 +503,157 @@
     "share": 0.0394
    },
    "KXINSCOMMRACE-DE-28-R": {
-    "ahead": 99862.0,
+    "ahead": 95862.0,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXAGRACE-UT-28-D": {
-    "ahead": 33872.9,
+    "ahead": 33803.13,
     "others": 1000.0,
     "share": 0.0177
    },
    "KXINSCOMMRACE-ND-28-R": {
-    "ahead": 21431.84,
+    "ahead": 18120.86,
     "others": 1000.0,
     "share": 0.031
    },
    "KXNASHVILLEMAYOR-27-JSTY": {
-    "ahead": 109236.0,
+    "ahead": 108236.0,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXAUDITORRACE-UT-28-D": {
-    "ahead": 77355.0,
+    "ahead": 76355.0,
     "others": 1000.0,
     "share": 0.0234
    }
   }
  },
+ "shadow": {
+  "day": "2026-11-13",
+  "at": 1794555171,
+  "programs": 6225,
+  "scored": 2,
+  "current": [
+   "KXAGRACE-UT-28-D",
+   "KXAUDITORRACE-UT-28-D",
+   "KXINSCOMMRACE-DE-28-R",
+   "KXINSCOMMRACE-ND-28-D",
+   "KXINSCOMMRACE-ND-28-R",
+   "KXNASHVILLEMAYOR-27-JSTY",
+   "KXONIONACT-30JAN01-27JAN01",
+   "KXTREASRACE-UT-28-D",
+   "KXTREASRACE-UT-28-R",
+   "KXTXINCOMETAX-30JAN01-28JAN01"
+  ],
+  "picks": [
+   "KXTREASRACE-UT-28-R",
+   "KXTXINCOMETAX-30JAN01-28JAN01"
+  ],
+  "picks_conservative": [
+   "KXTXINCOMETAX-30JAN01-28JAN01",
+   "KXTREASRACE-UT-28-R"
+  ],
+  "add": [],
+  "drop": [
+   "KXAGRACE-UT-28-D",
+   "KXAUDITORRACE-UT-28-D",
+   "KXINSCOMMRACE-DE-28-R",
+   "KXINSCOMMRACE-ND-28-D",
+   "KXINSCOMMRACE-ND-28-R",
+   "KXNASHVILLEMAYOR-27-JSTY",
+   "KXONIONACT-30JAN01-27JAN01",
+   "KXTREASRACE-UT-28-D"
+  ],
+  "current_net_day": 2.49,
+  "picks_net_day": 2.49,
+  "current_net_cons_day": 0.03,
+  "picks_net_cons_day": 0.03,
+  "current_fill_loss_day": 0.0,
+  "picks_fill_loss_day": 0.0,
+  "top": [
+   {
+    "ticker": "KXTREASRACE-UT-28-R",
+    "event": "KXTREASRACE-UT-28",
+    "side": "no",
+    "px": 0.06,
+    "n": 41,
+    "share": 0.0394,
+    "vol24": 0.0,
+    "held": true,
+    "reward_day": 1.2792,
+    "reward_cons_day": 0.0087,
+    "share_cons": 0.0003,
+    "flow_day": 0.0,
+    "fill_ct_day": 0.0,
+    "fill_loss_day": 0.0,
+    "news_factor": 1.0,
+    "net_day": 1.2792,
+    "net_cons_day": 0.0087
+   },
+   {
+    "ticker": "KXTXINCOMETAX-30JAN01-28JAN01",
+    "event": "KXTXINCOMETAX-30JAN01",
+    "side": "yes",
+    "px": 0.07,
+    "n": 35,
+    "share": 0.0338,
+    "vol24": 0.0,
+    "held": true,
+    "reward_day": 1.2077,
+    "reward_cons_day": 0.02,
+    "share_cons": 0.0006,
+    "flow_day": 0.9,
+    "fill_ct_day": 0.0,
+    "fill_loss_day": 0.0,
+    "news_factor": 1.0,
+    "net_day": 1.2077,
+    "net_cons_day": 0.02
+   }
+  ],
+  "held_rows": [
+   {
+    "ticker": "KXTXINCOMETAX-30JAN01-28JAN01",
+    "event": "KXTXINCOMETAX-30JAN01",
+    "side": "yes",
+    "px": 0.07,
+    "n": 35,
+    "share": 0.0338,
+    "vol24": 0.0,
+    "held": true,
+    "reward_day": 1.2077,
+    "reward_cons_day": 0.02,
+    "share_cons": 0.0006,
+    "flow_day": 0.9,
+    "fill_ct_day": 0.0,
+    "fill_loss_day": 0.0,
+    "news_factor": 1.0,
+    "net_day": 1.2077,
+    "net_cons_day": 0.02
+   },
+   {
+    "ticker": "KXTREASRACE-UT-28-R",
+    "event": "KXTREASRACE-UT-28",
+    "side": "no",
+    "px": 0.06,
+    "n": 41,
+    "share": 0.0394,
+    "vol24": 0.0,
+    "held": true,
+    "reward_day": 1.2792,
+    "reward_cons_day": 0.0087,
+    "share_cons": 0.0003,
+    "flow_day": 0.0,
+    "fill_ct_day": 0.0,
+    "fill_loss_day": 0.0,
+    "news_factor": 1.0,
+    "net_day": 1.2792,
+    "net_cons_day": 0.0087
+   }
+  ]
+ },
  "credits": [],
  "events": [
-  {
-   "t": 1794450917,
-   "kind": "cancel",
-   "ticker": "KXTREASRACE-VT-28-D",
-   "why": "up to 8c (reference price)"
-  },
   {
    "t": 1794450918,
    "kind": "place",
@@ -1188,6 +1306,28 @@
     "KXTXINCOMETAX-30JAN01-28JAN01"
    ],
    "est_day": 26.8
+  },
+  {
+   "t": 1794555261,
+   "kind": "shadow",
+   "scored": 2,
+   "picks": [
+    "KXTREASRACE-UT-28-R",
+    "KXTXINCOMETAX-30JAN01-28JAN01"
+   ],
+   "add": [],
+   "drop": [
+    "KXAGRACE-UT-28-D",
+    "KXAUDITORRACE-UT-28-D",
+    "KXINSCOMMRACE-DE-28-R",
+    "KXINSCOMMRACE-ND-28-D",
+    "KXINSCOMMRACE-ND-28-R",
+    "KXNASHVILLEMAYOR-27-JSTY",
+    "KXONIONACT-30JAN01-27JAN01",
+    "KXTREASRACE-UT-28-D"
+   ],
+   "current_net_day": 2.49,
+   "picks_net_day": 2.49
   }
  ]
 }
