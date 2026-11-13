@@ -49,7 +49,7 @@ MM = {"markets": 20, "per_event": 2, "min_spread": 0.03, "min_vol24": 100.0, "mi
 FIELD_CATS = ("Entertainment", "Mentions", "Social", "Companies", "Science and Technology", "World", "Health")
 FIELD = {"min_markets": 5, "yes_lo": 0.10, "yes_hi": 0.50, "min_vol24": 500.0, "per_event": 15,
          "max_open": 400, "settle_checks": 60, "keep_done": 3000}
-RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.00), "check_s": 600, "keep_days": 4,
+RFQ = {"cycle_s": 20, "margins": (0.0, 0.05, 0.10, 0.20, 0.30, 0.50, 1.00), "check_s": 600, "keep_days": 4, "save_s": 300,
        "pages": 5,                  # the open-RFQ list is paged 100 at a time (one poll hit 100)
        # what a small real test would allow: per combo at most this many contracts and this much loss
        "cap_ct": 25, "max_loss": 3.0}
@@ -518,9 +518,19 @@ class RfqPaper:
             self.st = {}
         for k, v in (("rfqs", {}), ("checked_at", 0.0), ("errors", 0), ("last_error", None), ("polls", 0)):
             self.st.setdefault(k, v)
+        self._saved = self.lab.clock()
 
-    def save(self):
-        (self.lab.out / "rfq_state.json").write_text(json.dumps(self.st))
+    def save(self, force: bool = False):
+        """Written at most every RFQ["save_s"]: the 4-day request book is ~10-30 MB of JSON, and dumping
+        it every 20 s doubled the service's memory at each write (paper lab restart loop, Nov 13)."""
+        now = self.lab.clock()
+        if not force and now - self._saved < RFQ["save_s"]:
+            return
+        self._saved = now
+        tmp = self.lab.out / "rfq_state.json.tmp"
+        with open(tmp, "w") as fh:
+            json.dump(self.st, fh, separators=(",", ":"))
+        tmp.replace(self.lab.out / "rfq_state.json")
 
     @staticmethod
     def legs(rfq: dict) -> list[dict]:

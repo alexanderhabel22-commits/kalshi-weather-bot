@@ -237,6 +237,28 @@ def svc_mem_pct(text: str | None) -> float | None:
         return None
 
 
+SIDE_SERVICES = ("kalshi-copycat", "kalshi-paper", "kalshi-lip", "kalshi-srclog")
+
+
+def side_services(runner=subprocess.run) -> dict:
+    """Restart count, last exit result (e.g. oom-kill), memory and recent warnings of the side
+    services, uploaded with watch.json so a crash loop's cause is readable without the server console."""
+    out = {}
+    for u in SIDE_SERVICES:
+        txt = _sh(["systemctl", "show", "-p", "NRestarts", "-p", "Result", "-p", "MemoryCurrent", "-p",
+                   "MemoryPeak", "-p", "MemoryMax", "-p", "ActiveState", "-p", "SubState", u], runner)
+        kv = dict(line.split("=", 1) for line in txt.splitlines() if "=" in line)
+        for k in ("MemoryCurrent", "MemoryPeak", "MemoryMax"):
+            try:
+                kv[k] = f"{int(kv[k]) / 2**20:.0f} MB"
+            except (KeyError, ValueError):
+                pass
+        kv["log"] = _sh(["journalctl", "-u", u, "--since", "-3 h", "-p", "warning", "--no-pager",
+                         "-o", "short-iso", "-n", "6"], runner)[-1500:]
+        out[u] = kv
+    return out
+
+
 COPYCAT_STATUS = Path(os.environ.get("COPYCAT_DIR") or "/var/lib/kalshi-copycat") / "status.json"
 
 
@@ -269,6 +291,7 @@ def gather(gh: GitHub, now: float, runner=subprocess.run, meminfo: str = "/proc/
     grab("lip_control", lambda: gh.json("lip_control.json"))
     f["lip_service"] = _sh(["systemctl", "is-active", "kalshi-lip"], runner)
     f["paper_service"] = _sh(["systemctl", "is-active", "kalshi-paper"], runner)
+    f["side_services"] = side_services(runner)
     try:                              # same server: the file's age shows whether Copycat is working
         f["cc_age_min"] = round((now - (cc_status or COPYCAT_STATUS).stat().st_mtime) / 60, 1)
     except OSError:
@@ -296,18 +319,20 @@ def rules(f: dict, s: dict, m15cfg: dict | None = None, over_seen: dict | None =
     out = []
     now = f["now"]
 
-    def flag(code, sev, text, malfunction=False):
-        out.append({"code": code, "sev": sev, "text": text, "malfunction": malfunction})
+    def flag(code, sev, text, malfunction=False, paper=False):
+        out.append({"code": code, "sev": sev, "text": text, "malfunction": malfunction,
+                    **({"paper": True} if paper else {})})
 
     st = f.get("status") or {}
     ctl = ((f.get("control") or {}).get("mode") or "").lower()
     cc_svc = str(f.get("cc_service") or "")
     if cc_svc and cc_svc not in ("active", "inactive") and not cc_svc.startswith("unavailable"):
-        flag("COPYCAT_DOWN", "critical", f"kalshi-copycat service is '{cc_svc}'")
+        flag("COPYCAT_DOWN", "warn", f"kalshi-copycat service is '{cc_svc}' (paper; no money at risk)",
+             paper=True)
     cc_age = f.get("cc_age_min")
     if cc_svc == "active" and cc_age is not None and cc_age > s["copycat_stale_min"]:
-        flag("COPYCAT_STALE", "critical", f"Copycat status not updated for {int(cc_age)} min "
-             "(running but stuck or restarting; it writes every 5 min)")
+        flag("COPYCAT_STALE", "warn", f"Copycat status not updated for {int(cc_age)} min "
+             "(running but stuck or restarting; it writes every 5 min; paper, no money at risk)", paper=True)
     svc = str(f.get("service") or "")
     if svc and svc != "active" and not svc.startswith("unavailable"):
         flag("M15_SERVICE_DOWN", "critical", f"kalshi-m15 service is '{f['service']}'")
@@ -437,7 +462,8 @@ def lip_rules(f: dict, s: dict) -> list[dict]:
              f"rewards bot: {len(errs)} errors in the last hour, last: {str(errs[-1].get('error'))[:120]}")
     psvc = str(f.get("paper_service") or "")
     if psvc and psvc not in ("active",) and not psvc.startswith("unavailable") and psvc != "inactive":
-        flag("PAPER_DOWN", "warn", f"paper lab service kalshi-paper is '{psvc}'")
+        out.append({"code": "PAPER_DOWN", "sev": "warn", "text": f"paper lab service kalshi-paper is '{psvc}'",
+                    "malfunction": False, "target": "lip", "paper": True})
     return out
 
 
@@ -672,7 +698,12 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
         except Exception as exc:
             rec["haiku"] = {"error": str(exc)[:200]}
             level = "escalate" if any(x["sev"] == "critical" for x in flags) else "watch"
-    critical = [x for x in flags if x["sev"] == "critical"]
+    # Paper-only problems (Copycat, paper lab) never reach Alex's phone (his rule: pushes only for real
+    # issues). They stay in the journal and on watch.json for an engineer.
+    if level == "escalate" and flags and all(x.get("paper") for x in flags):
+        level = "watch"
+        rec["paper_only"] = True
+    critical = [x for x in flags if x["sev"] == "critical" and not x.get("paper")]
     malfunction = [x for x in flags if x["malfunction"]]
     key = ",".join(sorted({x["code"] for x in critical})) or (level if level == "escalate" else "")
 
@@ -745,7 +776,7 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
         out = {"last": rec, "today": {k: state.get(k) for k in ("day", "haiku", "opus", "tokens")},
                "ai_spend": spend, "ai_history": state["ai_history"],
                "notes": state.get("notes", []), "journal": state.get("journal", []),
-               "log": state["log"], "digest": text}
+               "log": state["log"], "digest": text, "services": f.get("side_services")}
         gh.put("m15/watch.json", json.dumps(out, indent=1, default=str),
                "m15: watch.json [skip ci]", branch="m15-data")
     except Exception as exc:
