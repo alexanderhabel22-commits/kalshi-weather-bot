@@ -1290,7 +1290,7 @@ function settledItem(t, i){
   const c = v => Math.round(v * 100) + "¢", r = t.r;
   const legs = t.netted && t.legs.length > 1 ? t.legs.map(l => `${l.side.toUpperCase()} ${Math.max(1, l.filled || l.count)}@${c(l.price)}`).join(" + ") : `${Math.max(1, r.filled || r.count)} @ ${c(r.price)}`;
   const side = t.netted && t.legs.length > 1 ? `<span class="side" style="color:var(--amber);border:1px solid rgba(245,179,53,.4);background:rgba(245,179,53,.08)">PAIR</span>` : `<span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span>`;
-  const sub = [legs, t.how, t.settled ? fdt(t.settled) : "", strategyName(t.strategy)].filter(Boolean).join(" · ");
+  const sub = [legs, t.how, t.settled ? fdt(t.settled) : "", S.mode === "live" && !liveNow(t.strategy) ? "" : strategyName(t.strategy)].filter(Boolean).join(" · ");
   return `<div class="item tap">${side}<div class="main"><div class="t"><span style="color:${colorOf(t.strategy, i)}">▍</span>${esc(t.title)}</div><div class="s">${esc(sub)}</div></div>
     <div class="r"><span class="${cls(t.pnl)}">${money(t.pnl)}</span><small>$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} · ${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%</small></div>${details(r)}</div>`;
 }
@@ -1527,13 +1527,13 @@ function renderOverview(){
   const manual = mode === "live" ? model().manual : [];
   const unr = st.open.map(unrealized).filter(v => v != null), unrTot = unr.reduce((a, b) => a + b, 0);
   const strats = strategiesFor(mode), hist = strategiesFor(mode, true);
-  const sx = settledHTML(mode, rows, hist, B, unrTot);
+  const sx = settledHTML(mode, rows, strats, B, unrTot);
   let h = `<h2>All time <span class="sub">${mode === "live" ? "real money" : "paper"}</span></h2><div class="card glow"><div class="hero"><div><div class="lbl">${mode === "live" ? "Real-money P&L" : "Paper P&L"} · all time</div>
     <div class="big ${cls(st.pnl)}">${money(st.pnl)}</div>
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${settledTrades(rows).length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
-    ${sx.summary}${winsHTML(sx.tr, hist)}${moreBtn("all", "More all-time stats")}</div>`;
+    ${sx.summary}${winsHTML(sx.tr, strats)}${moreBtn("all", "More all-time stats")}</div>`;
   h = liveAcctHTML() + h;
   if (isOpen("all")) h += sx.h;
   h += botMoneyHTML(capExp, B);
@@ -1638,13 +1638,16 @@ function renderOverview(){
     const names = [...new Set(eqRows.flatMap(r => Object.keys(byStrategy(r))))];
     const last = byStrategy(eqRows.at(-1)), cur = n => (last[n] || {}).exposure || 0;
     names.sort((a, b) => cur(b) - cur(a));  // biggest at the bottom
-    const ex = names.map(n => ({name:strategyName(n), c:colorOf(n, strats.indexOf(n) < 0 ? names.indexOf(n) : strats.indexOf(n)), pts:eqRows.map(r => ({x:r.x, y:(byStrategy(r)[n] || {}).exposure || 0}))}));
+    // strategies no longer live are not named on MAIN (Alex, Nov 13): their open bets still count, as "Older bets"
+    const liveN = names.filter(n => strats.includes(n)), oldN = names.filter(n => !strats.includes(n));
+    const ex = liveN.map(n => ({name:strategyName(n), c:colorOf(n, strats.indexOf(n)), pts:eqRows.map(r => ({x:r.x, y:(byStrategy(r)[n] || {}).exposure || 0}))}));
+    if (oldN.length) ex.push({name:"Older bets", c:"#64748b", pts:eqRows.map(r => { const b = byStrategy(r); return {x:r.x, y:oldN.reduce((a, n) => a + ((b[n] || {}).exposure || 0), 0)}; })});
     const now = num(eqRows.at(-1).exposure);
     $("#expHead").innerHTML = `<b>$${now.toFixed(2)}</b><span>in open bets · ${pct(now / B, 0)} of bankroll · cap $${openCap.toFixed(2)}</span>`;
-    $("#expLeg").innerHTML = ex.map((s, i) => `<span><i style="background:${s.c}"></i>${esc(s.name)} <b>$${cur(names[i]).toFixed(2)}</b></span>`).join("");
+    $("#expLeg").innerHTML = ex.map((s, i) => `<span><i style="background:${s.c}"></i>${esc(s.name)} <b>$${s.pts.at(-1).y.toFixed(2)}</b></span>`).join("");
     lineChart($("#exp"), ex, {h:190, stack:true, step:true, total:"Total", fv:v => "$" + v.toFixed(2), refs:[{y:openCap, c:"#f5b335", label:"cap $" + openCap.toFixed(0)}], y1:openCap * 1.02});
   }
-  if ($("#eq")) drawSettled(sx, rows, hist, st, dayStop, totStop);
+  if ($("#eq")) drawSettled(sx, rows, strats, st, dayStop, totStop);
 }
 
 // kalshi.com/events/<ticker> is an empty page and fails in the iPhone app; /markets/<series>/<any slug>/<event> works in both
@@ -1710,7 +1713,7 @@ function orderItem(r, i){
   return `<div class="item tap"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" title="${esc(r.ticker)}"><span style="color:${colorOf(r.strategy, i)}">▍</span>${esc(r.title)}</div><div class="s">${esc(sub)}</div>${mkt}</div><div class="r">${right}</div>${details(r)}</div>`;
 }
 function renderOrders(){
-  const rows = modeRows(S.mode), strats = strategiesFor(S.mode, true), f = S.filter;
+  const rows = modeRows(S.mode), strats = strategiesFor(S.mode), f = S.filter;
   const pick = rows.filter(r => f === "all" || r.strategy === f);
   const open = pick.filter(r => r.status === "open").sort((a, b) => (a.close || 0) - (b.close || 0));
   const held = pick.filter(r => r.status === "filled").sort((a, b) => (b.placed || 0) - (a.placed || 0));
