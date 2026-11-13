@@ -84,3 +84,20 @@ def test_contracts_by_sizes_lows_up_and_keeps_others_at_base(monkeypatch):
                     contracts_by={"low/need": 2})
     got = {i.ticker: i.count for i in wl.propose(c)}
     assert got == {"KXLOWTNYC-26NOV12-B42.5": 2, "H": 1, "Y": 1}
+
+
+def test_skip_and_series_contracts(monkeypatch):
+    def o(tk, series, metric="low", kind="need", side="no", price="0.81"):
+        r = order(tk=tk, metric=metric, kind=kind, side=side, price=price)
+        r["series"] = series
+        return r
+    paper = [o("NYC", "KXLOWTNYC"), o("ATL", "KXLOWTATL"), o("HN", "KXHIGHTATL", metric="high"),
+             o("HH", "KXHIGHTATL", metric="high", kind="holds", side="yes", price="0.15"),
+             o("EWR", "KXHIGHTEWR", metric="high", kind="holds", side="yes", price="0.15")]
+    setup(monkeypatch, paper)
+    c = ctx()
+    c.params.update(metrics=["low", "high"], kinds=["need", "holds"], contracts=1,
+                    contracts_by={"low/need": 2}, skip=["high/need", "KXHIGHTEWR"],
+                    series_contracts={"KXLOWTATL": 1})
+    got = {i.ticker: i.count for i in wl.propose(c)}
+    assert got == {"NYC": 2, "ATL": 1, "HH": 1}

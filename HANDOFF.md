@@ -193,6 +193,12 @@ record earns it. Be candid about odds and risk; no hype.
   on the bracket holding it. Backtest for lows: +5.7c per contract Oct 2025-Aug 2026, +3.7c
   Sep-Nov 2026, about 7 fills a day. Review at 300 filled low orders; real money needs Alex's
   OK. Switch off with `[markets] paper_late = false`.
+- **Late-day weather on 16 more low cities, REAL since Nov 13** (Alex: "start em up with real money
+  whenever" if confident; replay +3.9c need / +4.2c holds, `research_wx/RESULTS_cities.md`). Kalshi
+  lists weather.com as every weather series' settlement source now, so discovery can't read the
+  station; new series are in `wxbot/stations.py` DEFAULT_SERIES (station from the rules' "(CLIxxx)").
+  New cities trade 1 contract (`series_contracts`). Highs "need" back to paper (replay ~0) and the
+  new Newark/Trenton/San Diego HIGH series stay paper (`skip` in `[trading.weather_late]`).
 - **Late-day lows at 2 contracts since Nov 12 10:41 PM ET** (Alex "sure do it"): `contracts_by = {"low/need" = 2}`
   in `[trading.weather_late]`; highs/holds stay 1. Live cap is 100% of bankroll (PR #224).
 - **Late-day highs and "holds": REAL MONEY since Nov 12** (Alex 2:45 PM ET "Switch them on", PR #221):

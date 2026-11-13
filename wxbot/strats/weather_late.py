@@ -44,12 +44,18 @@ def propose(ctx) -> list[Intent]:
     recent = ctx.now - timedelta(minutes=float(ctx.params.get("max_age_minutes", 30)))
     metrics = set(ctx.params.get("metrics", ["low"]))
     kinds = set(ctx.params.get("kinds", ["need"]))
+    # skip: "metric/kind" pairs or series tickers that stay paper-only (Nov 13)
+    skip = {str(x) for x in (ctx.params.get("skip") or [])}
+    # per-series size overrides, e.g. newly added cities start at 1 contract (Nov 13)
+    per_series = {k: int(v) for k, v in (ctx.params.get("series_contracts") or {}).items()}
     picks = []
     for o in load_orders():
         placed = parse_iso(o.get("placed_at"))
         if o.get("status") != "open" or placed is None or placed < recent:
             continue
         if o.get("metric") not in metrics or o.get("kind") not in kinds:
+            continue
+        if f"{o.get('metric')}/{o.get('kind')}" in skip or o.get("series") in skip:
             continue
         picks.append(o)
     if not picks or (ctx.mode == "live" and stopped(ctx)):
@@ -72,8 +78,11 @@ def propose(ctx) -> list[Intent]:
             log.info("weather_late %s: market moved, order would cross (bid %.2f ask %.2f); skipped",
                      o["ticker"], bid, ask)
             continue
+        size = sizes.get(f"{o['metric']}/{o['kind']}", count)
+        if o.get("series") in per_series:
+            size = min(size, per_series[o["series"]])
         out.append(Intent(NAME, o["ticker"], o["event"], o["side"], price,
-                          sizes.get(f"{o['metric']}/{o['kind']}", count), o.get("close") or "",
+                          size, o.get("close") or "",
                           f"{o['city']} {o['metric']} {o['date']} {o['bracket']}",
                           f"late-day {o['kind']}: {o.get('metric', 'low')} so far {o.get('extreme')}, {o.get('hours_left')}h left"))
     return out

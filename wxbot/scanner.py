@@ -29,7 +29,11 @@ def get_catalog(http: Http, cfg: Config, state: dict, now: datetime) -> list[Ser
     today = now.date().isoformat()
     cat = state.get("catalog") or {}
     series: list[SeriesInfo] = []
-    if cat.get("date") == today and cat.get("series"):
+    cached = {s.get("ticker") for s in (cat.get("series") or [])}
+    fresh = cat.get("date") == today and cat.get("series")
+    if fresh and not {si.ticker for si in default_catalog()} <= cached:
+        fresh = False                      # the built-in list grew (new code): re-discover now
+    if fresh:
         for s in cat["series"]:
             st = Station(s["icao"], s["name"], s["lat"], s["lon"], s["tz"])
             series.append(SeriesInfo(s["ticker"], s["metric"], st, s["city"]))
