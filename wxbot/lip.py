@@ -15,8 +15,12 @@ Rails, all checked every cycle:
   - bids only at 1c..max_px (8c), post-only (never takes), only on the cheap side, sports excluded;
     order cost <= $6 each (kalshi_api.LIP_MAX_*);
   - fill stop: once filled contracts cost `fill_stop` ($10) in total, everything is cancelled and
-    the bot halts (we came to be paid for resting, not to collect longshots). Filled contracts are
-    held to settlement (no selling).
+    the bot halts (we came to be paid for resting, not to collect longshots).
+  - fill recovery (Alex, Nov 13): contracts a bid bought by accident are offered straight back
+    at the price we paid (reduce-only, post-only sell; sold at once if a bid already sits at that
+    price). Break-even if someone takes them, otherwise they are held to settlement as before.
+    These exit offers stay up through the fill stop and the end of the test window, and are
+    cancelled only by the kill switches (they can only shrink a position, never add risk).
   - about one Kalshi call per second at most (the key is shared with the live bots).
 Client order ids start "lip-" (the tax ledger tags these fills "rewards bot").
 """
@@ -49,7 +53,8 @@ DEFAULTS = {"mode": "off", "budget": 20.0, "reserve": 6.0, "markets": 8, "min_px
             "max_vol24": 2000.0, "move_guard": 0.03, "move_pause_s": 6 * 3600,
             # daily risk-adjusted re-pick, SHADOW only (logs; moves no orders): wxbot/lip_rank.py
             "shadow": True, "shadow_hour_utc": 10, "shadow_programs": 400, "shadow_books": 80,
-            "shadow_max_vol24": 20000.0, "adverse": 0.6}
+            "shadow_max_vol24": 20000.0, "adverse": 0.6,
+            "recover": True}
 CONTROL_STALE_S = 1800
 PACE_S = 1.0                     # seconds between Kalshi calls
 
@@ -159,7 +164,7 @@ class LipBot:
             self.state = {}
         for k, v in (("orders", {}), ("positions", {}), ("chosen", {}), ("credits", {}),
                      ("bad", {}), ("requotes", {}), ("est", {}), ("halted", None),
-                     ("selected_at", 0.0), ("uploaded_at", 0.0), ("events", []), ("shadow", {})):
+                     ("selected_at", 0.0), ("uploaded_at", 0.0), ("events", []), ("shadow", {}), ("exits", {})):
             self.state.setdefault(k, v)
 
     # -- plumbing
@@ -196,6 +201,15 @@ class LipBot:
         except Exception as exc:  # noqa: BLE001
             log.warning("lip control read: %s", exc)
 
+    def killed(self) -> bool:
+        """An explicit kill (control off, global switch off/paper/halted, stale switches): cancel
+        everything, exit offers included. The fill stop and the test end are not kills."""
+        if self.cfg.get("mode") != "live" or self.client is None:
+            return True
+        if self.switch["mode"] in ("off", "paper") or self.switch["halted"]:
+            return True
+        return self.clock() - self.ok_at > CONTROL_STALE_S
+
     def mode(self) -> str:
         if self.cfg.get("mode") != "live" or self.client is None:
             return "off"
@@ -213,6 +227,10 @@ class LipBot:
 
     def filled_cost(self) -> float:
         return sum(p["cost"] for p in self.state["positions"].values())
+
+    def filled_total(self) -> float:
+        """Everything our bids ever bought, including fills since sold back (for the fill stop)."""
+        return sum(p["cost"] + p.get("recovered", 0.0) for p in self.state["positions"].values())
 
     def room(self, cash0: float | None) -> float:
         """Dollars we may still put into new bids: under the budget, and leaving `reserve` of
@@ -476,7 +494,7 @@ class LipBot:
         self.event("fill", ticker=tk, side=o["side"], n=new, px=o["px"])
         self.alert("Rewards test: a bid filled",
                    f"{tk}: bought {new:g} {o['side'].upper()} at {round(o['px'] * 100)}c "
-                   f"(held to settlement). Filled so far ${self.filled_cost():.2f} of the "
+                   f"(offered back at our price; held to settlement if nobody takes it). Filled so far ${self.filled_total():.2f} of the "
                    f"${self.cfg['fill_stop']:.0f} fill stop.")
 
     def place(self, tk: str, pl: dict, room: float) -> float:
@@ -501,7 +519,7 @@ class LipBot:
         """Fills and vanished orders, from one listing of our resting orders; cancel strays."""
         self.pace()
         resting = self.client.resting_orders()
-        mine = {o["id"] for o in self.state["orders"].values()}
+        mine = {o["id"] for o in self.state["orders"].values()} | {x["id"] for x in self.state["exits"].values()}
         for oid, ko in resting.items():
             if str(ko.get("client_order_id") or "").startswith("lip-") and oid not in mine:
                 self.pace()
@@ -524,6 +542,7 @@ class LipBot:
                 self.event("gone", ticker=tk, status=ko.get("status"))
             else:
                 self.book_fill(tk, o, fill_qty(ko, o["n"]))
+        self.sync_exits(resting)
 
     def credits(self) -> None:
         """Kalshi credits (where reward payouts should show up), newest first; keep them all."""
@@ -620,20 +639,113 @@ class LipBot:
                     pass
             cash0 -= spent
 
+    # -- fill recovery (Nov 13): offer accidental fills back at our cost
+    def book_exit(self, tk: str, x: dict, sold: float) -> None:
+        new = round(sold - x.get("sold", 0.0), 2)
+        if new <= 0:
+            return
+        x["sold"] = sold
+        p = self.state["positions"].get(tk)
+        if p:
+            avg = p["cost"] / p["n"] if p["n"] else x["px"]
+            p["n"] = round(max(0.0, p["n"] - new), 2)
+            p["cost"] = round(max(0.0, p["cost"] - new * avg), 4)
+            p["recovered"] = round(p.get("recovered", 0.0) + new * x["px"], 4)
+            p["recovered_n"] = round(p.get("recovered_n", 0.0) + new, 2)
+        self.event("exit_fill", ticker=tk, side=x["side"], n=new, px=x["px"])
+        self.alert("Rewards test: accidental fill sold back",
+                   f"{tk}: sold {new:g} {x['side'].upper()} back at {round(x['px'] * 100)}c (what we paid).")
+
+    def cancel_exit(self, tk: str, why: str) -> bool:
+        x = self.state["exits"].get(tk)
+        if not x:
+            return True
+        self.pace()
+        try:
+            self.client.cancel(x["id"], tk)
+            self.pace()
+            self.book_exit(tk, x, fill_qty(self.client.get_order(x["id"]), x["n"]))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("lip exit cancel %s: %s", tk, exc)
+            return False
+        self.state["exits"].pop(tk, None)
+        self.event("exit_cancel", ticker=tk, why=why)
+        return True
+
+    def sync_exits(self, resting: dict) -> None:
+        for tk, x in list(self.state["exits"].items()):
+            ko = resting.get(x["id"])
+            if ko is not None:
+                self.book_exit(tk, x, fill_qty(ko, x["n"]))
+                continue
+            self.pace()
+            try:
+                ko = self.client.get_order(x["id"])
+            except Exception as exc:  # noqa: BLE001
+                log.warning("lip exit order %s: %s", x["id"], exc)
+                continue
+            self.book_exit(tk, x, fill_qty(ko, x["n"]))
+            self.state["exits"].pop(tk, None)
+            self.event("exit_gone", ticker=tk, status=ko.get("status"))
+
+    def recover(self) -> None:
+        """For every held position: one exit offer for all of it, at the average price paid."""
+        if not self.cfg.get("recover"):
+            return
+        for tk, p in list(self.state["positions"].items()):
+            if self.state["bad"].get(f"exit|{tk}", 0) > self.clock():
+                continue
+            if self.state["orders"].get(tk):
+                # a fill usually means news: pull the rest of that bid (it would also trade
+                # against our own exit offer at the same price)
+                self.cancel(tk, "bid filled: pull the rest, offer the fill back")
+                if self.state["orders"].get(tk):
+                    continue
+            want = int(math.floor(p["n"] + 1e-6))
+            x = self.state["exits"].get(tk)
+            if x and round(x["n"] - x.get("sold", 0.0), 2) >= want:
+                continue
+            if x and not self.cancel_exit(tk, "more filled: re-offer all"):
+                continue
+            want = int(math.floor(self.state["positions"].get(tk, {}).get("n", 0) + 1e-6))
+            if want < 1:
+                continue
+            px = round(math.ceil(p["cost"] / p["n"] * 100 - 1e-6) / 100, 2) if p["n"] else None
+            if not px:
+                continue
+            b = self.book(tk) or {}
+            best = max((q for q, _ in b.get(p["side"]) or []), default=0.0)
+            now_ = best >= px - 1e-9        # someone already bids our price: sell at once
+            cid = f"lip-x-{uuid.uuid4().hex[:14]}"
+            self.pace()
+            try:
+                o = self.client.place_lip_exit(tk, p["side"], px, want, cid, now=now_)
+            except Exception as exc:  # noqa: BLE001
+                self.event("exit_reject", ticker=tk, side=p["side"], px=px, n=want, error=str(exc)[:200])
+                self.state["bad"][f"exit|{tk}"] = self.clock() + 3600
+                continue
+            oid = o.get("order_id") or o.get("id")
+            x = {"id": oid, "cid": cid, "side": p["side"], "px": px, "n": want, "sold": 0.0, "at": self.clock()}
+            self.event("exit_place", ticker=tk, side=p["side"], px=px, n=want, now=now_)
+            if now_:
+                self.book_exit(tk, x, fill_qty(o, want))
+            else:
+                self.state["exits"][tk] = x
+
     def check_stop(self) -> None:
-        if self.filled_cost() >= self.cfg["fill_stop"] and not self.state.get("halted"):
-            self.state["halted"] = f"fill stop: ${self.filled_cost():.2f} of bids filled"
+        if self.filled_total() >= self.cfg["fill_stop"] and not self.state.get("halted"):
+            self.state["halted"] = f"fill stop: ${self.filled_total():.2f} of bids filled"
             self.cancel_all("fill stop")
-            self.alert("Rewards test halted", f"Our cheap bids filled ${self.filled_cost():.2f} worth "
+            self.alert("Rewards test halted", f"Our cheap bids filled ${self.filled_total():.2f} worth "
                        f"(stop ${self.cfg['fill_stop']:.0f}). All bids cancelled; filled contracts "
-                       "are held to settlement.")
+                       "stay offered back at what we paid (else held to settlement).")
 
     def status(self) -> dict:
         return {"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "mode": self.mode(),
                 "control": self.cfg.get("mode"), "kill_switch": self.switch, "halted": self.state.get("halted"),
                 "budget": self.cfg["budget"], "resting_cost": round(self.resting_cost(), 2),
                 "filled_cost": round(self.filled_cost(), 2), "orders": self.state["orders"],
-                "positions": self.state["positions"], "chosen": self.state["chosen"],
+                "positions": self.state["positions"], "exits": self.state["exits"], "chosen": self.state["chosen"],
                 "est": dict(list(self.state["est"].items())[-4:]), "shadow": self.state.get("shadow") or {},
                 "credits": sorted(self.state["credits"].values(), key=lambda r: str(r.get("created_time")))[-60:],
                 "events": self.state["events"][-80:]}
@@ -644,6 +756,18 @@ class LipBot:
         if self.mode() != "live":
             if self.state["orders"] and self.client is not None:
                 self.cancel_all(f"mode {self.mode()} (control {self.cfg.get('mode')}, switch {self.switch})")
+            if self.client is not None and (self.state["exits"] or self.state["positions"]):
+                try:
+                    if self.killed():
+                        for tk in list(self.state["exits"]):
+                            self.cancel_exit(tk, "kill switch")
+                    else:           # fill stop / test over: keep offering fills back
+                        self.pace()
+                        self.sync_exits(self.client.resting_orders())
+                        self.recover()
+                except Exception as exc:  # noqa: BLE001
+                    log.warning("lip recover: %s", exc)
+                    self.event("error", error=f"recover: {str(exc)[:280]}")
         else:
             try:
                 self.sync()
@@ -654,6 +778,7 @@ class LipBot:
                         self.state["reselect_seen"] = self.cfg.get("reselect")
                         self.select()
                     self.manage()
+                self.recover()
             except Exception as exc:  # noqa: BLE001
                 log.warning("lip cycle: %s", exc)
                 self.event("error", error=str(exc)[:300])

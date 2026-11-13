@@ -409,3 +409,92 @@ def test_shadow_waits_for_morning_after_first_day(tmp_path):
     assert bot.shadow_due()                       # never ran: run now
     bot.state["shadow"] = {"day": "2026-11-13"}
     assert not bot.shadow_due()                   # new UTC day but before 10:00 UTC (5 AM ET)
+
+
+# -- fill recovery (Nov 13): accidental fills are offered back at our price
+class ExitClient(Client):
+    def __init__(self, cash=30.0):
+        super().__init__(cash)
+        self.exits = []
+
+    def place_lip_exit(self, tk, side, px, n, cid, now=False):
+        check_lip_order(side, px, n)
+        self.exits.append((tk, side, px, n, now))
+        oid = f"x{len(self.exits)}"
+        if now:
+            return {"order_id": oid, "fill_count_fp": str(n), "status": "executed"}
+        self.orders[oid] = {"ticker": tk, "client_order_id": cid, "side": side, "px": px, "n": n,
+                            "fill_count_fp": "0", "sell": True}
+        return {"order_id": oid}
+
+    def cancel(self, oid, tk):
+        o = self.orders.get(oid)
+        if o and o.get("sell"):
+            self.orders.pop(oid)
+            self.cancelled.append(oid)
+            return
+        super().cancel(oid, tk)
+
+
+def _filled(tmp_path, control=None, http=None):
+    c = ExitClient()
+    bot, data, clock, alerts = mk(tmp_path, client=c, http=http, control=control)
+    bot.cycle()
+    oid = bot.state["orders"]["KXA-1"]["id"]
+    c.orders[oid]["fill_count_fp"] = "20"          # 20 of 83 at 3c fill, the rest still rests
+    clock[0] += 300
+    bot.cycle()
+    return bot, c, data, clock, alerts, oid
+
+
+def test_fill_pulls_bid_and_offers_fill_back(tmp_path):
+    bot, c, _, _, alerts, oid = _filled(tmp_path)
+    assert oid in c.cancelled and "KXA-1" not in bot.state["orders"]     # rest of the bid pulled
+    assert c.exits == [("KXA-1", "yes", 0.03, 20, False)]                 # resting offer at cost
+    x = bot.state["exits"]["KXA-1"]
+    assert x["n"] == 20 and x["id"] in c.orders
+    assert "Rewards test: a bid filled" in alerts
+
+
+def test_exit_fill_reduces_position_and_still_counts_for_stop(tmp_path):
+    bot, c, _, clock, alerts, _ = _filled(tmp_path)
+    x = bot.state["exits"]["KXA-1"]
+    c.orders[x["id"]]["fill_count_fp"] = "20"
+    c.orders.pop(x["id"])
+    c.fills[x["id"]] = 20
+    clock[0] += 300
+    bot.cycle()
+    p = bot.state["positions"]["KXA-1"]
+    assert p["n"] == 0 and p["cost"] == 0 and p["recovered"] == pytest.approx(0.6)
+    assert bot.filled_cost() == 0 and bot.filled_total() == pytest.approx(0.6)
+    assert "KXA-1" not in bot.state["exits"] and len(c.exits) == 1
+    assert "Rewards test: accidental fill sold back" in alerts
+    assert not c.orders                       # no new bid in a market that filled
+
+
+def test_exit_survives_fill_stop_but_not_kill_switch(tmp_path):
+    bot, c, data, clock, _, _ = _filled(tmp_path, control={"fill_stop": 0.5})
+    assert bot.state["halted"]                                  # $0.60 filled >= $0.50
+    clock[0] += 300
+    bot.cycle()
+    assert bot.state["exits"]["KXA-1"]["id"] in c.orders        # halted, but the offer stays
+    data[SWITCH_URL] = {"mode": "off"}
+    clock[0] += 300
+    bot.cycle()
+    assert bot.state["exits"] == {} and not c.orders            # kill switch: everything off
+
+
+def test_exit_sells_at_once_when_bid_is_at_our_price(tmp_path):
+    http = Http()
+    c = ExitClient()
+    bot, data, clock, _ = mk(tmp_path, client=c, http=http)
+    bot.cycle()
+    oid = bot.state["orders"]["KXA-1"]["id"]
+    c.orders[oid]["fill_count_fp"] = "20"
+    # someone now bids 3c on YES (our price): sell straight into it
+    http.books["KXA-1"] = {"orderbook_fp": {"yes_dollars": [["0.0200", "300"], ["0.0300", "500"]],
+                                            "no_dollars": [["0.9300", "800"], ["0.9400", "400"]]}}
+    clock[0] += 300
+    bot.cycle()
+    assert c.exits[-1] == ("KXA-1", "yes", 0.03, 20, True)
+    assert bot.state["positions"]["KXA-1"]["n"] == 0 and bot.state["exits"] == {}
