@@ -1140,7 +1140,7 @@ def test_e2_bids_only_against_last_hours_move(monkeypatch):
     monkeypatch.setattr(b, "hour_move", lambda m: 120.0)       # index rose; YES favourite = with it
     b.step()
     m = b.state["markets"][TK]
-    assert cl.placed == [] and m["why"] == "E2: with the trend" and m["rule"] == "E2"
+    assert cl.placed == [] and m["why"] == "E2: with the trend" and m["rule"] == "E2" and m["e2_skip"]
     monkeypatch.setattr(b, "hour_move", lambda m: None)
     clk.t += 5
     b.step()
