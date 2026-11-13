@@ -360,7 +360,7 @@ paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for n
 mode = "live"                    # off | paper | live. LIVE from the start (Alex, Nov 8: "this is the
                                  # test", no paper run). Without a Kalshi key on the server it stays
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
-live_series = ["KXBTC15M", "KXSILVER15M"]   # real money only on these. GOLD back to PAPER Nov 11 3:40 PM ET (Alex: "find a profitable way or cut it"; live -3.8c/ct on 84 ct, no gold rule with an honest edge). Was: GOLD live Nov 11 12:50 AM ET (Alex OK, 1 ct + same 2nd-contract rule; review at 100 fills, paper if < -5c). Nov 10 12:15 PM ET (Alex, trim
+live_series = ["KXBTC15M"]   # real money only on these. Nov 13 (Alex: E2 "we can put it on real"): BTC only, under rule E2 at 1 ct; silver stays PAPER (no edge, Nov 12). Before: GOLD back to PAPER Nov 11 3:40 PM ET (Alex: "find a profitable way or cut it"; live -3.8c/ct on 84 ct, no gold rule with an honest edge). Was: GOLD live Nov 11 12:50 AM ET (Alex OK, 1 ct + same 2nd-contract rule; review at 100 fills, paper if < -5c). Nov 10 12:15 PM ET (Alex, trim
                                  # decision): copper, palladium, platinum, WTI back to PAPER, all red
                                  # all-time (-$18.59 on 469 ct) vs BTC+silver +$14.23. They keep logging.
                                  # platinum + WTI live Nov 9 ~1:30 PM ET (Alex OK), 1 contract, last 5 min,
@@ -402,7 +402,8 @@ early_after_contracts = 500      # rule E (BTC early window): from BTC's 500th r
                                  # before close, favourite 80-95c, 1 contract, no double (Alex Nov 10 7:56 PM ET:
                                  # "just make them go live at 500"). 80-day replay: today's rule ~0c/ct since Oct 10,
                                  # rule E +1.4c. Graded at every BTC review after; decay guard and stops unchanged.
-early_contracts = 2              # MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET): 2 ct/window when rule E starts at 500; 3 if E holds at its review. Was 3: (Alex Nov 10 8:12 PM ET wants ~today's daily
+e2_series = ["KXBTC15M"]         # rule E2 (Nov 13, Alex OK): BTC rule E bids only against the last hour's move
+early_contracts = 1              # Nov 13: 1 ct/window under rule E2 (real-money test). Was 2: MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET): 2 ct/window when rule E starts at 500; 3 if E holds at its review. Was 3: (Alex Nov 10 8:12 PM ET wants ~today's daily
                                  # volume; rule E trades ~31 windows/day vs ~90). 3 = ~95 ct/day.
 
 [watch]

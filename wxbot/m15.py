@@ -66,7 +66,8 @@ CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/m15_control.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
 COLS = ["ticker", "series", "mode", "close", "fav_side", "first_q", "last_q", "quotes",
         "contracts", "filled", "cost", "fee", "fill_at", "fill_ttc_s", "model_filled",
-        "touched", "pulls", "spot_bps", "result", "won", "pnl", "fills", "fv_fill"]
+        "touched", "pulls", "spot_bps", "result", "won", "pnl", "fills", "fv_fill", "rule",
+        "hour_move"]
 # "fills" (Nov 10): each fill as contracts@price, ';'-separated (e.g. "1@0.77;1@0.85"), so a
 # double's 1st and 2nd contract can be judged apart (the cost column only gives the blend).
 
@@ -177,6 +178,11 @@ DEFAULTS = {
     "early_max": 0.95,
     "early_after_contracts": 0,
     "early_contracts": 0,             # >0: contracts per window under rule E (0 = the usual base)
+    # RULE E2 (Nov 13, Alex OK for real money at 1 ct): in these series, rule E bids ONLY when the
+    # favourite bets AGAINST the index's move over the hour before the window (strike now vs the
+    # strike of the window that opened 1 h earlier). Unknown move -> skip. 80-day replay +3.3c/ct
+    # at the bid (1,216 windows, 10 of 13 weeks up) vs +1.1c with the trend. tools/e2_check.py.
+    "e2_series": [],
 }
 
 
@@ -231,6 +237,19 @@ def desired_quote(m: dict, s: dict) -> tuple[str, float] | None:
         if b is not None and s["min_fav"] - 1e-9 <= b <= s["max_fav"] + 1e-9:
             return side, round(b, 2)
     return None
+
+
+def window_ticker(series: str, close_ts: int) -> str:
+    """KXBTC15M-26NOV131430-30 for the window closing 2:30 PM ET Nov 13, 2026."""
+    et = datetime.fromtimestamp(close_ts, ZoneInfo("America/New_York"))
+    return f"{series}-{et.strftime('%y%b%d%H%M').upper()}-{et.strftime('%M')}"
+
+
+def e2_ok(side: str, move: float | None) -> bool:
+    """Rule E2: bid only when the favourite bets against the last hour's move."""
+    if not move:
+        return False
+    return (side == "yes") == (move < 0)
 
 
 def qty_str(x) -> int | float:
@@ -549,6 +568,11 @@ class Bot(FillQuality):
                                              "model_filled": None, "touched": False,
                                              "pulls": 0, "tape_at": 0,
                                              "strike": mk.get("floor_strike")}
+                if mk.get("floor_strike") is not None:
+                    hist = self.state.setdefault("strikes", {}).setdefault(series, {})
+                    hist[str(int(ct.timestamp()))] = float(mk["floor_strike"])
+                    for old in sorted(hist, key=int)[:-12]:
+                        del hist[old]
         if self.kfeed is not None:
             self.kfeed.watch([k for k, m in self.state["markets"].items() if m["close"] > now])
 
@@ -877,6 +901,13 @@ class Bot(FillQuality):
             band = s
         want = desired_quote(quote, band) if quote else None
         m["why"] = "no quote" if not quote else ("out of band" if want is None else "ok")
+        if early and m["series"] in (s.get("e2_series") or []):
+            m["rule"] = "E2"
+            mv = self.hour_move(m)
+            m["hour_move"] = mv
+            if want and not e2_ok(want[0], mv):
+                want = None
+                m["why"] = "E2: with the trend" if mv else "E2: last hour unknown"
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
         base_n = int((s.get("series_contracts") or {}).get(m["series"], s["contracts"]))
@@ -995,6 +1026,25 @@ class Bot(FillQuality):
                    f"{int(s['early_start_s']) // 60}-{int(s['early_end_s']) // 60} min before close, "
                    f"favourite {s['early_min']:.2f}-{s['early_max']:.2f}, 1 contract per window.", 3)
         return True
+
+    def hour_move(self, m: dict) -> float | None:
+        """Index move over the hour before this window: its strike minus the strike of the window
+        that opened 1 h earlier (strikes = index average at each open). Kalshi API on a miss."""
+        hist = self.state.setdefault("strikes", {}).setdefault(m["series"], {})
+        now_k, ago_k = str(int(m["close"])), str(int(m["close"]) - 3600)
+        if m.get("strike") is not None:
+            hist.setdefault(now_k, float(m["strike"]))
+        for k in (now_k, ago_k):
+            if k not in hist:
+                try:
+                    mk = kalshi.get_market(self.http, window_ticker(m["series"], int(k)))
+                    if mk and mk.get("floor_strike") is not None:
+                        hist[k] = float(mk["floor_strike"])
+                except Exception as exc:
+                    log.warning("hour move %s: %s", m["ticker"], exc)
+        if now_k not in hist or ago_k not in hist:
+            return None
+        return round(hist[now_k] - hist[ago_k], 2)
 
     def fv_blocks(self, m: dict, want, now: float) -> bool:
         """Fair-value filter (OFF by default; Alex Nov 10 "ok then do them", switch on only at a
@@ -1248,7 +1298,8 @@ class Bot(FillQuality):
             "spot_bps": m.get("spot_bps", ""),
             "result": m.get("result", ""), "won": "" if m.get("won") is None else int(m["won"]),
             "pnl": round(m.get("pnl", 0.0), 2), "fills": ";".join(m.get("fills") or []),
-            "fv_fill": m.get("fv_fill", "")}
+            "fv_fill": m.get("fv_fill", ""), "rule": m.get("rule", ""),
+            "hour_move": "" if m.get("hour_move") is None else m["hour_move"]}
         if not new:
             with open(path, newline="", encoding="utf-8") as f:
                 rd = csv.DictReader(f)
