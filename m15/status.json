@@ -1,5 +1,5 @@
 {
- "at": "2026-11-13T17:32:00+00:00",
+ "at": "2026-11-13T17:47:00+00:00",
  "control": "live",
  "cut": {},
  "day_stop": null,
@@ -13,20 +13,20 @@
  },
  "halted": null,
  "last_reject": {
-  "at": 1794590395,
+  "at": 1794592017,
   "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}",
-  "ticker": "KXBTC15M-26NOV131230-30"
+  "ticker": "KXBTC15M-26NOV131300-00"
  },
  "live_exposure": 0.0,
  "live_now": {
-  "KXBTC15M-26NOV131245-45": {
+  "KXBTC15M-26NOV131300-00": {
    "bid_ask": [
-    0.49,
-    0.5
+    0.17,
+    0.18
    ],
    "mode": "live",
    "order": false,
-   "why": "out of band"
+   "why": "fair value below bid"
   }
  },
  "mode": "live",
@@ -50,9 +50,9 @@
    "2026-11-10": -34.61,
    "2026-11-11": -38.48,
    "2026-11-12": -62.28,
-   "2026-11-13": -15.8
+   "2026-11-13": -14.04
   },
-  "paper_total": -240.93
+  "paper_total": -239.17
  },
  "pnl_24h": 0,
  "roll_stop": null,
