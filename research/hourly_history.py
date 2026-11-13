@@ -19,7 +19,7 @@ from pathlib import Path
 import requests
 
 K = "https://api.elections.kalshi.com/trade-api/v2"
-START = datetime(2026, 10, 1, tzinfo=timezone.utc)
+START = datetime(2026, 11, 5, tzinfo=timezone.utc)
 SERIES = ["KXTEMPMIAH", "KXTEMPNYCHS", "KXTEMPCHIHS", "KXTEMPLAXHS"]
 MEMBERS = ["MIA", "OPF", "FLL", "FXE", "PMP", "LGA", "EWR", "TEB", "CDW", "HPN", "FRG",
            "SMQ", "ISP", "MDW", "ORD", "PWK", "DPA", "ARR", "HHR", "LAX", "SMO", "LGB", "SNA"]

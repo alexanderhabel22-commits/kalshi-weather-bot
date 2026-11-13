@@ -15,7 +15,7 @@ from pathlib import Path
 import requests
 
 K = "https://api.elections.kalshi.com/trade-api/v2"
-START = datetime(2026, 10, 1, tzinfo=timezone.utc)
+START = datetime(2026, 11, 5, tzinfo=timezone.utc)
 SERIES = ["KXTEMPMIAH", "KXTEMPNYCHS", "KXTEMPCHIHS", "KXTEMPLAXHS"]
 OUT = Path(sys.argv[1] if len(sys.argv) > 1 else "out")
 OUT.mkdir(parents=True, exist_ok=True)
