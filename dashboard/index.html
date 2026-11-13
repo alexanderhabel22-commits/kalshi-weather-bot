@@ -1302,11 +1302,11 @@ function startBankroll(mode, B, gain){
   return {amt:Math.max(1, B - gain), at:null, set:false};
 }
 function settledTrades(rows){
-  // one entry per settled bet; a YES+NO pair Kalshi netted into $1 counts as one trade
+  // one entry per settled bet; a YES+NO pair Kalshi netted into $1 counts as one trade (per strategy, so a pair split across two strategies is credited to each)
   const g = new Map(); let i = 0;
   for (const r of rows){
     if (r.status !== "settled" || r.pnl == null) continue;
-    const k = r.result === "netted" ? "net|" + r.ticker + "|" + Math.round((+r.settled || 0) / 60e3) : "row|" + (i++);
+    const k = r.result === "netted" ? "net|" + r.strategy + "|" + r.ticker + "|" + Math.round((+r.settled || 0) / 60e3) : "row|" + (i++);
     if (!g.has(k)) g.set(k, []);
     g.get(k).push(r);
   }
@@ -1336,7 +1336,7 @@ function settledItem(t, i){
   const side = t.netted && t.legs.length > 1 ? `<span class="side" style="color:var(--amber);border:1px solid rgba(245,179,53,.4);background:rgba(245,179,53,.08)">PAIR</span>` : `<span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span>`;
   const sub = [legs, t.how, t.settled ? fdt(t.settled) : "", S.mode === "live" && !liveNow(t.strategy) ? "" : strategyName(t.strategy)].filter(Boolean).join(" · ");
   return `<div class="item tap">${side}<div class="main"><div class="t"><span style="color:${colorOf(t.strategy, i)}">▍</span>${esc(t.title)}</div><div class="s">${esc(sub)}</div></div>
-    <div class="r"><span class="${cls(t.pnl)}">${money(t.pnl)}</span><small>$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} · ${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%</small></div>${details(r)}</div>`;
+    <div class="r"><span class="${cls(t.pnl)}">${money(t.pnl)}</span><small>${t.contracts ? cents(t.pnl / t.contracts * 100) + "/ct · " : ""}$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} · ${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%</small></div>${details(r)}</div>`;
 }
 function isOpen(k){ if (!S.open){ try { S.open = new Set(JSON.parse(ls.get("ovOpen") || "[]")); } catch(e){ S.open = new Set(); } } return S.open.has(k); }
 function moreBtn(k, label){ return `<button class="seeall" data-more="${k}">${isOpen(k) ? "Show less ▲" : label + " ▼"}</button>`; }
@@ -1392,7 +1392,7 @@ function settledHTML(mode, rows, strats, B, unrTot){
   const summary = `<div class="grid g3" style="margin-top:14px">
       <div><div class="lbl">Growth</div><div class="val ${cls(growth)}">${sp(growth)}</div></div>
       <div><div class="lbl">Record</div><div class="val">${sm.wins}-${sm.losses}<small> ${sm.winRate == null ? "" : pct(sm.winRate)}</small></div></div>
-      <div><div class="lbl">ROI</div><div class="val ${cls(sm.roi || 0)}">${sp(sm.roi)}</div></div></div>`;
+      <div><div class="lbl">Per contract</div><div class="val ${cls(sm.pnl)}">${sm.contracts ? cents(sm.pnl / sm.contracts * 100) : "—"}<small> after fees</small></div></div></div>`;
   let h = `<h2>Settled results <span class="sub">${real} · cashed out</span></h2><div class="card">
     <div class="sgrid">
       <div><div class="lbl">Realized</div><div class="val ${cls(sm.pnl)}">${money(sm.pnl)}<small>${sm.n} trade${sm.n === 1 ? "" : "s"}</small></div></div>
@@ -1413,12 +1413,15 @@ function settledHTML(mode, rows, strats, B, unrTot){
   </div>`;
   h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card">${smoothBtns()}<div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="chead" id="eqHead"></div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div><div class="mute" style="font-size:11px;margin-top:4px">Each step up or down is a bet settling. Flat stretches mean nothing settled.</div></div>`;
   if (tr.length) h += `<h2>Profit per trade <span class="sub">oldest → newest · tap a bar</span></h2><div class="card"><div class="chart" id="perTrade"></div></div>`;
-  const by = strats.map((n, i) => ({n, i, s:settledSum(tr.filter(t => t.strategy === n))})).filter(x => x.s.n).sort((a, b) => b.s.pnl - a.s.pnl);
+  const byNames = strats.concat([...new Set(tr.map(t => t.strategy))].filter(n => n && !strats.includes(n)));
+  const by = byNames.map((n, i) => ({n, i, old:!strats.includes(n), s:settledSum(tr.filter(t => t.strategy === n))})).filter(x => x.s.n).sort((a, b) => b.s.pnl - a.s.pnl);
+  // profit per contract (after fees, settled only): the same yardstick as the 15-MIN tab
+  const pc = s => s.contracts ? s.pnl / s.contracts * 100 : null, pcTd = s => { const v = pc(s); return `<td class="${cls(v || 0)}" style="font-weight:700">${v == null ? "—" : cents(v)}</td>`; };
   if (by.length){
-    h += `<h2>By strategy <span class="sub">settled only</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>W-L</th><th>Win</th><th>Staked</th><th>P&L</th><th>ROI</th></tr>`
-      + by.map(x => `<tr><td><i style="background:${colorOf(x.n, x.i)}"></i>${esc(histName(x.n))}</td><td>${x.s.wins}-${x.s.losses}</td><td>${x.s.winRate == null ? "—" : pct(x.s.winRate)}</td><td>$${x.s.staked.toFixed(2)}</td><td class="${cls(x.s.pnl)}">${money(x.s.pnl)}</td><td class="${cls(x.s.roi || 0)}">${sp(x.s.roi)}</td></tr>`).join("")
-      + (by.length > 1 ? `<tr class="tot"><td>Total</td><td>${sm.wins}-${sm.losses}</td><td>${sm.winRate == null ? "—" : pct(sm.winRate)}</td><td>$${sm.staked.toFixed(2)}</td><td class="${cls(sm.pnl)}">${money(sm.pnl)}</td><td class="${cls(sm.roi || 0)}">${sp(sm.roi)}</td></tr>` : "")
-      + `</table></div>${by.length > 1 ? `<div class="chart" id="byStrat" style="margin-top:12px"></div>` : ""}</div>`;
+    h += `<h2>By strategy <span class="sub">settled only</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>¢/ct</th><th>P&L</th><th>Ct</th><th>W-L</th><th>Win</th><th>Staked</th><th>ROI</th></tr>`
+      + by.map(x => `<tr><td><i style="background:${colorOf(x.n, x.i)}"></i>${esc(histName(x.n))}${x.old ? ` <span class="mute" style="font-size:10px">(paper now)</span>` : ""}</td>${pcTd(x.s)}<td class="${cls(x.s.pnl)}">${money(x.s.pnl)}</td><td>${x.s.contracts}</td><td>${x.s.wins}-${x.s.losses}</td><td>${x.s.winRate == null ? "—" : pct(x.s.winRate)}</td><td>$${x.s.staked.toFixed(2)}</td><td class="${cls(x.s.roi || 0)}">${sp(x.s.roi)}</td></tr>`).join("")
+      + (by.length > 1 ? `<tr class="tot"><td>Total</td>${pcTd(sm)}<td class="${cls(sm.pnl)}">${money(sm.pnl)}</td><td>${sm.contracts}</td><td>${sm.wins}-${sm.losses}</td><td>${sm.winRate == null ? "—" : pct(sm.winRate)}</td><td>$${sm.staked.toFixed(2)}</td><td class="${cls(sm.roi || 0)}">${sp(sm.roi)}</td></tr>` : "")
+      + `</table></div><div class="mute" style="font-size:11px;margin-top:6px">¢/ct = profit per contract after fees. Ct = settled contracts. Under ~100 contracts a strategy's ¢/ct is mostly luck.</div>${by.length > 1 ? `<div class="chart" id="byStrat" style="margin-top:12px"></div>` : ""}</div>`;
   }
   h += `<h2>Daily P&L</h2><div class="card"><div class="chart" id="daily"></div></div>`;
   const list = tr.slice().reverse();
@@ -1458,7 +1461,7 @@ function drawSettled(sx, rows, strats, st, dayStop, totStop){
   if ($("#perTrade")) barChart($("#perTrade"), tr.map(t => ({label:t.title, short:"", v:t.pnl,
     extra:`${t.how ? t.how + " · " : ""}$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} (${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%) · ${t.settled ? fdt(t.settled) + " · " : ""}${strategyName(t.strategy)}`})), {h:140});
   if ($("#byStrat")) barChart($("#byStrat"), by.map(x => ({label:strategyName(x.n), short:strategyName(x.n).split(" ")[0], v:x.s.pnl, c:colorOf(x.n, x.i),
-    extra:`${x.s.wins}-${x.s.losses} · ROI ${x.s.roi == null ? "—" : (x.s.roi * 100).toFixed(1) + "%"} · $${x.s.staked.toFixed(2)} staked`})), {h:130});
+    extra:`${x.s.contracts ? cents(x.s.pnl / x.s.contracts * 100) + "/ct over " + x.s.contracts + " ct · " : ""}${x.s.wins}-${x.s.losses} · ROI ${x.s.roi == null ? "—" : (x.s.roi * 100).toFixed(1) + "%"} · $${x.s.staked.toFixed(2)} staked`})), {h:130});
   const byDay = {}; st.settled.forEach(r => { const d = etDay(r.settled); byDay[d] = (byDay[d] || 0) + r.pnl; });
   const days = Object.keys(byDay).sort().slice(-30);
   barChart($("#daily"), days.map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:byDay[d], extra:`${fp(byDay[d] / start.amt)} of bankroll`})), {empty:"No settled days yet"});
@@ -1574,7 +1577,7 @@ function renderOverview(){
   const sx = settledHTML(mode, rows, strats, B, unrTot);
   let h = `<h2>All time <span class="sub">${mode === "live" ? "real money" : "paper"}</span></h2><div class="card glow"><div class="hero"><div><div class="lbl">${mode === "live" ? "Real-money P&L" : "Paper P&L"} · all time</div>
     <div class="big ${cls(st.pnl)}">${money(st.pnl)}</div>
-    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${settledTrades(rows).length} settled · ${st.contracts} contracts · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
+    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${settledTrades(rows).length} settled · ${st.contracts} contracts${st.contracts ? ` · <span class="${cls(st.edgeC)}">${cents(st.edgeC)}/ct</span>` : ""} · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
     ${sx.summary}${winsHTML(sx.tr, strats)}${moreBtn("all", "More all-time stats")}</div>`;
