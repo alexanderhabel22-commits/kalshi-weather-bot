@@ -1060,6 +1060,7 @@ def early_bot(monkeypatch, yb=0.82, ya=0.84, **kw):
     w = World(monkeypatch, yb, ya)
     clk = Clock(CLOSE - 800)                         # 13:20 left
     cl = Client()
+    kw.setdefault("e2_series", [])                  # plain rule E unless a test turns E2 on
     b = bot(cfg(mode="live", live_series=["KXBTC15M"], **kw), clk, cl)
     return b, clk, cl, w
 
@@ -1123,3 +1124,38 @@ def test_series_floor_skips_bids_below_it(monkeypatch):
     clk.t += 10
     b.step()
     assert m["order"]["q"] == 0.81
+
+
+def test_e2_rule_helpers():
+    assert m15.e2_ok("yes", -50.0) and not m15.e2_ok("yes", 50.0)
+    assert m15.e2_ok("no", 12.5) and not m15.e2_ok("no", -12.5)
+    assert not m15.e2_ok("yes", None) and not m15.e2_ok("no", 0.0)
+    # 2:30 PM ET Nov 13, 2026 = 19:30 UTC
+    assert m15.window_ticker("KXBTC15M", 1794598200) == "KXBTC15M-26NOV131430-30"
+
+
+def test_e2_bids_only_against_last_hours_move(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, early_contracts=1, e2_series=["KXBTC15M"])
+    monkeypatch.setattr(b, "hour_move", lambda m: 120.0)       # index rose; YES favourite = with it
+    b.step()
+    m = b.state["markets"][TK]
+    assert cl.placed == [] and m["why"] == "E2: with the trend" and m["rule"] == "E2"
+    monkeypatch.setattr(b, "hour_move", lambda m: None)
+    clk.t += 5
+    b.step()
+    assert cl.placed == [] and m["why"] == "E2: last hour unknown"
+    monkeypatch.setattr(b, "hour_move", lambda m: -80.0)       # index fell; YES favourite = against
+    clk.t += 5
+    b.step()
+    assert len(cl.placed) == 1 and cl.placed[0][3] == 1
+
+
+def test_e2_hour_move_from_strike_history(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True)
+    m = {"ticker": TK, "series": "KXBTC15M", "close": CLOSE, "strike": 100500.0}
+    b.state["strikes"] = {"KXBTC15M": {str(int(CLOSE) - 3600): 100000.0}}
+    assert b.hour_move(m) == 500.0
+    calls = []
+    monkeypatch.setattr(m15.kalshi, "get_market", lambda http, t: calls.append(t) or {"floor_strike": 99000})
+    b.state["strikes"] = {}
+    assert b.hour_move(m) == 1500.0 and calls == [m15.window_ticker("KXBTC15M", int(CLOSE) - 3600)]

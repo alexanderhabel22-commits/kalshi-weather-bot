@@ -751,8 +751,26 @@ function m15Group(fs, key, order){
   const out = Object.values(g).map(b => ({...b, win:b.n ? b.wn / b.n : 0, beR:b.n ? b.cf / b.n : 0, c:100 * b.pnl / b.n}));
   return order ? order.filter(k => g[k]).map(k => out.find(b => b.k === k)) : out;
 }
+// Rule E2 real-money test (Nov 13): BTC rule E, only when the favourite bets against the last hour's move.
+function m15E2HTML(){
+  const M = S.m15; if (!M) return "";
+  const rows = M.rows.filter(r => r.rule === "E2"), live = rows.filter(r => r.mode === "live" && num(r.filled) > 0 && (r.won === "1" || r.won === "0"));
+  const n = live.reduce((a, r) => a + num(r.filled), 0), pnl = live.reduce((a, r) => a + num(r.pnl), 0), wins = live.filter(r => r.won === "1").length;
+  const be = live.length ? live.reduce((a, r) => a + (num(r.cost) + num(r.fee)) / num(r.filled), 0) / live.length : null;
+  const c = n ? 100 * pnl / n : null, skipped = rows.filter(r => !(num(r.filled) > 0) && r.mode === "live").length;
+  const goal = 300, prog = Math.min(100, 100 * live.length / goal);
+  return `<h2>Rule E2 test <span class="sub">real money · BTC · 1 contract</span></h2><div class="card glow">
+    <div class="grid g3">
+      <div><div class="lbl">Per contract</div><div class="val ${c == null ? "" : c >= 2 ? "pos" : c < 0 ? "neg" : ""}">${c == null ? "–" : cents(c)}</div><small class="mute">goal +2¢ or better</small></div>
+      <div><div class="lbl">Record</div><div class="val">${wins}-${live.length - wins}</div><small class="mute">${be != null ? `need ${pct(be)} wins` : "no fills yet"}</small></div>
+      <div><div class="lbl">Profit</div><div class="val ${cls(pnl)}">${money(pnl)}</div><small class="mute">${skipped} window${skipped === 1 ? "" : "s"} skipped (with the trend)</small></div>
+    </div>
+    <div class="lbl" style="margin-top:12px">Progress to the verdict · ${live.length} of ~${goal} windows</div>
+    <div style="height:8px;border-radius:6px;background:rgba(148,163,200,.18);overflow:hidden;margin-top:4px"><div style="height:100%;width:${prog.toFixed(1)}%;background:#f5b335"></div></div>
+    <div class="mute" style="font-size:11px;margin-top:8px">Bids 14-10 minutes before close on a BTC favourite at 80-95¢, but only when that favourite is betting AGAINST BTC's move over the previous hour. The 80-day backtest made +3.3¢ per contract (1,216 windows, 10 of 13 weeks up); betting with the trend made +1.1¢. Verdict at ~300 windows (around Dec 3): keep it if it's +2¢ or better with the range above zero, otherwise it stops. Rows in the last 7 days only.</div></div>`;
+}
 function m15ChartsHTML(fs){
-  if (!fs.length) return "";
+  if (!fs.length) return m15E2HTML();
   const wins = fs.filter(f => f.won).length, n = fs.reduce((a, f) => a + f.n, 0), pnl = fs.reduce((a, f) => a + f.pnl, 0);
   const be = fs.reduce((a, f) => a + f.be, 0) / fs.length, win = wins / fs.length;
   let cur = 0, curW = null, bestW = 0, worstL = 0, run = 0, runW = null;
@@ -761,7 +779,7 @@ function m15ChartsHTML(fs){
   const dayOf = f => etDay(new Date(f.t - 60e3)), today = etDay(new Date()), byD = {}; fs.forEach(f => { const d = dayOf(f); byD[d] = (byD[d] || 0) + 1; });
   const full = Object.keys(byD).filter(d => d !== today), avgD = full.length ? full.reduce((a, d) => a + byD[d], 0) / full.length : null;
   const thru = fmt(new Date(fs.at(-1).t), {hour:"numeric", minute:"2-digit"}), up = S.m15.status && pdate(S.m15.status.at);
-  let h = `<h2>How it's doing <span class="sub">real money · ${fs.length} graded fills</span></h2><div class="card">
+  let h = m15E2HTML() + `<h2>How it's doing <span class="sub">real money · ${fs.length} graded fills</span></h2><div class="card">
     <div class="grid g3">
       <div><div class="lbl">Win rate</div><div class="val ${win >= be ? "pos" : "neg"}">${pct(win)}</div><small class="mute">${wins}-${fs.length - wins} · need ${pct(be)}</small></div>
       <div><div class="lbl">Per contract</div><div class="val ${cls(pnl)}">${cents(100 * pnl / n)}</div><small class="mute">after fees · ${+n.toFixed(2)} contracts</small></div>
