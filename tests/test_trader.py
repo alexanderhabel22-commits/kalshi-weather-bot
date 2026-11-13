@@ -511,6 +511,8 @@ def test_only_approved_strategies_trade_real_money():
     assert c.raw["trading"]["macro_fade"]["contracts"] == 3
     wl = c.raw["trading"]["weather_late"]
     assert wl["contracts"] == 1 and wl["contracts_by"] == {"low/need": 2} and wl["max_open_pct"] <= 0.15 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
+    # Nov 13: highs "need" back to paper (replay ~0); new low cities start at 1 contract
+    assert "high/need" in wl["skip"] and set(wl["series_contracts"].values()) == {1}
     assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
 
 

@@ -49,6 +49,9 @@ KNOWN_STATIONS: dict[str, Station] = {s.icao: s for s in [
     Station("KBOS", "Boston Logan", 42.3606, -71.0097, "America/New_York"),
     Station("KDCA", "Washington National", 38.8483, -77.0342, "America/New_York"),
     Station("KATL", "Atlanta Hartsfield", 33.6301, -84.4418, "America/New_York"),
+    Station("KEWR", "Newark Liberty", 40.6827, -74.1693, "America/New_York"),
+    Station("KTTN", "Trenton Mercer", 40.2767, -74.8156, "America/New_York"),
+    Station("KSAN", "San Diego Lindbergh", 32.7336, -117.1831, "America/Los_Angeles"),
 ]}
 
 # Fallback catalog: series ticker -> (metric, station, city label).
@@ -81,6 +84,28 @@ DEFAULT_SERIES: dict[str, tuple[str, str, str]] = {
     "KXLOWTDEN": ("low", "KDEN", "Denver"),
     "KXLOWTPHIL": ("low", "KPHL", "Philadelphia"),
     "KXLOWTAUS": ("low", "KAUS", "Austin"),
+    # Added Nov 13, 2026: Kalshi now runs these too. Every weather series lists
+    # weather.com as its settlement source now, so discovery can no longer read the
+    # station from the URL; the station comes from the "(CLIxxx)" code in the rules.
+    "KXHIGHTEWR": ("high", "KEWR", "Newark"),
+    "KXHIGHTTTN": ("high", "KTTN", "Trenton"),
+    "KXHIGHTSAN": ("high", "KSAN", "San Diego"),
+    "KXLOWTATL": ("low", "KATL", "Atlanta"),
+    "KXLOWTBOS": ("low", "KBOS", "Boston"),
+    "KXLOWTDAL": ("low", "KDFW", "Dallas"),
+    "KXLOWTDC": ("low", "KDCA", "Washington DC"),
+    "KXLOWTHOU": ("low", "KHOU", "Houston"),
+    "KXLOWTLV": ("low", "KLAS", "Las Vegas"),
+    "KXLOWTMIN": ("low", "KMSP", "Minneapolis"),
+    "KXLOWTNOLA": ("low", "KMSY", "New Orleans"),
+    "KXLOWTOKC": ("low", "KOKC", "Oklahoma City"),
+    "KXLOWTPHX": ("low", "KPHX", "Phoenix"),
+    "KXLOWTSAN": ("low", "KSAN", "San Diego"),
+    "KXLOWTSATX": ("low", "KSAT", "San Antonio"),
+    "KXLOWTSEA": ("low", "KSEA", "Seattle"),
+    "KXLOWTSFO": ("low", "KSFO", "San Francisco"),
+    "KXLOWTEWR": ("low", "KEWR", "Newark"),
+    "KXLOWTTTN": ("low", "KTTN", "Trenton"),
 }
 
 
