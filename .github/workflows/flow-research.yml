@@ -1,0 +1,46 @@
+name: flow-research
+
+# Research only: fetches public settlement data for the markets in the Copycat logs.
+# Read-only, never trades, never alerts. Runs only on push to this research branch.
+# Output goes to the flow-research-data branch.
+on:
+  push:
+    branches: ["claude/project-thread-leubb2"]
+    paths: ["research_flow/settle.py", ".github/workflows/flow-research.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: flow-research
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Get Copycat logs
+        run: |
+          git fetch -q origin copycat-data
+          mkdir -p cc && git archive origin/copycat-data copycat | tar x -C cc
+      - name: Run
+        run: mkdir -p out && python research_flow/settle.py cc/copycat out/markets.json.gz
+      - name: Save to flow-research-data branch
+        if: always() && hashFiles('out/markets.json.gz') != ''
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          stamp="$(date -u +%Y%m%d-%H%M)"
+          mkdir -p /tmp/keep && cp -r out "/tmp/keep/$stamp"
+          git checkout -q -f --orphan data && git rm -rq --cached . || true
+          git clean -fdxq
+          mkdir -p runs && cp -r "/tmp/keep/$stamp" "runs/$stamp"
+          git add runs
+          git commit -qm "research output $stamp"
+          git push -f origin data:flow-research-data

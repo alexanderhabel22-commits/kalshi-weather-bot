@@ -1,0 +1,95 @@
+
+== A. big bets, follow vs fade (cents per contract after taker fee)
+       group          signal  period     n  events  c_per_ct   se
+      15-min       fade anon   train  5327     331      -3.3  1.6
+      15-min       fade anon holdout  1272     155      -1.4  4.0
+      15-min      fade named   train  1336     232      -1.5  1.7
+      15-min      fade named holdout   446      98      -0.1  3.6
+      15-min   fade new acct   train    37      19       6.9 13.8
+      15-min     follow anon   train  5327     331      -1.8  1.6
+      15-min     follow anon holdout  1272     155      -3.7  4.0
+      15-min    follow named   train  1336     232      -3.7  1.7
+      15-min    follow named holdout   446      98      -4.9  3.7
+      15-min follow new acct   train    37      19     -11.9 13.7
+crypto other       fade anon   train   275      35      -3.1  2.7
+crypto other       fade anon holdout   107      22       6.9  4.8
+crypto other      fade named   train   132      17      -2.0  4.6
+crypto other      fade named holdout    42      10       9.8  8.7
+crypto other     follow anon   train   275      35      -1.8  2.7
+crypto other     follow anon holdout   107      22     -12.1  4.8
+crypto other    follow named   train   132      17      -2.9  4.6
+crypto other    follow named holdout    42      10     -14.7  8.7
+       other       fade anon   train  1275     119      -6.4  2.7
+       other       fade anon holdout   543     101      -2.6  5.7
+       other      fade named   train   294     112      -0.0  2.6
+       other      fade named holdout   154      66      -1.7  5.7
+       other     follow anon   train  1275     119       1.0  2.6
+       other     follow anon holdout   543     101      -2.6  5.7
+       other    follow named   train   294     112      -5.4  2.6
+       other    follow named holdout   154      66      -3.7  5.8
+      parlay       fade anon   train  2653    1804      -5.6  1.3
+      parlay       fade anon holdout   488     400      -8.0  2.6
+      parlay      fade named   train   727     606       0.1  1.9
+      parlay      fade named holdout   160     145      -8.2  3.4
+      parlay     follow anon   train  2653    1804       0.1  1.3
+      parlay     follow anon holdout   488     400       2.5  2.6
+      parlay    follow named   train   727     606      -5.6  1.9
+      parlay    follow named holdout   160     145       2.8  3.4
+      sports       fade anon   train 11429     691      -2.1  1.1
+      sports       fade anon holdout  1903     245      -3.9  1.7
+      sports      fade named   train  1601     321       0.9  1.7
+      sports      fade named holdout   371     108      -2.1  2.7
+      sports   fade new acct   train    33      28      10.7  7.8
+      sports     follow anon   train 11429     691      -3.3  1.1
+      sports     follow anon holdout  1903     245      -1.4  1.7
+      sports    follow named   train  1601     321      -6.1  1.7
+      sports    follow named holdout   371     108      -3.1  2.8
+      sports follow new acct   train    33      28     -16.5  7.8
+
+fade by their price, train | holdout:
+  15-min       (0.2, 0.4]    -2.4 (n=558) |   -0.0 ±7.0 (n=110)
+  15-min       (0.4, 0.6]    -4.3 (n=1221) |   -5.4 ±3.3 (n=287)
+  15-min       (0.6, 0.8]    -2.1 (n=1806) |   -0.6 ±6.1 (n=452)
+  15-min       (0.8, 1.0]    -3.0 (n=3054) |   +0.1 ±5.0 (n=862)
+  crypto other (0.6, 0.8]    -0.2 (n=78) |   -1.0 ±8.7 (n=34)
+  crypto other (0.8, 1.0]    -4.0 (n=241) |  +11.3 ±8.8 (n=73)
+  other        (0.2, 0.4]    +5.6 (n=183) |  -14.3 ±9.5 (n=32)
+  other        (0.4, 0.6]    +0.3 (n=303) |   +8.1 ±12.3 (n=158)
+  other        (0.6, 0.8]   -12.6 (n=514) |   -2.0 ±7.7 (n=184)
+  other        (0.8, 1.0]    -6.5 (n=541) |   -7.0 ±2.7 (n=316)
+  parlay       (0.0, 0.2]    -2.7 (n=357) |   -1.2 ±3.6 (n=86)
+  parlay       (0.2, 0.4]    -6.2 (n=784) |   -7.9 ±4.9 (n=167)
+  parlay       (0.4, 0.6]    -2.1 (n=986) |  -12.0 ±3.9 (n=186)
+  parlay       (0.6, 0.8]    -6.5 (n=647) |  -13.2 ±5.2 (n=102)
+  parlay       (0.8, 1.0]    -4.2 (n=621) |   -1.3 ±4.3 (n=110)
+  sports       (0.0, 0.2]    +2.3 (n=227) |  -23.2 ±12.1 (n=43)
+  sports       (0.2, 0.4]    -3.1 (n=1053) |   +3.0 ±4.9 (n=190)
+  sports       (0.4, 0.6]    -1.0 (n=4008) |   -3.3 ±2.6 (n=648)
+  sports       (0.6, 0.8]    -2.8 (n=3048) |   -8.8 ±3.9 (n=601)
+  sports       (0.8, 1.0]    -1.4 (n=4727) |   -0.5 ±3.0 (n=804)
+
+B: 176835 settled fills, 1344 accounts, live 109097
+record cut points from train: bottom fifth <= -2.7c, top fifth >= +5.7c
+
+== B. track-record consensus (cents per contract after taker fee, at the ask ~15 s later)
+       group            signal  period    n  events  c_per_ct  se
+      15-min fade bottom fifth   train  893     657      -1.4 0.8
+      15-min fade bottom fifth holdout  303     238       2.3 1.7
+      15-min  follow top fifth   train  309     224      -4.4 1.6
+      15-min  follow top fifth holdout  133     106      -5.7 3.0
+crypto other fade bottom fifth   train   92      20      -3.7 3.5
+crypto other fade bottom fifth holdout   82      21       7.3 3.0
+crypto other  follow top fifth   train   72      28       0.1 5.8
+crypto other  follow top fifth holdout   27      14     -13.6 6.2
+       other fade bottom fifth   train  150      88       1.7 2.4
+       other fade bottom fifth holdout  112      63      -1.5 2.6
+       other  follow top fifth   train  472     205      -3.3 2.0
+       other  follow top fifth holdout  146      54      -8.5 4.4
+      parlay fade bottom fifth   train  134     133      -3.7 3.2
+      parlay fade bottom fifth holdout   51      49      -0.7 4.5
+      parlay  follow top fifth   train  169     161      -7.0 2.8
+      parlay  follow top fifth holdout   27      27      -7.7 6.0
+      sports fade bottom fifth   train 1040     392      -3.3 1.3
+      sports fade bottom fifth holdout  286     141      -0.7 2.3
+      sports  follow top fifth   train  839     420      -3.6 1.3
+      sports  follow top fifth holdout  130      89      -4.1 3.3
