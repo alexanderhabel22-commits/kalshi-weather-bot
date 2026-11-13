@@ -194,6 +194,14 @@ record earns it. Be candid about odds and risk; no hype.
   at the ask (taker) and hold. Replay Jul-Nov 2026 +6.1c +- 3.9 on 109 real trades; ~1 a day.
   Own stop -10% of bankroll, 15% open cap. Research and the hourly-temperature NO-GO:
   `research_new/RESULTS.md`.
+- **S&P range fade (REAL 1 contract, Nov 13):** `wxbot/strats/spx_range.py`,
+  `[trading.spx_range]` (Alex OK Nov 13 10:13 AM ET). Daily S&P 500 close ranges (KXINX, 25 points):
+  from ~4:05 PM ET the day before to 8:30 AM ET, rest a post-only NO bid at 65c (= sell YES at 35c)
+  on the 6 likeliest ranges of the next close, or take a YES bid already at 35c+. Every resting
+  order is cancelled at 8:45 AM ET (before the open) by the trader's generic `cancel_due` hook
+  (`trader.expire_resting`; live rows stay resting until `sync_live` reads the cancel back).
+  Replay Feb 2025-Nov 2026, back-of-queue: +12.8c per fill, 293 fills, 21% lose; ~14 fills/month.
+  Kalshi stock perps (leverage) were checked the same day: NO edge. Research: `research_spx/RESULTS.md`.
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES

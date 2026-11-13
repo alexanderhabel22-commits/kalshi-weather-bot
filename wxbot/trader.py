@@ -348,6 +348,55 @@ def valuers() -> dict:
     return found
 
 
+def cancellers() -> dict:
+    """Strategies whose resting orders expire: NAME -> cancel_due(row, now) -> bool."""
+    import importlib
+    import pkgutil
+    from . import strats
+    found = {}
+    for mod in pkgutil.iter_modules(strats.__path__):
+        m = importlib.import_module(f"{strats.__name__}.{mod.name}")
+        if hasattr(m, "NAME") and hasattr(m, "cancel_due"):
+            found[m.NAME] = m.cancel_due
+    return found
+
+
+def expire_resting(client: KalshiClient | None, rows: list[dict], now: datetime, dry_run: bool) -> int:
+    """Cancel resting orders whose strategy says they are due (e.g. S&P ranges before the
+    open). Live rows stay "resting" until sync_live reads the order back, so a fill that
+    lands just before the cancel is still booked; paper rows are closed here."""
+    due = cancellers()
+    n = 0
+    for r in rows:
+        f = due.get(r.get("strategy"))
+        if r.get("status") != "resting" or f is None:
+            continue
+        try:
+            if not f(r, now):
+                continue
+        except Exception as exc:
+            log.warning("cancel_due %s: %s", r.get("strategy"), exc)
+            continue
+        if dry_run:
+            print(f"[dry run] cancel {r.get('mode')} {r.get('strategy')} {r.get('ticker')}")
+            continue
+        if r.get("mode") == "live":
+            if client is None or not r.get("order_id"):
+                log.warning("expire %s: live order but no client/order id", r.get("ticker"))
+                continue
+            try:
+                client.cancel(r["order_id"], r.get("ticker", ""))
+            except HttpError as exc:
+                log.warning("expire cancel %s: %s", r["order_id"], exc)
+                continue
+        else:
+            r["status"] = "filled" if int(_f(r.get("filled"))) else "cancelled"
+        n += 1
+    if n:
+        log.info("expired %d resting orders", n)
+    return n
+
+
 def shadows() -> dict:
     """Strategies with a log-only exit candidate: NAME -> shadow(http, row, market, now)."""
     import importlib
@@ -1010,6 +1059,10 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
     today = now.astimezone(tz).date().isoformat()
     midnight = now.astimezone(tz).replace(hour=0, minute=0, second=0, microsecond=0)
 
+    try:
+        expire_resting(client, rows, now, dry_run)
+    except Exception as exc:          # never block the run
+        log.warning("expire_resting failed: %s", exc)
     if client is not None:
         sync_live(client, rows, cfg, http, dry_run, now)
     net_pairs(rows, now)
