@@ -20,7 +20,8 @@ def iso(ts):
 
 def cfg(**kw):
     c = load_config()
-    c.raw["m15"].update({"series": ["KXBTC15M"], "guard": False, "contracts": 1, "extra_contracts": 0})
+    c.raw["m15"].update({"series": ["KXBTC15M"], "guard": False, "contracts": 1, "extra_contracts": 0,
+                         "early_on": False, "e2_series": []})   # tests turn rule E / E2 on themselves
     c.raw["m15"].update(kw)
     return c
 
