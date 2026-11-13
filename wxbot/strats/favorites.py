@@ -66,7 +66,7 @@ def big_series(ctx, cats, min_vol: float) -> dict[str, str]:
     return found
 
 
-def active_series(ctx, series: dict, max_pages: int = 150) -> list[str]:
+def active_series(ctx, series: dict, max_pages: int = 400) -> list[str]:
     """Big series that have open events, refreshed every 6 hours from a light
     listing of all open events (no nested markets)."""
     st = ctx.state
@@ -86,6 +86,11 @@ def active_series(ctx, series: dict, max_pages: int = 150) -> list[str]:
         cursor = js.get("cursor")
         if not cursor:
             break
+    else:
+        # Nov 13, 2026: Kalshi lists ~21.5k open events (108 pages); a full cap would
+        # silently drop big series from the scan, so say so loudly.
+        log.warning("favorites: open-event listing hit the %d-page cap; some series may be missed",
+                    max_pages)
     st["active"], st["active_at"] = sorted(seen), ctx.now.isoformat(timespec="seconds")
     return st["active"]
 
@@ -158,7 +163,7 @@ def propose(ctx) -> list[Intent]:
     cats = list(p.get("categories") or DEFAULT_CATS)
     try:
         series = big_series(ctx, cats, float(p.get("min_series_volume", 1_000_000)))
-        active = active_series(ctx, series, int(p.get("max_pages", 150)))
+        active = active_series(ctx, series, int(p.get("max_pages", 400)))
         events = open_events(ctx, series, active[:int(p.get("max_series", 250))])
     except HttpError as exc:
         log.warning("favorites scan: %s", exc)
