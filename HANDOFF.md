@@ -484,7 +484,7 @@ While off, nothing changes; the 15-min server only keeps each coin's step record
 - Nov 13: Copycat crash loop (out of memory: restarting every ~6 min from ~11 PM ET Nov 12, no status
   after 4 AM ET Nov 13) and paper-lab restarts. Fix: Copycat's loader skips big-bet rows older than
   WHALE_MEM_DAYS before parsing and shares repeated strings (start-up load 198 -> 123 MB on the real
-  files); paper lab writes rfq_state.json every 5 min instead of every 20 s; caps Copycat 300 -> 500 MB,
+  files); paper lab writes rfq_state.json every 5 min instead of every 20 s; caps Copycat 300 -> 500 -> 700 MB (it ran at 408 MB, peak 419, right after the fix),
   paper lab 150 -> 300 MB. Foreman now uploads each side service's restart count, last exit result
   (e.g. oom-kill), memory peak and recent warnings as `services` in m15/watch.json. Paper-only flags
   (COPYCAT_DOWN, COPYCAT_STALE, PAPER_DOWN) are warn level and NEVER push to Alex's phone (his rule:
