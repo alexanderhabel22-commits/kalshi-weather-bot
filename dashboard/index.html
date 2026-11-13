@@ -1439,7 +1439,7 @@ function strategiesFor(mode, all){
 }
 function colorOf(name, i){ return COLORS[name] || EXTRA[i % EXTRA.length]; }
 // a strategy's name in all-time tables: flags the ones that no longer trade real money
-function histName(n){ return strategyName(n) + (S.mode === "live" && !liveNow(n) && n !== "manual" ? " (paper now)" : ""); }
+function histName(n){ return strategyName(n); }
 // review milestones (wxbot/review.py): 100, 300, 500, 750, 1,000, 2,000, 5,000, then every 2,500
 const REVIEWS = [100, 300, 500, 750, 1000, 2000, 5000];
 function nextReview(n){ for (const m of REVIEWS) if (n < m) return m; return (Math.floor(n / 2500) + 1) * 2500; }
@@ -1495,7 +1495,7 @@ function lateSplitHTML(r){
     return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(lbl)}</div><div class="s">${ct} ct · ${s.settled.length} settled (${s.wins}-${s.settled.length - s.wins}) · ${s.open.length} open</div></div>
       <div class="r"><span class="${cls(s.pnl)}">${money(s.pnl)}</span><small>${s.contracts ? cents(s.edgeC) + "/ct" : "—"}</small></div></div>`; }).join("") + `</div>`;
 }
-// always-visible list of what trades real money now, plus one line for strategies moved to paper
+// always-visible list of what trades real money now (paper strategies are not shown; Alex, Nov 13)
 function liveStratsHTML(rows, strats, hist, bench){
   let h = `<h2>Live strategies <span class="sub">${strats.length} on real money</span></h2><div class="card"><div class="list">`;
   h += strats.map((n, i) => { const r = rows.filter(x => x.strategy === n), s = stats(r), n0 = filledN(r, "settled"), nx = nextReview(n0), b = bench[n] || {};
@@ -1507,8 +1507,6 @@ function liveStratsHTML(rows, strats, hist, bench){
       <div class="share" style="margin-top:4px"><i style="width:${Math.min(100, 100 * n0 / nx).toFixed(1)}%;background:${colorOf(n, i)}"></i></div></div>
       <div class="r"><span class="${cls(s.pnl)}">${s.settled.length ? money(s.pnl) : "—"}</span><small>${s.contracts ? cents(s.edgeC) + "/ct" : ""}</small></div></div>`; }).join("") || `<div class="empty">Nothing on real money right now</div>`;
   h += `</div>`;
-  const gone = hist.filter(n => !strats.includes(n)).map(n => ({n, s:stats(rows.filter(x => x.strategy === n))})).filter(x => x.s.n);
-  if (gone.length) h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-top:8px">Moved to paper (no new real-money orders): ${gone.map(x => `${esc(strategyName(x.n))} ${money(x.s.pnl)}${x.s.open.length ? `, ${x.s.open.length} still open` : ""}`).join(" · ")}. Their past real-money results stay in the totals above.</div>`;
   return h + `</div>`;
 }
 function renderOverview(){
