@@ -168,6 +168,7 @@ record earns it. Be candid about odds and risk; no hype.
   contract on 162 fills. Cause (research_wx/RESULTS.md): since September the market's own
   implied forecast misses by 1.31F at 36h, our model mix by 1.60F, so the model has almost
   nothing the price doesn't. Re-check in Jan-Feb; it keeps logging on paper.
+- **Coverage sweep (Nov 13, research_cover/RESULTS.md):** checked whether the live main-bot rules miss Kalshi series. Favorites discovery is fine (582 of 583 big series; open-event page cap raised 150 -> 400 with a warning, Kalshi is at ~108 pages). The fade rule replayed on 51 more scheduled-number series = +0.5c +- 1.3 pooled (foreign central banks -5.1c, lose); favorites in other categories +1.9c +- 1.6. Nothing went live. Watch only: KXU3 unemployment fade (+13c, 22 release days, never lost, but 1 of 51 picks, ~3 fills/mo).
 - **Audit of Mentions / favorites / Fed-CPI (Nov 12, research_main/RESULTS.md):** an exact
   replay of each live rule on hourly bid/ask and trade tapes (one fixed-size order per
   market, fill only when a later trade prints at our price). Mentions NO: +0.9c ± 0.9 per
