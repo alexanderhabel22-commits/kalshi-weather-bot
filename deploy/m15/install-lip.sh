@@ -14,7 +14,7 @@ if ! cmp -s "$APP/deploy/m15/$U" "/etc/systemd/system/$U"; then
   systemctl daemon-reload
   changed=1
 fi
-sig=$(sha1sum "$APP/wxbot/lip.py" "$APP/wxbot/kalshi_api.py" "$APP/wxbot/kalshi.py" "$APP/bot.py" | sha1sum | cut -d' ' -f1)
+sig=$(sha1sum "$APP/wxbot/lip.py" "$APP/wxbot/lip_rank.py" "$APP/wxbot/kalshi_api.py" "$APP/wxbot/kalshi.py" "$APP/bot.py" | sha1sum | cut -d' ' -f1)
 if ! systemctl is-enabled --quiet "$U" 2>/dev/null; then
   systemctl enable --now "$U" >/dev/null
 elif [ "$changed" = 1 ] || [ "$(cat "$STAMP" 2>/dev/null)" != "$sig" ]; then

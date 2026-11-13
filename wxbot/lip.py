@@ -34,6 +34,7 @@ from typing import Callable
 
 from .kalshi import BASE, parse_orderbook
 from .kalshi_api import fill_qty
+from . import lip_rank
 
 log = logging.getLogger("wxbot")
 REPO = "alexanderhabel22-commits/kalshi-weather-bot"
@@ -45,7 +46,10 @@ DEFAULTS = {"mode": "off", "budget": 20.0, "reserve": 6.0, "markets": 8, "min_px
             "select_s": 21600, "upload_s": 900, "min_est_day": 0.03, "candidates": 60,
             "exclude_categories": ["Sports"], "exclude_series": [], "only": [], "until": None,
             "price_mode": "ref", "ref_requote_s": 600, "reselect": None,
-            "max_vol24": 2000.0, "move_guard": 0.03, "move_pause_s": 6 * 3600}
+            "max_vol24": 2000.0, "move_guard": 0.03, "move_pause_s": 6 * 3600,
+            # daily risk-adjusted re-pick, SHADOW only (logs; moves no orders): wxbot/lip_rank.py
+            "shadow": True, "shadow_hour_utc": 10, "shadow_programs": 400, "shadow_books": 80,
+            "shadow_max_vol24": 20000.0, "adverse": 0.6}
 CONTROL_STALE_S = 1800
 PACE_S = 1.0                     # seconds between Kalshi calls
 
@@ -155,7 +159,7 @@ class LipBot:
             self.state = {}
         for k, v in (("orders", {}), ("positions", {}), ("chosen", {}), ("credits", {}),
                      ("bad", {}), ("requotes", {}), ("est", {}), ("halted", None),
-                     ("selected_at", 0.0), ("uploaded_at", 0.0), ("events", [])):
+                     ("selected_at", 0.0), ("uploaded_at", 0.0), ("events", []), ("shadow", {})):
             self.state.setdefault(k, v)
 
     # -- plumbing
@@ -324,6 +328,122 @@ class LipBot:
         self.state["selected_at"] = now
         self.event("select", programs=len(progs), checked=len(plans), chosen=sorted(chosen),
                    est_day=round(sum(p["est_day"] for p in chosen.values()), 2))
+
+    # -- daily shadow re-pick (Nov 13; logs only, see wxbot/lip_rank.py)
+    def trades(self, tk: str, since: float) -> list:
+        out, cur = [], None
+        for _ in range(3):
+            p = {"ticker": tk, "limit": 1000, "min_ts": int(since)}
+            if cur:
+                p["cursor"] = cur
+            self.pace()
+            js = self.http.get_json(f"{BASE}/markets/trades", params=p)
+            out += js.get("trades") or []
+            cur = js.get("cursor")
+            if not cur:
+                break
+        return out
+
+    def tripped(self, tk: str, now: float) -> bool:
+        return any(e.get("ticker") == tk and e.get("kind") == "cancel" and str(e.get("why", "")).startswith("price moved")
+                   and now - e.get("t", 0) < 3 * 86400 for e in self.state["events"])
+
+    def shadow_due(self) -> bool:
+        if not self.cfg.get("shadow"):
+            return False
+        now = self.clock()
+        day = time.strftime("%Y-%m-%d", time.gmtime(now))
+        last = self.state["shadow"].get("day")
+        if now - self.state.get("shadow_try", 0) < 3600:
+            return False                 # a failed run (e.g. rate limit) retries an hour later
+        return last != day and (last is None or time.gmtime(now).tm_hour >= self.cfg["shadow_hour_utc"])
+
+    def shadow(self) -> None:
+        """Rank reward markets by expected reward minus expected fill loss and log the set we WOULD
+        hold next to the one we hold. Public reads only; never places or cancels anything."""
+        s, now = self.cfg, self.clock()
+        since = now - lip_rank.FLOW_DAYS * 86400
+        progs = {}
+        for r in self.programs():
+            tk = r.get("market_ticker")
+            end, start = _ts(r.get("end_date")), _ts(r.get("start_date"))
+            if not tk or not end or not start or start > now or end - now < s["min_days_left"] * 86400:
+                continue
+            if any(tk.startswith(x) for x in s["exclude_series"]) or tk.split("-")[0].endswith("15M"):
+                continue
+            progs[tk] = r
+
+        def pool_day(t):
+            r = progs[t]
+            return (_f(r.get("period_reward"), 0) or 0) / max(1.0, ((_ts(r["end_date"]) or 0) - (_ts(r["start_date"]) or 0)) / 86400)
+        current = set(self.state["chosen"])
+        look = sorted(progs, key=lambda t: -pool_day(t))[:s["shadow_programs"]]
+        look += [t for t in current if t in progs and t not in look]
+        mk = self.markets(look)
+        per_mkt = s["budget"] / max(1, s["markets"])
+        rows, books = [], 0
+        for tk in look:
+            m = mk.get(tk)
+            if not m or m.get("status") not in ("active", "open"):
+                continue
+            if (_ts(m.get("close_time")) or 0) - now < s["min_days_to_close"] * 86400:
+                continue
+            if int(_f(m.get("exchange_index"), 0) or 0) != 0:
+                continue
+            if (_f(m.get("volume_24h_fp"), 0.0) or 0.0) > s["shadow_max_vol24"]:
+                continue
+            if tk not in current and books >= s["shadow_books"]:
+                continue
+            if self.category(m.get("event_ticker") or "") in s["exclude_categories"] + ["unknown"]:
+                continue
+            b = self.book(tk)
+            books += 1
+            if not b:
+                continue
+            o = self.state["orders"].get(tk)
+            if o:            # judge the book without our own resting order
+                rest = o["n"] - o.get("filled", 0)
+                b = {sd: [(p, q - (rest if sd == o["side"] and abs(p - o["px"]) < 1e-9 else 0))
+                          for p, q in (b.get(sd) or [])] for sd in ("yes", "no")}
+            pl = plan_market(b, progs[tk], s, per_mkt)
+            if not pl or pl["est_day"] <= 0:
+                continue
+            try:
+                flow = lip_rank.fill_flow(self.trades(tk, since), pl["side"], pl["px"], since,
+                                          lambda t: _ts(t.get("created_time")))
+            except Exception as exc:  # noqa: BLE001
+                log.info("lip shadow trades %s: %s", tk, exc)
+                flow = (_f(m.get("volume_24h_fp"), 0.0) or 0.0) / 2
+            last, prev = _f(m.get("last_price_dollars")), _f(m.get("previous_price_dollars"))
+            move = (last - prev) if last is not None and prev is not None and prev > 0 else None
+            sc = lip_rank.score(pl, [(p, q) for p, q in (b.get(pl["side"]) or []) if q > 0], flow, move,
+                                self.tripped(tk, now) or self.state["bad"].get(tk, 0) > now,
+                                s["move_guard"], s["adverse"])
+            rows.append({"ticker": tk, "event": m.get("event_ticker"), "side": pl["side"], "px": pl["px"],
+                         "n": pl["n"], "share": pl["share"], "vol24": _f(m.get("volume_24h_fp"), 0.0),
+                         "held": tk in current, **sc})
+        k = s["markets"]
+        picks = lip_rank.pick(rows, k, current)
+        picks_cons = lip_rank.pick(rows, k, current, key="net_cons_day")
+        cur_rows = [r for r in rows if r["held"]]
+
+        def tot(rs, key):
+            return round(sum(r[key] for r in rs), 2)
+        summary = {"day": time.strftime("%Y-%m-%d", time.gmtime(now)), "at": round(now), "programs": len(progs),
+                   "scored": len(rows), "current": sorted(current), "picks": [r["ticker"] for r in picks],
+                   "picks_conservative": [r["ticker"] for r in picks_cons],
+                   "add": sorted({r["ticker"] for r in picks} - current), "drop": sorted(current - {r["ticker"] for r in picks}),
+                   "current_net_day": tot(cur_rows, "net_day"), "picks_net_day": tot(picks, "net_day"),
+                   "current_net_cons_day": tot(cur_rows, "net_cons_day"), "picks_net_cons_day": tot(picks_cons, "net_cons_day"),
+                   "current_fill_loss_day": tot(cur_rows, "fill_loss_day"), "picks_fill_loss_day": tot(picks, "fill_loss_day"),
+                   "top": sorted(rows, key=lambda r: -r["net_day"])[:25], "held_rows": cur_rows}
+        self.state["shadow"] = summary
+        try:
+            (self.out / f"shadow-{summary['day']}.json").write_text(json.dumps(summary, indent=1))
+        except OSError:
+            pass
+        self.event("shadow", scored=len(rows), picks=summary["picks"], add=summary["add"], drop=summary["drop"],
+                   current_net_day=summary["current_net_day"], picks_net_day=summary["picks_net_day"])
 
     # -- orders
     def cancel(self, tk: str, why: str) -> None:
@@ -514,7 +634,7 @@ class LipBot:
                 "budget": self.cfg["budget"], "resting_cost": round(self.resting_cost(), 2),
                 "filled_cost": round(self.filled_cost(), 2), "orders": self.state["orders"],
                 "positions": self.state["positions"], "chosen": self.state["chosen"],
-                "est": dict(list(self.state["est"].items())[-4:]),
+                "est": dict(list(self.state["est"].items())[-4:]), "shadow": self.state.get("shadow") or {},
                 "credits": sorted(self.state["credits"].values(), key=lambda r: str(r.get("created_time")))[-60:],
                 "events": self.state["events"][-80:]}
 
@@ -537,6 +657,14 @@ class LipBot:
             except Exception as exc:  # noqa: BLE001
                 log.warning("lip cycle: %s", exc)
                 self.event("error", error=str(exc)[:300])
+        if self.shadow_due():
+            # once a day, even when the test is off: reads only, places nothing
+            self.state["shadow_try"] = now
+            try:
+                self.shadow()
+            except Exception as exc:  # noqa: BLE001
+                log.warning("lip shadow: %s", exc)
+                self.event("error", error=f"shadow: {str(exc)[:280]}")
         if self.client is not None and now - self.state.get("credits_at", 0) > 3600:
             self.state["credits_at"] = now
             self.credits()
