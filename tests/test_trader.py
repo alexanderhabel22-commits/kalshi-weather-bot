@@ -510,7 +510,7 @@ def test_only_approved_strategies_trade_real_money():
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 1
     assert c.raw["trading"]["macro_fade"]["contracts"] == 3
     wl = c.raw["trading"]["weather_late"]
-    assert wl["contracts"] == 1 and wl["max_open_pct"] <= 0.15 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
+    assert wl["contracts"] == 1 and wl["contracts_by"] == {"low/need": 2} and wl["max_open_pct"] <= 0.15 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
     assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
 
 

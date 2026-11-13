@@ -268,6 +268,7 @@ exit_margin = 0.08
 enabled = true
 live = true
 contracts = 1                    # per order; raise only at a review
+contracts_by = { "low/need" = 2 }  # late-day LOWS 1 -> 2 (Alex Nov 12 10:41 PM ET "sure do it"); highs/holds stay 1
 metrics = ["low", "high"]        # highs added Nov 12 as a 1-contract real test (backtest: cool season only)
 kinds = ["need", "holds"]        # "holds" (YES on the bracket holding the extreme) added Nov 12, 1-contract test
 max_open_pct = 0.15              # at most 15% of the bankroll at once (about 7 orders a day at ~75c)

@@ -39,6 +39,8 @@ def stopped(ctx) -> bool:
 
 def propose(ctx) -> list[Intent]:
     count = int(ctx.params.get("contracts", 1))
+    # per "metric/kind" sizes, e.g. {"low/need" = 2}; anything not listed uses `contracts`
+    sizes = {k: int(v) for k, v in (ctx.params.get("contracts_by") or {}).items()}
     recent = ctx.now - timedelta(minutes=float(ctx.params.get("max_age_minutes", 30)))
     metrics = set(ctx.params.get("metrics", ["low"]))
     kinds = set(ctx.params.get("kinds", ["need"]))
@@ -70,7 +72,8 @@ def propose(ctx) -> list[Intent]:
             log.info("weather_late %s: market moved, order would cross (bid %.2f ask %.2f); skipped",
                      o["ticker"], bid, ask)
             continue
-        out.append(Intent(NAME, o["ticker"], o["event"], o["side"], price, count, o.get("close") or "",
+        out.append(Intent(NAME, o["ticker"], o["event"], o["side"], price,
+                          sizes.get(f"{o['metric']}/{o['kind']}", count), o.get("close") or "",
                           f"{o['city']} {o['metric']} {o['date']} {o['bracket']}",
                           f"late-day {o['kind']}: {o.get('metric', 'low')} so far {o.get('extreme')}, {o.get('hours_left')}h left"))
     return out
