@@ -34,7 +34,8 @@ NAMES = {"KXBTC15M": "BTC", "KXSILVER15M": "Silver", "KXCOPPER15M": "Copper",
          "KXPALLADIUM15M": "Palladium", "KXPLATINUM15M": "Platinum", "KXWTI15M": "WTI oil",
          "KXBRENT15M": "Brent oil", "KXGOLD15M": "Gold", "KXNATGAS15M": "Natural gas",
          "mentions": "Mentions", "favorites": "Favorites", "macro_fade": "Fed/CPI",
-         "weather": "Weather", "weather_late": "Late-day lows", "locks": "LOCKs"}
+         "macro_wide": "Gas/claims fade", "favorites_wide": "Election favorites",
+         "weather": "Weather", "weather_late": "Late-day weather", "locks": "LOCKs"}
 KELLY = 0.25          # quarter Kelly
 MAX_MULT = 3          # never recommend more than 3x the current size in one step
 CUT_BELOW = -0.05     # under -5c per contract -> back to paper
