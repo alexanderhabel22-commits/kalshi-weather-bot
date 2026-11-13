@@ -198,8 +198,10 @@ contracts = 4                    # doubled Nov 7 (Alex: "up to you"); was 2
 max_markets_per_event = 2
 min_price = 0.85                 # favorite-side price band
 max_price = 0.96
-min_hours = 1                    # market closes 1 hour - 7 days from now
-max_hours = 168
+min_hours = 1                    # market closes 1 hour - 24 hours from now
+max_hours = 24                   # 168 -> 24 Nov 13 (Alex: "implement if you think it is smart"). Entry-timing
+                                 # replay: last-24h bids +4.6c/fill vs +2.0c for the 7-day window (reachable
+                                 # markets, ~20% fewer fills). Orders already resting stay until they fill or close.
 max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
 max_event_pct = 0.15             # at most 15% on one event (was 10%; room for 2 markets at 4 contracts)
 
@@ -232,7 +234,7 @@ max_event_pct = 0.05
 # Never live without Alex's OK.
 max_week_contracts = 2000
 max_market_contracts = 200
-enabled = true
+enabled = false                  # OFF Nov 13: the live favorites rule itself now uses the 24-hour window
 live = false                     # keep false: paper only
 contracts = 1
 max_contracts = 1

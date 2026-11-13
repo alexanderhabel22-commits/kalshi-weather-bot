@@ -887,7 +887,7 @@ def test_favorites_late_logs_last_24h_markets_on_paper():
     c = cfg()
     live, late = c.raw["trading"]["favorites"], c.raw["trading"]["favorites_late"]
     sp = trader.strategy_settings(c, "favorites_late", trader.settings(c))
-    assert trader.strategy_mode("live", sp) == "paper" and late["max_hours"] == 24
+    assert trader.strategy_mode("live", sp) is None and late["max_hours"] == 24   # off since Nov 13
 
     def m(tk, close, yb=0.90, ya=0.93):
         return {"ticker": tk, "event_ticker": tk.rsplit("-", 1)[0], "close_time": close,
@@ -903,7 +903,7 @@ def test_favorites_late_logs_last_24h_markets_on_paper():
     live_pick = {i.ticker for i in favorites.candidates(events, NOW, live, None)}
     out = favorites_late.extra(events, NOW, late, live, None)
     assert {i.ticker for i in out} == {"KXRT-A-X", "KXRT-A-Y"}       # 72 h out: too early
-    assert {"KXRT-A-X", "KXRT-B-X"} <= live_pick                     # live rule untouched (7 days)
+    assert live["max_hours"] == 24 and live_pick == {"KXRT-A-X", "KXRT-A-Y"}  # live rule = 24 h since Nov 13
     assert all(i.strategy == "favorites_late" and i.count == 1 for i in out)
     held = {"KXRT-A": {"KXRT-A-X", "KXRT-A-Y"}}
     assert favorites_late.extra(events, NOW, late, live, held) == []
