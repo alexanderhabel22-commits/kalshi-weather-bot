@@ -72,5 +72,15 @@ def test_runs_through_the_trader_on_paper(monkeypatch, tmp_path):
     out = trader.run(c, now=now, http=tt.Http([]))
     mine = [r for r in trader.load() if r["strategy"] == "weather_late"]
     assert len(mine) == 1, out
-    assert (mine[0]["mode"], mine[0]["side"], mine[0]["price"], mine[0]["count"]) == ("paper", "no", "0.81", "1")
+    assert (mine[0]["mode"], mine[0]["side"], mine[0]["price"], mine[0]["count"]) == ("paper", "no", "0.81", "2")
     assert trader.strategy_settings(c, "weather_late", trader.settings(c))["exit"] == "hold"
+
+
+def test_contracts_by_sizes_lows_up_and_keeps_others_at_base(monkeypatch):
+    paper = [order(), order(tk="H", metric="high"), order(tk="Y", kind="holds", side="yes", price="0.15")]
+    setup(monkeypatch, paper)
+    c = ctx()
+    c.params.update(metrics=["low", "high"], kinds=["need", "holds"], contracts=1,
+                    contracts_by={"low/need": 2})
+    got = {i.ticker: i.count for i in wl.propose(c)}
+    assert got == {"KXLOWTNYC-26NOV12-B42.5": 2, "H": 1, "Y": 1}

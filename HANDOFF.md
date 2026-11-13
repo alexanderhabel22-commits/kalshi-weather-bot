@@ -193,6 +193,8 @@ record earns it. Be candid about odds and risk; no hype.
   on the bracket holding it. Backtest for lows: +5.7c per contract Oct 2025-Aug 2026, +3.7c
   Sep-Nov 2026, about 7 fills a day. Review at 300 filled low orders; real money needs Alex's
   OK. Switch off with `[markets] paper_late = false`.
+- **Late-day lows at 2 contracts since Nov 12 10:41 PM ET** (Alex "sure do it"): `contracts_by = {"low/need" = 2}`
+  in `[trading.weather_late]`; highs/holds stay 1. Live cap is 100% of bankroll (PR #224).
 - **Late-day highs and "holds": REAL MONEY since Nov 12** (Alex 2:45 PM ET "Switch them on", PR #221):
   `[trading.weather_late]` metrics low+high, kinds need+holds, still 1 contract, same caps.
 - **Late-day lows: REAL MONEY since Nov 11** (Alex, 2:18 PM ET: "implement the strategy you
