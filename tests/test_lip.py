@@ -498,3 +498,34 @@ def test_exit_sells_at_once_when_bid_is_at_our_price(tmp_path):
     bot.cycle()
     assert c.exits[-1] == ("KXA-1", "yes", 0.03, 20, True)
     assert bot.state["positions"]["KXA-1"]["n"] == 0 and bot.state["exits"] == {}
+
+
+def test_exit_price_ladder_and_book_reading(tmp_path):
+    bot, _, clock, _ = mk(tmp_path)
+    p = {"side": "yes", "n": 20, "cost": 1.00, "at": NOW}           # paid 5c each
+    quiet = {"yes": [(0.02, 300)], "no": [(0.90, 500)]}             # best YES bid 2c, cheapest YES ask 10c
+    assert bot.exit_price(p, quiet) == (0.05, False)                # start at cost
+    clock[0] = NOW + 6 * 3600 + 1
+    assert bot.exit_price(p, quiet) == (0.04, False)                # 1c lower after 6 h
+    clock[0] = NOW + 30 * 3600
+    assert bot.exit_price(p, quiet) == (0.03, False)                # floor: cost - 2c
+    # someone bids at/above our target: sell into it now
+    clock[0] = NOW
+    assert bot.exit_price(p, {"yes": [(0.06, 50)], "no": [(0.90, 500)]}) == (0.05, True)
+    # a cheaper seller at 4c: undercut by 1c (3c), never below the floor
+    assert bot.exit_price(p, {"yes": [(0.01, 50)], "no": [(0.96, 500)]}) == (0.03, False)
+    assert bot.exit_price(p, {"yes": [(0.01, 50)], "no": [(0.98, 500)]}) == (0.03, False)
+
+
+def test_exit_steps_down_over_time(tmp_path):
+    bot, c, _, clock, _, _ = _filled(tmp_path)
+    first = bot.state["exits"]["KXA-1"]
+    assert first["px"] == 0.03
+    clock[0] += 3600
+    bot.cycle()
+    assert bot.state["exits"]["KXA-1"]["id"] == first["id"]          # nothing changes before 6 h
+    clock[0] += 5 * 3600 + 60
+    bot.cycle()
+    # 6 h unsold: target 2c, and a 2c bid sits in the book -> sold into it at once
+    assert first["id"] in c.cancelled and c.exits[-1] == ("KXA-1", "yes", 0.02, 20, True)
+    assert bot.state["positions"]["KXA-1"]["n"] == 0 and bot.state["exits"] == {}
