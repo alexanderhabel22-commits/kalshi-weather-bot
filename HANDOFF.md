@@ -193,6 +193,9 @@ record earns it. Be candid about odds and risk; no hype.
   close, 1-contract paper orders (also on markets the live rule holds). Entry-timing replay: +4.6c per
   fill vs +2.0c for the live rule on reachable markets, ~20% fewer fills (write-up in project files
   analysis/main-timing/RESULTS.md). Decide at the favorites 500-contract review; live needs Alex's OK.
+  **Nov 13 update:** Alex OK'd it, so the LIVE favorites rule now bids only in the last 24 hours
+  (`[trading.favorites] max_hours = 24`, was 168) and this shadow is off. Early-sell check the same day:
+  take-profit at 97-99c and stop-losses all lose vs holding on favorites and Fed/CPI fills (keep holding).
 - **Evening rain fade (REAL 1 contract, Nov 13):** `wxbot/strats/rain_evening.py`,
   `[trading.rain_evening]`. Daily KXRAIN markets: 8-10 PM local, if the airport's METARs
   (aviationweather.gov) show no measurable rain since local midnight and NO is 75-95c, buy 1 NO
