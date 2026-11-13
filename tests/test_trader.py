@@ -506,7 +506,9 @@ def test_only_approved_strategies_trade_real_money():
     # Alex, Nov 11 2:18 PM ET: late-day lows (weather_late) live in its place, 1 contract.
     # Alex, Nov 12 2:34 PM ET: Mentions back to paper (no edge in the audit), Fed/CPI 1 -> 3.
     # Alex, Nov 12 2:38 PM ET ("ok testing with real money"): the two new rules at 1 contract.
-    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide"}
+    # Nov 13 (Alex's Nov 12 OK for ideas clearing +3c): evening rain fade at 1 contract.
+    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening"}
+    assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 1
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 1
     assert c.raw["trading"]["macro_fade"]["contracts"] == 3
     wl = c.raw["trading"]["weather_late"]

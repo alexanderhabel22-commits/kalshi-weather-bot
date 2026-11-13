@@ -285,6 +285,31 @@ exit = "hold"                    # the tested rule holds to settlement
 max_week_contracts = 4000
 max_market_contracts = 50
 
+[trading.rain_evening]
+# Evening "no rain yet" fade on daily rain markets (wxbot/strats/rain_evening.py,
+# research_new/RESULTS.md). After 8 PM local, if the airport has recorded no measurable
+# rain today, buy NO at the ask in the 75-95c band and hold. Replay Jul 16-Nov 12 2026
+# (exact trades, after taker fee): +6.1c +- 3.9 per contract, 109 trades, both halves
+# positive. ~1 trade a day. 1-CONTRACT REAL test from Nov 13 under Alex's Nov 12 OK for
+# new ideas that clear +3c ("if you are confident... start em up with real money").
+# Reviews at 100/300/500 contracts; freeze applies until 500.
+enabled = true
+live = true
+taker = true                     # the tested rule takes the ask (fee ~1c)
+contracts = 1
+max_contracts = 1
+min_price = 0.75
+max_price = 0.95
+start_hour = 20                  # local time window for entries
+end_hour = 22
+max_markets_per_day = 8
+max_open_pct = 0.15              # at most 15% of the bankroll (~$7.50)
+max_event_pct = 0.15             # one KXRAIN event = all cities for one day
+max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
+exit = "hold"
+max_week_contracts = 100
+max_market_contracts = 1
+
 [allocator]
 # Grades every strategy on profit per $1 risked (settled REAL-money results only,
 # bets on one event counted together, longshots trusted less because
