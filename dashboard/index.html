@@ -142,6 +142,8 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .rng{display:flex;gap:4px;margin-top:6px}
 .rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
 .rng button.on{background:var(--rc,#34d399);color:#070a12}
+.rng[data-smt]{display:inline-flex;margin-left:auto}.rng[data-smt] button{flex:none;padding:4px 10px;font-size:10.5px}
+.smrow{display:flex;justify-content:flex-end;margin:0 0 6px}
 .share{height:4px;border-radius:2px;background:#18213b;margin:5px 0 3px;overflow:hidden}.share i{display:block;height:100%;border-radius:2px;opacity:.85}
 .legend b{font-family:var(--mono);font-weight:600;font-size:11.5px}
 .chead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}.chead b{font-family:var(--mono);font-size:24px;font-weight:700}.chead span{font-size:12px;color:var(--ink2)}
@@ -1154,7 +1156,9 @@ function lineChart(el, series, o={}){
   let paths = "";
   const f1 = v => v.toFixed(1), path = ps => o.smooth && ps.length > 2 ? smoothPath(ps.map(p => [X(p.x), Y(p.y)])) : ps.map((p, j) => !j ? `M${f1(X(p.x))},${f1(Y(p.y))}` : o.step ? `H${f1(X(p.x))}V${f1(Y(p.y))}` : `L${f1(X(p.x))},${f1(Y(p.y))}`).join("");
   if (o.stack) draw.forEach(s => { if (!s.pts.length) return; const q = s.pts, L = q.length - 1;
-    let back = `L${f1(X(q[L].x))},${f1(Y(q[L].b))}`; for (let j = L; j > 0; j--) back += o.step ? `V${f1(Y(q[j - 1].b))}H${f1(X(q[j - 1].x))}` : `L${f1(X(q[j - 1].x))},${f1(Y(q[j - 1].b))}`;
+    let back = `L${f1(X(q[L].x))},${f1(Y(q[L].b))}`;
+    if (o.smooth && q.length > 2) back = "L" + smoothPath(q.slice().reverse().map(p => [X(p.x), Y(p.b)])).slice(1);
+    else for (let j = L; j > 0; j--) back += o.step ? `V${f1(Y(q[j - 1].b))}H${f1(X(q[j - 1].x))}` : `L${f1(X(q[j - 1].x))},${f1(Y(q[j - 1].b))}`;
     paths += `<path d="${path(q)}${back}Z" fill="${s.c}" fill-opacity=".38"/><path d="${path(q)}" fill="none" stroke="${s.c}" stroke-width="1.5" stroke-linejoin="round"/>`; });
   else series.forEach((s, i) => {
     if (!s.pts.length) return;
@@ -1185,6 +1189,20 @@ function lineChart(el, series, o={}){
   svg.addEventListener("pointermove", move); svg.addEventListener("pointerdown", move); svg.addEventListener("pointerleave", leave);
   svg.addEventListener("touchmove", move, {passive:true}); svg.addEventListener("touchend", () => setTimeout(leave, 1800));
 }
+// MAIN tab "Smooth / Raw" switch (Alex, Nov 13): one setting for every MAIN line chart, default Smooth.
+// Smooth = curved lines, and dense lines are averaged into ~24 slices (first and last points stay exact).
+const mainSmooth = () => (ls.get("mainS") || "s") === "s";
+function smoothBtns(){ const on = mainSmooth(); return `<div class="smrow"><div class="rng" data-smt style="--rc:#94a3c8;margin:0">${[["s","Smooth"],["r","Raw"]].map(([k, l]) => `<button data-s="${k}" class="${(k === "s") === on ? "on" : ""}">${l}</button>`).join("")}</div></div>`; }
+function smoothOpts(series, o){ if (!mainSmooth()) return [series, o]; return [o.stack ? thinStack(series, 24) : series.map(x => ({...x, pts:thinPts(x.pts, 24)})), {...o, step:false, smooth:true}]; }
+// stacked layers share x: average every layer over the same x slices so they still line up
+function thinStack(series, n){
+  const xs = (series[0] || {pts:[]}).pts.map(p => p.x); if (xs.length <= n) return series;
+  const x0 = xs[0], x1 = xs.at(-1), w = (x1 - x0) / n || 1, groups = [[0]], last = xs.length - 1;
+  for (let j = 1; j < last; j++){ const k = Math.min(n - 1, Math.floor((xs[j] - x0) / w)); const g = groups.at(-1); if (g.k === k) g.push(j); else { const ng = [j]; ng.k = k; groups.push(ng); } }
+  groups.push([last]);
+  return series.map(s => ({...s, pts:groups.map(g => ({x:g.reduce((a, j) => a + xs[j], 0) / g.length, y:g.reduce((a, j) => a + s.pts[j].y, 0) / g.length}))}));
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-smt] button"); if (!b) return; ls.set("mainS", b.dataset.s); renderOverview(); });
 // monotone cubic curve through screen points (no overshoot past the real values)
 function smoothPath(P){
   const n = P.length, d = [], m = new Array(n).fill(0), f = v => v.toFixed(1);
@@ -1375,7 +1393,7 @@ function settledHTML(mode, rows, strats, B, unrTot){
         : days ? `<div class="mute" style="margin-top:6px">At this pace: about ${sp(growth / days * 30)} a month (simple, not compounded). Past pace is not a promise.</div>` : ""}
       ${start.set ? "" : `<div class="mute" style="margin-top:6px">Start bankroll estimated as today's balance minus trading P&L.</div>`}</div>
   </div>`;
-  h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card"><div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="chead" id="eqHead"></div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div><div class="mute" style="font-size:11px;margin-top:4px">Each step up or down is a bet settling. Flat stretches mean nothing settled.</div></div>`;
+  h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card">${smoothBtns()}<div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="chead" id="eqHead"></div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div><div class="mute" style="font-size:11px;margin-top:4px">Each step up or down is a bet settling. Flat stretches mean nothing settled.</div></div>`;
   if (tr.length) h += `<h2>Profit per trade <span class="sub">oldest → newest · tap a bar</span></h2><div class="card"><div class="chart" id="perTrade"></div></div>`;
   const by = strats.map((n, i) => ({n, i, s:settledSum(tr.filter(t => t.strategy === n))})).filter(x => x.s.n).sort((a, b) => b.s.pnl - a.s.pnl);
   if (by.length){
@@ -1413,8 +1431,8 @@ function drawSettled(sx, rows, strats, st, dayStop, totStop){
   $("#eqHead").innerHTML = ser[0].pts.length ? `<b class="${cls(ser[0].tot)}">${fmtV(ser[0].tot)}</b><span>${pctU ? money(ser[0].tot) : fp(ser[0].tot / start.amt) + " of bankroll"} · ${tr.length} settled since ${esc(fday(new Date(t0)))}</span>` : "";
   const hidden = new Set(JSON.parse(ls.get("eqHidden") || "[]"));
   const refs = [{y:-dayStop, c:"#f5b335", label:"daily stop"}, {y:-totStop, c:"#fb6b7b", label:"halt"}].filter(r => st.pnl < -dayStop * .3 || r.label === "daily stop" && st.pnl < 0).map(r => ({...r, y:r.y * k}));
-  const drawEq = () => lineChart($("#eq"), ser.filter(s => !hidden.has(s.name)).map(scale), {step:true, empty:"Nothing settled yet. The curve starts with the first settled order.", refs,
-    ...(pctU ? {fy:v => (v * 100).toFixed(Math.abs(v) < .05 ? 1 : 0) + "%", fv:fp, minSpan:.004} : {})});
+  const drawEq = () => lineChart($("#eq"), ...smoothOpts(ser.filter(s => !hidden.has(s.name)).map(scale), {step:true, empty:"Nothing settled yet. The curve starts with the first settled order.", refs,
+    ...(pctU ? {fy:v => (v * 100).toFixed(Math.abs(v) < .05 ? 1 : 0) + "%", fv:fp, minSpan:.004} : {})}));
   $("#eqLeg").innerHTML = ser.length > 1 ? ser.map(s => `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}"><i style="background:${s.c}"></i>${esc(s.name)} <b class="${cls(s.tot)}">${fmtV(s.tot)}</b></span>`).join("") : "";
   $("#eqLeg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("eqHidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); drawEq(); };
   $("#eqUnit").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("eqUnit", b.dataset.u); renderOverview(); };
@@ -1560,7 +1578,7 @@ function renderOverview(){
       <div class="lbl">If you sold everything now <span class="mute" style="text-transform:none;letter-spacing:0">· at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></div>
       <div class="big ${cls(upNow || 0)}">${upNow == null ? "—" : money(upNow)}</div>
       <div class="chg ${upChg < -0.004 ? "neg" : "pos"}">${upPts.length > 1 ? `${upChg < -0.004 ? "▼" : "▲"} ${money(upChg)} <span class="mute">${rng === "ALL" ? "all time" : "past " + {"1H":"hour","1D":"day","1W":"week"}[rng]}</span>` : `<span class="mute">history builds every 5 min</span>`}</div>
-      <div class="chart" id="upc"></div>
+      ${smoothBtns()}<div class="chart" id="upc"></div>
       <div class="rng" id="upRng">${Object.keys(RANGES).map(k => `<button data-r="${k}" class="${k === rng ? "on" : ""}">${k}</button>`).join("")}</div>
       <div class="grid g3" style="margin-top:14px"><div><div class="lbl">Cost held</div><div class="val">${mk.cost ? "$" + mk.cost.toFixed(2) : "—"}</div></div>
       <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
@@ -1584,7 +1602,7 @@ function renderOverview(){
   </div>`;
 
   const eqRows = equityRows(mode);
-  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">stacked by strategy</span></h2><div class="card"><div class="chead" id="expHead"></div><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div><div class="mute" style="font-size:11px;margin-top:4px">The top edge is the total in open bets (what they cost). The dashed line is the ${pct(capPct)} cap.</div></div>`;
+  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">stacked by strategy</span></h2><div class="card">${smoothBtns()}<div class="chead" id="expHead"></div><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div><div class="mute" style="font-size:11px;margin-top:4px">The top edge is the total in open bets (what they cost). The dashed line is the ${pct(capPct)} cap.</div></div>`;
   const bench = (S.data.verdicts || {}).strategies || {};
   h += liveStratsHTML(rows, strats, hist, bench);
   if (!isOpen("strat")) h += moreBtn("strat", `Details for each strategy`);
@@ -1634,8 +1652,8 @@ function renderOverview(){
   if ($("#nextAll")) $("#nextAll").onclick = () => { S.nextAll = !S.nextAll; renderOverview(); };
   if ($("#upAll")) $("#upAll").onclick = () => { S.upAll = !S.upAll; renderOverview(); };
   if ($("#upc")){
-    lineChart($("#upc"), [{name:"Up/down", c:upC, w:2.5, pts:upPts}], {h:180, zero:false, refs:upPts.length > 1 ? [{y:upPts[0].y, c:"#6b7699", label:"start"}] : [],
-      empty:mk.priced.length ? "Building history: a point every 30 s while open, every 5 min from the bot." : "No open bets right now."});
+    lineChart($("#upc"), ...smoothOpts([{name:"Up/down", c:upC, w:2.5, pts:upPts}], {h:180, zero:false, refs:upPts.length > 1 ? [{y:upPts[0].y, c:"#6b7699", label:"start"}] : [],
+      empty:mk.priced.length ? "Building history: a point every 30 s while open, every 5 min from the bot." : "No open bets right now."}));
     $("#upRng").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("upRange", b.dataset.r); renderOverview(); };
   }
   if ($("#upBets")){
@@ -1653,7 +1671,7 @@ function renderOverview(){
     const now = num(eqRows.at(-1).exposure);
     $("#expHead").innerHTML = `<b>$${now.toFixed(2)}</b><span>in open bets · ${pct(now / B, 0)} of bankroll · cap $${openCap.toFixed(2)}</span>`;
     $("#expLeg").innerHTML = ex.map((s, i) => `<span><i style="background:${s.c}"></i>${esc(s.name)} <b>$${s.pts.at(-1).y.toFixed(2)}</b></span>`).join("");
-    lineChart($("#exp"), ex, {h:190, stack:true, step:true, total:"Total", fv:v => "$" + v.toFixed(2), refs:[{y:openCap, c:"#f5b335", label:"cap $" + openCap.toFixed(0)}], y1:openCap * 1.02});
+    lineChart($("#exp"), ...smoothOpts(ex, {h:190, stack:true, step:true, total:"Total", fv:v => "$" + v.toFixed(2), refs:[{y:openCap, c:"#f5b335", label:"cap $" + openCap.toFixed(0)}], y1:openCap * 1.02}));
   }
   if ($("#eq")) drawSettled(sx, rows, strats, st, dayStop, totStop);
 }
