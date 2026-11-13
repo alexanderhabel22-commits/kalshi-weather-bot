@@ -278,7 +278,7 @@ kinds = ["need", "holds"]        # "holds" (YES on the bracket holding the extre
 # crowding the 15% cap, so it goes back to paper; the 3 new HIGH series stay paper too.
 skip = ["high/need", "KXHIGHTEWR", "KXHIGHTTTN", "KXHIGHTSAN"]
 series_contracts = { KXLOWTATL = 1, KXLOWTBOS = 1, KXLOWTDAL = 1, KXLOWTDC = 1, KXLOWTHOU = 1, KXLOWTLV = 1, KXLOWTMIN = 1, KXLOWTNOLA = 1, KXLOWTOKC = 1, KXLOWTPHX = 1, KXLOWTSAN = 1, KXLOWTSATX = 1, KXLOWTSEA = 1, KXLOWTSFO = 1, KXLOWTEWR = 1, KXLOWTTTN = 1 }
-max_open_pct = 0.15              # at most 15% of the bankroll at once (about 7 orders a day at ~75c)
+max_open_pct = 0.40              # 15% -> 40% (Alex Nov 13 12:31 AM ET, decision card): room for 23 cities' late-day orders
 max_event_pct = 0.08             # one city-day
 max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
 exit = "hold"                    # the tested rule holds to settlement

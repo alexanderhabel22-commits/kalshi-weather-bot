@@ -199,6 +199,7 @@ record earns it. Be candid about odds and risk; no hype.
   station; new series are in `wxbot/stations.py` DEFAULT_SERIES (station from the rules' "(CLIxxx)").
   New cities trade 1 contract (`series_contracts`). Highs "need" back to paper (replay ~0) and the
   new Newark/Trenton/San Diego HIGH series stay paper (`skip` in `[trading.weather_late]`).
+  weather_late cap raised 15% -> 40% of bankroll (Alex, Nov 13 12:31 AM ET).
 - **Late-day lows at 2 contracts since Nov 12 10:41 PM ET** (Alex "sure do it"): `contracts_by = {"low/need" = 2}`
   in `[trading.weather_late]`; highs/holds stay 1. Live cap is 100% of bankroll (PR #224).
 - **Late-day highs and "holds": REAL MONEY since Nov 12** (Alex 2:45 PM ET "Switch them on", PR #221):
