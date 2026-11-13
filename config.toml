@@ -89,7 +89,7 @@ mode = "live"                    # REAL money since Nov 5 7 PM ET (Alex's OK) fo
 max_contracts_per_order = 10     # hard per-order size limit (each strategy's own size is smaller)
 max_orders_per_run = 40           # per 5-min run (caps still apply); a run also stops placing after run_budget_s
 # Limits scale with the bankroll ([account] bankroll or the BANKROLL variable):
-max_open_pct = 0.75              # live: at most 75% of the bankroll at risk at once (Alex, Nov 5)
+max_open_pct = 1.00              # live: whole bankroll may be at risk (Alex, Nov 12 10:38 PM ET; was 75%). Cash check still applies
 max_event_pct = 0.20             # any strategy: at most 20% on one event, unless its table sets less
 # Capacity (scale study, Nov 5): as the bankroll grows, never take more than 10%
 # of a market's traded volume (at least 50, at most 1,000 contracts per market).

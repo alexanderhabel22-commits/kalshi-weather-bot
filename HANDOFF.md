@@ -159,7 +159,7 @@ record earns it. Be candid about odds and risk; no hype.
   live = true for favorites, macro_fade (3 contracts since Nov 12) and weather_late (late-day lows, Nov 11;
   Mentions moved to paper Nov 12 after the audit;
   weather day-before was a small test until Nov 11, now paper). LOCKs stay
-  paper (weather had 0 settled paper orders). Rails: 75% live cap, 20% per event,
+  paper (weather had 0 settled paper orders). Rails: 100% live cap (75% until Nov 12, Alex OK), 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
   orders, EV exits (sell only when bid after fee beats mid + hold_edge). Kill switch:
   GitHub variable TRADING_MODE=off. Since Nov 10 "off" also cancels the main bot's resting real-money orders (held positions stay).
