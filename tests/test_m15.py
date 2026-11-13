@@ -1174,3 +1174,20 @@ def test_e2_money_cap_moves_series_to_paper(monkeypatch):
     assert b.state["cut"]["KXBTC15M"]["why"] == "E2 money cap" and alerts[0][1] == 4
     b.e2_check({**m, "rule": ""}, -5)                # non-E2 windows don't count
     assert b.state["e2_live"]["n"] == 3 and len(alerts) == 1
+
+
+def test_e2_session_cap_counts_from_zero_per_tag(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, e2_stop_usd=8.0, e2_loss_seed=-4.0,
+                              e2_session="t1", e2_session_stop_usd=2.5)
+    alerts = []
+    monkeypatch.setattr(b, "alert", lambda t, body, p=3: alerts.append((t, p)))
+    m = {"series": "KXBTC15M", "rule": "E2", "close": CLOSE, "filled": 1}
+    b.e2_check(m, -0.85)
+    b.e2_check(m, 0.20)
+    assert "KXBTC15M" not in b.state.get("cut", {})
+    b.e2_check(m, -0.85)
+    b.e2_check(m, -0.85)                             # session -2.35: still on
+    assert "KXBTC15M" not in b.state.get("cut", {})
+    b.e2_check(m, -0.20)                             # session -2.55 -> paper
+    assert b.state["cut"]["KXBTC15M"]["why"] == "E2 session cap" and alerts[0][1] == 4
+    assert b.state["e2_session"]["n"] == 5 and b.state["e2_session"]["won"] == 1
