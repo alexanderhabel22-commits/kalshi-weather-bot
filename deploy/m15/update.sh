@@ -39,7 +39,7 @@ g fetch -q origin main
 after=$(g rev-parse origin/main)
 # Files the 15-min bot itself never loads: changing only these needs no bot restart (the
 # watcher is a separate 15-min timer job), so the trading bot keeps running untouched.
-NO_RESTART='^(wxbot/(watch|lip|paperlab|copycat|copycat_boss|copycat_live|ai_budget)\.py|deploy/m15/(update\.sh|install-(watch|lip|paperlab)\.sh|set-anthropic-key\.sh|kalshi-watch\.(service|timer)|kalshi-(lip|paper)\.service))$'
+NO_RESTART='^(wxbot/(watch|lip|lip_rank|paperlab|copycat|copycat_boss|copycat_live|ai_budget)\.py|deploy/m15/(update\.sh|install-(watch|lip|paperlab)\.sh|set-anthropic-key\.sh|kalshi-watch\.(service|timer)|kalshi-(lip|paper)\.service))$'
 if [ "$before" != "$after" ] && g diff --name-only "$before" "$after" -- $CODE | grep -q . \
    && ! g diff --name-only "$before" "$after" -- $CODE | grep -Evq "$NO_RESTART"; then
   g reset -q --hard "$after"
