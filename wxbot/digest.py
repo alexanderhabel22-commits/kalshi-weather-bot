@@ -58,7 +58,7 @@ THESIS = {
                     "Judge after 4 weeks or 100 filled contracts; stop early at the loss stop."),
 }
 NAMES = {"mentions": "Mentions NO", "weather": "Weather day-before", "weather_late": "Late-day weather",
-         "favorites": "Big-event favorites", "favorites_wide": "Election favorites",
+         "favorites": "Big-event favorites", "favorites_wide": "Election favorites", "favorites_late": "Favorites, last 24h (paper)",
          "macro_fade": "Fed/CPI fade", "macro_wide": "Gas + jobless claims fade",
          "rain_evening": "Evening rain fade", "spx_range": "S&P range fade"}
 # How each mode reads to a person: only live and alert results are money.

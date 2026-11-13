@@ -188,6 +188,11 @@ record earns it. Be candid about odds and risk; no hype.
   close is far out but whose `expected_expiration_time` is within 7 days (mostly elections, which
   the live 7-day close rule skips; replay Elections +6.5c). Reuses the live favorites scan, no
   extra Kalshi calls, never places a market the live rule places. Real money needs Alex's OK.
+- **Favorites last-24h shadow (PAPER, Nov 13):** `wxbot/strats/favorites_late.py`,
+  `[trading.favorites_late]`. The live favorites rule with the window cut to the last 24 hours before
+  close, 1-contract paper orders (also on markets the live rule holds). Entry-timing replay: +4.6c per
+  fill vs +2.0c for the live rule on reachable markets, ~20% fewer fills (write-up in project files
+  analysis/main-timing/RESULTS.md). Decide at the favorites 500-contract review; live needs Alex's OK.
 - **Evening rain fade (REAL 1 contract, Nov 13):** `wxbot/strats/rain_evening.py`,
   `[trading.rain_evening]`. Daily KXRAIN markets: 8-10 PM local, if the airport's METARs
   (aviationweather.gov) show no measurable rain since local midnight and NO is 75-95c, buy 1 NO
