@@ -908,6 +908,7 @@ class Bot(FillQuality):
             if want and not e2_ok(want[0], mv):
                 want = None
                 m["why"] = "E2: with the trend" if mv else "E2: last hour unknown"
+                m["e2_skip"] = True
         if quote:
             m["bid_ask"] = [quote.get("yes_bid_dollars"), quote.get("yes_ask_dollars")]
         base_n = int((s.get("series_contracts") or {}).get(m["series"], s["contracts"]))
@@ -1135,7 +1136,7 @@ class Bot(FillQuality):
             m.update({"graded": True, "result": r, "won": won, "pnl": pnl})
             if self.kfeed is not None:
                 self.kfeed.forget(m["ticker"])
-            if m["quotes"]:
+            if m["quotes"] or m.get("e2_skip"):     # E2 skips get a row too (dashboard counts them)
                 self.record(m)
             if m["filled"] and m["mode"] in ("paper", "live"):
                 p = self.state["pnl"]
