@@ -5,7 +5,7 @@ favourite bets AGAINST BTC's move over the hour before the window opened. 80-day
 test half E2 +2.1c/ct vs E with the trend +0.4c (m15-edge RESULTS.md row 1b). No bot change: this splits the
 bot's own rule-E windows (fill 600-840 s before close) using Kalshi's settlement prices.
 
-Bar (pre-registered): ~300 E2 windows, average >= +3c/ct after fees and the 90% range above 0
+Bar (pre-registered, Alex Nov 13): ~300 E2 windows (~Dec 3), average >= +2c/ct after fees and the 90% range above 0
 -> propose 1 contract of real money to Alex. Otherwise E2 is dropped.
 
 Run: python tools/e2_check.py  (reads branch m15-data via git, Kalshi public API)
@@ -80,7 +80,7 @@ def main():
         live = sum(1 for x in L if x[2] == "live")
         print(f"{k:14s} windows {len(v):4d} (live {live})  avg {100*sum(v)/max(1,len(v)):+.1f}c/ct  "
               f"90% range {100*lo:+.1f}..{100*hi:+.1f}c")
-    print("bar: ~300 E2 windows, avg >= +3c/ct and range above 0 -> propose 1 ct real money")
+    print("bar: ~300 E2 windows, avg >= +2c/ct and range above 0 -> propose 1 ct real money")
 
 
 if __name__ == "__main__":
