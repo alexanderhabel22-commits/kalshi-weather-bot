@@ -1,5 +1,5 @@
 {
- "at": "2026-11-13T10:57:08+00:00",
+ "at": "2026-11-13T11:15:29+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,19 +8,9 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 20.0,
+ "resting_cost": 19.95,
  "filled_cost": 0,
  "orders": {
-  "KXONIONACT-30JAN01-27JAN01": {
-   "id": "01a1cb83-c548-7feb-b9ed-14a551a085bc",
-   "cid": "lip-d56c1c8e20e9418d",
-   "side": "yes",
-   "px": 0.01,
-   "n": 250,
-   "filled": 0.0,
-   "at": 1794415773.9216497,
-   "mid0": 0.015
-  },
   "KXTREASRACE-UT-28-R": {
    "id": "01a1cf74-e538-7d2b-b7ba-e3a9a9dcb700",
    "cid": "lip-e91df4555ae049bf",
@@ -100,28 +90,21 @@
    "filled": 0.0,
    "at": 1794525378.3904324,
    "mid0": 0.9225
+  },
+  "KXTXINCOMETAX-30JAN01-28JAN01": {
+   "id": "01a1d495-0f48-7cda-a47c-f158561194d1",
+   "cid": "lip-da4e73410a334509",
+   "side": "yes",
+   "px": 0.07,
+   "n": 35,
+   "filled": 0.0,
+   "at": 1794567901.9143467,
+   "mid0": 0.075
   }
  },
  "positions": {},
  "exits": {},
  "chosen": {
-  "KXONIONACT-30JAN01-27JAN01": {
-   "side": "yes",
-   "px": 0.01,
-   "n": 250,
-   "cost": 2.5,
-   "share": 0.2,
-   "mid": 0.015,
-   "pool": 1000.0,
-   "days": 7.0,
-   "est_day": 14.2857,
-   "per_dollar": 5.714285714285714,
-   "ref": 0.01,
-   "best": 0.01,
-   "ticker": "KXONIONACT-30JAN01-27JAN01",
-   "close": "2027-01-01T15:00:00Z",
-   "end": "2026-11-14T05:00:00Z"
-  },
   "KXTREASRACE-UT-28-R": {
    "side": "no",
    "px": 0.06,
@@ -488,12 +471,12 @@
     "share": 0.2
    },
    "KXTREASRACE-UT-28-D": {
-    "ahead": 31415.14,
+    "ahead": 32277.73,
     "others": 1000.0,
     "share": 0.0476
    },
    "KXINSCOMMRACE-ND-28-D": {
-    "ahead": 20680.93,
+    "ahead": 21097.67,
     "others": 1000.0,
     "share": 0.0394
    },
@@ -503,29 +486,34 @@
     "share": 0.0394
    },
    "KXINSCOMMRACE-DE-28-R": {
-    "ahead": 92319.0,
+    "ahead": 89719.0,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXAGRACE-UT-28-D": {
-    "ahead": 31511.9,
+    "ahead": 31197.15,
     "others": 1000.0,
     "share": 0.0177
    },
    "KXINSCOMMRACE-ND-28-R": {
-    "ahead": 19382.25,
+    "ahead": 16648.73,
     "others": 1000.0,
     "share": 0.031
    },
    "KXNASHVILLEMAYOR-27-JSTY": {
-    "ahead": 107595.0,
+    "ahead": 106595.0,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXAUDITORRACE-UT-28-D": {
-    "ahead": 75812.0,
+    "ahead": 74812.0,
     "others": 1000.0,
     "share": 0.0234
+   },
+   "KXTXINCOMETAX-30JAN01-28JAN01": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.0338
    }
   }
  },
@@ -654,40 +642,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794450918,
-   "kind": "place",
-   "ticker": "KXTREASRACE-VT-28-D",
-   "side": "no",
-   "px": 0.08,
-   "n": 31,
-   "est_day": 2.4892
-  },
-  {
-   "t": 1794459204,
-   "kind": "select",
-   "programs": 5879,
-   "checked": 24,
-   "chosen": [
-    "KXAUDITORRACE-UT-28-R",
-    "KXINSCOMMRACE-DE-28-R",
-    "KXINSCOMMRACE-MS-27-R",
-    "KXINSCOMMRACE-ND-28-D",
-    "KXINSCOMMRACE-ND-28-R",
-    "KXNASHVILLEMAYOR-27-JSTY",
-    "KXNASHVILLEMAYOR-27-LWIL",
-    "KXONIONACT-30JAN01-27JAN01",
-    "KXSENATENOM-SCD-28-BBRO",
-    "KXSENATENOM-SCD-28-BWEB"
-   ],
-   "est_day": 35.77
-  },
-  {
-   "t": 1794459207,
-   "kind": "cancel",
-   "ticker": "KXSOSRACE-MS-27-D",
-   "why": "no longer chosen"
-  },
   {
    "t": 1794459209,
    "kind": "cancel",
@@ -1328,6 +1282,39 @@
    ],
    "current_net_day": 2.49,
    "picks_net_day": 2.49
+  },
+  {
+   "t": 1794567896,
+   "kind": "select",
+   "programs": 6225,
+   "checked": 2,
+   "chosen": [
+    "KXAGRACE-UT-28-D",
+    "KXAUDITORRACE-UT-28-D",
+    "KXINSCOMMRACE-DE-28-R",
+    "KXINSCOMMRACE-ND-28-D",
+    "KXINSCOMMRACE-ND-28-R",
+    "KXNASHVILLEMAYOR-27-JSTY",
+    "KXTREASRACE-UT-28-D",
+    "KXTREASRACE-UT-28-R",
+    "KXTXINCOMETAX-30JAN01-28JAN01"
+   ],
+   "est_day": 12.51
+  },
+  {
+   "t": 1794567899,
+   "kind": "cancel",
+   "ticker": "KXONIONACT-30JAN01-27JAN01",
+   "why": "no longer chosen"
+  },
+  {
+   "t": 1794567902,
+   "kind": "place",
+   "ticker": "KXTXINCOMETAX-30JAN01-28JAN01",
+   "side": "yes",
+   "px": 0.07,
+   "n": 35,
+   "est_day": 1.2077
   }
  ]
 }
