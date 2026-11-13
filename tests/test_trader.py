@@ -63,7 +63,7 @@ def no_env(monkeypatch):
 
 def test_limits_scale_with_bankroll():
     t = trader.settings(cfg(bankroll=40))
-    assert (t["max_open_dollars"], t["daily_loss_stop"], t["total_loss_stop"]) == (30.0, -4.0, -10.0)
+    assert (t["max_open_dollars"], t["daily_loss_stop"], t["total_loss_stop"]) == (40.0, -4.0, -10.0)
     assert t["max_event_dollars"] == 8.0
     t = trader.settings(cfg(bankroll=400))
     assert t["total_loss_stop"] == -100.0
@@ -335,14 +335,16 @@ def test_paper_fill_when_quotes_move_through_our_bid():
     assert trader.crossed({"side": "yes", "price": "0.30"}, {"yes_bid_dollars": "0.25", "yes_ask_dollars": "0.29"})
 
 
-def test_overall_cap_is_75pct_live_but_100pct_paper():
+def test_overall_cap_is_whole_bankroll_live_and_paper():
+    # Alex, Nov 12 10:38 PM ET: the whole bankroll may be traded at once (was 75% live).
     t = trader.settings(cfg(bankroll=10))
     sp = {"max_open_dollars": 100}
     rows = [{"strategy": "x", "event": "E0", "ticker": "T0", "side": "no", "price": "0.80",
              "count": 9, "filled": 9, "status": "filled"}]                   # $7.20 open
     it = trader.Intent("mentions", "T1", "E1", "no", 0.80, 1, CLOSE)       # +$0.80 -> $8.00
-    assert trader.vet(it, rows, t, sp, NOW, [], "live") == "overall open-$ cap"   # > $7.50
-    assert trader.vet(it, rows, t, sp, NOW, [], "paper") is None                  # <= $10.00
+    assert trader.vet(it, rows, t, sp, NOW, [], "live") is None                   # <= $10.00
+    big = trader.Intent("mentions", "T2", "E2", "no", 0.80, 4, CLOSE)      # +$3.20 -> $10.40
+    assert trader.vet(big, rows, t, sp, NOW, [], "live") == "overall open-$ cap"
 
 
 def test_global_event_cap_applies_to_every_strategy():

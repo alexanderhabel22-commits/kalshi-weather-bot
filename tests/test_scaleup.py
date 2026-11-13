@@ -27,7 +27,7 @@ def test_off_changes_nothing_main_bot(monkeypatch):
     c.raw["account"]["auto_bankroll"] = False
     c.raw["account"]["bankroll"] = 2000.0
     t = trader.settings(c)
-    assert t["max_open_pct"] == 0.75 and t["daily_loss_pct"] == 0.10 and t["total_loss_pct"] == 0.25
+    assert t["max_open_pct"] == 1.00 and t["daily_loss_pct"] == 0.10 and t["total_loss_pct"] == 0.25
     assert t["scaleup_tier"] is None
 
 
@@ -37,7 +37,7 @@ def test_tiers_tighten_main_bot_by_bankroll(monkeypatch):
     c.raw["account"]["auto_bankroll"] = False
     c.raw["account"]["bankroll"] = 60.0
     t = trader.settings(c)
-    assert t["scaleup_tier"] == "test money" and t["max_open_pct"] == 0.75   # test money: unchanged
+    assert t["scaleup_tier"] == "test money" and t["max_open_pct"] == 1.00   # test money: unchanged
     c.raw["account"]["bankroll"] = 500.0
     t = trader.settings(c)
     assert t["scaleup_tier"] == "small real"
