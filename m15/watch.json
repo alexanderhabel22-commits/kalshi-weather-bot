@@ -1,45 +1,45 @@
 {
  "last": {
-  "at": "2026-11-13T02:35:32+00:00",
+  "at": "2026-11-13T02:50:33+00:00",
   "flags": [],
   "haiku": {
    "level": "ok",
-   "summary": "Copycat is active with a fresh status file (0.8 min), so the earlier activating flap has cleared. 15-MIN is in paper matching its control, no errors or halt, 24h P&L about -$7.44, inside its stops. MAIN is live, not halted, Actions runs succeeding. Rewards bot live, $20 resting, no fills, no credits yet (normal before period ends). Paper lab active. No rule flags.",
+   "summary": "Copycat is active with a fresh status file (0.9 min), so the earlier activating flap has cleared and the open engineer escalation can close if it holds. 15-MIN is in paper with control matching, no errors or halt, and its 24h loss of about $7.44 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $20 resting and no fills, inside budget, and its $0 credits are normal before the period ends. Paper Lab is active. RAM and memory are fine.",
    "remember": ""
   },
   "opus": null,
   "action": null,
   "ai_spend": {
    "day": "2026-11-13",
-   "total": 0.1328,
+   "total": 0.1375,
    "by": {
-    "foreman": 0.0545,
+    "foreman": 0.0592,
     "copycat_boss": 0.0783
    }
   }
  },
  "today": {
   "day": "2026-11-12",
-  "haiku": 87,
+  "haiku": 88,
   "opus": 2,
   "tokens": {
-   "haiku_in": 320547,
-   "haiku_out": 24129,
+   "haiku_in": 324350,
+   "haiku_out": 24324,
    "opus_in": 7145,
    "opus_out": 2405
   }
  },
  "ai_spend": {
   "day": "2026-11-13",
-  "total": 0.1328,
+  "total": 0.1375,
   "by": {
-   "foreman": 0.0545,
+   "foreman": 0.0592,
    "copycat_boss": 0.0783
   }
  },
  "ai_history": {
   "2026-11-12": 0.5527,
-  "2026-11-13": 0.1328
+  "2026-11-13": 0.1375
  },
  "notes": [
   "Copycat activating/stale flags have recurred several times on Nov 12 and cleared on recheck each time; watch it, escalate only if they persist.",
@@ -1162,5 +1162,5 @@
    "opus": null
   }
  ],
- "digest": "Time: 9:35 PM ET Thu Nov 12\n15-MIN: service=active mode=paper control=paper status_at=2026-11-13T02:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-7.4365 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV120000-00 2 1.6 0.4\n  KXSILVER15M-26NOV120000-00 2 1.7 -1.7\n  KXBTC15M-26NOV120015-15 2 1.62 0.38\n  KXSILVER15M-26NOV120015-15 2 1.6 -1.6\n  KXSILVER15M-26NOV120030-30 2 1.74 0.26\n  KXBTC15M-26NOV120045-45 2 1.62 0.38\n  KXSILVER15M-26NOV120045-45 2 1.82 0.18\nSERVER: RAM 41.3% used, 15-min bot at 29.6% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 4.3 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-13T02:33:56+00:00 mode=live halted=None bids=9 resting=$20.0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXAUDITORRACE-UT-28-D up to 7c (reference price); cancel KXAGRACE-UT-28-D up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-D up to 6c (reference price); cancel KXINSCOMMRACE-DE-28-R up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-R up to 7c (reference price)\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$50.31 cash=$17.26 at=2026-11-13T02:31:47.669623+00:00\nRecent Actions runs: weather-scan in_progress 02:35Z; trade success 02:31Z; weather-scan success 02:30Z; trade success 02:27Z; weather-scan success 02:25Z; trade success 02:20Z; weather-scan success 02:20Z; trade success 02:16Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Copycat activating/stale flags have recurred several times on Nov 12 and cleared on recheck each time; watch it, escalate only if they persist.; Copycat activating/stale flags have now recurred on Nov 12 at 7:20 AM, 12:35 PM, 5:20 PM ET and at 2:35, 3:05, 4:35 PM for staleness, each cleared on recheck; if they recur again, escalate if still pr; Copycat activating or stale flags recur several times a day on Nov 12 and clear on recheck; escalate only if still activating or stale at the next check.; Copycat 'activating' flag recurred again Nov 12 8:20 PM ET; first time it persisted across two consecutive checks (5:20 PM and 8:20 PM) would be the escalation trigger, so check the next run.; Copycat 'activating' flag has now persisted across two consecutive checks (8:20 PM and 8:35 PM ET Nov 12), so the persistence trigger has been reached; escalated for an engineer to check the service.; Copycat 'activating' has now persisted across three consecutive checks (8:20, 8:35, 8:50 PM ET Nov 12), so the engineer escalation is still open.; Copycat 'activating' episodes on Nov 12 cleared on their own by 9:05 PM ET after three consecutive checks; flaps have recovered without intervention so far.; Copycat activating flaps on Nov 12 have now cleared on their own after several checks; the engineer escalation was raised at 8:35 PM and is closed as of 9:20 PM if it holds.\nRecent log:\n  Nov 12 3:20 PM ET: check: ok. 15-MIN is in paper with control matching, no errors, no halt, and its 24h P&L of about -$11.38 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting against th\n  Nov 12 5:20 PM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 5:20 PM ET: escalated: Copycat still starting; watch item, nothing needed (ok). Memory check: this is a repeat. Copycat 'activating' recurred at 7:20 AM, 12:35 PM and now 5:20 PM ET, each cleared on recheck. Status file staleness also recurred at 2:35,\n  Nov 12 5:50 PM ET: cleared: COPYCAT_DOWN\n  Nov 12 6:50 PM ET: check: ok. All bots are within their rules. 15-MIN is in paper by design with control matching, no errors, and its 24h P&L of about -$8.57 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is li\n  Nov 12 7:50 PM ET: check: ok. Copycat is active and its status file is fresh (0.0 min), so the earlier staleness has cleared. 15-MIN is in paper by design with control matching, no errors, no halt, and its 24h P&L of -$6.41 is inside the stops. MAIN is live, \n  Nov 12 8:20 PM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 8:35 PM ET: check: escalate. Copycat service has shown 'activating' for two checks in a row (8:20 PM and now 8:35 PM ET), which my notes set as the trigger to escalate for an engineer. Everything else is inside rules: 15-MIN is in paper matching its co\n  Nov 12 9:05 PM ET: cleared: COPYCAT_DOWN\n  Nov 12 9:05 PM ET: check: ok. Copycat is active again with a fresh status file, so the open engineer escalation can close if it holds. 15-MIN is in paper matching its control, with no errors or halt, and its losses are inside the stops. MAIN is live, not halt"
+ "digest": "Time: 9:50 PM ET Thu Nov 12\n15-MIN: service=active mode=paper control=paper status_at=2026-11-13T02:47:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-7.4365 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV120000-00 2 1.6 0.4\n  KXSILVER15M-26NOV120000-00 2 1.7 -1.7\n  KXBTC15M-26NOV120015-15 2 1.62 0.38\n  KXSILVER15M-26NOV120015-15 2 1.6 -1.6\n  KXSILVER15M-26NOV120030-30 2 1.74 0.26\n  KXBTC15M-26NOV120045-45 2 1.62 0.38\n  KXSILVER15M-26NOV120045-45 2 1.82 0.18\nSERVER: RAM 41.3% used, 15-min bot at 29.9% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 4.9 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-13T02:49:31+00:00 mode=live halted=None bids=9 resting=$20.0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXAUDITORRACE-UT-28-D up to 7c (reference price); cancel KXAGRACE-UT-28-D up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-D up to 6c (reference price); cancel KXINSCOMMRACE-DE-28-R up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-R up to 7c (reference price)\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$50.83 cash=$17.26 at=2026-11-13T02:47:09.525365+00:00\nRecent Actions runs: weather-scan in_progress 02:50Z; trade success 02:46Z; weather-scan success 02:45Z; trade success 02:41Z; weather-scan success 02:40Z; trade success 02:36Z; weather-scan success 02:35Z; trade success 02:31Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Copycat activating/stale flags have recurred several times on Nov 12 and cleared on recheck each time; watch it, escalate only if they persist.; Copycat activating/stale flags have now recurred on Nov 12 at 7:20 AM, 12:35 PM, 5:20 PM ET and at 2:35, 3:05, 4:35 PM for staleness, each cleared on recheck; if they recur again, escalate if still pr; Copycat activating or stale flags recur several times a day on Nov 12 and clear on recheck; escalate only if still activating or stale at the next check.; Copycat 'activating' flag recurred again Nov 12 8:20 PM ET; first time it persisted across two consecutive checks (5:20 PM and 8:20 PM) would be the escalation trigger, so check the next run.; Copycat 'activating' flag has now persisted across two consecutive checks (8:20 PM and 8:35 PM ET Nov 12), so the persistence trigger has been reached; escalated for an engineer to check the service.; Copycat 'activating' has now persisted across three consecutive checks (8:20, 8:35, 8:50 PM ET Nov 12), so the engineer escalation is still open.; Copycat 'activating' episodes on Nov 12 cleared on their own by 9:05 PM ET after three consecutive checks; flaps have recovered without intervention so far.; Copycat activating flaps on Nov 12 have now cleared on their own after several checks; the engineer escalation was raised at 8:35 PM and is closed as of 9:20 PM if it holds.\nRecent log:\n  Nov 12 3:20 PM ET: check: ok. 15-MIN is in paper with control matching, no errors, no halt, and its 24h P&L of about -$11.38 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is live with $19.97 resting against th\n  Nov 12 5:20 PM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 5:20 PM ET: escalated: Copycat still starting; watch item, nothing needed (ok). Memory check: this is a repeat. Copycat 'activating' recurred at 7:20 AM, 12:35 PM and now 5:20 PM ET, each cleared on recheck. Status file staleness also recurred at 2:35,\n  Nov 12 5:50 PM ET: cleared: COPYCAT_DOWN\n  Nov 12 6:50 PM ET: check: ok. All bots are within their rules. 15-MIN is in paper by design with control matching, no errors, and its 24h P&L of about -$8.57 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is li\n  Nov 12 7:50 PM ET: check: ok. Copycat is active and its status file is fresh (0.0 min), so the earlier staleness has cleared. 15-MIN is in paper by design with control matching, no errors, no halt, and its 24h P&L of -$6.41 is inside the stops. MAIN is live, \n  Nov 12 8:20 PM ET: new: kalshi-copycat service is 'activating'\n  Nov 12 8:35 PM ET: check: escalate. Copycat service has shown 'activating' for two checks in a row (8:20 PM and now 8:35 PM ET), which my notes set as the trigger to escalate for an engineer. Everything else is inside rules: 15-MIN is in paper matching its co\n  Nov 12 9:05 PM ET: cleared: COPYCAT_DOWN\n  Nov 12 9:05 PM ET: check: ok. Copycat is active again with a fresh status file, so the open engineer escalation can close if it holds. 15-MIN is in paper matching its control, with no errors or halt, and its losses are inside the stops. MAIN is live, not halt"
 }
