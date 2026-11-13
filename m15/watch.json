@@ -1,28 +1,25 @@
 {
  "last": {
-  "at": "2026-11-13T10:05:32+00:00",
+  "at": "2026-11-13T10:20:08+00:00",
   "flags": [
    {
-    "code": "PAPER_DOWN",
-    "sev": "warn",
-    "text": "paper lab service kalshi-paper is 'activating'",
+    "code": "COPYCAT_DOWN",
+    "sev": "critical",
+    "text": "kalshi-copycat service is 'activating'",
     "malfunction": false,
-    "target": "lip",
-    "runs": 3
+    "runs": 1
    }
   ],
   "haiku": {
-   "level": "watch",
-   "summary": "Paper lab kalshi-paper is still activating, now across several checks since 2:35 AM. Per my notes it should be escalated if it persists through the next check. Copycat is back to normal and is paper-only. Main bot is live, not halted, and its runs are succeeding. Rewards bot is live with $20 resting and $0 filled. 15-MIN is paper, matching its control, with no errors or halt.",
-   "remember": ""
+   "error": "Error code: 503"
   },
   "opus": null,
   "action": null,
   "ai_spend": {
    "day": "2026-11-13",
-   "total": 0.2986,
+   "total": 0.3006,
    "by": {
-    "foreman": 0.1917,
+    "foreman": 0.1937,
     "copycat_boss": 0.1069
    }
   }
@@ -40,15 +37,15 @@
  },
  "ai_spend": {
   "day": "2026-11-13",
-  "total": 0.2986,
+  "total": 0.3006,
   "by": {
-   "foreman": 0.1917,
+   "foreman": 0.1937,
    "copycat_boss": 0.1069
   }
  },
  "ai_history": {
   "2026-11-12": 0.5527,
-  "2026-11-13": 0.2986
+  "2026-11-13": 0.3006
  },
  "notes": [
   "Escalate copycat only if activating or stale persists for two or more consecutive checks. Last escalation (8:35 PM) closed at 9:05 PM.",
@@ -61,8 +58,6 @@
   "Paper lab kalshi-paper 'activating' flap now persisting across several checks on Nov 13 (from 2:35 AM ET); if it stays through the next check, escalate."
  ],
  "journal": [
-  "Nov 12 6:50 PM ET: check: ok. All bots are within their rules. 15-MIN is in paper by design with control matching, no errors, and its 24h P&L of about -$8.57 is inside the stops. MAIN is live, not halted, and its Actions runs are succeeding. Rewards bot is li",
-  "Nov 12 7:50 PM ET: check: ok. Copycat is active and its status file is fresh (0.0 min), so the earlier staleness has cleared. 15-MIN is in paper by design with control matching, no errors, no halt, and its 24h P&L of -$6.41 is inside the stops. MAIN is live, ",
   "Nov 12 8:20 PM ET: new: kalshi-copycat service is 'activating'",
   "Nov 12 8:35 PM ET: check: escalate. Copycat service has shown 'activating' for two checks in a row (8:20 PM and now 8:35 PM ET), which my notes set as the trigger to escalate for an engineer. Everything else is inside rules: 15-MIN is in paper matching its co",
   "Nov 12 9:05 PM ET: cleared: COPYCAT_DOWN",
@@ -90,7 +85,9 @@
   "Nov 13 4:35 AM ET: new: paper lab service kalshi-paper is 'activating'",
   "Nov 13 4:35 AM ET: cleared: COPYCAT_DOWN",
   "Nov 13 4:50 AM ET: new: kalshi-copycat service is 'activating'",
-  "Nov 13 5:05 AM ET: cleared: COPYCAT_DOWN"
+  "Nov 13 5:05 AM ET: cleared: COPYCAT_DOWN",
+  "Nov 13 5:20 AM ET: new: kalshi-copycat service is 'activating'",
+  "Nov 13 5:20 AM ET: cleared: PAPER_DOWN"
  ],
  "log": [
   {
@@ -1155,33 +1152,33 @@
    "opus": null
   },
   {
+   "action": null,
+   "ai_spend": {
+    "by": {
+     "copycat_boss": 0.1069,
+     "foreman": 0.1917
+    },
+    "day": "2026-11-13",
+    "total": 0.2986
+   },
    "at": "2026-11-13T10:05:32+00:00",
    "flags": [
     {
      "code": "PAPER_DOWN",
-     "sev": "warn",
-     "text": "paper lab service kalshi-paper is 'activating'",
      "malfunction": false,
+     "runs": 3,
+     "sev": "warn",
      "target": "lip",
-     "runs": 3
+     "text": "paper lab service kalshi-paper is 'activating'"
     }
    ],
    "haiku": {
     "level": "watch",
-    "summary": "Paper lab kalshi-paper is still activating, now across several checks since 2:35 AM. Per my notes it should be escalated if it persists through the next check. Copycat is back to normal and is paper-only. Main bot is live, not halted, and its runs are succeeding. Rewards bot is live with $20 resting and $0 filled. 15-MIN is paper, matching its control, with no errors or halt.",
-    "remember": ""
+    "remember": "",
+    "summary": "Paper lab kalshi-paper is still activating, now across several checks since 2:35 AM. Per my notes it should be escalated if it persists through the next check. Copycat is back to normal and is paper-only. Main bot is live, not halted, and its runs are succeeding. Rewards bot is live with $20 resting and $0 filled. 15-MIN is paper, matching its control, with no errors or halt."
    },
-   "opus": null,
-   "action": null,
-   "ai_spend": {
-    "day": "2026-11-13",
-    "total": 0.2986,
-    "by": {
-     "foreman": 0.1917,
-     "copycat_boss": 0.1069
-    }
-   }
+   "opus": null
   }
  ],
- "digest": "Time: 5:05 AM ET Fri Nov 13\n15-MIN: service=active mode=paper control=paper status_at=2026-11-13T10:02:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 34.2% used, 15-min bot at 21.9% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 3.9 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-13T09:54:44+00:00 mode=live halted=None bids=9 resting=$20.0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXAUDITORRACE-UT-28-D up to 7c (reference price); cancel KXAGRACE-UT-28-D up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-D up to 6c (reference price); cancel KXINSCOMMRACE-DE-28-R up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-R up to 7c (reference price)\nPAPER LAB: service=activating\nMAIN: mode=live halted=False bankroll=$51.4 cash=$13.57 at=2026-11-13T10:02:35.552860+00:00\nRecent Actions runs: weather-scan in_progress 10:05Z; trade success 10:02Z; weather-scan success 10:00Z; trade success 09:55Z; weather-scan success 09:55Z; trade success 09:50Z; weather-scan success 09:50Z; trade success 09:45Z\nRULE FLAGS: [warn] PAPER_DOWN: paper lab service kalshi-paper is 'activating' (3 checks in a row)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Escalate copycat only if activating or stale persists for two or more consecutive checks. Last escalation (8:35 PM) closed at 9:05 PM.; Copycat is paper/copy only; no money at risk from its flaps.; 15-MIN: paper by design, control matches. Stops handle its losses; pause only for real malfunction.; Rewards bot: live, $20 budget, fill stop $10. Pause_lip only for runaway fills or orders outside budget.; MAIN: live, not halted, Actions runs succeeding as of 11 PM ET Nov 12.; Paper lab kalshi-paper 'activating' flaps recur on Nov 13 (12:35 and 1:35 AM ET) and clear on recheck. Watch only unless it persists past several checks.; Paper lab kalshi-paper 'activating' flaps have now run three checks at 2 AM ET Nov 13; if it still shows activating after several more checks, escalate per the persistence rule.; Paper lab kalshi-paper 'activating' flap now persisting across several checks on Nov 13 (from 2:35 AM ET); if it stays through the next check, escalate.\nRecent log:\n  Nov 13 3:05 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 13 3:20 AM ET: cleared: COPYCAT_DOWN, PAPER_DOWN\n  Nov 13 3:20 AM ET: check: ok. Copycat and paper lab are active again; their flaps cleared on recheck. 15-MIN is in paper matching its control with no errors or halt. Rewards bot is live with $20 resting and $0 filled. MAIN is live, not halted, and Actions run\n  Nov 13 3:35 AM ET: new: paper lab service kalshi-paper is 'activating'\n  Nov 13 4:20 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 13 4:20 AM ET: cleared: PAPER_DOWN\n  Nov 13 4:35 AM ET: new: paper lab service kalshi-paper is 'activating'\n  Nov 13 4:35 AM ET: cleared: COPYCAT_DOWN\n  Nov 13 4:50 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 13 5:05 AM ET: cleared: COPYCAT_DOWN"
+ "digest": "Time: 5:20 AM ET Fri Nov 13\n15-MIN: service=active mode=paper control=paper status_at=2026-11-13T10:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-7.8928\n15-MIN live P&L by day: 2026-11-09 $11.22, 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70\n  KXBTC15M: fills=553.0 pnl=$5.85 decay_alert=2026-11-12\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 31.9% used, 15-min bot at 22.4% of its memory cap\nCOPYCAT (separate paper/copy service): activating, status file updated 0.2 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-13T10:10:19+00:00 mode=live halted=None bids=9 resting=$20.0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXAUDITORRACE-UT-28-D up to 7c (reference price); cancel KXAGRACE-UT-28-D up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-D up to 6c (reference price); cancel KXINSCOMMRACE-DE-28-R up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-R up to 7c (reference price)\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$51.4 cash=$13.57 at=2026-11-13T10:16:06.551376+00:00\nRecent Actions runs: trade success 10:15Z; weather-scan success 10:15Z; trade success 10:10Z; weather-scan success 10:10Z; trade success 10:05Z; weather-scan success 10:05Z; trade success 10:02Z; weather-scan success 10:00Z\nRULE FLAGS: [critical] COPYCAT_DOWN: kalshi-copycat service is 'activating'\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Escalate copycat only if activating or stale persists for two or more consecutive checks. Last escalation (8:35 PM) closed at 9:05 PM.; Copycat is paper/copy only; no money at risk from its flaps.; 15-MIN: paper by design, control matches. Stops handle its losses; pause only for real malfunction.; Rewards bot: live, $20 budget, fill stop $10. Pause_lip only for runaway fills or orders outside budget.; MAIN: live, not halted, Actions runs succeeding as of 11 PM ET Nov 12.; Paper lab kalshi-paper 'activating' flaps recur on Nov 13 (12:35 and 1:35 AM ET) and clear on recheck. Watch only unless it persists past several checks.; Paper lab kalshi-paper 'activating' flaps have now run three checks at 2 AM ET Nov 13; if it still shows activating after several more checks, escalate per the persistence rule.; Paper lab kalshi-paper 'activating' flap now persisting across several checks on Nov 13 (from 2:35 AM ET); if it stays through the next check, escalate.\nRecent log:\n  Nov 13 3:20 AM ET: check: ok. Copycat and paper lab are active again; their flaps cleared on recheck. 15-MIN is in paper matching its control with no errors or halt. Rewards bot is live with $20 resting and $0 filled. MAIN is live, not halted, and Actions run\n  Nov 13 3:35 AM ET: new: paper lab service kalshi-paper is 'activating'\n  Nov 13 4:20 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 13 4:20 AM ET: cleared: PAPER_DOWN\n  Nov 13 4:35 AM ET: new: paper lab service kalshi-paper is 'activating'\n  Nov 13 4:35 AM ET: cleared: COPYCAT_DOWN\n  Nov 13 4:50 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 13 5:05 AM ET: cleared: COPYCAT_DOWN\n  Nov 13 5:20 AM ET: new: kalshi-copycat service is 'activating'\n  Nov 13 5:20 AM ET: cleared: PAPER_DOWN"
 }
