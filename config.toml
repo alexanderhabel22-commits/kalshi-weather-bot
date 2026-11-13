@@ -402,7 +402,13 @@ early_after_contracts = 500      # rule E (BTC early window): from BTC's 500th r
                                  # before close, favourite 80-95c, 1 contract, no double (Alex Nov 10 7:56 PM ET:
                                  # "just make them go live at 500"). 80-day replay: today's rule ~0c/ct since Oct 10,
                                  # rule E +1.4c. Graded at every BTC review after; decay guard and stops unchanged.
-e2_series = ["KXBTC15M"]         # rule E2 (Nov 13, Alex OK): BTC rule E bids only against the last hour's move
+early_on = true                  # Nov 13: rule E on every series in early_series (BTC already on since Nov 11)
+early_series = ["KXBTC15M", "KXETH15M", "KXSOL15M", "KXSILVER15M", "KXPALLADIUM15M", "KXPLATINUM15M"]
+e2_series = ["KXBTC15M", "KXETH15M", "KXSOL15M", "KXSILVER15M", "KXPALLADIUM15M", "KXPLATINUM15M"]
+                                 # rule E2 (Nov 13, Alex OK): rule E bids only against the last hour's move. REAL on BTC
+                                 # only (live_series); the others are PAPER tests (Alex: "do the other markets show the
+                                 # same?"). Replay E2 vs with-trend: ETH +1.6/-0.4, SOL +1.2/+0.6, silver +1.3/-1.3,
+                                 # Pd +4.7/+0.8, Pt +4.0/+1.3 (metal replays run 5-20c rosy). Gold/copper/WTI: no gap, left alone.
 early_contracts = 1              # Nov 13: 1 ct/window under rule E2 (real-money test). Was 2: MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET): 2 ct/window when rule E starts at 500; 3 if E holds at its review. Was 3: (Alex Nov 10 8:12 PM ET wants ~today's daily
                                  # volume; rule E trades ~31 windows/day vs ~90). 3 = ~95 ct/day.
 
