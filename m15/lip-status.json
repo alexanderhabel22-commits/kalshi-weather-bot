@@ -1,5 +1,5 @@
 {
- "at": "2026-11-13T22:58:20+00:00",
+ "at": "2026-11-13T23:16:55+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -105,13 +105,30 @@
  "positions": {},
  "exits": {},
  "chosen": {
+  "KXRT-DUNE-97": {
+   "side": "yes",
+   "px": 0.07,
+   "n": 35,
+   "cost": 2.45,
+   "share": 0.0338,
+   "mid": 0.075,
+   "pool": 145.0,
+   "days": 1.47,
+   "est_day": 1.6663,
+   "per_dollar": 0.6801043627962001,
+   "ref": 0.07,
+   "best": 0.07,
+   "ticker": "KXRT-DUNE-97",
+   "close": "2026-12-21T15:00:00Z",
+   "end": "2026-11-15T05:00:00Z"
+  },
   "KXTREASRACE-UT-28-R": {
    "side": "no",
    "px": 0.06,
    "n": 41,
    "cost": 2.46,
    "share": 0.0394,
-   "mid": 0.9245,
+   "mid": 0.9255,
    "pool": 230.0,
    "days": 3.54,
    "est_day": 1.2792,
@@ -471,12 +488,12 @@
     "share": 0.2
    },
    "KXTREASRACE-UT-28-D": {
-    "ahead": 35913.92,
+    "ahead": 36833.16,
     "others": 1000.0,
     "share": 0.0476
    },
    "KXINSCOMMRACE-ND-28-D": {
-    "ahead": 36017.83,
+    "ahead": 35357.12,
     "others": 1000.0,
     "share": 0.0394
    },
@@ -486,22 +503,22 @@
     "share": 0.0394
    },
    "KXINSCOMMRACE-DE-28-R": {
-    "ahead": 98240.0,
+    "ahead": 99036.0,
     "others": 1000.0,
     "share": 0.0338
    },
    "KXAGRACE-UT-28-D": {
-    "ahead": 32236.34,
+    "ahead": 31574.44,
     "others": 1000.0,
     "share": 0.0177
    },
    "KXINSCOMMRACE-ND-28-R": {
-    "ahead": 32495.89,
+    "ahead": 31897.36,
     "others": 1000.0,
     "share": 0.031
    },
    "KXNASHVILLEMAYOR-27-JSTY": {
-    "ahead": 105977.0,
+    "ahead": 105992.0,
     "others": 1000.0,
     "share": 0.0338
    },
@@ -642,12 +659,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794459211,
-   "kind": "cancel",
-   "ticker": "KXTREASRACE-WA-28-D",
-   "why": "no longer chosen"
-  },
   {
    "t": 1794459213,
    "kind": "cancel",
@@ -1327,6 +1338,25 @@
     "KXTXINCOMETAX-30JAN01-28JAN01"
    ],
    "est_day": 12.51
+  },
+  {
+   "t": 1794611182,
+   "kind": "select",
+   "programs": 10224,
+   "checked": 3,
+   "chosen": [
+    "KXAGRACE-UT-28-D",
+    "KXAUDITORRACE-UT-28-D",
+    "KXINSCOMMRACE-DE-28-R",
+    "KXINSCOMMRACE-ND-28-D",
+    "KXINSCOMMRACE-ND-28-R",
+    "KXNASHVILLEMAYOR-27-JSTY",
+    "KXRT-DUNE-97",
+    "KXTREASRACE-UT-28-D",
+    "KXTREASRACE-UT-28-R",
+    "KXTXINCOMETAX-30JAN01-28JAN01"
+   ],
+   "est_day": 14.18
   }
  ]
 }
