@@ -17,8 +17,9 @@ Rails, all checked every cycle:
   - fill stop: once filled contracts cost `fill_stop` ($10) in total, everything is cancelled and
     the bot halts (we came to be paid for resting, not to collect longshots).
   - fill recovery (Alex, Nov 13): contracts a bid bought by accident are offered straight back
-    at the price we paid (reduce-only, post-only sell; sold at once if a bid already sits at that
-    price). Break-even if someone takes them, otherwise they are held to settlement as before.
+    (reduce-only sell), starting at the price we paid and stepping 1c lower every 6 h unsold, at
+    most 2c under cost; sold at once into any bid at/above that price; undercuts a cheaper seller
+    by 1c within the floor. Unsold contracts are held to settlement as before.
     These exit offers stay up through the fill stop and the end of the test window, and are
     cancelled only by the kill switches (they can only shrink a position, never add risk).
   - about one Kalshi call per second at most (the key is shared with the live bots).
@@ -54,7 +55,8 @@ DEFAULTS = {"mode": "off", "budget": 20.0, "reserve": 6.0, "markets": 8, "min_px
             # daily risk-adjusted re-pick, SHADOW only (logs; moves no orders): wxbot/lip_rank.py
             "shadow": True, "shadow_hour_utc": 10, "shadow_programs": 400, "shadow_books": 80,
             "shadow_max_vol24": 20000.0, "adverse": 0.6,
-            "recover": True}
+            "recover": True, "exit_step_s": 6 * 3600, "exit_step": 0.01, "exit_max_drop": 0.02,
+            "exit_requote_s": 1800}
 CONTROL_STALE_S = 1800
 PACE_S = 1.0                     # seconds between Kalshi calls
 
@@ -488,7 +490,7 @@ class LipBot:
         if new <= 0:
             return
         o["filled"] = got
-        p = self.state["positions"].setdefault(tk, {"side": o["side"], "n": 0.0, "cost": 0.0})
+        p = self.state["positions"].setdefault(tk, {"side": o["side"], "n": 0.0, "cost": 0.0, "at": self.clock()})
         p["n"] = round(p["n"] + new, 2)
         p["cost"] = round(p["cost"] + new * o["px"], 4)
         self.event("fill", ticker=tk, side=o["side"], n=new, px=o["px"])
@@ -688,12 +690,37 @@ class LipBot:
             self.state["exits"].pop(tk, None)
             self.event("exit_gone", ticker=tk, status=ko.get("status"))
 
+    def exit_price(self, p: dict, book: dict) -> tuple[float, bool] | None:
+        """Where to offer a held fill back (plain rules, no AI): start at what we paid, step down
+        `exit_step` (1c) every `exit_step_s` (6 h) it doesn't sell, never below cost -
+        `exit_max_drop` (2c) or 1c. Reading the book: if someone already bids at or above that
+        price, sell into the bid now (that includes selling at a profit after a rise); if another
+        seller already asks lower, undercut them by 1c while staying above the floor."""
+        if not p.get("n"):
+            return None
+        s = self.cfg
+        cost = math.ceil(p["cost"] / p["n"] * 100 - 1e-6) / 100
+        floor = max(0.01, round(cost - s["exit_max_drop"], 2))
+        steps = int(max(0.0, self.clock() - p.get("at", self.clock())) // max(1, s["exit_step_s"]))
+        target = max(floor, round(cost - steps * s["exit_step"], 2))
+        side, other = p["side"], ("no" if p["side"] == "yes" else "yes")
+        bid = max((q for q, _ in book.get(side) or []), default=0.0)
+        if bid >= target - 1e-9:
+            return target, True     # IOC at target: fills at the best bid, which is >= target
+        ob = max((q for q, _ in book.get(other) or []), default=None)
+        ask = round(1 - ob, 2) if ob is not None else None      # cheapest other seller of our side
+        px = target
+        if ask is not None and ask <= target - 1e-9:
+            px = max(floor, round(ask - 0.01, 2))
+        return round(max(px, round(bid + 0.01, 2)), 2), False
+
     def recover(self) -> None:
-        """For every held position: one exit offer for all of it, at the average price paid."""
+        """For every held position: one exit offer for all of it, priced by exit_price()."""
         if not self.cfg.get("recover"):
             return
+        now = self.clock()
         for tk, p in list(self.state["positions"].items()):
-            if self.state["bad"].get(f"exit|{tk}", 0) > self.clock():
+            if self.state["bad"].get(f"exit|{tk}", 0) > now:
                 continue
             if self.state["orders"].get(tk):
                 # a fill usually means news: pull the rest of that bid (it would also trade
@@ -703,29 +730,33 @@ class LipBot:
                     continue
             want = int(math.floor(p["n"] + 1e-6))
             x = self.state["exits"].get(tk)
-            if x and round(x["n"] - x.get("sold", 0.0), 2) >= want:
-                continue
-            if x and not self.cancel_exit(tk, "more filled: re-offer all"):
-                continue
-            want = int(math.floor(self.state["positions"].get(tk, {}).get("n", 0) + 1e-6))
-            if want < 1:
-                continue
-            px = round(math.ceil(p["cost"] / p["n"] * 100 - 1e-6) / 100, 2) if p["n"] else None
-            if not px:
+            if want < 1 and not x:
                 continue
             b = self.book(tk) or {}
-            best = max((q for q, _ in b.get(p["side"]) or []), default=0.0)
-            now_ = best >= px - 1e-9        # someone already bids our price: sell at once
+            ep = self.exit_price(p, b)
+            if not ep:
+                continue
+            px, now_ = ep
+            if x:
+                left = round(x["n"] - x.get("sold", 0.0), 2)
+                same = left >= want and abs(x["px"] - px) < 1e-9
+                if same or (left >= want and not now_ and now - x["at"] < self.cfg["exit_requote_s"]):
+                    continue
+                if not self.cancel_exit(tk, f"re-offer at {round(px * 100)}c"):
+                    continue
+                want = int(math.floor(self.state["positions"].get(tk, {}).get("n", 0) + 1e-6))
+                if want < 1:
+                    continue
             cid = f"lip-x-{uuid.uuid4().hex[:14]}"
             self.pace()
             try:
                 o = self.client.place_lip_exit(tk, p["side"], px, want, cid, now=now_)
             except Exception as exc:  # noqa: BLE001
                 self.event("exit_reject", ticker=tk, side=p["side"], px=px, n=want, error=str(exc)[:200])
-                self.state["bad"][f"exit|{tk}"] = self.clock() + 3600
+                self.state["bad"][f"exit|{tk}"] = now + 3600
                 continue
             oid = o.get("order_id") or o.get("id")
-            x = {"id": oid, "cid": cid, "side": p["side"], "px": px, "n": want, "sold": 0.0, "at": self.clock()}
+            x = {"id": oid, "cid": cid, "side": p["side"], "px": px, "n": want, "sold": 0.0, "at": now}
             self.event("exit_place", ticker=tk, side=p["side"], px=px, n=want, now=now_)
             if now_:
                 self.book_exit(tk, x, fill_qty(o, want))
