@@ -1,4 +1,5 @@
 import json
+import sys
 from datetime import datetime, timezone
 from types import SimpleNamespace
 
@@ -213,7 +214,8 @@ def test_copycat_stuck_flagged(tmp_path, monkeypatch):
     c = FakeClient(opus={"severity": "alert", "title": "Copycat stuck", "message": "m",
                          "diagnosis": "d", "proposed_fix": "f", "needs_alex": True})
     rec, sent = go(tmp_path, monkeypatch, FakeGH(), c)
-    assert "COPYCAT_STALE" in {f["code"] for f in rec["flags"]} and sent and rec["action"] is None
+    # paper-only problem: logged for an engineer, never pushed to Alex's phone
+    assert "COPYCAT_STALE" in {f["code"] for f in rec["flags"]} and not sent and rec["action"] is None
     os.utime(p, (NOW - 120, NOW - 120))
     assert "COPYCAT_STALE" not in {f["code"] for f in watch.rules(watch.gather(FakeGH(), NOW, runner, cc_status=p), watch.settings(load_config()))}
 
@@ -302,3 +304,31 @@ def test_spend_reads_local_boss_ledger(tmp_path, monkeypatch):
     monkeypatch.setattr(watch, "COPYCAT_STATUS", tmp_path / "status.json")
     rec, _ = go(tmp_path, monkeypatch, FakeGH(), FakeClient())
     assert rec["ai_spend"]["by"]["copycat_boss"] == 0.12
+
+
+def test_paper_only_problems_never_push(tmp_path, monkeypatch):
+    """Alex's rule: phone pushes only for real issues. Copycat/paper-lab trouble stays in the journal."""
+    def down(cmd, **kw):
+        if "is-active" in cmd:
+            return SimpleNamespace(stdout="activating" if cmd[-1] in ("kalshi-copycat", "kalshi-paper") else "active")
+        if "show" in cmd and cmd[-1] == "kalshi-copycat":
+            return SimpleNamespace(stdout="NRestarts=40\nResult=oom-kill\nMemoryMax=314572800\nMemoryPeak=314572800")
+        return SimpleNamespace(stdout="")
+    monkeypatch.setattr(sys.modules[__name__], "runner", down)
+    c = FakeClient(haiku={"level": "escalate", "summary": "copycat stuck"})
+    gh = FakeGH()
+    rec, sent = go(tmp_path, monkeypatch, gh, c)
+    assert {"COPYCAT_DOWN", "PAPER_DOWN"} <= {f["code"] for f in rec["flags"]}
+    assert not sent and rec["opus"] is None and rec.get("paper_only")
+    out = json.loads([p for p in gh.puts if p[0] == "m15/watch.json"][-1][2])
+    assert out["services"]["kalshi-copycat"]["Result"] == "oom-kill"
+
+
+def test_side_services_report_parses_memory():
+    def r(cmd, **kw):
+        if "show" in cmd:
+            return SimpleNamespace(stdout="NRestarts=3\nResult=oom-kill\nMemoryMax=314572800\nMemoryPeak=[not set]")
+        return SimpleNamespace(stdout="Nov 13 killed")
+    s = watch.side_services(r)
+    assert s["kalshi-copycat"]["Result"] == "oom-kill" and s["kalshi-copycat"]["MemoryMax"] == "300 MB"
+    assert s["kalshi-copycat"]["MemoryPeak"] == "[not set]" and "killed" in s["kalshi-paper"]["log"]

@@ -513,3 +513,23 @@ def test_new_account_whale_scored_at_our_price():
           "usd": 600, "count": 1200}]
     sm = copycat.whale_summary(r, {"K": "yes"}, 1.0)
     assert sm["new"]["avg_c"] > sm["new_ours"]["avg_c"] and sm["new_ours"]["settled"] == 1
+
+
+def test_old_whale_rows_never_loaded_and_rows_share_strings(tmp_path):
+    """Crash loop Nov 12-13: the start-up load held days of big-bet rows before trimming them."""
+    import json as js
+    from datetime import datetime, timezone
+    copycat._ROW_CACHE.clear()
+    now = datetime(2026, 11, 13, 14, tzinfo=timezone.utc).timestamp()
+    for name, ts in (("copycat-2026-11-09-01.jsonl", now - 4.5 * 86400), ("copycat-2026-11-13-10.jsonl", now - 4 * 3600)):
+        rows = [{"kind": "whale", "ticker": "KXA-1", "ts": ts, "anon": True},
+                {"kind": "fill", "v": 2, "nick": "n", "trade_id": name, "ticker": "KXA-1", "side": "yes",
+                 "yes_price": 0.5, "ts": ts}]
+        (tmp_path / name).write_text("\n".join(js.dumps(r) for r in rows) + "\n")
+    got = copycat.load_rows(tmp_path, cache_done_hours=True, now=now)
+    whales = [r for r in got if r["kind"] == "whale"]
+    fills = [r for r in got if r["kind"] == "fill"]
+    assert len(whales) == 1 and whales[0]["ts"] == now - 4 * 3600
+    assert len(fills) == 2                                  # copies are kept whatever their age
+    assert fills[0]["ticker"] is fills[1]["ticker"]         # interned: one string shared by every row
+    copycat._ROW_CACHE.clear()

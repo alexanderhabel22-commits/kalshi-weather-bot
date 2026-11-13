@@ -32,6 +32,7 @@ import json
 import logging
 import os
 import statistics as st
+import sys
 import threading
 import time
 from collections import defaultdict
@@ -327,19 +328,43 @@ def _slim(r: dict) -> bool:
     return k in ("snap", "whale")
 
 
-def _read_part(p: Path, prev: dict) -> tuple[list[dict], dict]:
+_INTERN_VALS = ("kind", "nick", "ticker", "role", "side", "src")
+
+
+def _compact(r: dict) -> dict:
+    """The same row with shared key strings (and shared common values). json.loads gives every row
+    its own copy of each key, ~0.8 KB a row; interned, ~80k held rows use about half the memory
+    (Copycat crash loop Nov 12-13: restarts every ~6 min once the start-up load passed 300 MB)."""
+    return {sys.intern(k): (sys.intern(v) if k in _INTERN_VALS and isinstance(v, str) else v)
+            for k, v in r.items()}
+
+
+def _hour_end(p: Path) -> float | None:
+    """End of the UTC hour a copycat-YYYY-MM-DD-HH file covers (None if the name doesn't parse)."""
+    try:
+        h = datetime.strptime(p.name[8:21], "%Y-%m-%d-%H").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+    return h.timestamp() + 3600
+
+
+def _read_part(p: Path, prev: dict, whale_cut: float | None = None) -> tuple[list[dict], dict]:
     """One hour's scoring rows, streamed line by line: a busy hour is tens of MB once unzipped, and
     reading whole files pushed the service past its 200 MB cap (crash loop, Nov 11 4:28 AM ET).
     To keep memory small each snapshot is folded into its fill (fill["_s"] = {delay: (bid, ask)});
     snapshots come within ~5 min, so a fill from this hour or the one before is found. Settled
     results become one small {"kind": "result"} row per ticker."""
     part, tids, res = [], {}, {}
+    end = _hour_end(p)
+    skip_whales = whale_cut is not None and end is not None and end < whale_cut   # too old to hold
     try:
         with (gzip.open(p, "rt", encoding="utf-8") if p.suffix == ".gz"
               else open(p, encoding="utf-8")) as fh:
             for x in fh:
                 if '"fill"' in x and ('"snap":false' in x or '"snap": false' in x):
                     continue                        # unsnapped fills are never scored: skip the parse
+                if skip_whales and '"whale"' in x:
+                    continue                        # big-bet rows older than WHALE_MEM_DAYS: never held
                 try:
                     r = json.loads(x)
                 except ValueError:
@@ -353,6 +378,7 @@ def _read_part(p: Path, prev: dict) -> tuple[list[dict], dict]:
                     if f is not None:
                         f.setdefault("_s", {})[r.get("delay")] = (r.get("bid"), r.get("ask"))
                     continue
+                r = _compact(r)
                 if r["kind"] == "fill":
                     for k in ("trade_time", "snap", "dropped"):
                         r.pop(k, None)
@@ -377,7 +403,7 @@ def load_rows(d: Path, cache_done_hours: bool = False, now: float | None = None)
             part, prev = _ROW_CACHE[p.name]
             rows += part
             continue
-        part, tids = _read_part(p, prev)
+        part, tids = _read_part(p, prev, whale_cut=now - WHALE_MEM_DAYS * 86400 if now else None)
         if cache_done_hours and p.name != cur:
             _ROW_CACHE[p.name] = (part, tids)
         rows += part
