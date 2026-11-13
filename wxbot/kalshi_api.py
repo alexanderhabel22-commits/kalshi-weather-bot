@@ -252,6 +252,15 @@ class KalshiClient:
         return self._order_v2(ticker, side, True, price, count, client_order_id,
                               "good_till_canceled", post_only=True, lip=True)
 
+    def place_lip_exit(self, ticker: str, side: str, price: float, count: int,
+                       client_order_id: str, now: bool = False) -> dict:
+        """Liquidity-reward test only: offer back contracts a reward bid bought by accident.
+        reduce_only (it can only shrink what we hold), LIP ceilings; resting post-only, or
+        immediate-or-cancel when the bid is already at our price (`now`)."""
+        return self._order_v2(ticker, side, False, price, count, client_order_id,
+                              "immediate_or_cancel" if now else "good_till_canceled",
+                              post_only=not now, reduce_only=True, lip=True)
+
     def credit_history(self, max_pages: int = 5) -> list:
         """Credits Kalshi applied to the account, newest first (GET /portfolio/credit_history;
         where incentive payouts are expected to show up)."""
