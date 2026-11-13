@@ -188,6 +188,12 @@ record earns it. Be candid about odds and risk; no hype.
   close is far out but whose `expected_expiration_time` is within 7 days (mostly elections, which
   the live 7-day close rule skips; replay Elections +6.5c). Reuses the live favorites scan, no
   extra Kalshi calls, never places a market the live rule places. Real money needs Alex's OK.
+- **Evening rain fade (REAL 1 contract, Nov 13):** `wxbot/strats/rain_evening.py`,
+  `[trading.rain_evening]`. Daily KXRAIN markets: 8-10 PM local, if the airport's METARs
+  (aviationweather.gov) show no measurable rain since local midnight and NO is 75-95c, buy 1 NO
+  at the ask (taker) and hold. Replay Jul-Nov 2026 +6.1c +- 3.9 on 109 real trades; ~1 a day.
+  Own stop -10% of bankroll, 15% open cap. Research and the hourly-temperature NO-GO:
+  `research_new/RESULTS.md`.
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES
