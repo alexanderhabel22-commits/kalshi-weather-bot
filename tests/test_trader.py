@@ -880,3 +880,30 @@ def test_macro_wide_is_paper_and_relabels_macro_fade_picks():
     out = macro_wide.candidates(ms, p, NOW)
     assert [i.ticker for i in out] == [i.ticker for i in base] == ["KXJOBLESSCLAIMS-26NOV19-A"]
     assert out[0].strategy == "macro_wide" and out[0].price == 0.87 and out[0].count == 1
+
+
+def test_favorites_late_logs_last_24h_markets_on_paper():
+    from wxbot.strats import favorites, favorites_late
+    c = cfg()
+    live, late = c.raw["trading"]["favorites"], c.raw["trading"]["favorites_late"]
+    sp = trader.strategy_settings(c, "favorites_late", trader.settings(c))
+    assert trader.strategy_mode("live", sp) == "paper" and late["max_hours"] == 24
+
+    def m(tk, close, yb=0.90, ya=0.93):
+        return {"ticker": tk, "event_ticker": tk.rsplit("-", 1)[0], "close_time": close,
+                "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": 900_000,
+                "title": tk}
+    iso = lambda h: (NOW + timedelta(hours=h)).isoformat().replace("+00:00", "Z")  # noqa: E731
+    events = [
+        {"event_ticker": "KXRT-A", "category": "Entertainment",
+         "markets": [m("KXRT-A-X", iso(10)), m("KXRT-A-Y", iso(10), 0.05, 0.07)]},
+        {"event_ticker": "KXRT-B", "category": "Entertainment",
+         "markets": [m("KXRT-B-X", iso(72)), m("KXRT-B-Y", iso(72), 0.05, 0.07)]},
+    ]
+    live_pick = {i.ticker for i in favorites.candidates(events, NOW, live, None)}
+    out = favorites_late.extra(events, NOW, late, live, None)
+    assert {i.ticker for i in out} == {"KXRT-A-X", "KXRT-A-Y"}       # 72 h out: too early
+    assert {"KXRT-A-X", "KXRT-B-X"} <= live_pick                     # live rule untouched (7 days)
+    assert all(i.strategy == "favorites_late" and i.count == 1 for i in out)
+    held = {"KXRT-A": {"KXRT-A-X", "KXRT-A-Y"}}
+    assert favorites_late.extra(events, NOW, late, live, held) == []

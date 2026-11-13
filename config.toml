@@ -223,6 +223,26 @@ max_hours = 168
 max_open_pct = 0.20
 max_event_pct = 0.05
 
+[trading.favorites_late]
+# PAPER SHADOW ONLY (Nov 13, 2026, thread "Check entry timing in main-bot strategies"): the live
+# favorites rule above, but bidding only in the LAST 24 HOURS before close (wxbot/strats/favorites_late.py).
+# Replay Jan 2025-Nov 2026 on the markets the bot can reach: +4.6c per fill vs +2.0c for the live
+# rule, ~20% fewer fills. Logs 1-contract paper orders, also on markets the live rule holds.
+# Decide at the favorites 500-contract review whether the live rule should wait like this.
+# Never live without Alex's OK.
+max_week_contracts = 2000
+max_market_contracts = 200
+enabled = true
+live = false                     # keep false: paper only
+contracts = 1
+max_contracts = 1
+min_price = 0.85
+max_price = 0.96
+min_hours = 1
+max_hours = 24                   # the only change vs the live rule (168 there)
+max_open_pct = 0.20
+max_event_pct = 0.05
+
 [trading.locks]
 # Weather LOCKs, PAPER for now. Alex OK'd real money on Nov 5, then paused it the
 # same evening after a bad 6-hour METAR group made a false Philadelphia LOCK.
