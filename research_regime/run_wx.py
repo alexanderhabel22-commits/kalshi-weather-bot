@@ -1,4 +1,4 @@
-import sys, pandas as pd, numpy as np
+import sys, pandas as pd
 sys.path.insert(0, "research_regime")
 from regime import add_form, search, streak_stats
 FEATS = ["px", "spread", "metric", "model_gap", "mkt_p", "sd", "dow", "form20", "form100", "last_win", "loss_streak", "yday"]

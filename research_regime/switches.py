@@ -1,6 +1,6 @@
 """Fixed (not fitted) on/off switches driven by a strategy's own recent results, on every ledger.
 Whole sample is fine here because nothing is tuned: the rules are the textbook ones."""
-import sys, datetime, zoneinfo, pandas as pd, numpy as np
+import sys, datetime, zoneinfo, pandas as pd
 sys.path.insert(0, "research_regime")
 from regime import add_form, clustered
 ET = zoneinfo.ZoneInfo("America/New_York")
