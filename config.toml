@@ -424,6 +424,8 @@ early_after_contracts = 500      # rule E (BTC early window): from BTC's 500th r
                                  # rule E +1.4c. Graded at every BTC review after; decay guard and stops unchanged.
 early_on = true                  # Nov 13: rule E on every series in early_series (BTC already on since Nov 11)
 early_series = ["KXBTC15M", "KXETH15M", "KXSOL15M", "KXSILVER15M", "KXPALLADIUM15M", "KXPLATINUM15M"]
+e2_stop_usd = 8.0                # Nov 13 money cap: real E2 back to paper (state cut) once its real P&L hits -$8
+e2_loss_seed = -1.60             # E2's real P&L before the cap shipped (0-2 on Nov 13 afternoon)
 e2_series = ["KXBTC15M", "KXETH15M", "KXSOL15M", "KXSILVER15M", "KXPALLADIUM15M", "KXPLATINUM15M"]
                                  # rule E2 (Nov 13, Alex OK): rule E bids only against the last hour's move. REAL on BTC
                                  # only (live_series); the others are PAPER tests (Alex: "do the other markets show the

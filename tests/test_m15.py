@@ -1160,3 +1160,17 @@ def test_e2_hour_move_from_strike_history(monkeypatch):
     monkeypatch.setattr(m15.kalshi, "get_market", lambda http, t: calls.append(t) or {"floor_strike": 99000})
     b.state["strikes"] = {}
     assert b.hour_move(m) == 1500.0 and calls == [m15.window_ticker("KXBTC15M", int(CLOSE) - 3600)]
+
+
+def test_e2_money_cap_moves_series_to_paper(monkeypatch):
+    b, clk, cl, w = early_bot(monkeypatch, early_on=True, e2_stop_usd=8.0, e2_loss_seed=-6.5)
+    alerts = []
+    monkeypatch.setattr(b, "alert", lambda t, body, p=3: alerts.append((t, p)))
+    m = {"series": "KXBTC15M", "rule": "E2", "close": CLOSE, "filled": 1}
+    b.e2_check(m, 0.20)
+    assert "KXBTC15M" not in b.state.get("cut", {}) and not alerts
+    b.e2_check(m, -0.85)
+    b.e2_check(m, -0.85)                             # -6.5 + 0.2 - 1.7 = -8.0
+    assert b.state["cut"]["KXBTC15M"]["why"] == "E2 money cap" and alerts[0][1] == 4
+    b.e2_check({**m, "rule": ""}, -5)                # non-E2 windows don't count
+    assert b.state["e2_live"]["n"] == 3 and len(alerts) == 1

@@ -1147,6 +1147,7 @@ class Bot(FillQuality):
                 if m["mode"] == "live":
                     p.setdefault("live_log", []).append([m["close"], pnl])
                 if m["mode"] == "live":
+                    self.e2_check(m, pnl)
                     self.series_check(m, pnl)
         # forget graded markets after a day
         self.state["markets"] = {k: v for k, v in self.state["markets"].items()
@@ -1236,6 +1237,22 @@ class Bot(FillQuality):
                 self.uploader(up)
             except Exception as exc:
                 log.warning("history upload failed: %s", exc)
+
+    def e2_check(self, m: dict, pnl: float) -> None:
+        """E2 money cap (Nov 13): real E2 trading goes back to paper once its real P&L (plus
+        e2_loss_seed, the loss before this cap shipped) reaches -e2_stop_usd. Phone push."""
+        cap = float(self.s.get("e2_stop_usd") or 0)
+        if m.get("rule") != "E2" or not cap:
+            return
+        st = self.state.setdefault("e2_live", {"pnl": float(self.s.get("e2_loss_seed") or 0), "n": 0})
+        st["pnl"] = round(st["pnl"] + pnl, 4)
+        st["n"] += 1
+        cut = self.state.setdefault("cut", {})
+        if st["pnl"] <= -cap and m["series"] not in cut:
+            cut[m["series"]] = {"at": self.day(m["close"]), "why": "E2 money cap", "e2_pnl": st["pnl"]}
+            self.alert(f"15-min bot: E2 money cap hit, {m['series']} back to PAPER",
+                       f"Real E2 is at ${st['pnl']:+.2f} over {st['n']} windows (cap -${cap:.0f}). "
+                       "No more real orders on it; paper keeps running. Claude reviews.", 4)
 
     def series_check(self, m: dict, pnl: float) -> None:
         """Pre-registered cut rule: below cut_below_ct per contract after cut_after_fills real fills."""
