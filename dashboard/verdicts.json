@@ -15,13 +15,13 @@
     },
     "favorites": {
       "label": "Big-event favorites",
-      "backtest_c": 3.7,
-      "backtest_note": "Resting bids on 85-96c favorites in Elections/Politics/Entertainment events with 1M+ contracts traded, Feb 2025-Oct 2026, 317 events, 88% up"
+      "backtest_c": 2.0,
+      "backtest_note": "Resting bids on 85-96c favorites in Elections/Politics/Entertainment events with 1M+ contracts traded. Nov 12 exact replay: +3.2c per fill overall, about +2.0c on the markets the 7-day rule actually reaches (Entertainment ~0)."
     },
     "weather_late": {
-      "label": "Late-day lows",
+      "label": "Late-day weather",
       "backtest_c": 3.7,
-      "backtest_note": "Sell LOW brackets below the low already recorded, 1c inside the offer, spread 4c+. +5.7c per contract Oct 2025-Aug 2026, +3.7c Sep-Nov 2026. Real money since Nov 11."
+      "backtest_note": "From midday on, sell brackets that need a new low (or high) beyond what is already recorded, 1c inside the offer, spread 4c+; also buy the bracket holding the extreme. Lows backtest +5.7c per contract Oct 2025-Aug 2026, +3.7c Sep-Nov 2026; highs and holds are untested 1-contract real tests since Nov 12. Lows 2 contracts since Nov 12."
     },
     "weather": {
       "label": "Weather day-before",
@@ -37,6 +37,21 @@
       "label": "Near-locks (silent)",
       "backtest_c": null,
       "backtest_note": "Late-day calls the model rates 95%+, logged silently"
+    },
+    "macro_fade": {
+      "label": "Fed/CPI fade",
+      "backtest_c": 8.7,
+      "backtest_note": "Resting NO at 71-95c on Fed and CPI/PCE longshots. Nov 12 exact replay: +8.7c per fill after maker fees (52 release days), about 8 fills a month. 3 contracts since Nov 12."
+    },
+    "macro_wide": {
+      "label": "Gas + jobless claims fade",
+      "backtest_c": 6.6,
+      "backtest_note": "The Fed/CPI fade rule on weekly gas prices and weekly jobless claims. Replay Nov 2025-Nov 2026: +6.6c per fill, about 8 events a month. 1-contract real test since Nov 12."
+    },
+    "favorites_wide": {
+      "label": "Election favorites",
+      "backtest_c": null,
+      "backtest_note": "Favorites on markets whose listed close is far out but Kalshi expects the result within 7 days (most election markets). Replay: Elections +6.5c per fill, small sample. 1-contract real test since Nov 12."
     }
   },
   "events": [

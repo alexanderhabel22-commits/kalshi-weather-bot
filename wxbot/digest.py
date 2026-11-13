@@ -57,7 +57,9 @@ THESIS = {
                     "21-month history: about +4c per filled contract, 74% of events ahead.",
                     "Judge after 4 weeks or 100 filled contracts; stop early at the loss stop."),
 }
-NAMES = {"mentions": "Mentions NO", "weather": "Weather day-before", "weather_late": "Late-day lows"}
+NAMES = {"mentions": "Mentions NO", "weather": "Weather day-before", "weather_late": "Late-day weather",
+         "favorites": "Big-event favorites", "favorites_wide": "Election favorites",
+         "macro_fade": "Fed/CPI fade", "macro_wide": "Gas + jobless claims fade"}
 # How each mode reads to a person: only live and alert results are money.
 MODE_LABEL = {"live": "REAL money", "alert": "old alerts (money only if you traded them)",
               "paper": "practice, no money", "shadow": "silent test, no money"}
