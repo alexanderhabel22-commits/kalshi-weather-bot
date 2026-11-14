@@ -43,6 +43,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
+from wxbot.copycat_live import DEFAULTS as LIVE, event_of
 from wxbot.srclog import UA, github_put
 
 log = logging.getLogger("wxbot")
@@ -201,6 +202,14 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
             "recent": list(reversed(named))[:40]}
 
 
+def real_ok(their: float, pay: float, lag: float | None) -> bool:
+    """Would the real-money rails have taken this copy? (their price + 2c at most, 5-95c, seen in time).
+    Only such copies count toward an account's score (Nov 14 audit: 62% of paper copies were trades
+    real money could never get, and copies where the price had run more than 2c lost 11.9c)."""
+    return (pay <= round(min(their + LIVE["slip"], LIVE["max_px"]), 2) + 1e-9 and pay >= LIVE["min_px"]
+            and (lag or 0) <= LIVE["max_lag_s"])
+
+
 def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
     """Per account (and "ALL"): lists of cents/contract on the sharp's side.
     move_N = mid N s after we saw the fill minus the sharp's price; follow_N = mid minus the ask a
@@ -227,6 +236,7 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
         entry = side_value(side, f["yes_price"])
         pay = s0["ask"] if side == "yes" else 1 - s0["bid"]
         fee = taker_fee_c(pay)                 # copying always takes the ask
+        ok = real_ok(entry, pay, f.get("lag_s"))
         for nick in (f["nick"], "ALL"):
             o = out[nick]
             o["lag"].append(f.get("lag_s") or 0)
@@ -238,13 +248,14 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
                 o[f"move_{d}"].append(100 * (mid - entry))
                 o[f"follow_{d}"].append(100 * (mid - pay) - fee)
             res = (results or {}).get(f["ticker"])
-            if res in ("yes", "no"):
+            if res in ("yes", "no") and ok:    # the score: only copies real money could have made
                 o["settle"].append(100 * ((1.0 if res == side else 0.0) - pay) - fee)
+                o["settle_ev"].append(event_of(f.get("ticker") or ""))
         res = (results or {}).get(f["ticker"])
         out[f["nick"]]["trades"].append({
             "tid": tid, "et": (f.get("et") or "")[5:16], "ticker": f.get("ticker"), "side": side,
             "their_c": round(100 * entry), "pay_c": round(100 * pay), "count": f.get("count"),
-            "role": f.get("role"), "result": res,
+            "role": f.get("role"), "result": res, "ok": ok,
             "c": round(100 * ((1.0 if res == side else 0.0) - pay) - fee, 1) if res in ("yes", "no") else None})
     return out
 
@@ -314,6 +325,22 @@ def mean_low(vals: list[float]) -> tuple[float | None, float | None]:
     m = st.mean(vals)
     se = st.pstdev(vals) / len(vals) ** 0.5 if len(vals) > 1 else abs(m) + 50
     return round(m, 2), round(m - 1.645 * se, 2)
+
+
+def mean_low_events(vals: list[float], events: list[str]) -> tuple[float | None, float | None, int]:
+    """Mean, pessimistic (one-sided 95%) lower bound and number of events, counting copies in the same
+    event (game) together: ten copies in one game are one piece of evidence, not ten (Nov 14 audit)."""
+    if not vals:
+        return None, None, 0
+    by: dict = defaultdict(list)
+    for v, e in zip(vals, events):
+        by[e].append(v)
+    n, g = len(vals), len(by)
+    m = st.mean(vals)
+    if g < 2:
+        return round(m, 2), round(m - 1.645 * (abs(m) + 50), 2), g
+    se = (sum((sum(v) - m * len(v)) ** 2 for v in by.values()) * g / (g - 1)) ** 0.5 / n
+    return round(m, 2), round(m - 1.645 * se, 2), g
 
 
 _ROW_CACHE: dict[str, tuple[list[dict], dict]] = {}
@@ -444,14 +471,17 @@ LETTERS = ((97, "A+"), (93, "A"), (90, "A-"), (87, "B+"), (83, "B"), (80, "B-"),
 COPY_SCORE = 80.0           # B- or better is copied
 
 
-def score_grade(settle: list[float]) -> tuple[float | None, str]:
+MIN_EVENTS = 30             # an account needs settled copies in 30+ different events (games) to go real
+
+
+def score_grade(settle: list[float], events: list[str] | None = None) -> tuple[float | None, str]:
     """A test-style score (0-100) and letter from the whole copy history (cents per contract after
     fees). It is built on the pessimistic mean, so a short lucky run can't score high:
     80 + 2.5 x (lower 95% bound of the mean, in cents), so 0c = 80 (B-), +4c = 90 (A-), +7c = 97.5 (A+),
     -4c = 70 (C-), below -8c = F. A small recency term (+/-3) rewards a hot last 50 or marks a cold one."""
     if len(settle) < MIN_SETTLED:
         return None, "-"
-    m, low = mean_low(settle)
+    m, low = mean_low(settle) if events is None else mean_low_events(settle, events)[:2]
     rec = st.mean(settle[-ROLL_WINDOW:]) - m
     score = max(0.0, min(100.0, 80 + 2.5 * low + max(-3.0, min(3.0, rec * 0.25))))
     letter = next((lt for cut, lt in LETTERS if score >= cut), "F")
@@ -530,7 +560,8 @@ def cat_breakdown(trades: list[dict], cats: dict | None, grades: dict) -> dict:
 
 
 def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float,
-                 account_stops: dict | None = None, notes: dict | None = None, cats: dict | None = None) -> dict:
+                 account_stops: dict | None = None, notes: dict | None = None, cats: dict | None = None,
+                 keep: set | None = None) -> dict:
     g = grade(rows, results)
     accounts = []
     paper_c = {}
@@ -544,25 +575,32 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         settle, settle_low = mean_low(window)
         f300, _ = mean_low(o.get("follow_300", []))
         f1800, _ = mean_low(o.get("follow_1800", []))
-        score, gl = score_grade(settle_all[-GO_LIVE_SLOW_FILLS:])   # rolling: the last 150 copies
+        ev_all = o.get("settle_ev", [])[-GO_LIVE_SLOW_FILLS:]
+        score, gl = score_grade(settle_all[-GO_LIVE_SLOW_FILLS:], ev_all)   # rolling: the last 150 copies
+        n_ev = len(set(ev_all))
+        kept = nick in (keep or ())               # Alex's hand-picked real test (copycat_control.json "keep")
         due = (n >= GO_LIVE_SLOW_FILLS or (n >= GO_LIVE_FILLS and (score or 0) >= GO_LIVE_FAST_SCORE)) \
             and len(settle_all) >= GO_LIVE_SETTLED
         banked = sum(settle_all) / 100            # $ a 1-contract copy would have made, all-time
         leeway = leeway_c(banked, score)
-        copyable = score is not None and score >= COPY_SCORE
+        copyable = score is not None and score >= COPY_SCORE and n_ev >= MIN_EVENTS
         rmean = st.mean(window) if window else None
         cg = cat_grades(o.get("trades") or [], cats)
         if n >= CAT_DETAIL_MIN:
             cg = cat_breakdown(o.get("trades") or [], cats, cg)
         paper_c.update({t["tid"]: t["c"] for t in o.get("trades") or [] if t.get("c") is not None})
-        if not due:
-            verdict = "watching"
-        elif (account_stops or {}).get(nick):
+        if (account_stops or {}).get(nick) and (due or kept):
             verdict = "benched"                   # its own real-money loss stop, or the boss
+        elif kept:
+            verdict = "passes"                    # stays on real money whatever its score, inside its $ limit
+        elif not due:
+            verdict = "watching"
         elif copyable and rmean is not None and rmean >= -leeway:
             verdict = "passes"
         elif copyable:
             verdict = "slump"                     # good record, recent run below its leeway
+        elif score is not None and score >= COPY_SCORE:
+            verdict = "watching"                  # good score but too few different events yet: not a fail
         else:
             verdict = "fails"
         accounts.append({"nick": nick, "watched": nick in watch, **(watch.get(nick) or {}),
@@ -570,13 +608,15 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "lag_s": round(st.median(o["lag"]), 1) if n else None,
                          "follow_5m_c": f300, "follow_30m_c": f1800,
                          "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict,
-                         "grade": gl, "score": score, "banked": round(banked, 2), "leeway_c": round(leeway, 1),
-                         "size": size_for(score, len(settle_all)) if verdict == "passes" else 0,
+                         "grade": gl, "score": score, "events": n_ev, "kept": kept, "banked": round(banked, 2), "leeway_c": round(leeway, 1),
+                         "size": (1 if kept and not copyable else size_for(score, len(settle_all)))
+                         if verdict == "passes" else 0,
                          "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None,
                          "cat_grades": cg, "blocked_cats": sorted(k for k, v in cg.items() if v["blocked"])})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
-            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}, and only with {GO_LIVE_SETTLED}+ settled. Score 0-100 from its last 150 copies "
+            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}, and only with {GO_LIVE_SETTLED}+ settled in {MIN_EVENTS}+ different events. Score 0-100 from its last 150 settled copies "
+            "that real money could have made (within 2c of their price, 5-95c), counting copies in one game together "
             "(after fees; 80 = break-even even in the pessimistic case). Copied at 80+ (B- or better) while its "
             f"last {ROLL_WINDOW} copies average better than -leeway (5c, +1c per $1 it has made us, +up to 5c "
             "for a high score); benched below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3",
@@ -606,7 +646,7 @@ def add_real(status: dict, state: dict | None) -> None:
         m, lo = mean_low(real_c)
         gap = round(st.mean(r - q for r, q in same), 2) if same else None
         a["real"].update(c=m, gap_c=gap, gap_n=len(same))
-        if len(real_c) >= REAL_MIN and a["verdict"] == "passes":
+        if len(real_c) >= REAL_MIN and a["verdict"] == "passes" and not a.get("kept"):
             hi = m + (m - lo)
             if (gap is not None and gap < -REAL_GAP_C) or hi < 0:
                 a["verdict"], a["size"] = "real-lag", 0
@@ -1264,7 +1304,9 @@ class Copycat:
         if self.boss is not None:
             stops.update({k: "boss: " + v["reason"] for k, v in self.boss.benches(now).items()})
             notes = dict(self.boss.state["notes"])
-        status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats)
+        keep = set((self.live.cfg.get("keep") or []) if self.live is not None else [])
+        status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats,
+                              keep=keep)
         add_real(status, self.live.state if self.live else None)
         for a in status["accounts"]:
             if a["verdict"] == "real-lag" and a["nick"] not in self.lag_told:

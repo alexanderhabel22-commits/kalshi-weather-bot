@@ -125,7 +125,11 @@ def test_grade_follow_and_settle():
     assert len(o["lag"]) == 1                          # backfill ignored
     assert round(o["move_300"][0], 1) == 11.0          # mid 0.61 - 0.50
     assert round(o["follow_300"][0], 1) == 5.0         # mid 0.61 - ask 0.54 - 2c taker fee
-    assert round(o["settle"][0], 1) == 44.0            # 1.00 - 0.54 - 2c fee
+    assert o["settle"] == []                           # ask ran 4c past their price: real money would
+    assert o["trades"][0]["c"] == 44.0 and o["trades"][0]["ok"] is False   # skip it, so it is not scored
+    rows_[1] = dict(rows_[1], bid=0.50, ask=0.52)      # within 2c: scored
+    o = copycat.grade(rows_, {"T": "yes"})["sharp"]
+    assert round(o["settle"][0], 1) == 46.0 and o["settle_ev"] == ["T"]   # 1.00 - 0.52 - 2c fee
 
 
 def test_status_verdicts(tmp_path):
@@ -622,3 +626,30 @@ def test_results_fetched_in_batches_least_recently_checked_first(tmp_path):
     cc.fetch_results((want - set(cc.results)) | late, 5300.0)
     asked = {t for c in ses.calls[len(calls):] for t in c[1]["tickers"].split(",")}
     assert late <= asked and "OPEN2499" in asked and "OPEN1949" not in asked
+
+
+def _acct_rows(nick, n, tick, win):
+    out = []
+    for i in range(n):
+        out += [{"kind": "fill", "trade_id": f"{nick}{i}", "nick": nick, "ticker": tick(i), "side": "yes",
+                 "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
+                {"kind": "snap", "trade_id": f"{nick}{i}", "ticker": tick(i), "delay": 0, "bid": 0.50, "ask": 0.52}]
+    return out, {tick(i): ("yes" if win(i) else "no") for i in range(n)}
+
+
+def test_honest_grade_counts_games_once_and_needs_30_events():
+    # 160 copies, 80% winners at 52c, but all in 8 games (20 copies each, a game wins or loses whole)
+    rows_, res = _acct_rows("lucky", 160, lambda i: f"KXG-G{i // 20}-M{i}", lambda i: i // 20 not in (3, 6))
+    a = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0)["accounts"][0]
+    assert a["events"] == 8 and a["verdict"] == "fails"          # was a pass when each copy counted alone
+    assert copycat.score_grade([c for c in copycat.grade(rows_, res)["lucky"]["settle"]])[0] >= 80
+    # the same record spread over 160 games passes
+    rows2, res2 = _acct_rows("real", 160, lambda i: f"KXG-G{i}-M", lambda i: i % 10 < 8)
+    b = copycat.build_status(rows2, res2, {"real": {}}, now=2000.0)["accounts"][0]
+    assert b["events"] == 150 and b["verdict"] == "passes" and b["size"] >= 1
+    # a kept account stays on real money at 1 contract whatever its score, unless its own stop benched it
+    k = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"})["accounts"][0]
+    assert k["verdict"] == "passes" and k["size"] == 1 and k["kept"]
+    k2 = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"},
+                              account_stops={"lucky": "own stop"})["accounts"][0]
+    assert k2["verdict"] == "benched" and k2["size"] == 0
