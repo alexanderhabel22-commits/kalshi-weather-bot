@@ -1,5 +1,5 @@
 {
- "at": "2026-11-14T11:03:01+00:00",
+ "at": "2026-11-14T11:19:31+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -122,23 +122,6 @@
    "close": "2027-01-01T15:00:00Z",
    "end": "2026-11-21T05:00:00Z"
   },
-  "KXASPENMTNOPEN-27-29NOV26": {
-   "side": "no",
-   "px": 0.01,
-   "n": 250,
-   "cost": 2.5,
-   "share": 0.2,
-   "mid": 0.985,
-   "pool": 400.0,
-   "days": 7.0,
-   "est_day": 5.7143,
-   "per_dollar": 2.2857142857142856,
-   "ref": 0.01,
-   "best": 0.01,
-   "ticker": "KXASPENMTNOPEN-27-29NOV26",
-   "close": "2026-12-05T15:00:00Z",
-   "end": "2026-11-18T05:00:00Z"
-  },
   "KXWAAEROEMP-27APR30-T91000": {
    "side": "yes",
    "px": 0.01,
@@ -154,6 +137,23 @@
    "best": 0.01,
    "ticker": "KXWAAEROEMP-27APR30-T91000",
    "close": "2027-04-30T15:29:00Z",
+   "end": "2026-11-20T05:00:00Z"
+  },
+  "KXFLVISITORCOUNT-27FEB26-T136": {
+   "side": "no",
+   "px": 0.01,
+   "n": 250,
+   "cost": 2.5,
+   "share": 0.2,
+   "mid": 0.985,
+   "pool": 250.0,
+   "days": 7.0,
+   "est_day": 3.5714,
+   "per_dollar": 1.4285714285714286,
+   "ref": 0.01,
+   "best": 0.01,
+   "ticker": "KXFLVISITORCOUNT-27FEB26-T136",
+   "close": "2027-02-26T14:59:00Z",
    "end": "2026-11-20T05:00:00Z"
   },
   "KXWAAEROEMP-27APR30-T80000": {
@@ -240,6 +240,23 @@
    "ticker": "KXILNUCLEAR-27FEB28-T87.5",
    "close": "2027-02-28T14:59:00Z",
    "end": "2026-11-20T05:00:00Z"
+  },
+  "KXASPENMTNOPEN-27-29NOV26": {
+   "side": "no",
+   "px": 0.01,
+   "n": 250,
+   "cost": 2.5,
+   "share": 0.2,
+   "mid": 0.985,
+   "pool": 400.0,
+   "days": 7.0,
+   "est_day": 5.7143,
+   "per_dollar": 2.2857142857142856,
+   "ref": 0.01,
+   "best": 0.01,
+   "ticker": "KXASPENMTNOPEN-27-29NOV26",
+   "close": "2026-12-05T15:00:00Z",
+   "end": "2026-11-18T05:00:00Z"
   },
   "KXTXINCOMETAX-30JAN01-28JAN01": {
    "side": "yes",
@@ -1304,12 +1321,6 @@
  "credits": [],
  "events": [
   {
-   "t": 1794477962,
-   "kind": "cancel",
-   "ticker": "KXNASHVILLEMAYOR-27-LWIL",
-   "why": "up to 5c (reference price)"
-  },
-  {
    "t": 1794477963,
    "kind": "place",
    "ticker": "KXNASHVILLEMAYOR-27-LWIL",
@@ -2019,6 +2030,25 @@
    ],
    "current_net_day": 42.63,
    "picks_net_day": 41.43
+  },
+  {
+   "t": 1794654538,
+   "kind": "select",
+   "programs": 4951,
+   "checked": 34,
+   "chosen": [
+    "KXASPENMTNOPEN-27-29NOV26",
+    "KXFLVISITORCOUNT-27FEB26-T136",
+    "KXILNUCLEAR-27FEB28-T87.5",
+    "KXNYCASKRENT-27JAN31-T4500",
+    "KXONIONACT-30JAN01-27JAN01",
+    "KXTXINCOMETAX-30JAN01-28JAN01",
+    "KXWAAEROEMP-27APR30-T80000",
+    "KXWAAEROEMP-27APR30-T91000",
+    "KXWAAEROEMP-27APR30-T92000",
+    "KXWATECHEMP-27FEB28-T235000"
+   ],
+   "est_day": 46.21
   }
  ]
 }
