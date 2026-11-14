@@ -179,6 +179,10 @@ record earns it. Be candid about odds and risk; no hype.
   days up, about 8 fills a month. Done Nov 12 2:34 PM ET (Alex: "whatever you recommend"):
   Mentions to paper, Fed/CPI 1 -> 3 contracts. Late-day lows 1 -> 2 after its ~Nov 26 review if it holds. Re-run: push research_main/fetch.py on the research branch (workflow
   main-audit-research, output on branch main-audit-data), then replay.py and analyze.py.
+- **Best-AI fade (REAL 3 contracts, Nov 14):** `wxbot/strats/ai_fade.py`, `[trading.ai_fade]`. The macro_fade
+  rule (NO 71-95c, rest to close) on KXLLM1 "Best AI this week". Replay +5.1c +- 1.8/fill, 85 fills, 40/43
+  events, both years. The broader test of the Fed fade on ~120 non-econ series was ~0 (+0.4c), see
+  /mnt/project-files/analysis/fade-events/RESULTS.md. Alex OK Nov 14 ~2 AM ET ("+5c is +5c let's add it").
 - **Fed/CPI fade on weekly gas + jobless claims (PAPER, Nov 12):** `wxbot/strats/macro_wide.py`,
   `[trading.macro_wide]` (REAL 1-contract test since Nov 12, Alex OK). Same rule as macro_fade on KXAAAGASW and KXJOBLESSCLAIMS. Replay of 11
   extra scheduled-number series (Nov 2025-Nov 2026): these two +6.6c +- 2.7 per fill over 90 weekly

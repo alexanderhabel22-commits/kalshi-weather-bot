@@ -34,7 +34,7 @@ NAMES = {"KXBTC15M": "BTC", "KXSILVER15M": "Silver", "KXCOPPER15M": "Copper",
          "KXPALLADIUM15M": "Palladium", "KXPLATINUM15M": "Platinum", "KXWTI15M": "WTI oil",
          "KXBRENT15M": "Brent oil", "KXGOLD15M": "Gold", "KXNATGAS15M": "Natural gas",
          "mentions": "Mentions", "favorites": "Favorites", "macro_fade": "Fed/CPI",
-         "macro_wide": "Gas/claims fade", "favorites_wide": "Election favorites", "favorites_late": "Favorites, last 24h (paper)",
+         "macro_wide": "Gas/claims fade", "ai_fade": "Best-AI fade", "favorites_wide": "Election favorites", "favorites_late": "Favorites, last 24h (paper)",
          "weather": "Weather", "weather_late": "Late-day weather", "locks": "LOCKs",
          "rain_evening": "Evening rain fade", "spx_range": "S&P range fade"}
 KELLY = 0.25          # quarter Kelly

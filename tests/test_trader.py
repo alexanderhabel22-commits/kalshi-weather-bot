@@ -508,7 +508,9 @@ def test_only_approved_strategies_trade_real_money():
     # Alex, Nov 12 2:38 PM ET ("ok testing with real money"): the two new rules at 1 contract.
     # Nov 13 (Alex's Nov 12 OK for ideas clearing +3c): evening rain fade at 1 contract.
     # Alex, Nov 13 10:13 AM ET (decision card "Yes, 1 contract real"): S&P range fade, 1 contract.
-    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range"}
+    # Alex, Nov 14 ("+5c is +5c let's add it"): Best-AI fade (KXLLM1), 3 contracts.
+    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade"}
+    assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 3
     assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 1
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 1
     assert c.raw["trading"]["macro_fade"]["contracts"] == 3
@@ -880,6 +882,20 @@ def test_macro_wide_is_paper_and_relabels_macro_fade_picks():
     out = macro_wide.candidates(ms, p, NOW)
     assert [i.ticker for i in out] == [i.ticker for i in base] == ["KXJOBLESSCLAIMS-26NOV19-A"]
     assert out[0].strategy == "macro_wide" and out[0].price == 0.87 and out[0].count == 1
+
+
+def test_ai_fade_relabels_macro_fade_picks_on_kxllm1():
+    from wxbot.strats import ai_fade
+    c = cfg(mode="live")
+    close = (NOW + timedelta(days=3)).isoformat().replace("+00:00", "Z")
+    ms = [{"ticker": f"KXLLM1-26NOV30-{k}", "event_ticker": "KXLLM1-26NOV30",
+           "close_time": close, "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}",
+           "volume": 2000} for k, yb, ya in (("A", 0.12, 0.13), ("GOOG", 0.85, 0.86), ("XAI", 0.01, 0.02))]
+    p = c.raw["trading"]["ai_fade"]
+    assert p["series"] == ["KXLLM1"] and p["live"] is True
+    out = ai_fade.candidates(ms, p, NOW)
+    assert [i.ticker for i in out] == ["KXLLM1-26NOV30-A"]
+    assert out[0].strategy == "ai_fade" and out[0].price == 0.87 and out[0].count == 3   # 1c spread: joins the 87c NO bid
 
 
 def test_favorites_late_logs_last_24h_markets_on_paper():
