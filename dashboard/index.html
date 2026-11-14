@@ -685,7 +685,7 @@ function ccCats(a){
   const G = a.cat_grades || {}, keys = Object.keys(G);
   const gcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
   const ct = v => v == null ? "—" : cents(v);
-  if (!keys.length) return `<div class="mute" style="font-size:12px;margin-top:10px">No copies yet, so no categories to grade.</div>`;
+  if (!keys.length) return `<div class="mute" style="font-size:12px;margin-top:10px">${a.cat_grades ? "No copies yet, so no categories to grade." : "Category grades show here after the Copycat server's next update (it updates itself every hour)."}</div>`;
   // real copies of this account, matched to a category by the market's series
   const L = ((S.cc || {}).live) || {}, real = [...(L.open || []), ...(L.settled || [])].filter(p => p.nick === a.nick);
   const catOf = t => { const s0 = String(t || "").split("-")[0]; return keys.find(k => (G[k].all_series || []).includes(s0)) || null; };
