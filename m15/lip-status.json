@@ -1,5 +1,5 @@
 {
- "at": "2026-11-14T12:06:19+00:00",
+ "at": "2026-11-14T12:21:57+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 10.54,
+ "resting_cost": 10.98,
  "filled_cost": 0,
  "orders": {
   "KXTXINCOMETAX-30JAN01-28JAN01": {
@@ -99,6 +99,16 @@
    "n": 106,
    "filled": 0.0,
    "at": 1794634050.6473706,
+   "mid0": 0.985
+  },
+  "KXFLVISITORCOUNT-27FEB26-T136": {
+   "id": "01a1d9f8-39b0-78ca-bf6b-fc161579bc6d",
+   "cid": "lip-e347b171c3af475b",
+   "side": "no",
+   "px": 0.01,
+   "n": 44,
+   "filled": 0.0,
+   "at": 1794658286.9993858,
    "mid0": 0.985
   }
  },
@@ -618,6 +628,11 @@
     "ahead": 0,
     "others": 1000.0,
     "share": 0.0958
+   },
+   "KXFLVISITORCOUNT-27FEB26-T136": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.0421
    }
   }
  },
@@ -1320,15 +1335,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794477963,
-   "kind": "place",
-   "ticker": "KXNASHVILLEMAYOR-27-LWIL",
-   "side": "yes",
-   "px": 0.05,
-   "n": 45,
-   "est_day": 2.4892
-  },
   {
    "t": 1794478278,
    "kind": "cancel",
@@ -2049,6 +2055,15 @@
     "KXWATECHEMP-27FEB28-T235000"
    ],
    "est_day": 46.21
+  },
+  {
+   "t": 1794658287,
+   "kind": "place",
+   "ticker": "KXFLVISITORCOUNT-27FEB26-T136",
+   "side": "no",
+   "px": 0.01,
+   "n": 44,
+   "est_day": 3.5714
   }
  ]
 }
