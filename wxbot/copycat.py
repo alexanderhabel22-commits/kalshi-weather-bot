@@ -594,7 +594,14 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         if (account_stops or {}).get(nick) and (due or kept):
             verdict = "benched"                   # its own real-money loss stop, or the boss
         elif kept:
-            verdict = "passes"                    # stays on real money whatever its score, inside its $ limit
+            # Alex's keep list skips only the sample-size bar (copies, settled, different events);
+            # score, recent run, real-vs-paper and every $ stop still apply (Alex, Nov 14)
+            if score is not None and score < COPY_SCORE:
+                verdict = "fails"
+            elif rmean is not None and score is not None and rmean < -leeway:
+                verdict = "slump"
+            else:
+                verdict = "passes"
         elif not due:
             verdict = "watching"
         elif copyable and rmean is not None and rmean >= -leeway:
@@ -648,7 +655,7 @@ def add_real(status: dict, state: dict | None) -> None:
         m, lo = mean_low(real_c)
         gap = round(st.mean(r - q for r, q in same), 2) if same else None
         a["real"].update(c=m, gap_c=gap, gap_n=len(same))
-        if len(real_c) >= REAL_MIN and a["verdict"] == "passes" and not a.get("kept"):
+        if len(real_c) >= REAL_MIN and a["verdict"] == "passes":
             hi = m + (m - lo)
             if (gap is not None and gap < -REAL_GAP_C) or hi < 0:
                 a["verdict"], a["size"] = "real-lag", 0
