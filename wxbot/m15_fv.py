@@ -527,6 +527,23 @@ class LagProbe:
                 self.open.remove(ev)
         self._write(rows, now)
 
+    def place_check(self, bot, m: dict, side: str, q: float, n: int, now: float) -> None:
+        """Right before a LIVE bid goes in: the real REST book next to the cached quote the
+        bot priced from. stage=place; ws_ask = the cached best bid for our side (what we're
+        joining), book_bid / book_ask = the real ones, depth_ask = contracts already bid at
+        our price q, depth_edge = our price q, fair = our side's fair value."""
+        y = self._fair(m, now) if self.sh.coin.get(m.get("series")) else None
+        cq = bot.quote(m["ticker"], now) if hasattr(bot, "quote") else None
+        cached = None
+        if cq and _q(cq, "yes_bid") not in ("", None):
+            cached = float(_q(cq, "yes_bid")) if side == "yes" else (
+                round(1.0 - float(_q(cq, "yes_ask")), 4) if _q(cq, "yes_ask") not in ("", None) else None)
+        book, ms = self._book(bot, m["ticker"])
+        ask, _, bid = self._best(book, side)
+        at_q = sum(c for p, c in (book or {}).get(side, []) if abs(p - q) < 1e-9) if book else ""
+        ev = {"jid": f"{m['ticker']}@{int(now)}", "m": m, "side": side, "y0": None}
+        self._write([self._row(now, ev, "place", y, cached, ask, at_q, q, bid, ms, n, "")], now)
+
     def _row(self, now, ev, stage, y, ws_ask, ask, depth, edge, bid, ms, at, anyc):
         m, side = ev["m"], ev["side"]
         sv = (lambda v: "" if v is None else round(v if side == "yes" else 1.0 - v, 4))

@@ -599,6 +599,12 @@ class Bot(FillQuality):
     def _place(self, m: dict, side: str, q: float, n: int, now: float) -> bool:
         o = {"side": side, "q": q, "n": n, "filled": 0, "t0": now, "id": None}
         if m["mode"] == "live":
+            lag = getattr(self.fv, "lag", None) if self.fv is not None else None
+            if lag is not None:                  # shadow: is the cached quote stale vs the real book?
+                try:
+                    lag.place_check(self, m, side, q, n, now)
+                except Exception as exc:
+                    log.warning("place check %s: %s", m["ticker"], exc)
             cid = f"m15-{m['ticker']}-{int(now)}"[:60]
             try:
                 r = self.client.place_limit(m["ticker"], side, q, n, cid)
