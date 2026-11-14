@@ -493,6 +493,40 @@ def cat_grades(trades: list[dict], cats: dict | None) -> dict:
     return out
 
 
+CAT_DETAIL_MIN = 20         # dashboard Categories tab (Nov 14): full per-category breakdown only for accounts
+                            # with 20+ copies (keeps status.json small; smaller accounts show grades only)
+BANDS = (("5-25c", 5, 25), ("25-50c", 25, 50), ("50-75c", 50, 75), ("75-95c", 75, 96))
+
+
+def cat_breakdown(trades: list[dict], cats: dict | None, grades: dict) -> dict:
+    """Adds to each category's grade: copies (settled or not), won/lost, price bands and series
+    (each [copies, settled, avg c]) and the 3 newest copies. Categories with no settled copy yet get a row too."""
+    by: dict = defaultdict(list)
+    for t in trades:
+        by[(cats or {}).get((t.get("ticker") or "").split("-")[0]) or "unknown"].append(t)
+    out = {k: dict(v) for k, v in grades.items()}
+    for k, tr in by.items():
+        g = out.setdefault(k, {"n": 0, "c": None, "low": None, "grade": "-", "score": None, "blocked": False})
+        done = [t for t in tr if t.get("c") is not None]
+        g.update(copies=len(tr), won=sum(1 for t in done if t["c"] > 0), lost=sum(1 for t in done if t["c"] <= 0))
+        bands, ser = {}, defaultdict(list)
+        for lbl, lo, hi in BANDS:
+            b = [t for t in tr if lo <= (t.get("pay_c") or 0) < hi]
+            d = [t["c"] for t in b if t.get("c") is not None]
+            if b:
+                bands[lbl] = [len(b), len(d), round(st.mean(d), 1) if d else None]
+        for t in tr:
+            ser[(t.get("ticker") or "").split("-")[0]].append(t)
+        g["bands"] = bands
+        g["series"] = [[s_, len(v), len(d), round(st.mean(d), 1) if d else None]
+                       for s_, v in sorted(ser.items(), key=lambda kv: -len(kv[1]))[:5]
+                       for d in [[t["c"] for t in v if t.get("c") is not None]]]
+        g["all_series"] = sorted(ser)
+        g["latest"] = [{"et": t.get("et"), "ticker": t.get("ticker"), "side": t.get("side"),
+                        "pay_c": t.get("pay_c"), "c": t.get("c")} for t in tr[-3:][::-1]]
+    return out
+
+
 def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float,
                  account_stops: dict | None = None, notes: dict | None = None, cats: dict | None = None) -> dict:
     g = grade(rows, results)
@@ -516,6 +550,8 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         copyable = score is not None and score >= COPY_SCORE
         rmean = st.mean(window) if window else None
         cg = cat_grades(o.get("trades") or [], cats)
+        if n >= CAT_DETAIL_MIN:
+            cg = cat_breakdown(o.get("trades") or [], cats, cg)
         paper_c.update({t["tid"]: t["c"] for t in o.get("trades") or [] if t.get("c") is not None})
         if not due:
             verdict = "watching"
