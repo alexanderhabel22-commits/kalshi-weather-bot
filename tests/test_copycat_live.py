@@ -77,13 +77,13 @@ def test_held_elsewhere_and_pool(tmp_path):
 
 def test_settle_and_stops(tmp_path):
     alerts = []
-    lv, rows = mk(tmp_path, bankroll=10.0)
+    lv, rows = mk(tmp_path, bankroll=12.5)
     lv.alert = lambda t, b: alerts.append(t)
     lv.maybe_copy(ACCT, FILL, SNAP, 1000.0)          # 2 yes at 62c + 2c fee = $1.26
     done = lv.settle({"KXFOO-1": "no"}, 2000.0)
     assert done and lv.state["pnl"]["ace"] == -1.26
-    assert "ace" in lv.benched()                      # -$1.26 < 10% of $10
-    assert lv.state["halted"] is None                 # total stop is 25% = $2.50
+    assert "ace" in lv.benched()                      # -$1.26 < 10% of $12.50
+    assert lv.state["halted"] is None                 # total stop is 25% = $3.13
     assert alerts == ["Copycat benched an account"]
     assert any(r["kind"] == "settle" for r in rows)
 
@@ -271,13 +271,32 @@ def test_boss_digest_is_trimmed():
 
 def test_hard_dollar_account_stop(tmp_path):
     alerts = []
-    lv, _ = mk(tmp_path, bankroll=1000.0)            # 10% = $100, so the $3 cap is what bites
+    lv, _ = mk(tmp_path, bankroll=1000.0)            # 10% = $100, so the $5 cap is what bites
     lv.alert = lambda t, b: alerts.append(b)
-    lv.state["pnl"]["ace"] = -2.99
+    lv.state["pnl"]["ace"] = -4.99
     lv.check_stops(1000.0)
     assert "ace" not in lv.benched()
-    lv.state["pnl"]["ace"] = -3.0
+    lv.state["pnl"]["ace"] = -5.0
     lv.check_stops(1000.0)
     assert "ace" in lv.benched() and len(alerts) == 1 and "paper" in alerts[0]
     lv.check_stops(1000.0)
     assert len(alerts) == 1                           # one push only
+
+
+def test_trader_limit_counts_open_copies_and_one_copy_per_event(tmp_path):
+    lv, _ = mk(tmp_path, bankroll=1000.0)            # pool $150, so only the $5 trader limit bites
+    acct = dict(ACCT, size=3)
+    assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-A-X"), SNAP, 1000.0) == "copied"      # 3 x 62c + fee = $1.88
+    assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-A-Y"), SNAP, 1000.0) == "already copied this event"
+    assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-B-X"), SNAP, 1000.0) == "copied"      # $3.76 at risk
+    assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-C-X"), SNAP, 1000.0) == "copied"      # cut to 1 contract
+    assert lv.client.orders[-1][3] == 1 and 4.3 < lv.at_risk("ace") <= 5.0
+    assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-D-X"), SNAP, 1000.0).startswith("trader limit")
+    assert lv.maybe_copy(dict(acct, nick="bee"), dict(FILL, nick="bee", ticker="KXG-D-X"), SNAP, 1000.0) == "copied"
+    lv.settle({"KXG-A-X": "no"}, 1100.0)             # a settled loss still counts; the event frees up
+    assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-E-X"), SNAP, 1101.0).startswith("trader limit")
+    lv.settle({"KXG-B-X": "yes", "KXG-C-X": "yes"}, 1200.0)   # wins: net settled loss is now $0.40
+    assert round(lv.at_risk("ace"), 2) == 0.4
+    lv.state["pnl"]["ace"] = 2.0                     # banked real profit = earned room: limit $7
+    assert lv.account_limit("ace") == 7.0 and lv.account_limit("bee") == 5.0
+    assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-A-Y"), SNAP, 1201.0) == "copied"

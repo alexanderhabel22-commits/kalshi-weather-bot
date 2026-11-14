@@ -393,9 +393,12 @@ IP without a token). It never places, changes or cancels anything and needs no s
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
   account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
   their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
-  bot's live series. Rails in `copycat_control.json`: open copies <= 15% of bankroll, an account is
-  benched after losing 10% of bankroll on real copies, Copycat halts at -25% total (reset: edit
-  live_state.json "halted" to null). Alex approved real money at the 100-copy threshold on Nov 10.
+  bot's live series, and one open copy per event (game). Rails in `copycat_control.json`: open copies
+  <= 15% of bankroll; per account a hard total-at-risk limit (Alex, Nov 14): settled real losses plus
+  the cost of its open real copies never pass `account_stop_usd` ($5, or 10% of bankroll if smaller)
+  plus whatever real profit it has banked for us ("earned room"); a copy that would pass it is
+  skipped, and settled losses alone at the limit send it back to paper with one push. Copycat halts
+  at -25% total (reset: edit live_state.json "halted" to null). Alex approved real money at the 100-copy threshold on Nov 10.
 - The boss (`wxbot/copycat_boss.py`): Claude Haiku triage every 15 min; Claude Opus full review every
   2 h when something changed or when Haiku asks (max 16/day). Writes a plain-English note per
   account and a summary (dashboard), can bench an account 24 h for a reason the numbers can't see
