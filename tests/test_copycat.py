@@ -533,3 +533,18 @@ def test_old_whale_rows_never_loaded_and_rows_share_strings(tmp_path):
     assert len(fills) == 2                                  # copies are kept whatever their age
     assert fills[0]["ticker"] is fills[1]["ticker"]         # interned: one string shared by every row
     copycat._ROW_CACHE.clear()
+
+
+def test_needs_40_settled_before_real(tmp_path):
+    rows_ = []
+    for i in range(160):
+        tid = f"t{i}"
+        rows_ += [{"kind": "fill", "trade_id": tid, "nick": "good", "ticker": f"T{i}", "side": "yes",
+                   "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
+                  {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
+    few = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(39)}       # 160 seen, 39 settled
+    a = copycat.build_status(rows_, few, {"good": {}}, now=2000.0)["accounts"][0]
+    assert a["fills"] == 160 and a["settled"] == 39 and a["verdict"] == "watching"
+    more = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(40)}
+    a = copycat.build_status(rows_, more, {"good": {}}, now=2000.0)["accounts"][0]
+    assert a["verdict"] == "passes"
