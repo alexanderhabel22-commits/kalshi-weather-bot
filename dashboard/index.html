@@ -480,7 +480,7 @@ function ccPage(){
   if (!c) return `<h2>Copycat <span class="sub">starting up</span></h2><div class="card"><div class="mute">No data yet. Copycat posts its first status about 5 minutes after it starts on the server.</div></div>`;
   const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
   const L = c.live || {}, live = c.mode === "live", B = c.boss || {};
-  const tag = {watching:["#94a3c8","testing on paper"], passes:["#34d399", live ? "COPYING WITH REAL MONEY" : "qualified (real money off)"], slump:["#f5b335","slump, paused"], benched:["#f87171","benched"], fails:["#f87171","not copied"]};
+  const tag = {watching:["#94a3c8","testing on paper"], passes:["#34d399", live ? "COPYING WITH REAL MONEY" : "qualified (real money off)"], slump:["#f5b335","slump, paused"], "real-lag":["#f5b335","back to paper (real money lagged)"], benched:["#f87171","benched"], fails:["#f87171","not copied"]};
   const gcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
   const acc = (c.accounts || []).slice().sort((a, b) => (((b.real || {}).copies || 0) - ((a.real || {}).copies || 0)) || ((b.score ?? -1) - (a.score ?? -1)) || ((b.fills || 0) - (a.fills || 0)));
   const n = k => acc.filter(a => a.verdict === k).length;
@@ -492,7 +492,7 @@ function ccPage(){
     <div class="hero"><div><div class="lbl">Real-money P&L · all time</div><div class="big ${cls(num(L.total_pnl))}">${money(num(L.total_pnl))}</div>
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">switch ${esc(String(L.control || "off").toUpperCase())}${live ? ` · <span class="pos">● live</span>` : ""}${stopTxt}</div></div>
     <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div>
-    <div class="lbl" style="margin-top:8px">Copying / testing / out</div><div class="val" style="font-size:17px">${n("passes")} / ${n("watching")} / ${n("fails") + n("slump") + n("benched")}</div></div></div>
+    <div class="lbl" style="margin-top:8px">Copying / testing / out</div><div class="val" style="font-size:17px">${n("passes")} / ${n("watching")} / ${n("fails") + n("slump") + n("benched") + n("real-lag")}</div></div></div>
     <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Every account starts on <b>paper</b>: we score each of its trades as if we had copied it ~10 s later, after Kalshi's fee. Strong accounts (B+, 87+) are tested at 100 paper copies, everyone else at 150. With a score of 80+ it moves to <b>real money</b> (1-3 contracts). Paper and real results are shown separately below.</div>${c.scan ? `<div class="s" style="margin-top:8px;white-space:normal;font-size:12px">Scanning every public Kalshi trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> public traders seen so far, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones (lifetime or last 30 days) being tested${c.scan.dropped ? `, <b>${c.scan.dropped}</b> dropped` : ""}.</div>` : ""}</div>`;
   if (B.summary) h += `<h2>The boss <span class="sub">Claude · ${num(B.reviews_today)} reviews today</span></h2><div class="card"><div style="font-size:13px;line-height:1.5;color:#c4b5fd">${esc(B.summary)}</div>${Object.keys(B.benches || {}).length ? `<div class="s" style="margin-top:6px;white-space:normal">Benched by the boss: ${Object.entries(B.benches).map(([k, v]) => esc(k) + " (" + esc(v.reason) + ")").join(", ")}</div>` : ""}</div>`;
   const row = a => { const [col, lbl] = tag[a.verdict] || tag.watching, R = a.real || {};
@@ -513,7 +513,7 @@ function ccPage(){
     progress:["Closest to qualifying", a => a.verdict === "watching" ? (a.fills || 0) / ((a.score || 0) >= 87 ? 100 : 150) : -1],
     speed:["Fastest seen", a => -(a.lag_s ?? 999)], name:["Name", a => 0]};
   const sk = SORTS[S.ccSort] ? S.ccSort : "grade", q = (S.ccQ || "").trim().toLowerCase();
-  const OUT = ["benched", "slump", "fails"], drops = c.dropped || [];
+  const OUT = ["benched", "slump", "fails", "real-lag"], drops = c.dropped || [];
   const views = {active:["Active", a => !OUT.includes(a.verdict)], benched:["Benched or paused", a => OUT.includes(a.verdict)],
     solo:["Solo traders (takers)", a => !OUT.includes(a.verdict) && (a.fills || 0) >= 3 && ((a.detail || {}).maker_pct ?? 100) <= 30],
     dropped:["Dropped", () => false]};
@@ -552,6 +552,14 @@ function ccCard(nick){
   const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
   const gcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
   const stat = (l, v) => `<div><div class="lbl">${l}</div><div class="val" style="font-size:15px">${v}</div></div>`;
+  const catGradesHTML = a => {
+    const cg = Object.entries(a.cat_grades || {}).sort((x, y) => y[1].n - x[1].n);
+    const r = a.real || {};
+    const realLine = r.settled ? `<div class="s" style="white-space:normal;margin-top:6px">Real money: ${r.settled} settled, ${r.c != null ? ct(r.c) : "—"}/contract${r.gap_c != null ? ` · real vs paper on the same trades ${r.gap_c >= 0 ? "+" : ""}${r.gap_c.toFixed(1)}¢ (${r.gap_n})` : ""}${r.why ? ` · ${esc(r.why)}` : ""}</div>` : "";
+    if (!cg.length) return realLine;
+    return `<div class="lbl" style="margin-top:12px">Grade by category (paper, settled)</div>` + cg.map(([k, v]) =>
+      `<div class="item" style="padding:4px 0"><div class="main"><div class="t" style="font-size:12px">${esc(k)}${v.blocked ? ` <small style="color:#f87171">· blocked for real money</small>` : ""}</div><div class="s">${v.n} settled</div></div><div class="r"><span style="color:${gcol(v.grade)};font-weight:700">${esc(v.grade || "-")}</span><small class="${cls(v.c)}">${v.c != null ? ct(v.c) : ""}</small></div></div>`).join("") + realLine;
+  };
   const tr = t => `<div class="item" style="padding:5px 0"><div class="main" style="min-width:0"><div class="t" style="font-size:12px">${esc((t.side || "").toUpperCase())} · they paid ${t.their_c}¢ · we'd pay ${t.pay_c}¢ × ${esc(t.count)}${t.role ? " · " + esc(t.role) : ""}</div><div class="s">${esc(t.ticker)} · ${esc(t.et)} ET</div></div><div class="r">${t.c == null ? `<small class="mute">open</small>` : `<span class="${cls(t.c)}">${ct(t.c)}</span><small>${esc(String(t.result || "").toUpperCase())}</small>`}</div></div>`;
   const list = (title, arr) => `<div class="lbl" style="margin-top:14px">${title}</div>` + (arr && arr.length ? arr.map(tr).join("") : `<div class="mute" style="font-size:12px">None yet.</div>`);
   const bands = D.bands || {}, bt = Object.values(bands).reduce((x, y) => x + y, 0) || 1;
@@ -560,6 +568,7 @@ function ccCard(nick){
       <div class="s" style="white-space:normal">${(a.cats || []).length ? esc(a.cats.join(" / ")) + " · " : ""}${a.joined ? "on Kalshi since " + esc(String(a.joined).slice(0, 10)) : ""}</div></div>
       <div style="text-align:right"><div style="color:${gcol(a.grade)};font-weight:800;font-size:30px;line-height:1">${esc(a.grade || "-")}</div><small class="mute">${a.score != null ? a.score.toFixed(1) + " / 100" : "no score yet"}</small></div></div>
     ${a.boss_note ? `<div style="margin-top:10px;font-size:13px;color:#c4b5fd;line-height:1.45">Boss: ${esc(a.boss_note)}</div>` : ""}
+    ${catGradesHTML(a)}
     <div class="grid g3" style="margin-top:12px;gap:10px">
       ${stat("Lifetime Kalshi profit", a.pnl ? money(a.pnl).replace(".00", "") : "—")}
       ${stat("Their contracts", a.contracts != null ? Number(a.contracts).toLocaleString() : "—")}

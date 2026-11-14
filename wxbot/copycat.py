@@ -240,7 +240,7 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
                 o["settle"].append(100 * ((1.0 if res == side else 0.0) - pay) - fee)
         res = (results or {}).get(f["ticker"])
         out[f["nick"]]["trades"].append({
-            "et": (f.get("et") or "")[5:16], "ticker": f.get("ticker"), "side": side,
+            "tid": tid, "et": (f.get("et") or "")[5:16], "ticker": f.get("ticker"), "side": side,
             "their_c": round(100 * entry), "pay_c": round(100 * pay), "count": f.get("count"),
             "role": f.get("role"), "result": res,
             "c": round(100 * ((1.0 if res == side else 0.0) - pay) - fee, 1) if res in ("yes", "no") else None})
@@ -469,10 +469,35 @@ def size_for(score: float | None, n: int) -> int:
     return 3 if score >= 95 and n >= 300 else 2 if score >= 90 else 1
 
 
+CAT_MIN = 15                # category grades (Nov 14): a passing account is not copied for real in a
+                            # category where its 15+ settled paper copies there are clearly negative (even the
+                            # optimistic 95% bound < 0). Unlocking categories for non-passing accounts tested noisy
+                            # out of sample on 3.7 days of data (sign flipped between splits): revisit ~Nov 28.
+REAL_MIN = 20               # real-money check: after 20 settled real copies, back to paper if real trails paper
+REAL_GAP_C = 3.0            # (same trades) by more than 3c/contract, or real is clearly negative
+
+
+def cat_grades(trades: list[dict], cats: dict | None) -> dict:
+    """Per Kalshi category: settled paper copies, c/contract, grade, and whether it is blocked."""
+    by: dict = defaultdict(list)
+    for t in trades:
+        if t.get("c") is not None:
+            by[(cats or {}).get((t.get("ticker") or "").split("-")[0]) or "unknown"].append(t["c"])
+    out = {}
+    for k, v in by.items():
+        m, lo = mean_low(v)
+        hi = m + (m - lo) if len(v) > 1 else None
+        sc, gl = score_grade(v)
+        out[k] = {"n": len(v), "c": m, "low": lo, "grade": gl, "score": sc,
+                  "blocked": len(v) >= CAT_MIN and hi is not None and hi < 0}
+    return out
+
+
 def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float,
-                 account_stops: dict | None = None, notes: dict | None = None) -> dict:
+                 account_stops: dict | None = None, notes: dict | None = None, cats: dict | None = None) -> dict:
     g = grade(rows, results)
     accounts = []
+    paper_c = {}
     for nick in sorted(set(watch) | {n for n in g if n != "ALL"}):
         o = g.get(nick) or {}
         n = len(o.get("lag", []))
@@ -490,6 +515,8 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         leeway = leeway_c(banked, score)
         copyable = score is not None and score >= COPY_SCORE
         rmean = st.mean(window) if window else None
+        cg = cat_grades(o.get("trades") or [], cats)
+        paper_c.update({t["tid"]: t["c"] for t in o.get("trades") or [] if t.get("c") is not None})
         if not due:
             verdict = "watching"
         elif (account_stops or {}).get(nick):
@@ -507,21 +534,26 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict,
                          "grade": gl, "score": score, "banked": round(banked, 2), "leeway_c": round(leeway, 1),
                          "size": size_for(score, len(settle_all)) if verdict == "passes" else 0,
-                         "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None})
+                         "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None,
+                         "cat_grades": cg, "blocked_cats": sorted(k for k, v in cg.items() if v["blocked"])})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
             "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}, and only with {GO_LIVE_SETTLED}+ settled. Score 0-100 from its last 150 copies "
             "(after fees; 80 = break-even even in the pessimistic case). Copied at 80+ (B- or better) while its "
             f"last {ROLL_WINDOW} copies average better than -leeway (5c, +1c per $1 it has made us, +up to 5c "
             "for a high score); benched below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3",
-            "accounts": accounts,
+            "accounts": accounts, "_paper_c": paper_c,
             "recent": [{k: r.get(k) for k in ("et", "nick", "ticker", "side", "yes_price", "count",
                                                   "role", "lag_s")} for r in reversed(recent)]}
 
 
 def add_real(status: dict, state: dict | None) -> None:
-    """Puts each account's REAL-money record next to its paper (shadow) record."""
+    """Puts each account's REAL-money record next to its paper (shadow) record, and measures what
+    paper still misses (IOC misses, our 2c limit, the ~16 s delay, thin books): real c/contract minus
+    paper c/contract on the same trades. After REAL_MIN settled real copies an account goes back to
+    paper ("real-lag") if real trails paper by more than REAL_GAP_C, or real is clearly negative."""
     pos = (state or {}).get("positions") or {}
+    paper = status.pop("_paper_c", None) or {}
     for a in status["accounts"]:
         mine = [p for p in pos.values() if p.get("nick") == a["nick"]]
         done = [p for p in mine if p.get("settled")]
@@ -530,6 +562,18 @@ def add_real(status: dict, state: dict | None) -> None:
                      "contracts": round(sum(p.get("n") or 0 for p in mine), 2),
                      "open_cost": round(sum(p.get("cost") or 0 for p in mine if not p.get("settled")), 2),
                      "pnl": round(((state or {}).get("pnl") or {}).get(a["nick"], 0.0), 2)}
+        real_c = [100 * (p.get("pnl") or 0) / p["n"] for p in done if p.get("n")]
+        same = [(100 * (p.get("pnl") or 0) / p["n"], paper[p["trade_id"]]) for p in done
+                if p.get("n") and p.get("trade_id") in paper]
+        m, lo = mean_low(real_c)
+        gap = round(st.mean(r - q for r, q in same), 2) if same else None
+        a["real"].update(c=m, gap_c=gap, gap_n=len(same))
+        if len(real_c) >= REAL_MIN and a["verdict"] == "passes":
+            hi = m + (m - lo)
+            if (gap is not None and gap < -REAL_GAP_C) or hi < 0:
+                a["verdict"], a["size"] = "real-lag", 0
+                a["real"]["why"] = (f"real trails paper by {-gap:.1f}c/contract" if gap is not None and gap < -REAL_GAP_C
+                                    else f"real money clearly losing ({m:+.1f}c/contract over {len(real_c)})")
 
 
 class Copycat:
@@ -562,6 +606,7 @@ class Copycat:
         self.alert = alert or (lambda t, b: None)
         self.copied_once: set[str] = set()
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
+        self.lag_told: set[str] = set()           # accounts already pushed as "back to paper" (real-lag)
         self.feed_seen: set[str] = set()         # trade ids already read from the global feed
         self.feed_top: str | None = None         # newest trade id of the feed snapshot last read
         self.feed_fh = None                      # open gzip file for the rolling full-feed log
@@ -1071,7 +1116,11 @@ class Copycat:
                 return
             snap = self.snapshot(row["ticker"]) if row.get("ticker") else {}
             snap["category"] = self.category(row.get("ticker") or "")
-            what = self.live.maybe_copy(self.acct.get(row["nick"]), row, snap, now)
+            acct = self.acct.get(row["nick"]) or {}
+            if (snap["category"] or "unknown") in (acct.get("blocked_cats") or []):
+                what = f"category blocked: {snap['category']}"
+            else:
+                what = self.live.maybe_copy(acct or None, row, snap, now)
         except Exception as exc:  # noqa: BLE001
             what = f"error: {str(exc)[:120]}"
         self.write({"kind": "copy", "nick": row["nick"], "ticker": row.get("ticker"),
@@ -1156,8 +1205,12 @@ class Copycat:
         if self.boss is not None:
             stops.update({k: "boss: " + v["reason"] for k, v in self.boss.benches(now).items()})
             notes = dict(self.boss.state["notes"])
-        status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes)
+        status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats)
         add_real(status, self.live.state if self.live else None)
+        for a in status["accounts"]:
+            if a["verdict"] == "real-lag" and a["nick"] not in self.lag_told:
+                self.lag_told.add(a["nick"])
+                self.alert("Copycat: back to paper", f"{a['nick']}: {a['real'].get('why')}. Paper copies continue.")
         for a in status["accounts"]:
             self.judge(a)
         if any(a["nick"] in self.dropped for a in status["accounts"]):
