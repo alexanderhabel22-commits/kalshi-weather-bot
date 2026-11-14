@@ -142,6 +142,21 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .rng{display:flex;gap:4px;margin-top:6px}
 .rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
 .rng button.on{background:var(--rc,#34d399);color:#070a12}
+details.dd{margin:10px 0;border:1px solid var(--line2);border-radius:14px;background:rgba(12,18,36,.6)}
+details.dd>summary{list-style:none;cursor:pointer;padding:12px 14px;display:flex;align-items:baseline;gap:8px;font-weight:700;font-size:14px}
+details.dd>summary::-webkit-details-marker{display:none}
+details.dd>summary::before{content:"▸";color:var(--mute);display:inline-block;transition:transform .15s}
+details.dd[open]>summary::before{transform:rotate(90deg)}
+details.dd>summary .sub{font-weight:400;font-size:11.5px;color:var(--mute);margin-left:auto;text-align:right}
+details.dd .ddb{padding:0 14px 12px}
+details.dd.in{margin:10px 0 0;border-radius:10px;background:rgba(148,163,200,.05)}
+details.dd.in>summary{font-size:12.5px;padding:9px 12px}
+.cg{display:inline-flex;gap:5px;align-items:baseline;font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);margin:0 5px 5px 0;white-space:nowrap}
+.cg.bl{border-color:rgba(251,107,123,.6);background:rgba(251,107,123,.08)}
+.cg small{color:var(--mute)}
+.tcard{border-top:1px solid var(--line);padding:14px 0 4px}.tcard:first-child{border-top:0;padding-top:4px}
+.tchk{font-size:11.5px;line-height:1.7}.tchk b{font-weight:700}
+.gbig{font-weight:800;font-size:22px;line-height:1}
 .ccn{cursor:pointer;text-decoration:underline dotted rgba(148,163,200,.7);text-underline-offset:3px}
 .rng[data-smt]{display:inline-flex;margin-left:auto}.rng[data-smt] button{flex:none;padding:4px 10px;font-size:10.5px}
 .smrow{display:flex;justify-content:flex-end;margin:0 0 6px}
@@ -505,7 +520,7 @@ function ccLiveHTML(){
   const winAll = rows.reduce((a, r) => a + r.n - r.cost, 0), loseAll = rows.reduce((a, r) => a + r.cost, 0);
   const next = rows.filter(r => r.exp).sort((a, b) => a.exp - b.exp)[0];
   const list = rows.slice().sort((a, b) => (mk.val(b) || 0) - (mk.val(a) || 0));
-  let h = `<h2>Right now <span class="sub">real copies · live</span></h2>`;
+  let h = `<h2>Right now <span class="sub">open real copies · live prices</span></h2>`;
   if (!rows.length) h += `<div class="card"><div class="mute" style="font-size:12px">No real copies open right now. They show here the moment Copycat copies a trade with real money.</div></div>`;
   else h += `<div class="card rh glow" style="--rc:${col}">
     <div class="lbl">If you sold every copy now <span class="mute" style="text-transform:none;letter-spacing:0">· at mid${S.noQuotes ? " · prices unavailable" : " · live"}</span></div>
@@ -520,32 +535,12 @@ function ccLiveHTML(){
       <div><div class="lbl">If all lose</div><div class="val neg">${money(-loseAll)}</div></div>
       <div><div class="lbl">Next settles</div><div class="val" style="font-size:17px">${next ? esc(until(next.exp)) : "—"}</div></div></div>
     <div style="margin-top:14px">${meter("Real-money pool in use", mk.cost, num(L.pool), {txt:`$${mk.cost.toFixed(2)} / $${num(L.pool).toFixed(2)}`, sub:`Copycat may have at most ${pct(num((S.ccCtl || {}).pool_pct, .15))} of the $${num(L.bankroll).toFixed(2)} account in open copies`})}</div>
-    <div class="lbl" style="margin:16px 0 4px">Open copies <span class="mute" style="text-transform:none;letter-spacing:0">· best to worst since we copied</span></div>
-    <div class="list">${list.map(r => { const m = ccMark(r), u = m == null ? null : mk.val(r);
+    ${list.length > 1 ? `<div class="lbl" style="margin:14px 0 2px">Up/down by copy</div><div class="chart" id="ccBets"></div>` : ""}
+    ${dd("ccOpenList", "Open copies", `${list.length} · best to worst`, `<div class="list">${list.map(r => { const m = ccMark(r), u = m == null ? null : mk.val(r);
       return `<div class="item" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div>
         <div class="s" style="white-space:normal">${+r.n.toFixed(2)} @ ${c2(r.price)}${m == null ? "" : ` → now ${c2(m)}`} · copied ${ccN(r.nick)} ${esc(ago(new Date(r.at)))}${r.exp ? ` · settles in ${esc(until(r.exp))}` : ""}</div></div>
-        <div class="r ${u == null ? "" : cls(u)}">${u == null ? "—" : money(u)}</div></div>`; }).join("")}</div>
-    ${list.length > 1 ? `<div class="lbl" style="margin:14px 0 2px">Up/down by copy</div><div class="chart" id="ccBets"></div>` : ""}
+        <div class="r ${u == null ? "" : cls(u)}">${u == null ? "—" : money(u)}</div></div>`; }).join("")}</div>`, false, "in")}
     <div class="mute" style="font-size:11px;margin-top:6px">Cost includes Kalshi's fee. Prices refresh every 30 s.</div></div>`;
-  h += ccEarnedHTML();
-  // accounts copied with real money: real result vs their paper record, and room left before their own stop
-  const stop = ccStop(), pnl = L.pnl || {}, benched = L.benched || {};
-  const accts = (c.accounts || []).filter(a => a.verdict === "passes" || (a.real || {}).copies || pnl[a.nick] != null || benched[a.nick]);
-  if (accts.length){
-    h += `<h2>Live accounts <span class="sub">${accts.length} copied with real money · stop $${stop.toFixed(2)} each</span></h2><div class="card"><div class="list">` + accts.map(a => {
-      const R = a.real || {}, rp = pnl[a.nick] != null ? num(pnl[a.nick]) : num(R.pnl), left = stop + Math.min(0, rp), used = Math.max(0, -rp);
-      const per = R.contracts && R.settled ? rp / R.contracts * 100 : null;
-      return `<div class="item" style="padding:9px 0;align-items:flex-start"><div class="main"><div class="t" style="font-size:13.5px">${ccN(a.nick)} <span class="chip" style="font-size:9.5px;padding:1px 6px;margin-left:4px">${esc(a.grade || "-")}${a.score != null ? " " + Math.round(a.score) : ""}</span>${benched[a.nick] ? ` <span class="chip off" style="font-size:9.5px;padding:1px 6px">BENCHED</span>` : ""}</div>
-        <div class="s" style="white-space:normal">Real: ${num(R.copies)} copies · ${num(R.open)} open · won ${num(R.won)}/${num(R.settled)}${per == null ? "" : ` · ${cents(per)}/ct`}</div>
-        <div class="s" style="white-space:normal">Paper: ${a.settle_c == null ? "—" : cents(a.settle_c) + "/copy"} on ${num(a.settled)} settled${a.banked ? ` · ${money(num(a.banked))} banked` : ""}</div>
-        <div class="s" style="white-space:normal">${benched[a.nick] ? esc(benched[a.nick]) : `$${left.toFixed(2)} left before its $${stop.toFixed(2)} stop`}</div>
-        <div class="share" style="margin-top:4px"><i style="width:${Math.min(100, 100 * used / stop).toFixed(1)}%;background:${used / stop > .66 ? "#fb6b7b" : used / stop > .33 ? "#f5b335" : "#34d399"}"></i></div></div>
-        <div class="r"><span class="${cls(rp)}">${money(rp)}</span><small>real P&L</small></div></div>`; }).join("") + `</div>
-      <div class="mute" style="font-size:11px;margin-top:6px">The bar fills as an account loses real money. At the stop it goes back to paper only (one push).</div></div>`;
-  }
-  const done = (L.settled || []).slice(0, 10);
-  if (done.length) h += `<h2>Settled copies <span class="sub">${done.length} newest</span></h2><div class="card list">` + done.map(p => { const q = S.quotes[p.ticker] || {};
-    return `<div class="item" style="padding:7px 0"><span class="side ${esc(String(p.side).toLowerCase())}">${esc(String(p.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(q.title || p.ticker)}</div><div class="s">${ccN(p.nick)} · ${p.result === p.side ? "won" : "lost"} · ${esc(fdt(new Date(num(p.settled) * 1000)))}</div></div><div class="r ${cls(num(p.pnl))}">${money(num(p.pnl))}</div></div>`; }).join("") + `</div>`;
   return h;
 }
 // Real money earned (Alex, Nov 14): cumulative settled real P&L (after fees), total + one line per account,
@@ -615,27 +610,133 @@ function drawCCLive(){
   if (bets) barChart(bets, mk.priced.map(r => ({label:r.title, short:"", v:mk.val(r), extra:`${r.side.toUpperCase()} ${+r.n.toFixed(2)} @ ${Math.round(r.price * 100)}¢ → ${Math.round(ccMark(r) * 100)}¢ · ${r.nick}`})), {h:120, empty:"No prices yet"});
   $("#ccRng").onclick = e => { const b = e.target.closest("button"); if (!b) return; ls.set("ccRange", b.dataset.r); renderOverview(); };
 }
+// ---- Copycat tab (Alex, Nov 14 overhaul): who is live and why, grades and category grades up front,
+// everything else in dropdowns. A dropdown remembers open/closed across the 30 s refresh (S.dd).
+S.dd = S.dd || {};
+function dd(id, title, sub, body, open, cls2){ const o = S.dd[id] ?? !!open;
+  return `<details class="dd${cls2 ? " " + cls2 : ""}" data-dd="${id}"${o ? " open" : ""}><summary><span>${title}</span>${sub ? `<span class="sub">${sub}</span>` : ""}</summary><div class="ddb">${body}</div></details>`; }
+const ccGcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
+// the server's rules (wxbot/copycat.py): entry bar, copy score, real-vs-paper check
+const CCR = {fast:100, slow:150, fastScore:87, settled:40, events:30, score:80, realMin:20, gap:3, catMin:15};
+const ccCatName = k => k === "unknown" ? "Uncategorized" : k;
+function ccCatChips(a, max){
+  const G = a.cat_grades || {}, ks = Object.keys(G).sort((x, y) => (G[y].copies ?? G[y].n) - (G[x].copies ?? G[x].n));
+  if (!ks.length) return `<span class="mute" style="font-size:11.5px">${a.cat_grades ? "No settled copies yet" : "Category grades come with the server's next update"}</span>`;
+  const one = k => { const g = G[k];
+    return `<span class="cg${g.blocked ? " bl" : ""}"><b style="color:${ccGcol(g.grade)}">${esc(g.grade || "-")}</b>${esc(ccCatName(k))} <span class="${g.c == null ? "mute" : cls(g.c)}">${g.c == null ? "—" : cents(g.c)}</span><small>${g.n}${g.copies != null && g.copies !== g.n ? "/" + g.copies : ""}</small>${g.blocked ? `<b style="color:#fb6b7b;font-size:10px">BLOCKED</b>` : ""}</span>`; };
+  return ks.slice(0, max || ks.length).map(one).join("") + (max && ks.length > max ? `<span class="cg"><small>+${ks.length - max} more</small></span>` : "");
+}
+function ccRisk(a){ const L = ((S.cc || {}).live) || {}, R = a.real || {};
+  const rp = (L.pnl || {})[a.nick] != null ? num(L.pnl[a.nick]) : num(R.pnl), base = ccStop();
+  return {rp, lim:base + Math.max(0, rp), base, risk:Math.max(0, -rp) + num(R.open_cost)}; }
+function ccStatus(a){ const ben = (((S.cc || {}).live || {}).benched || {})[a.nick];
+  if (ben || a.verdict === "benched") return ["BENCHED", "nogo"];
+  return {passes:[a.kept ? "LIVE · YOUR PICK" : "LIVE", "live"], "real-lag":["BACK TO PAPER", "pend"], slump:["PAUSED", "pend"], fails:["PAPER", "off"], watching:["TESTING", "off"]}[a.verdict] || ["PAPER", "off"]; }
+function ccWhy(a){
+  const R = a.real || {}, L = ((S.cc || {}).live) || {}, ben = (L.benched || {})[a.nick], sc = a.score != null ? a.score.toFixed(1) : "—";
+  if (ben || a.verdict === "benched") return `Benched: ${esc(ben || a.boss_note || "its own real-money stop")}.`;
+  if (a.verdict === "real-lag") return `Back to paper: ${esc(R.why || "real money trailed its paper record")}.`;
+  if (a.verdict === "slump") return `Paused: its recent copies average ${cents(a.settle_c)}, below its −${a.leeway_c}¢ leeway. It goes back on real money by itself when it recovers.`;
+  if (a.verdict !== "passes") return `On paper: score ${sc}${a.score != null && a.score < CCR.score ? ` (needs ${CCR.score})` : ""}.`;
+  if (a.kept) return `<b>Your pick (keep list).</b> It skips only the entry bar (${num(a.settled)}/${CCR.settled} settled copies, ${num(a.events)}/${CCR.events} games so far). Every check below still applies.`;
+  return `<b>Passed its paper test:</b> score ${sc} (${CCR.score}+ needed) on ${num(a.settled)} settled copies across ${num(a.events)} games (needs ${CCR.settled} in ${CCR.events}+).`;
+}
+function ccChecks(a){
+  const R = a.real || {}, k = ccRisk(a), ok = v => v ? `<b class="pos">✓</b>` : `<b class="neg">✗</b>`;
+  const recent = a.settle_c == null || a.settle_c >= -num(a.leeway_c);
+  const lag = num(R.settled) < CCR.realMin ? `<b class="mute">…</b> real vs paper: checked after ${CCR.realMin} settled real copies (${num(R.settled)} so far)`
+    : `${ok(!(R.gap_c != null && R.gap_c < -CCR.gap))} real vs paper: ${R.gap_c == null ? "no overlap yet" : (R.gap_c >= 0 ? "+" : "") + R.gap_c + "¢ gap"} (more than −${CCR.gap}¢ sends it back to paper)`;
+  const blocked = a.blocked_cats || [];
+  return `<div class="tchk">${ok(a.score == null || a.score >= CCR.score)} score ${a.score == null ? "—" : a.score.toFixed(1)} (needs ${CCR.score}+)<br>
+    ${ok(recent)} recent run ${a.settle_c == null ? "—" : cents(a.settle_c)}/ct over its last ${num(a.window)} (needs better than −${a.leeway_c}¢)<br>
+    ${lag}<br>
+    ${ok(k.risk < k.lim)} $${k.risk.toFixed(2)} at risk of its $${k.lim.toFixed(2)} limit${k.lim > k.base ? ` ($${k.base.toFixed(2)} + $${(k.lim - k.base).toFixed(2)} it earned us)` : ""}<br>
+    ${blocked.length ? `<b class="neg">⛔</b> no real copies in ${blocked.map(x => esc(ccCatName(x))).join(", ")} (clearly losing there)` : `${ok(true)} no category blocked`}</div>`;
+}
+function ccTraderCard(a, i){
+  const R = a.real || {}, k = ccRisk(a), [lbl, chip] = ccStatus(a), live = a.verdict === "passes", D = a.detail || {};
+  const mine = (((S.cc || {}).live || {}).open || []).filter(p => p.nick === a.nick);
+  const more = `<div class="grid g3"><div><div class="lbl">Paper copies</div><div class="val" style="font-size:15px">${num(a.fills)}<small> · ${num(a.settled)} settled</small></div></div>
+      <div><div class="lbl">Worst case</div><div class="val ${cls(a.settle_low_c || 0)}" style="font-size:15px">${a.settle_low_c == null ? "—" : cents(a.settle_low_c)}</div></div>
+      <div><div class="lbl">Seen after</div><div class="val" style="font-size:15px">${a.lag_s ?? "—"}s</div></div></div>
+    <div class="grid g3" style="margin-top:10px"><div><div class="lbl">Follow 5 min</div><div class="val ${cls(a.follow_5m_c || 0)}" style="font-size:15px">${a.follow_5m_c == null ? "—" : cents(a.follow_5m_c)}</div></div>
+      <div><div class="lbl">Size</div><div class="val" style="font-size:15px">${num(a.size)} ct</div></div>
+      <div><div class="lbl">Style</div><div class="val" style="font-size:15px">${D.maker_pct == null ? "—" : D.maker_pct >= 70 ? "maker" : D.maker_pct <= 30 ? "taker" : "mixed"}</div></div></div>
+    ${a.boss_note ? `<div class="s" style="white-space:normal;color:#c4b5fd;margin-top:8px">Boss: ${esc(a.boss_note)}</div>` : ""}
+    ${mine.length ? `<div class="lbl" style="margin:10px 0 2px">Open real copies</div>` + mine.map(p => `<div class="s" style="font-size:11.5px;word-break:break-all">${esc(String(p.side).toUpperCase())} ${p.n} · $${num(p.cost).toFixed(2)} · ${esc((S.quotes[p.ticker] || {}).title || p.ticker)}</div>`).join("") : ""}
+    <div style="margin-top:10px"><span class="ccn" data-ccn="${esc(a.nick)}" style="font-size:12.5px;color:#22d3ee">Open full report card, charts and categories →</span></div>`;
+  return `<div class="tcard"><div style="display:flex;align-items:flex-start;gap:10px">
+      <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:800;word-break:break-all">${ccN(a.nick)}</div>
+        <div style="margin-top:5px"><span class="chip ${chip}">${lbl}</span>${(a.cats || []).length ? ` <span class="mute" style="font-size:11px">${esc(a.cats.join(" / "))}</span>` : ""}</div></div>
+      <div style="text-align:right"><div class="gbig" style="color:${ccGcol(a.grade)}">${esc(a.grade || "-")}</div><div class="mute" style="font-size:11px;margin-top:3px">${a.score != null ? a.score.toFixed(1) + " / 100" : "no score"}</div></div></div>
+    <div style="font-size:12.5px;line-height:1.5;margin:10px 0">${ccWhy(a)}</div>
+    <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div><div class="lbl">Real P&L</div><div class="val ${cls(k.rp)}" style="font-size:16px">${money(k.rp)}</div><small class="mute">won ${num(R.won)}/${num(R.settled)}</small></div>
+      <div><div class="lbl">Real ¢/ct</div><div class="val ${R.c == null ? "" : cls(R.c)}" style="font-size:16px">${R.c == null ? "—" : cents(R.c)}</div><small class="mute">${num(R.contracts)} ct</small></div>
+      <div><div class="lbl">Open</div><div class="val" style="font-size:16px">${num(R.open)}</div><small class="mute">$${num(R.open_cost).toFixed(2)}</small></div>
+      <div><div class="lbl">Paper ¢/ct</div><div class="val ${cls(a.settle_c || 0)}" style="font-size:16px">${a.settle_c == null ? "—" : cents(a.settle_c)}</div><small class="mute">${num(a.settled)} settled</small></div></div>
+    ${live || R.copies ? `<div style="margin-top:10px">${meter("Real money at risk", k.risk, k.lim, {txt:`$${k.risk.toFixed(2)} / $${k.lim.toFixed(2)}`, sub:"Settled losses plus open copies. A copy that would pass the limit is skipped."})}</div>` : ""}
+    <div class="lbl" style="margin:10px 0 4px">Category grades <span class="mute" style="text-transform:none;letter-spacing:0">· paper ¢/ct · settled</span></div><div>${ccCatChips(a)}</div>
+    ${(D.curve || []).length > 2 ? `<div class="lbl" style="margin:8px 0 0">Paper record <span class="mute" style="text-transform:none;letter-spacing:0">· running total, 1 contract per copy</span></div><div class="chart" id="ccTc${i}"></div>` : ""}
+    ${dd("ccChk_" + a.nick, live ? "What keeps it live" : "Checks", live ? "all must hold" : "", ccChecks(a), live, "in")}
+    ${dd("ccMore_" + a.nick, "More on " + esc(a.nick), "", more, false, "in")}</div>`;
+}
+function ccWhoLive(){
+  const c = S.cc || {}, L = c.live || {};
+  const acc = c.accounts || [], live = acc.filter(a => a.verdict === "passes").sort((a, b) => num((b.real || {}).copies) - num((a.real || {}).copies) || (b.score || 0) - (a.score || 0));
+  const off = acc.filter(a => a.verdict !== "passes" && ((a.real || {}).copies || (L.benched || {})[a.nick]));
+  S.ccTC = live.concat(off);
+  return `<h2>On real money <span class="sub">${live.length} live${off.length ? ` · ${off.length} taken off` : ""}</span></h2><div class="card">`
+    + (S.ccTC.length ? S.ccTC.map(ccTraderCard).join("") : `<div class="mute" style="font-size:12.5px">Nobody is live right now. A trader goes live when it passes its paper test (see Next in line).</div>`) + `</div>`;
+}
+function drawCCTraders(){ (S.ccTC || []).forEach((a, i) => { const el = document.getElementById("ccTc" + i), cv = (a.detail || {}).curve || []; if (!el) return;
+  lineChart(el, [{name:"Paper", c:ccGcol(a.grade), w:2, pts:cv.map((y, j) => ({x:j, y:+(y / 100).toFixed(2)}))}], {h:90, zero:true, xnum:true, xlab:t => "#" + Math.round(t + 1), xtip:v => "copy #" + Math.round(v + 1), fy:v => "$" + v.toFixed(v < 10 && v > -10 ? 1 : 0)}); }); }
+function ccNextUp(){
+  const acc = (S.cc || {}).accounts || [];
+  const prog = a => { const need = (a.score || 0) >= CCR.fastScore ? CCR.fast : CCR.slow;
+    return {need, f:Math.min(1, num(a.fills) / need), st:Math.min(1, num(a.settled) / CCR.settled), ev:Math.min(1, num(a.events) / CCR.events)}; };
+  const near = acc.filter(a => a.verdict === "watching" && (a.score ?? 0) >= CCR.score).map(a => ({a, p:prog(a)}))
+    .map(x => ({...x, t:Math.min(x.p.f, x.p.st, x.p.ev)})).sort((x, y) => y.t - x.t || (y.a.score || 0) - (x.a.score || 0));
+  const bar = (l, v, txt) => `<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="mute" style="width:62px">${l}</span><div class="share" style="flex:1;margin:0"><i style="width:${(v * 100).toFixed(0)}%;background:${v >= 1 ? "#34d399" : "#22d3ee"}"></i></div><span style="width:56px;text-align:right">${txt}</span></div>`;
+  const row = ({a, p}) => `<div class="tcard"><div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;word-break:break-all">${ccN(a.nick)}</div>
+      <div class="mute" style="font-size:11.5px;margin-top:2px">${(a.cats || []).join(" / ")}${a.settle_c != null ? ` · paper ${cents(a.settle_c)}/ct` : ""}</div></div>
+      <div style="text-align:right"><div class="gbig" style="font-size:19px;color:${ccGcol(a.grade)}">${esc(a.grade || "-")}</div><div class="mute" style="font-size:10.5px">${a.score != null ? a.score.toFixed(1) : ""}</div></div></div>
+    <div style="margin-top:6px">${bar("Copies", p.f, `${num(a.fills)}/${p.need}`)}${bar("Settled", p.st, `${num(a.settled)}/${CCR.settled}`)}${bar("Games", p.ev, `${num(a.events)}/${CCR.events}`)}</div>
+    <div style="margin-top:6px">${ccCatChips(a, 4)}</div></div>`;
+  const out = acc.filter(a => ["slump", "real-lag", "benched"].includes(a.verdict));
+  let h = `<h2>Next in line <span class="sub">${near.length} scoring ${CCR.score}+ on paper · not enough data yet</span></h2><div class="card">`
+    + (near.length ? near.slice(0, 4).map(row).join("") + (near.length > 4 ? dd("ccNear", "Everyone else in line", `${near.length - 4} more`, near.slice(4, 40).map(row).join(""), false, "in") : "")
+      : `<div class="mute" style="font-size:12.5px">No paper trader is scoring ${CCR.score}+ right now.</div>`)
+    + `<div class="mute" style="font-size:11px;margin-top:8px">A trader goes live once all three bars fill and its score is still ${CCR.score}+ (${CCR.fast} copies at ${CCR.fastScore}+, otherwise ${CCR.slow}).</div></div>`;
+  if (out.length) h += dd("ccOut", "Paused or taken off real money", `${out.length}`, out.map(a => `<div class="item" style="padding:7px 0"><div class="main" style="white-space:normal"><div class="t" style="font-size:13px">${ccN(a.nick)} <span class="chip ${ccStatus(a)[1]}" style="font-size:9.5px;padding:1px 6px">${ccStatus(a)[0]}</span></div><div class="s" style="white-space:normal">${ccWhy(a)}</div></div><div class="r"><span style="color:${ccGcol(a.grade)};font-weight:800">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : ""}</small></div></div>`).join(""));
+  return h;
+}
 function ccPage(){
   const c = S.cc;
   if (!c) return `<h2>Copycat <span class="sub">starting up</span></h2><div class="card"><div class="mute">No data yet. Copycat posts its first status about 5 minutes after it starts on the server.</div></div>`;
   const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
   const L = c.live || {}, live = c.mode === "live", B = c.boss || {};
   const tag = {watching:["#94a3c8","testing on paper"], passes:["#34d399", live ? "COPYING WITH REAL MONEY" : "qualified (real money off)"], slump:["#f5b335","slump, paused"], "real-lag":["#f5b335","back to paper (real money lagged)"], benched:["#f87171","benched"], fails:["#f87171","not copied"]};
-  const gcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
+  const gcol = ccGcol;
   const acc = (c.accounts || []).slice().sort((a, b) => (((b.real || {}).copies || 0) - ((a.real || {}).copies || 0)) || ((b.score ?? -1) - (a.score ?? -1)) || ((b.fills || 0) - (a.fills || 0)));
   const n = k => acc.filter(a => a.verdict === k).length;
-  const stopTxt = L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : "";
-  let h = `<h2>Copycat <span class="sub">${live ? "REAL MONEY ON" : "paper only"} · ${esc(c.generated || "")}</span></h2>`
-    + (!c.scan ? `<div class="card" style="border-color:#f5b335"><div style="font-size:13px"><b>Old data.</b> This page is still showing the version from before the fresh start. The new version is starting up on the server and replaces this within a few minutes.</div></div>`
-      : `<div class="mute" style="font-size:12px;margin:-4px 0 8px">Fresh start: every score counts only copies since ${esc(c.fresh_since || "the Nov 10 update")}.</div>`)
+  const near = acc.filter(a => a.verdict === "watching" && (a.score ?? 0) >= CCR.score).length;
+  const mk = ccMarked();
+  let h = `<h2>Copycat <span class="sub">${live ? "real money on" : "paper only"} · updated ${esc(c.generated || "")}</span></h2>`
     + `<div class="card glow">
-    <div class="hero"><div><div class="lbl">Real-money P&L · all time</div><div class="big ${cls(num(L.total_pnl))}">${money(num(L.total_pnl))}</div>
-    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">switch ${esc(String(L.control || "off").toUpperCase())}${live ? ` · <span class="pos">● live</span>` : ""}${stopTxt}</div></div>
-    <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div>
-    <div class="lbl" style="margin-top:8px">Copying / testing / out</div><div class="val" style="font-size:17px">${n("passes")} / ${n("watching")} / ${n("fails") + n("slump") + n("benched") + n("real-lag")}</div></div></div>
-    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Every account starts on <b>paper</b>: we score each of its trades as if we had copied it ~10 s later, after Kalshi's fee. Strong accounts (B+, 87+) are tested at 100 paper copies, everyone else at 150. With a score of 80+ it moves to <b>real money</b> (1-3 contracts). Paper and real results are shown separately below.</div>${c.scan ? `<div class="s" style="margin-top:8px;white-space:normal;font-size:12px">Scanning every public Kalshi trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> public traders seen so far, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones (lifetime or last 30 days) being tested${c.scan.dropped ? `, <b>${c.scan.dropped}</b> dropped` : ""}.</div>` : ""}</div>`;
+    <div class="hero"><div><div class="lbl">Real money made · all time</div><div class="big ${cls(num(L.total_pnl))}">${money(num(L.total_pnl))}</div>
+      <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${live ? `<span class="pos">● live</span>` : `switch ${esc(String(L.control || "off").toUpperCase())}`}${L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : ""}${mk.priced.length ? ` · open copies ${money(mk.tot)} now` : ""}</div></div>
+      <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div></div></div>
+    <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px;text-align:center">
+      <div><div class="val pos" style="font-size:20px">${n("passes")}</div><div class="lbl">Live</div></div>
+      <div><div class="val" style="font-size:20px;color:#22d3ee">${near}</div><div class="lbl">Next in line</div></div>
+      <div><div class="val" style="font-size:20px">${n("watching")}</div><div class="lbl">Testing</div></div>
+      <div><div class="val mute" style="font-size:20px">${n("fails") + n("slump") + n("benched") + n("real-lag")}</div><div class="lbl">Out</div></div></div>
+    <div style="margin-top:12px">${meter("Real-money pool in use", num(L.open_cost), num(L.pool), {txt:`$${num(L.open_cost).toFixed(2)} / $${num(L.pool).toFixed(2)}`, sub:`At most ${pct(num((S.ccCtl || {}).pool_pct, .15))} of the $${num(L.bankroll).toFixed(2)} account is ever in open copies`})}</div>
+    ${dd("ccHow", "How Copycat picks traders", "", `<div style="font-size:12px;line-height:1.6">Every public Kalshi trader we find starts on <b>paper</b>: each of their trades is scored as if we copied it ~16 s later at the price we could really get, after Kalshi's fee. A trader goes on <b>real money</b> (1 contract, up to 3 for top scores) with a score of ${CCR.score}+ once it has ${CCR.fast} copies (B+ and up) or ${CCR.slow}, and ${CCR.settled}+ settled copies across ${CCR.events}+ different games. While live it keeps being re-graded, a losing category gets blocked, real money is compared with paper after ${CCR.realMin} settled real copies, and each trader can never have more than its $ limit at risk.${c.scan ? `<br><br>Scanning every public trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> traders seen, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones being tested${c.scan.dropped ? `, <b>${c.scan.dropped}</b> dropped` : ""}.` : ""}<br>Scores count only copies since ${esc(c.fresh_since || "Nov 10")}.</div>`, false, "in")}</div>`;
+  h += ccWhoLive();
   h += ccLiveHTML();
-  if (B.summary) h += `<h2>The boss <span class="sub">Claude · ${num(B.reviews_today)} reviews today</span></h2><div class="card"><div style="font-size:13px;line-height:1.5;color:#c4b5fd">${esc(B.summary)}</div>${Object.keys(B.benches || {}).length ? `<div class="s" style="margin-top:6px;white-space:normal">Benched by the boss: ${Object.entries(B.benches).map(([k, v]) => esc(k) + " (" + esc(v.reason) + ")").join(", ")}</div>` : ""}</div>`;
+  h += ccEarnedHTML();
+  h += ccNextUp();
   const row = a => { const [col, lbl] = tag[a.verdict] || tag.watching, R = a.real || {};
     const need = (a.score || 0) >= 87 ? 100 : 150, prog = a.verdict === "watching" ? Math.min(100, 100 * (a.fills || 0) / need) : 100;
     const realTxt = R.copies ? `${R.copies} real copies (${R.open} open) · won ${R.won}/${R.settled} · <span class="${cls(R.pnl)}">${money(R.pnl)}</span>` : (a.verdict === "passes" ? "no real copies yet" : "none");
@@ -646,9 +747,6 @@ function ccPage(){
       <div class="s" style="white-space:normal"><b style="color:#34d399">REAL</b> ${realTxt}${a.size ? " · size " + a.size + " ct" : ""}</div>
       ${a.boss_note ? `<div class="s" style="white-space:normal;color:#c4b5fd">Boss: ${esc(a.boss_note)}</div>` : ""}</div>
       <div class="r"><span style="color:${gcol(a.grade)};font-weight:800;font-size:18px">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : "no score yet"}</small></div></div>`; };
-  const pos = [...(L.open || []).map(p => ({...p, open:1})), ...(L.settled || [])];
-  h += `<h2>Real-money copies <span class="sub">${(L.open || []).length} open · ${(L.settled || []).length} settled</span></h2><div class="card">` + (pos.length ? pos.slice(0, 30).map(p =>
-    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${ccN(p.nick)} · ${esc((p.side || "").toUpperCase())} × ${p.n} · $${num(p.cost).toFixed(2)}</div><div class="s">${esc(p.ticker)}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${esc(String(p.result || "").toUpperCase())}</small>`}</div></div>`).join("") : `<div class="mute" style="font-size:12px">None yet. The first real copy happens when an account passes its paper test${live ? "" : " and the switch is on"}.</div>`) + `</div>`;
   const SORTS = {grade:["Grade", a => a.score ?? -1], real:["Real P&L", a => num((a.real || {}).pnl)], recent:["Recent result", a => a.settle_c ?? -999],
     copies:["Paper copies", a => a.fills || 0], profit:["Lifetime profit", a => a.pnl || 0], volume:["Their volume", a => num(a.contracts)],
     progress:["Closest to qualifying", a => a.verdict === "watching" ? (a.fills || 0) / ((a.score || 0) >= 87 ? 100 : 150) : -1],
@@ -667,23 +765,28 @@ function ccPage(){
     <input id="ccQ" value="${esc(S.ccQ || "")}" placeholder="Find name, market (KXNBA) or category" style="flex:2;min-width:160px;background:#0b1222;color:#e2e8f0;border:1px solid rgba(148,163,200,.25);border-radius:8px;padding:6px 8px;font-size:12px"></div>`;
   const dq = drops.filter(x => !q || x.nick.toLowerCase().includes(q));
   const dropList = `<div class="mute" style="font-size:12px;margin-bottom:6px">Not watched or copied for ${(c.scan || {}).drop_days || 30} days, then they can be re-tested from zero. Their trades are still logged from the public feed, so the data is kept.</div>` + (dq.length ? dq.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,200,.12);font-size:12px"><span style="word-break:break-all">${ccN(x.nick)}</span><span class="mute" style="text-align:right">${esc(x.reason)}${x.grade ? ` · ${esc(x.score)} ${esc(x.grade)} at ${x.fills} copies` : x.pnl_30d != null ? ` · 30-day ${money(x.pnl_30d)}` : ""} · back ${esc(x.back)}</span></div>`).join("") : `<div class="mute">None dropped yet.</div>`);
-  h += `<h2>Report card <span class="sub">${vw === "dropped" ? dq.length : shown.length} accounts${vw === "dropped" ? "" : " · tap one for its full card"}</span></h2><div class="card">` + ctl + (vw === "dropped" ? dropList : shown.length ? top.map(row).join("")
+  h += `<h2>More</h2>`;
+  h += dd("ccAll", "All traders on paper", `${acc.length.toLocaleString()} · search, sort, every grade`, ctl + (vw === "dropped" ? dropList : shown.length ? top.map(row).join("")
     + (rest.length ? `<details id="ccMore"${S.ccOpen ? " open" : ""} style="margin-top:6px"><summary data-more="Show all ${shown.length} accounts" style="cursor:pointer;font-size:12px;color:#22d3ee;padding:6px 0">${S.ccOpen ? "▲ Collapse to top 5" : `Show all ${shown.length} accounts`}</summary>${rest.map(row).join("")}<button data-cccollapse style="margin-top:8px;width:100%;background:rgba(148,163,200,.16);color:#22d3ee;border:0;border-radius:8px;padding:8px;font-size:12px;cursor:pointer">▲ Collapse to top 5</button></details>` : "")
-    : `<div class="mute">${vw === "benched" ? "None benched or paused." : "No accounts yet."}</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">"Worst case" = the low end of what this account's copies are likely worth per contract, given how few we've seen so far (95% confidence). The score is built on it, so a lucky streak can't earn a high grade.</div></div>`;
+    : `<div class="mute">${vw === "benched" ? "None benched or paused." : "No accounts yet."}</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">"Worst case" = the low end of what this account's copies are likely worth per contract, given how few we've seen so far (95% confidence). The score is built on it, so a lucky streak can't earn a high grade.</div>`);
+  const pos = [...(L.open || []).map(p => ({...p, open:1})), ...(L.settled || [])];
+  h += dd("ccHist", "Every real-money copy", `${(L.open || []).length} open · ${(L.settled || []).length} settled`, pos.length ? pos.slice(0, 40).map(p => { const q = S.quotes[p.ticker] || {};
+    return `<div class="item" style="padding:6px 0"><span class="side ${esc(String(p.side).toLowerCase())}">${esc(String(p.side || "").toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(q.title || p.ticker)}</div><div class="s">${ccN(p.nick)} · ${p.n} ct · $${num(p.cost).toFixed(2)}${p.settled ? " · " + esc(fdt(new Date(num(p.settled) * 1000))) : ""}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${p.result === p.side ? "won" : "lost"}</small>`}</div></div>`; }).join("") : `<div class="mute" style="font-size:12px">None yet.</div>`);
+  if (B.summary) h += dd("ccBoss", "The boss's notes", `Claude · ${num(B.reviews_today)} reviews today`, `<div style="font-size:13px;line-height:1.5;color:#c4b5fd">${esc(B.summary)}</div>${Object.keys(B.benches || {}).length ? `<div class="s" style="margin-top:6px;white-space:normal">Benched by the boss: ${Object.entries(B.benches).map(([k, v]) => esc(k) + " (" + esc(v.reason) + ")").join(", ")}</div>` : ""}`);
   const WH = c.whales;
   if (WH){
     const st = x => x && x.settled ? `${x.settled} settled · ${x.won} won · <span class="${cls(x.avg_c)}">${x.avg_c > 0 ? "+" : ""}${x.avg_c}¢</span> per contract` : "none settled yet";
     const wl = (WH.recent_new || []).slice(0, S.ccWh ? 40 : 6);
-    h += `<h2>Big bets by new accounts <span class="sub">paper only · $${WH.min_usd}+ single bets</span></h2><div class="card">
+    h += dd("ccWhales", "Big bets by new accounts", `paper only · $${WH.min_usd}+ bets`, `<div>
       <div class="s" style="white-space:normal;font-size:12px;line-height:1.6">Accounts that joined in the last ${WH.new_days} days (or have traded 10 markets or fewer) placing one bet of $${WH.min_usd}+. Possible inside information. We log each bet and score it as if we had copied it at their price, after the fee. Nothing is copied with real money.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;font-size:12px"><div><b>New accounts:</b> ${WH.new_count} bets · ${st(WH.new)}${WH.new_ours ? ` · <b>at the price we'd really get:</b> ${st(WH.new_ours)}` : ""}</div><div class="mute">Older accounts (for comparison): ${WH.count - WH.new_count} bets · ${st(WH.old)}</div>${WH.anon_min_usd ? `<div><b>Anonymous $${Number(WH.anon_min_usd).toLocaleString()}+ bets:</b> ${WH.anon_count || 0} bets · ${st(WH.anon)}</div>` : ""}</div>`
       + (wl.length ? wl.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,200,.12);font-size:12px"><div style="min-width:0"><div style="word-break:break-all"><b>${x.nick ? ccN(x.nick) : "anonymous"}</b> <span class="mute">${x.joined ? "joined " + esc(String(x.joined).slice(0, 10)) : ""}${x.markets != null ? " · " + x.markets + " markets" : ""}</span></div><div class="mute" style="word-break:break-all">${esc(x.ticker)} · ${esc(String(x.side || "").toUpperCase())} at ${Math.round(100 * x.paid)}¢ · ${esc(String(x.et || "").slice(5, 16))}</div></div><div style="text-align:right;white-space:nowrap"><div>$${Number(x.usd).toLocaleString()}</div><div class="${x.result_c == null ? "mute" : cls(x.result_c)}">${x.result_c == null ? "open" : (x.result_c > 0 ? "+" : "") + x.result_c + "¢"}</div></div></div>`).join("")
         + ((WH.recent_new || []).length > 6 ? `<button data-ccwh style="margin-top:8px;width:100%;background:rgba(148,163,200,.16);color:#22d3ee;border:0;border-radius:8px;padding:8px;font-size:12px;cursor:pointer">${S.ccWh ? "▲ Show fewer" : "Show all " + WH.recent_new.length}</button>` : "")
-        : `<div class="mute">None spotted yet.</div>`) + `</div>`;
+        : `<div class="mute">None spotted yet.</div>`) + `</div>`);
   }
   const rc = c.recent || [];
-  h += `<h2>Latest trades seen <span class="sub">paper record</span></h2><div class="card">` + (rc.length ? rc.slice(0, 25).map(r =>
-    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${ccN(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`) + `</div>`;
+  h += dd("ccRecent", "Latest trades seen", "paper record", (rc.length ? rc.slice(0, 25).map(r =>
+    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${ccN(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`));
   return h;
 }
 // Copycat: tap an account for its full report card (pop-up)
@@ -1762,7 +1865,7 @@ function liveStratsHTML(rows, strats, hist, bench){
   return h + `</div>`;
 }
 function renderOverview(){
-  if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); drawCCEarned(); return; }
+  if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); drawCCEarned(); drawCCTraders(); return; }
   if (S.bot === "tx"){ $("#v-overview").innerHTML = txPage(); return; }
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
@@ -1917,9 +2020,12 @@ function details(r){
   const tch = n > 0 && r.ticker && r.status !== "settled" ? `<div class="lbl" style="margin:10px 0 2px">Up/down on this bet</div><div class="chart tchart" data-tk="${esc(r.ticker)}" data-side="${esc(r.side)}" data-price="${r.price}" data-n="${n}" data-from="${+(r.filledAt || r.placed) || 0}"><div class="empty">Loading trades…</div></div>` : "";
   return `<div class="more">${tch}${rows.filter(x => x[1] !== "" && x[1] != null).map(([k, v]) => `<div><b>${k}</b> ${esc(v)}</div>`).join("")}<div><a href="${kalshiURL(r)}" target="_blank" rel="noopener">open on Kalshi ↗</a></div></div>`;
 }
-document.addEventListener("change", e => { if (e.target.id === "ccSort"){ S.ccSort = e.target.value; S.ccOpen = true; render(); }
+document.addEventListener("change", e => { if (e.target.id === "ccSort"){ S.ccSort = e.target.value; S.ccOpen = true; renderOverview(); }
   if (e.target.id === "ccView"){ S.ccView = e.target.value; renderOverview(); } });
 document.addEventListener("input", e => { if (e.target.id === "ccQ"){ S.ccQ = e.target.value; clearTimeout(S.ccQt); S.ccQt = setTimeout(() => { renderOverview(); const el = document.getElementById("ccQ"); if (el){ el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 400); } });
+// dropdowns keep their state across refreshes; opening one that holds a chart redraws so the chart gets its width
+document.addEventListener("toggle", e => { const d = e.target; if (!d.dataset || !d.dataset.dd) return; const was = S.dd[d.dataset.dd];
+  S.dd[d.dataset.dd] = d.open; if (d.open && was !== true && d.querySelector(".chart")) renderOverview(); }, true);
 document.addEventListener("toggle", e => { if (e.target.id === "ccMore" && S.ccOpen !== e.target.open){ S.ccOpen = e.target.open; const sm = e.target.querySelector("summary"); if (sm) sm.textContent = S.ccOpen ? "▲ Collapse to top 5" : sm.dataset.more || "Show all accounts"; } }, true);
 document.addEventListener("click", e => { if (e.target.closest("[data-ccwh]")){ S.ccWh = !S.ccWh; renderOverview(); } });
 document.addEventListener("click", e => { if (!e.target.closest("[data-cccollapse]")) return; const d = document.getElementById("ccMore"); if (!d) return;
