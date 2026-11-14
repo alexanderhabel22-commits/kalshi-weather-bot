@@ -22,7 +22,7 @@
    "cat": "Mentions",
    "event": "KXHILLARYMENTION-26NOV14",
    "vol24": 1082.94,
-   "casual": 1.0
+   "casual": 0.347
   },
   "KXEARNINGSMENTIONKLAR-26NOV17-APPL": {
    "cat": "Mentions",
@@ -40,25 +40,25 @@
    "cat": "Financials",
    "event": "KXNVDACEODATE-27",
    "vol24": 55094.0,
-   "casual": 0.626
+   "casual": 0.64
   },
   "KXMIDTERMMOV-MSSEND-P0.8": {
    "cat": "Elections",
    "event": "KXMIDTERMMOV-MSSEND",
    "vol24": 49953.62,
-   "casual": 0.052
+   "casual": 0.058
   },
   "KXSTARSHIPCATCH-01JAN27-STAR15": {
    "cat": "Science and Technology",
    "event": "KXSTARSHIPCATCH-01JAN27",
    "vol24": 15658.36,
-   "casual": 0.159
+   "casual": 0.188
   },
   "KXRAIN-26NOV14-PIT": {
    "cat": "Climate and Weather",
    "event": "KXRAIN-26NOV14",
    "vol24": 14815.17,
-   "casual": 0.423
+   "casual": 0.371
   },
   "KXOPENSOURCESHARE-26NOV15-T72.3": {
    "cat": "Science and Technology",
@@ -82,7 +82,7 @@
    "cat": "Entertainment",
    "event": "KX1ALBUM-26DEC",
    "vol24": 9349.45,
-   "casual": null
+   "casual": 1.0
   },
   "KXLUTNICKOUT-26SEP-27APR01": {
    "cat": "Politics",
@@ -141,21 +141,21 @@
    "maker_fee_c": 0.35
   },
   "Science and Technology": {
-   "fills": 40,
+   "fills": 42,
    "market_hours": 0.4,
-   "fills_per_market_hour": 88.93,
-   "edge_at_fill_c": -0.14,
-   "markout_5m_c": -0.58,
-   "markout_30m_c": 0.17,
-   "maker_fee_c": 0.24
+   "fills_per_market_hour": 93.37,
+   "edge_at_fill_c": -0.04,
+   "markout_5m_c": -0.45,
+   "markout_30m_c": 0.26,
+   "maker_fee_c": 0.25
   },
   "Mentions": {
-   "fills": 69,
+   "fills": 73,
    "market_hours": 3.7,
-   "fills_per_market_hour": 18.77,
-   "edge_at_fill_c": -2.11,
-   "markout_5m_c": -2.06,
-   "markout_30m_c": -1.4,
+   "fills_per_market_hour": 19.85,
+   "edge_at_fill_c": -1.99,
+   "markout_5m_c": -1.96,
+   "markout_30m_c": -1.32,
    "maker_fee_c": 0.4
   },
   "Entertainment": {
@@ -186,12 +186,12 @@
    "maker_fee_c": 0.34
   },
   "Financials": {
-   "fills": 55,
+   "fills": 56,
    "market_hours": 1.4,
-   "fills_per_market_hour": 40.09,
-   "edge_at_fill_c": -1.71,
-   "markout_5m_c": -3.41,
-   "markout_30m_c": -1.92,
+   "fills_per_market_hour": 40.82,
+   "edge_at_fill_c": -1.67,
+   "markout_5m_c": -3.32,
+   "markout_30m_c": -1.83,
    "maker_fee_c": 0.34
   },
   "Companies": {
@@ -220,30 +220,30 @@
    "maker_fee_c": 0.34
   },
   "50plus|no": {
-   "fills": 39,
+   "fills": 41,
    "settled": 4,
-   "markout_30m_c": -0.33,
+   "markout_30m_c": -0.18,
    "settled_c": -26.25,
    "maker_fee_c": 0.33
   },
   "50plus|yes": {
-   "fills": 13,
+   "fills": 15,
    "settled": 2,
-   "markout_30m_c": -0.04,
+   "markout_30m_c": -0.36,
    "settled_c": -11.5,
-   "maker_fee_c": 0.29
+   "maker_fee_c": 0.3
   },
   "under20|no": {
-   "fills": 60,
+   "fills": 62,
    "settled": 8,
-   "markout_30m_c": -4.25,
+   "markout_30m_c": -4.08,
    "settled_c": -15.38,
-   "maker_fee_c": 0.33
+   "maker_fee_c": 0.34
   },
   "under20|yes": {
-   "fills": 50,
+   "fills": 51,
    "settled": 2,
-   "markout_30m_c": -2.24,
+   "markout_30m_c": -2.11,
    "settled_c": -36.0,
    "maker_fee_c": 0.34
   },
@@ -270,8 +270,8 @@
   "done": true,
   "candidates": 1060
  },
- "pending": 7,
- "held": 221,
+ "pending": 8,
+ "held": 229,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -322,7 +322,7 @@
   "KXRAIN-26NOV12-WPB": 1,
   "KXRAIN-26NOV12-LEX": -1,
   "KXTHEWEEKNIGHTMENTION-26NOV12-GROC": 0,
-  "KXNVDACEODATE-27-26DEC16": -4,
+  "KXNVDACEODATE-27-26DEC16": -5,
   "KXDIESELD-26NOV13-T6.060": -3,
   "KXCOMPANYACTIONMERGER-27-27JAN01": -1,
   "KXDIESELD-26NOV13-T6.065": 0,
@@ -332,7 +332,7 @@
   "KXMIDTERMMOV-AKSENMPEL-P3.5": 2,
   "KXNVDACEODATE-27-27JAN01": -5,
   "KXNVDACEODATE-27-27FEB01": -2,
-  "KXEARNINGSMENTIONNVDA-26NOV18-NATI": -2,
+  "KXEARNINGSMENTIONNVDA-26NOV18-NATI": -3,
   "KXHIGHNY-26NOV13-T50": 0,
   "KXTRUMPSAY-26NOV16-BIBI": -1,
   "KXFEATURE-26GTA6-BAD": -1,
@@ -358,7 +358,8 @@
   "KXHILLARYMENTION-26NOV14-CONS": 1,
   "KXHOUSETURNOUT-26NOV03-120": -1,
   "KXRAIN-26NOV14-PIT": -1,
-  "KXHILLARYMENTION-26NOV14-TRUM": 1
+  "KXHILLARYMENTION-26NOV14-TRUM": 1,
+  "KX1ALBUM-26DEC-BAB": 0
  },
- "at": "2026-11-14T17:07:59+00:00"
+ "at": "2026-11-14T18:35:25+00:00"
 }
