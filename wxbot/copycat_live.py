@@ -34,7 +34,8 @@ SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.j
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
 DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_stop_usd": 5.0, "total_stop_pct": 0.25,
             "max_contracts": 3, "slip": 0.02, "max_lag_s": 60, "min_px": 0.05, "max_px": 0.95,
-            "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
+            "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": [],
+            "keep": []}     # accounts Alex keeps on real money whatever their score (inside their $ limit)
 CONTROL_STALE_S = 600
 
 

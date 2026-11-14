@@ -390,6 +390,16 @@ IP without a token). It never places, changes or cancels anything and needs no s
   CHANCES (Alex, Nov 11 6:10 PM ET, "don't disqualify someone for a bad day"): the score uses the
   LAST 150 copies; a fail at 150 is re-tested at 200 and 250 (TEST_CHANCES=3, RETEST_EVERY=50), and
   only 3 fails in a row drop it; a pass in between resets the count (watch.json fails_in_row/retest_at).
+  HONEST GRADE (Nov 14 audit, Alex chose it on a decision card): the score counts only settled copies
+  real money could have made (ask within 2c of their price, 5-95c, seen within 60 s), copies in the
+  same event (game) are counted together in the pessimistic bound, and an account needs 30+ different
+  events (`MIN_EVENTS`) as well as 40+ settled; a good score with too few events stays "watching".
+  Settlement results are looked up in batches (2,000 markets per status update, least recently
+  checked first; before this the bot knew under half of the settled results). `"keep"` in
+  `copycat_control.json` lists accounts that stay on real money at 1 contract whatever their score,
+  inside their $ limit (PrettyFlacko42: Alex's one $5-capped real test). Audit report:
+  Library analysis/copycat-audit/RESULTS.md: on 3.7 days of data the old grade did not predict
+  (score 80+ accounts went on to lose 7c/contract); re-test ~Nov 28.
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
   account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
   their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
