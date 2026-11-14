@@ -90,6 +90,8 @@ WHALE_NEW_DAYS = 30         # flagged NEW if the account joined within 30 days o
 WHALE_FEW_MARKETS = 10      # paper only: we log the bet and score how it settles, never copy it
 WHALE_ANON_USD = 2000       # anonymous trades: no account to check, so only bigger bets ($2,000+, the taker's side)
 WHALE_CHECKS = 4            # profile lookups per loop (cached per account)
+RESULT_BATCH = 100          # settlement results: markets per call, and calls per status update (every 5 min),
+RESULT_CALLS = 20           # so up to 2,000 markets are checked each time, least recently checked first
 CATEGORIES = ("Sports", "Politics", "Crypto", "Economics", "Climate and Weather", "Financials",
               "Entertainment", "Mentions", "Combos", "Commodities", "Elections", "Companies")
 SEED = ("BWmarkets", "thebigdon", "BitcoinTradingChallenge", "szg.szg", "brief.theme",
@@ -632,6 +634,7 @@ class Copycat:
         self.rr = 0
         self.uploaded: set[str] = set()
         self.results: dict[str, str] = {}
+        self.res_asked: dict[str, float] = {}    # ticker -> when its result was last asked for
         self.status_next = 0.0
         self.checked: set[str] = set()           # names already looked up by the scout
         self.scout_next = 0.0
@@ -888,6 +891,27 @@ class Copycat:
                 "last": _px(m.get("last_price_dollars", m.get("last_price"))),
                 "status": m.get("status"), "result": m.get("result") or None}
 
+    def fetch_results(self, want: set[str], now: float) -> None:
+        """Looks up settlement results in batches of RESULT_BATCH markets per call, least recently
+        checked first. (Until Nov 14 this asked for 40 markets per status update, one call each, in
+        alphabetical order, and still-open markets were asked again every time: most settled copies
+        never got a result, so scores were built on a small, lopsided part of each account's record.)"""
+        self.res_asked = {t: v for t, v in self.res_asked.items() if t in want}
+        todo = sorted(want, key=lambda t: (self.res_asked.get(t, 0.0), t))[:RESULT_BATCH * RESULT_CALLS]
+        for i in range(0, len(todo), RESULT_BATCH):
+            batch = todo[i:i + RESULT_BATCH]
+            self.tick()
+            try:
+                j = self.get(f"{KALSHI}/markets", tickers=",".join(batch), limit=1000)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat results: %s", exc)
+                return
+            for t in batch:
+                self.res_asked[t] = now
+            for m in j.get("markets") or []:
+                if m.get("result") in ("yes", "no") and m.get("ticker"):
+                    self.results[m["ticker"]] = m["result"]
+
     # -- one account
     def poll(self, nick: str, now: float) -> None:
         trades = self.get(f"{SOCIAL}/trades", nickname=nick, limit=50).get("trades") or []
@@ -1113,7 +1137,8 @@ class Copycat:
             row = {"kind": "fill", "v": ROW_V, "nick": nick, "trade_id": tid, "ticker": t.get("ticker"),
                    "role": role, "side": side, "yes_price": _px(t.get("price_dollars")),
                    "count": t.get("count_fp", t.get("count")), "trade_time": t.get("create_date"),
-                   "backfill": first, "src": src}
+                   "backfill": first, "src": src, "act": t.get("taker_action")}   # act: the taker bought or sold
+                   # (a sell is usually an exit; copies of sells did ~2c worse in the Nov 14 audit)
             if quiet:
                 row["dropped"] = True
             try:
@@ -1219,19 +1244,17 @@ class Copycat:
         old = now - 900
         held = [t for t, p in (self.live.state["positions"].items() if self.live else [])
                 if not p.get("settled") and t not in self.results]
-        need = held + sorted({r["ticker"] for r in rows if r.get("kind") == "fill" and not r.get("backfill")
-                              and (r.get("ts") or now) < old and r.get("ticker") not in self.results}
-                             - set(held))
-        whales = sorted({r["ticker"] for r in rows if r.get("kind") == "whale" and r.get("ticker")
-                         and (r.get("ts") or now) < old and r["ticker"] not in self.results} - set(need))
-        need = need[:40] + whales[:30]
-        for t in need:
+        want = ({r["ticker"] for r in rows if r.get("kind") in ("fill", "whale") and not r.get("backfill")
+                 and r.get("ticker") and (r.get("ts") or now) < old and r["ticker"] not in self.results}
+                - set(held))
+        for t in held:                            # markets we hold with real money: always, one by one
             try:
                 res = self.snapshot(t).get("result")
                 if res in ("yes", "no"):
                     self.results[t] = res
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat result %s: %s", t, exc)
+        self.fetch_results(want, now)
         stops, notes, live = {}, {}, None
         if self.live is not None:
             self.live.refresh(now, force=True)

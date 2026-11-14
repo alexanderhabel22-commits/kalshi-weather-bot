@@ -39,6 +39,9 @@ class FakeSession:
             return Resp({"social_profile": {"top_categories": ["Sports"], "joined_at": "2024-01-01"}})
         if "/series/" in url:
             return Resp({"series": {"category": "Politics"}})
+        if url.endswith("/markets"):
+            asked = params["tickers"].split(",")
+            return Resp({"markets": [{"ticker": t, "result": "yes" if t.startswith("DONE") else ""} for t in asked]})
         if "/markets/" in url:
             return Resp({"market": {"yes_bid_dollars": "0.60", "yes_ask_dollars": "0.62",
                                     "last_price_dollars": "0.61", "status": "active"}})
@@ -604,3 +607,18 @@ def test_cat_breakdown_adds_bands_series_and_unsettled_categories():
     assert sp["copies"] == 6 and sp["won"] == 3 and sp["lost"] == 3
     assert sp["bands"]["25-50c"] == [6, 6, 2.5] and sp["series"][0][:3] == ["KXNBA", 6, 6]
     assert out["Crypto"]["copies"] == 1 and out["Crypto"]["n"] == 0 and out["Crypto"]["all_series"] == ["KXBTC"]
+
+
+def test_results_fetched_in_batches_least_recently_checked_first(tmp_path):
+    ses = FakeSession()
+    cc = copycat.Copycat(tmp_path, session=ses, clock=lambda: 5000.0, req_gap=0)
+    cc.feed_next = 1e12
+    want = {f"OPEN{i:04d}" for i in range(2500)} | {f"DONE{i}" for i in range(50)}
+    cc.fetch_results(set(want), 5000.0)
+    calls = [c for c in ses.calls if c[0].endswith("/markets")]
+    assert len(calls) == copycat.RESULT_CALLS and all(len(c[1]["tickers"].split(",")) == 100 for c in calls)
+    assert len(cc.results) == 50                     # alphabetical on the first pass: DONE* come first
+    late = {f"ZLATE{i}" for i in range(10)}          # still-open markets asked before go to the back
+    cc.fetch_results((want - set(cc.results)) | late, 5300.0)
+    asked = {t for c in ses.calls[len(calls):] for t in c[1]["tickers"].split(",")}
+    assert late <= asked and "OPEN2499" in asked and "OPEN1949" not in asked
