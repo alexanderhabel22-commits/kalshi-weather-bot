@@ -755,6 +755,7 @@ function ccWhy(a){
   if (a.verdict === "real-lag") return `Back to paper: ${esc(R.why || "real money trailed its paper record")}.`;
   if (a.verdict === "slump") return `Paused: its recent copies average ${cents(a.settle_c)}, below its −${a.leeway_c}¢ leeway. It goes back on real money by itself when it recovers.`;
   if (a.verdict !== "passes") return `On paper: score ${sc}${a.score != null && a.score < CCR.score ? ` (needs ${CCR.score})` : ""}.`;
+  if (a.kept && a.why_live) return `<b>Your pick: real-money test (Alex, Nov 14).</b> 1 contract, $5 at-risk cap, $8 Copycat halt and $10 cash floor all on. Real results decide, not the paper score: ${esc(a.why_live)}. After 20 settled real copies it stays only while real P&L is break-even or better.`;
   if (a.kept) return `<b>Your pick (keep list).</b> It skips only the entry bar (${num(a.settled)}/${CCR.settled} settled copies, ${num(a.events)}/${CCR.events} games so far). Every check below still applies.`;
   return `<b>Passed its paper test:</b> score ${sc} (${CCR.score}+ needed) on ${num(a.settled)} settled copies across ${num(a.events)} games (needs ${CCR.settled} in ${CCR.events}+).`;
 }
