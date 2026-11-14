@@ -21,9 +21,11 @@ from datetime import timedelta
 from .. import kalshi
 from ..latepaper import load_orders
 from ..trader import Intent, archived_realized, realized
-from ..util import HttpError, parse_iso
+from .. import notify
+from ..util import DATA_DIR, HttpError, parse_iso, read_json, write_json
 
 NAME = "weather_late"
+STATE = DATA_DIR / "weather_late_state.json"
 log = logging.getLogger("wxbot")
 
 
@@ -37,6 +39,30 @@ def stopped(ctx) -> bool:
     return False
 
 
+def sub_stopped(ctx, key: str, limit: float) -> bool:
+    """Per metric/kind real-money stop (Nov 14: high/holds at -$3). Once the settled
+    real P&L of that piece is at or below -limit it stops trading (one push, once)."""
+    metric, kind = key.split("/")
+    tag = f"late-day {kind}: {metric} so far"
+    lost = sum(float(r.get("pnl") or 0) for r in ctx.orders
+               if r.get("strategy") == NAME and r.get("mode") == "live" and r.get("status") == "settled"
+               and str(r.get("note", "")).startswith(tag) and r.get("pnl") not in (None, ""))
+    if lost > -limit:
+        return False
+    st = read_json(STATE, {}) or {}
+    if key not in st.get("sub_stopped", {}):
+        st.setdefault("sub_stopped", {})[key] = ctx.now.isoformat(timespec="seconds")
+        write_json(STATE, st)
+        try:
+            notify.send(ctx.http, ctx.cfg, f"Late-day weather {metric} {kind}: back to paper",
+                        f"Real-money result ${lost:+.2f} hit the -${limit:.2f} stop. Lows keep trading.",
+                        priority=3, tags=["warning"])
+        except Exception as exc:  # alerts must never block trading
+            log.warning("sub-stop push failed: %s", exc)
+    log.warning("weather_late %s: stop hit ($%+.2f, limit -$%.2f); paper only", key, lost, limit)
+    return True
+
+
 def propose(ctx) -> list[Intent]:
     count = int(ctx.params.get("contracts", 1))
     # per "metric/kind" sizes, e.g. {"low/need" = 2}; anything not listed uses `contracts`
@@ -46,6 +72,10 @@ def propose(ctx) -> list[Intent]:
     kinds = set(ctx.params.get("kinds", ["need"]))
     # skip: "metric/kind" pairs or series tickers that stay paper-only (Nov 13)
     skip = {str(x) for x in (ctx.params.get("skip") or [])}
+    if ctx.mode == "live":
+        for key, lim in (ctx.params.get("sub_loss_stop") or {}).items():
+            if sub_stopped(ctx, key, float(lim)):
+                skip.add(key)
     # per-series size overrides, e.g. newly added cities start at 1 contract (Nov 13)
     per_series = {k: int(v) for k, v in (ctx.params.get("series_contracts") or {}).items()}
     picks = []
