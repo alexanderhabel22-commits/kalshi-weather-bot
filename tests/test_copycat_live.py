@@ -324,3 +324,17 @@ def test_total_dollar_halt(tmp_path):
     lv.state["total"] = -8.0
     lv.check_stops(1000.0)
     assert lv.state["halted"] and alerts == ["Copycat halted"] and lv.mode(1000.0) == "off"
+
+
+def test_earn_back_and_second_bench_is_final(tmp_path):
+    from wxbot.copycat_live import EARN_FINAL_S
+    lv, _ = mk(tmp_path)
+    lv.state["pnl"]["ace"] = -5.0
+    lv.check_stops(1000.0)
+    assert "ace" in lv.benched() and lv.earn_back_open(1000.0) == {"ace": 1000.0}
+    lv.unbench("ace", 5000.0)
+    assert "ace" not in lv.benched() and lv.state["pnl"]["ace"] == 0.0 and lv.state["pnl_hist"]["ace"] == -5.0
+    lv.state["pnl"]["ace"] = -5.0                       # benched again 1 day after coming back: final
+    lv.check_stops(5000.0 + 86400)
+    assert "ace" in lv.benched() and lv.earn_back_open(5000.0 + 86400) == {}
+    assert lv.earn_back_open(5000.0 + 86400 + EARN_FINAL_S + 1) == {"ace": 5000.0 + 86400}

@@ -38,6 +38,9 @@ DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": [],
             "keep": []}     # accounts Alex keeps on real money whatever their score (inside their $ limit)
 CONTROL_STALE_S = 600
+EARN_N = 50                 # earn-back: new settled paper copies needed since the bench
+EARN_SCORE = 80.0           # ... at this score or better, with a positive average
+EARN_FINAL_S = 30 * 86400   # a second bench within 30 days of coming back is final for 30 days
 
 
 def event_of(ticker: str) -> str:
@@ -78,6 +81,8 @@ class Live:
         self.state.setdefault("total", 0.0)
         self.state.setdefault("benched", {})       # nick -> reason (own stop)
         self.state.setdefault("halted", None)
+        self.state.setdefault("bench_log", {})     # nick -> {at, back_at, final_until} (earn-back, Nov 14)
+        self.state.setdefault("pnl_hist", {})      # nick -> real $ from before its last earn-back
 
     def save(self) -> None:
         (self.out / "live_state.json").write_text(json.dumps(self.state, indent=1))
@@ -257,13 +262,48 @@ class Live:
         lims = [x for x in (c["total_stop_pct"] * b if b else None, _f(c.get("total_stop_usd"))) if x is not None]
         return min(lims) if lims else None
 
+    # -- earn-back (Alex, Nov 14): a benched trader keeps paper copying and can earn real money back
+    def bench(self, nick: str, reason: str, now: float) -> None:
+        """Real-money bench (own $ stop or real-lag). A second bench within EARN_FINAL_S of coming
+        back is final for EARN_FINAL_S."""
+        log_ = self.state["bench_log"].setdefault(nick, {})
+        back = log_.get("back_at")
+        log_.update(at=now, final_until=now + EARN_FINAL_S if back and now - back < EARN_FINAL_S else None)
+        self.state["benched"][nick] = reason
+        self.save()
+
+    def earn_back_note(self, nick: str) -> str:
+        fu = (self.state["bench_log"].get(nick) or {}).get("final_until")
+        if fu:
+            return "second bench within 30 days, so no earn-back for 30 days"
+        return f"it can earn real money back after {EARN_N} new settled paper copies at score {EARN_SCORE:.0f}+ and a positive average"
+
+    def earn_back_open(self, now: float) -> dict:
+        """{nick: bench time} for benched traders allowed to earn back now."""
+        out = {}
+        for nick in self.state["benched"]:
+            lg = self.state["bench_log"].get(nick)
+            if lg and lg.get("at") and not (lg.get("final_until") and now < lg["final_until"]):
+                out[nick] = lg["at"]
+        return out
+
+    def unbench(self, nick: str, now: float) -> None:
+        """Back on real money with a fresh $ limit (its old real P&L moves to pnl_hist)."""
+        self.state["benched"].pop(nick, None)
+        lg = self.state["bench_log"].setdefault(nick, {})
+        lg.update(back_at=now, final_until=None)
+        self.state["pnl_hist"][nick] = round(self.state["pnl_hist"].get(nick, 0.0) + self.state["pnl"].get(nick, 0.0), 4)
+        self.state["pnl"][nick] = 0.0
+        self.save()
+
     def check_stops(self, now: float) -> None:
         lim = self.account_limit()               # hard $ stop per account (Nov 14), whichever is smaller
         for nick, pnl in self.state["pnl"].items():
             if lim is not None and pnl <= -lim and nick not in self.state["benched"]:
-                self.state["benched"][nick] = f"own stop: lost ${-pnl:.2f} copying it"
+                self.bench(nick, f"own stop: lost ${-pnl:.2f} copying it", now)
                 self.alert("Copycat benched an account",
-                           f"{nick}: lost ${-pnl:.2f} on real copies (stop ${lim:.2f}). Back to paper only.")
+                           f"{nick}: lost ${-pnl:.2f} on real copies (stop ${lim:.2f}). Back to paper only; "
+                           f"{self.earn_back_note(nick)}.")
         tl = self.total_limit()
         if tl is not None and self.state["total"] <= -tl and not self.state.get("halted"):
             self.state["halted"] = f"total stop: Copycat lost ${-self.state['total']:.2f}"

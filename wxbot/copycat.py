@@ -43,7 +43,7 @@ from zoneinfo import ZoneInfo
 
 import requests
 
-from wxbot.copycat_live import DEFAULTS as LIVE, event_of
+from wxbot.copycat_live import DEFAULTS as LIVE, EARN_N, EARN_SCORE, event_of
 from wxbot.srclog import UA, github_put
 
 log = logging.getLogger("wxbot")
@@ -255,7 +255,7 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
                 o["settle_ev"].append(event_of(f.get("ticker") or ""))
         res = (results or {}).get(f["ticker"])
         out[f["nick"]]["trades"].append({
-            "tid": tid, "et": (f.get("et") or "")[5:16], "ticker": f.get("ticker"), "side": side,
+            "tid": tid, "ts": f.get("ts"), "et": (f.get("et") or "")[5:16], "ticker": f.get("ticker"), "side": side,
             "their_c": round(100 * entry), "pay_c": round(100 * pay), "count": f.get("count"),
             "role": f.get("role"), "result": res, "ok": ok,
             "c": round(100 * ((1.0 if res == side else 0.0) - pay) - fee, 1) if res in ("yes", "no") else None})
@@ -563,7 +563,9 @@ def cat_breakdown(trades: list[dict], cats: dict | None, grades: dict) -> dict:
 
 def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float,
                  account_stops: dict | None = None, notes: dict | None = None, cats: dict | None = None,
-                 keep: set | None = None) -> dict:
+                 keep: set | None = None, earn_since: dict | None = None) -> dict:
+    """earn_since: {nick: bench time} for real-money-benched accounts that may earn back (paper
+    copies settled since then are scored into a["earn_back"])."""
     g = grade(rows, results)
     accounts = []
     paper_c = {}
@@ -590,6 +592,13 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         cg = cat_grades(o.get("trades") or [], cats)
         if n >= CAT_DETAIL_MIN:
             cg = cat_breakdown(o.get("trades") or [], cats, cg)
+        if nick in (earn_since or {}):
+            after = [t["c"] for t in o.get("trades") or [] if t.get("c") is not None and t.get("ok", True)
+                     and (t.get("ts") or 0) > earn_since[nick]]
+            sc_e, gl_e = score_grade(after)
+            earn = {"n": len(after), "c": round(st.mean(after), 2) if after else None, "score": sc_e, "grade": gl_e}
+        else:
+            earn = None
         paper_c.update({t["tid"]: t["c"] for t in o.get("trades") or [] if t.get("c") is not None})
         if (account_stops or {}).get(nick) and (due or kept):
             verdict = "benched"                   # its own real-money loss stop, or the boss
@@ -621,7 +630,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "size": (1 if kept and not copyable else size_for(score, len(settle_all)))
                          if verdict == "passes" else 0,
                          "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None,
-                         "cat_grades": cg, "blocked_cats": sorted(k for k, v in cg.items() if v["blocked"])})
+                         "earn_back": earn, "cat_grades": cg, "blocked_cats": sorted(k for k, v in cg.items() if v["blocked"])})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
             "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}, and only with {GO_LIVE_SETTLED}+ settled in {MIN_EVENTS}+ different events. Score 0-100 from its last 150 settled copies "
@@ -641,8 +650,10 @@ def add_real(status: dict, state: dict | None) -> None:
     paper ("real-lag") if real trails paper by more than REAL_GAP_C, or real is clearly negative."""
     pos = (state or {}).get("positions") or {}
     paper = status.pop("_paper_c", None) or {}
+    blog = (state or {}).get("bench_log") or {}
     for a in status["accounts"]:
-        mine = [p for p in pos.values() if p.get("nick") == a["nick"]]
+        back = (blog.get(a["nick"]) or {}).get("back_at") or 0   # after an earn-back: a fresh real record
+        mine = [p for p in pos.values() if p.get("nick") == a["nick"] and (p.get("ts") or 0) >= back]
         done = [p for p in mine if p.get("settled")]
         a["real"] = {"copies": len(mine), "open": len(mine) - len(done), "settled": len(done),
                      "won": sum(1 for p in done if (p.get("pnl") or 0) > 0),
@@ -1334,13 +1345,25 @@ class Copycat:
             stops.update({k: "boss: " + v["reason"] for k, v in self.boss.benches(now).items()})
             notes = dict(self.boss.state["notes"])
         keep = set((self.live.cfg.get("keep") or []) if self.live is not None else [])
+        earn = self.live.earn_back_open(now) if self.live is not None else {}
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats,
-                              keep=keep)
+                              keep=keep, earn_since=earn)
         add_real(status, self.live.state if self.live else None)
         for a in status["accounts"]:
             if a["verdict"] == "real-lag" and a["nick"] not in self.lag_told:
                 self.lag_told.add(a["nick"])
-                self.alert("Copycat: back to paper", f"{a['nick']}: {a['real'].get('why')}. Paper copies continue.")
+                if self.live is not None:
+                    self.live.bench(a["nick"], "real-lag: " + str(a["real"].get("why")), now)
+                self.alert("Copycat: back to paper", f"{a['nick']}: {a['real'].get('why')}. Paper copies continue"
+                           + (f"; {self.live.earn_back_note(a['nick'])}." if self.live is not None else "."))
+            eb = a.get("earn_back")
+            if (self.live is not None and eb and a["nick"] in earn and eb["n"] >= EARN_N
+                    and (eb["score"] or 0) >= EARN_SCORE and (eb["c"] or 0) > 0):
+                self.live.unbench(a["nick"], now)
+                self.lag_told.discard(a["nick"])
+                self.alert("Copycat: earned real money back",
+                           f"{a['nick']}: {eb['n']} paper copies since its bench, {eb['grade']} ({eb['c']:+.1f}c/contract). "
+                           "Real copies resume next cycle with a fresh limit.")
         for a in status["accounts"]:
             self.judge(a)
         if any(a["nick"] in self.dropped for a in status["accounts"]):
