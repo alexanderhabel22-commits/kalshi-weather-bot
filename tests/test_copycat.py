@@ -685,3 +685,22 @@ def test_load_cats_fills_category_map_from_full_series_list(tmp_path):
     assert not [c for c in s.calls if "/series/" in c[0]]          # served from the map, no per-series call
     g = copycat.cat_grades([{"ticker": "KXNBAGAME-X", "c": 5.0}, {"ticker": "SENATEKS-Y", "c": -3.0}], cc.cats)
     assert set(g) == {"Sports", "Elections"}
+
+
+def test_earn_back_scores_only_copies_since_the_bench():
+    rows_ = _cat_rows(160, lambda i: f"T{i}")
+    res = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(160)}
+    a = copycat.build_status(rows_, res, {"good": {}}, now=2000.0, earn_since={"good": 1000.0 + 99.5})["accounts"][0]
+    assert a["earn_back"]["n"] == 60 and a["earn_back"]["score"] >= 80 and a["earn_back"]["c"] > 0
+    b = copycat.build_status(rows_, res, {"good": {}}, now=2000.0)["accounts"][0]
+    assert b["earn_back"] is None
+
+
+def test_add_real_counts_only_copies_since_coming_back():
+    rows_ = _cat_rows(160, lambda i: f"T{i}")
+    res = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(160)}
+    st_ = copycat.build_status(rows_, res, {"good": {}}, now=2000.0)
+    pos = {f"T{i}": {"nick": "good", "side": "yes", "n": 1, "cost": 0.53, "settled": 1, "pnl": -0.53,
+                     "trade_id": f"t{i}", "ts": 100.0} for i in range(20)}
+    copycat.add_real(st_, {"positions": pos, "pnl": {}, "bench_log": {"good": {"back_at": 500.0}}})
+    assert st_["accounts"][0]["verdict"] == "passes" and st_["accounts"][0]["real"]["settled"] == 0
