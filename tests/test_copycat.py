@@ -593,3 +593,14 @@ def test_real_close_to_paper_keeps_copying():
                      "pnl": (0.46 if i % 10 < 8 else -0.54), "trade_id": f"t{i}"} for i in range(20)}
     copycat.add_real(st_, {"positions": pos, "pnl": {}})
     assert st_["accounts"][0]["verdict"] == "passes"
+
+
+def test_cat_breakdown_adds_bands_series_and_unsettled_categories():
+    trades = [{"ticker": f"KXNBA-{i}", "side": "yes", "pay_c": 30, "c": 10.0 if i % 2 else -5.0, "et": "2026-11-14 10:00"}
+              for i in range(6)] + [{"ticker": "KXBTC-1", "side": "no", "pay_c": 80, "c": None, "et": "2026-11-14 11:00"}]
+    cats = {"KXNBA": "Sports", "KXBTC": "Crypto"}
+    out = copycat.cat_breakdown(trades, cats, copycat.cat_grades(trades, cats))
+    sp = out["Sports"]
+    assert sp["copies"] == 6 and sp["won"] == 3 and sp["lost"] == 3
+    assert sp["bands"]["25-50c"] == [6, 6, 2.5] and sp["series"][0][:3] == ["KXNBA", 6, 6]
+    assert out["Crypto"]["copies"] == 1 and out["Crypto"]["n"] == 0 and out["Crypto"]["all_series"] == ["KXBTC"]
