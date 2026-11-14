@@ -60,7 +60,7 @@ THESIS = {
 NAMES = {"mentions": "Mentions NO", "weather": "Weather day-before", "weather_late": "Late-day weather",
          "favorites": "Big-event favorites", "favorites_wide": "Election favorites", "favorites_late": "Favorites, last 24h (paper)",
          "macro_fade": "Fed/CPI fade", "macro_wide": "Gas + jobless claims fade", "ai_fade": "Best-AI fade",
-         "rain_evening": "Evening rain fade", "spx_range": "S&P range fade"}
+         "rain_evening": "Evening rain fade", "spx_range": "S&P range fade", "ndx_range": "Nasdaq range fade"}
 # How each mode reads to a person: only live and alert results are money.
 MODE_LABEL = {"live": "REAL money", "alert": "old alerts (money only if you traded them)",
               "paper": "practice, no money", "shadow": "silent test, no money"}

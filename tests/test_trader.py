@@ -509,7 +509,8 @@ def test_only_approved_strategies_trade_real_money():
     # Nov 13 (Alex's Nov 12 OK for ideas clearing +3c): evening rain fade at 1 contract.
     # Alex, Nov 13 10:13 AM ET (decision card "Yes, 1 contract real"): S&P range fade, 1 contract.
     # Alex, Nov 14 ("+5c is +5c let's add it"): Best-AI fade (KXLLM1), 3 contracts.
-    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade"}
+    # Alex, Nov 14 4:19 PM ET ("Ok sure get it going"): Nasdaq range fade, 1 contract.
+    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range"}
     assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 3
     assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 1
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 1
