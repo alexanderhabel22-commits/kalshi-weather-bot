@@ -50,6 +50,8 @@ log = logging.getLogger("wxbot")
 ET = ZoneInfo("America/New_York")
 SOCIAL = "https://api.elections.kalshi.com/v1/social"
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
+CATS_REFRESH_S = 24 * 3600                # full series -> category map, once a day
+CATS_RETRY_S = 3600                       # after a failed refresh
 BRANCH = "copycat-data"
 MIN_PNL = 100               # watched if lifetime profit >= $100 OR last-30-day profit >= MIN_PNL_30D
 MIN_PNL_30D = 100           # (Alex Nov 10: as many as possible; catches lifetime losers on a hot run)
@@ -685,6 +687,7 @@ class Copycat:
         self.alert = alert or (lambda t, b: None)
         self.copied_once: set[str] = set()
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
+        self.cats_next = 0.0                     # next full refresh of the series -> category map
         self.lag_told: set[str] = set()           # accounts already pushed as "back to paper" (real-lag)
         self.feed_seen: set[str] = set()         # trade ids already read from the global feed
         self.feed_top: str | None = None         # newest trade id of the feed snapshot last read
@@ -1198,6 +1201,23 @@ class Copycat:
             for d in SNAP_DELAYS:
                 self.snaps.append((now + d, d, nick, key[1], tid))
 
+    def load_cats(self, now: float) -> None:
+        """Fill the series -> category map from Kalshi's full series list (one ~20 MB call, daily),
+        so per-category grades cover every copied trade, not only the ones we tried to copy live."""
+        self.cats_next = now + CATS_RETRY_S
+        try:
+            r = self.s.get(f"{KALSHI}/series", timeout=90)
+            if r.status_code != 200:
+                raise RuntimeError(f"{r.status_code} series list")
+            got = {x["ticker"]: x.get("category") for x in r.json().get("series") or [] if x.get("ticker")}
+            del r
+        except Exception as exc:  # noqa: BLE001
+            log.warning("copycat series list: %s", exc)
+            return
+        self.cats.update(got)
+        self.cats_next = now + CATS_REFRESH_S
+        log.info("copycat categories: %d series", len(got))
+
     def category(self, ticker: str) -> str | None:
         """Kalshi category of a market's series (e.g. 'Sports'), cached."""
         ser = ticker.split("-")[0]
@@ -1245,6 +1265,8 @@ class Copycat:
 
     def step(self) -> None:
         now = self.clock()
+        if now >= self.cats_next:
+            self.load_cats(now)
         if now >= self.watch_next:
             self.watch_next = now + WATCH_REFRESH_S
             self.build_watch()
