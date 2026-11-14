@@ -57,6 +57,21 @@
       "label": "Favorites, last 24h (paper)",
       "backtest_c": 4.6,
       "backtest_note": "Paper shadow Nov 13 only, switched off the same day when the live favorites rule moved to the 24-hour window. Was: PAPER shadow since Nov 13: the favorites rule but bidding only in the last 24 hours before close. Replay Jan 2025-Nov 2026 on reachable markets: +4.6c per fill vs +2.0c for the live rule, ~20% fewer fills. Decide at the favorites 500-contract review."
+    },
+    "ai_fade": {
+      "label": "Best-AI fade",
+      "backtest_c": 5.1,
+      "backtest_note": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1): resting NO at 71-95c. Replay Feb 2025-Nov 2026: +5.1c per fill, 85 fills, 40 of 43 events up. About 4 fills a month. Real money, 3 contracts, since Nov 14."
+    },
+    "rain_evening": {
+      "label": "Evening rain fade",
+      "backtest_c": 6.1,
+      "backtest_note": "After 8 PM local with no rain recorded yet, buy NO at the ask in the 75-95c band and hold. Replay Jul-Nov 2026: +6.1c per contract after fees, 109 trades. About 1 a day. 1-contract real test since Nov 13."
+    },
+    "spx_range": {
+      "label": "S&P range fade",
+      "backtest_c": 12.8,
+      "backtest_note": "Sell S&P 500 daily-close ranges priced 30c+ overnight (NO bid at 65c on the 6 likeliest ranges, cancelled at 8:45 AM ET). Replay Feb 2025-Nov 2026: +12.8c per fill, 293 fills, 21% lose. About 14 fills a month. 1-contract real test, first orders Sun Nov 15 4 PM ET."
     }
   },
   "events": [
