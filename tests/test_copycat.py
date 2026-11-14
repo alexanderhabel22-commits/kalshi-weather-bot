@@ -650,12 +650,29 @@ def test_honest_grade_counts_games_once_and_needs_30_events():
     rows2, res2 = _acct_rows("real", 160, lambda i: f"KXG-G{i}-M", lambda i: i % 10 < 8)
     b = copycat.build_status(rows2, res2, {"real": {}}, now=2000.0)["accounts"][0]
     assert b["events"] == 150 and b["verdict"] == "passes" and b["size"] >= 1
-    # a kept account stays on real money at 1 contract whatever its score, unless its own stop benched it
+    # a kept account skips only the sample-size bar (8 games here): good score -> 1 contract, unless its own stop benched it
+    rows_, res = _acct_rows("lucky", 110, lambda i: f"KXG-G{i % 20}-M{i}", lambda i: (i % 20) % 10 < 9)
+    w = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0)["accounts"][0]
+    assert w["events"] == 20 and w["score"] >= copycat.COPY_SCORE and w["verdict"] == "watching"
     k = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"})["accounts"][0]
     assert k["verdict"] == "passes" and k["size"] == 1 and k["kept"]
     k2 = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"},
                               account_stops={"lucky": "own stop"})["accounts"][0]
     assert k2["verdict"] == "benched" and k2["size"] == 0
+    # ...but a kept account with a losing record still goes back to paper (Alex, Nov 14)
+    rows3, res3 = _acct_rows("cold", 60, lambda i: f"KXG-G{i}-M", lambda i: i % 10 < 3)
+    c = copycat.build_status(rows3, res3, {"cold": {}}, now=2000.0, keep={"cold"})["accounts"][0]
+    assert c["kept"] and c["score"] < copycat.COPY_SCORE and c["verdict"] == "fails" and c["size"] == 0
+
+
+def test_kept_account_still_gets_real_lag_check():
+    rows_, res = _acct_rows("lucky", 110, lambda i: f"KXG-G{i % 20}-M{i}", lambda i: (i % 20) % 10 < 9)
+    pos = {f"p{i}": {"nick": "lucky", "n": 1, "cost": 0.6, "settled": 1.0, "pnl": -0.6, "trade_id": f"x{i}"}
+           for i in range(copycat.REAL_MIN)}
+    st_ = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"})
+    copycat.add_real(st_, {"positions": pos, "pnl": {"lucky": -0.6 * copycat.REAL_MIN}})
+    a = st_["accounts"][0]
+    assert a["verdict"] == "real-lag" and a["size"] == 0
 
 
 def test_load_cats_fills_category_map_from_full_series_list(tmp_path):
