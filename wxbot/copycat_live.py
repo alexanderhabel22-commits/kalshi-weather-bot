@@ -10,7 +10,10 @@ the price they got. Rails, all checked before every order:
     bot of ours holds), and never the 15-min bot's live series;
   - size from the account's grade (1-3 contracts) and the hard client ceiling;
   - money at risk in open copies <= pool_pct of the bankroll;
-  - each account has its own stop (account_stop_pct of the bankroll, at most account_stop_usd = $3); Copycat as a whole halts at
+  - each account has a hard total-at-risk limit (Alex, Nov 14): its settled real losses plus the cost
+    of its open real copies never exceed account_stop_usd ($5; or account_stop_pct of the bankroll if
+    smaller), plus any real profit it has banked for us. A copy that would pass it is skipped; settled losses alone at the limit send the
+    account back to paper. One copy per event (game) as well. Copycat as a whole halts at
     total_stop_pct. The boss (copycat_boss.py) and copycat_control.json "bench" can bench anyone.
 Every order and settlement is written to the hourly log and to live_state.json.
 """
@@ -29,10 +32,15 @@ REPO = "alexanderhabel22-commits/kalshi-weather-bot"
 CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/copycat_control.json"
 SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
-DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_stop_usd": 3.0, "total_stop_pct": 0.25,
+DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_stop_usd": 5.0, "total_stop_pct": 0.25,
             "max_contracts": 3, "slip": 0.02, "max_lag_s": 60, "min_px": 0.05, "max_px": 0.95,
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
 CONTROL_STALE_S = 600
+
+
+def event_of(ticker: str) -> str:
+    """A market's event (e.g. one game): the ticker without its last part."""
+    return ticker.rsplit("-", 1)[0] if ticker.count("-") >= 2 else ticker
 
 
 def _f(x, d=None):
@@ -108,6 +116,22 @@ class Live:
     def open_cost(self) -> float:
         return sum(p["cost"] for p in self.state["positions"].values() if not p.get("settled"))
 
+    def account_limit(self, nick: str | None = None) -> float | None:
+        """Hard $ limit per account: the smaller of account_stop_usd and account_stop_pct of bankroll.
+        With nick: plus the real profit that account has banked for us ("earned room", Alex Nov 14:
+        more leeway for traders who made us actual money). The shared pool still bounds it."""
+        c, b = self.cfg, self.bankroll or 0
+        lims = [x for x in (c["account_stop_pct"] * b if b else None, _f(c.get("account_stop_usd"))) if x is not None]
+        if not lims:
+            return None
+        return min(lims) + (max(0.0, self.state["pnl"].get(nick, 0.0)) if nick else 0.0)
+
+    def at_risk(self, nick: str) -> float:
+        """Settled real losses on this account plus the cost of its open real copies."""
+        lost = max(0.0, -self.state["pnl"].get(nick, 0.0))
+        return lost + sum(p["cost"] for p in self.state["positions"].values()
+                          if p.get("nick") == nick and not p.get("settled"))
+
     # -- copying
     def maybe_copy(self, acct: dict | None, fill: dict, snap: dict, now: float) -> str:
         """Returns what happened ('copied', or why not). acct is the account's status row."""
@@ -129,6 +153,9 @@ class Live:
             return f"excluded category ({snap.get('category')})"
         if ticker in self.state["positions"]:
             return "already copied this market"
+        ev = event_of(ticker)
+        if any(not p.get("settled") and event_of(t) == ev for t, p in self.state["positions"].items()):
+            return "already copied this event"
         bid, ask = snap.get("bid"), snap.get("ask")
         if bid is None or ask is None:
             return "no quote"
@@ -144,6 +171,11 @@ class Live:
             n = 1
             if self.open_cost() + limit > c["pool_pct"] * self.bankroll:
                 return "pool full"
+        lim = self.account_limit(nick)
+        if lim is not None and self.at_risk(nick) + limit * n > lim:
+            n = 1
+            if self.at_risk(nick) + limit > lim:
+                return f"trader limit (${lim:.2f} at risk)"
         try:
             if abs(self.client.position(ticker)) > 0:
                 return "we already hold this market"
@@ -197,10 +229,8 @@ class Live:
     def check_stops(self, now: float) -> None:
         b = self.bankroll or 0
         c = self.cfg
-        cap = _f(c.get("account_stop_usd"))      # hard $ stop per account (Nov 14), whichever is smaller
+        lim = self.account_limit()               # hard $ stop per account (Nov 14), whichever is smaller
         for nick, pnl in self.state["pnl"].items():
-            lims = [x for x in (c["account_stop_pct"] * b if b else None, cap) if x is not None]
-            lim = min(lims) if lims else None
             if lim is not None and pnl <= -lim and nick not in self.state["benched"]:
                 self.state["benched"][nick] = f"own stop: lost ${-pnl:.2f} copying it"
                 self.alert("Copycat benched an account",

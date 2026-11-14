@@ -1,5 +1,5 @@
 {
- "_note": "Copycat real-money switch (read by the droplet every minute). mode: live | off. Real copies only for accounts whose paper record passes (100 paper copies at a B+ score, else 150; score 80+ to copy). Alex approved going live at that threshold on Nov 10, 2026. bench: list of account nicknames never to copy. exclude_categories: Kalshi categories never copied with real money (Alex, Nov 10 8:57 PM ET: Sports INCLUDED for Copycat, an exception to the main bot's no-sports rule). account_stop_usd: hard $ loss stop per account (Nov 14: $3, then back to paper with one push); an account also needs 40+ settled copies to go real.",
+ "_note": "Copycat real-money switch (read by the droplet every minute). mode: live | off. Real copies only for accounts whose paper record passes (100 paper copies at a B+ score, else 150; score 80+ to copy). Alex approved going live at that threshold on Nov 10, 2026. bench: list of account nicknames never to copy. exclude_categories: Kalshi categories never copied with real money (Alex, Nov 10 8:57 PM ET: Sports INCLUDED for Copycat, an exception to the main bot's no-sports rule). account_stop_usd: hard total-at-risk limit per account (Alex, Nov 14: $5). Settled real losses plus the cost of open real copies never pass it (copies that would are skipped); settled losses alone at $5 send it back to paper with one push. The limit grows by the real profit the account has banked for us (earned room); the shared pool still bounds it. One copy per event. An account also needs 40+ settled copies to go real.",
  "mode": "live",
  "pool_pct": 0.15,
  "account_stop_pct": 0.1,
@@ -13,5 +13,5 @@
  ],
  "exclude_categories": [],
  "bench": [],
- "account_stop_usd": 3.0
+ "account_stop_usd": 5.0
 }
