@@ -46,14 +46,16 @@ def _mid(m: dict) -> float:
     return (yb + ya) / 2
 
 
-def candidates(markets: list[dict], p: dict, now, held: dict | None = None) -> list[Intent]:
+def candidates(markets: list[dict], p: dict, now, held: dict | None = None,
+               series: str = SERIES, name: str = NAME, label: str = "S&P 500 close") -> list[Intent]:
+    """Also used by ndx_range (same rule on the Nasdaq-100) with its own series/name."""
     held = held or {}
     sell = float(p["sell_yes"])
     lo, hi = now + timedelta(hours=float(p["min_hours"])), now + timedelta(hours=float(p["max_hours"]))
     by_event: dict[str, list] = {}
     for m in markets:
         tk = m.get("ticker") or ""
-        if not tk.startswith(SERIES + "-") or (m.get("strike_type") or "") != "between":
+        if not tk.startswith(series + "-") or (m.get("strike_type") or "") != "between":
             continue
         close = parse_iso(m.get("close_time"))
         if close is None or not lo <= close <= hi:
@@ -69,14 +71,14 @@ def candidates(markets: list[dict], p: dict, now, held: dict | None = None) -> l
                 continue
             yb = kalshi.price(m, "yes_bid")
             yb = yb if yb is not None and 0 < yb < 1 else 0.0
-            title = (m.get("title") or "S&P 500 close") + f" {m.get('yes_sub_title') or tk.rsplit('-', 1)[-1]}"
+            title = (m.get("title") or label) + f" {m.get('yes_sub_title') or tk.rsplit('-', 1)[-1]}"
             vol = float(m.get("volume_fp") or m.get("volume") or 0)
             if yb >= sell - 1e-9:
-                out.append(Intent(NAME, tk, ev, "no", round(1 - yb, 2), int(p["contracts"]),
+                out.append(Intent(name, tk, ev, "no", round(1 - yb, 2), int(p["contracts"]),
                                   m.get("close_time") or "", title[:120],
                                   f"YES bid {yb:.2f} >= {sell:.2f}: take", vol, taker=True))
             else:
-                out.append(Intent(NAME, tk, ev, "no", round(1 - sell, 2), int(p["contracts"]),
+                out.append(Intent(name, tk, ev, "no", round(1 - sell, 2), int(p["contracts"]),
                                   m.get("close_time") or "", title[:120],
                                   f"rest: sell YES at {sell:.2f} (bid {yb:.2f})", vol))
     return out

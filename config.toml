@@ -381,6 +381,33 @@ exit = "hold"
 max_week_contracts = 100             # ~6 resting a night count as placed, even when cancelled unfilled
 max_market_contracts = 1
 
+[trading.ndx_range]
+# Same rule as spx_range on the Nasdaq-100 daily close (wxbot/strats/ndx_range.py,
+# /mnt/project-files/analysis/range-brackets/RESULTS.md). KXNASDAQ100 100-point ranges
+# priced 30c+ before the open are overpriced (max fair ~13%). Rest a NO bid at 65c on the
+# 6 likeliest ranges, ~4:05 PM ET to 8:30 AM ET; cancel at 8:45 AM ET.
+# Replay Jan 2025-Nov 2026, back-of-queue: +22.4c per fill, 138 fills, 12% lose; recent
+# 25 fills +30c; every period positive. ~7 fills a month.
+# 1-CONTRACT REAL test from Nov 15 (Alex, Nov 14 4:19 PM ET: "Ok sure get it going").
+# With spx_range: 12 resting NO bids at 65c = $7.80 overnight at most (~13% of a ~$58 bankroll).
+# Reviews at 100/300/500 contracts; freeze applies until 500.
+enabled = true
+live = true
+taker = true
+contracts = 1
+max_contracts = 1
+sell_yes = 0.35
+n_markets = 6
+min_price = 0.40
+max_price = 0.65
+max_open_pct = 0.10              # 6 resting NO bids at 65c = $3.90
+max_event_pct = 0.10
+max_loss_pct = 0.10
+max_loss_usd = 5.0               # own stop: down $5 settled real money (or 10% of bankroll if smaller) -> no new orders + one push
+exit = "hold"
+max_week_contracts = 100
+max_market_contracts = 1
+
 [allocator]
 # Grades every strategy on profit per $1 risked (settled REAL-money results only,
 # bets on one event counted together, longshots trusted less because

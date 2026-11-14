@@ -214,6 +214,14 @@ record earns it. Be candid about odds and risk; no hype.
   (`trader.expire_resting`; live rows stay resting until `sync_live` reads the cancel back).
   Replay Feb 2025-Nov 2026, back-of-queue: +12.8c per fill, 293 fills, 21% lose; ~14 fills/month.
   Kalshi stock perps (leverage) were checked the same day: NO edge. Research: `research_spx/RESULTS.md`.
+- **Nasdaq range fade (REAL 1 contract, Nov 15):** `wxbot/strats/ndx_range.py`,
+  `[trading.ndx_range]` (Alex OK Nov 14 4:19 PM ET "Ok sure get it going"). The spx_range rule on
+  KXNASDAQ100 (100-point ranges); reuses `spx_range.candidates`/`cancel_due`. Replay Jan 2025-Nov 2026,
+  back-of-queue: +22.4c per fill, 138 fills, 12% lose, every period positive; ~7 fills/month. After
+  the open the same rule loses. Own stop: -$5 settled real money (or -10% of bankroll if smaller),
+  one push, state in `data/ndx_range_state.json`. Both range rules together: at most 12 resting
+  NO bids at 65c = $7.80. The same rule on FX daily ranges and BTC/ETH hourly ranges loses
+  (`research_ndx/RESULTS.md`).
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES
