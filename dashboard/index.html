@@ -142,6 +142,7 @@ h2 .sub{margin-left:auto;font-size:10.5px;letter-spacing:.04em;text-transform:no
 .rng{display:flex;gap:4px;margin-top:6px}
 .rng button{all:unset;flex:1;text-align:center;padding:7px 0;border-radius:8px;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--ink2);cursor:pointer}
 .rng button.on{background:var(--rc,#34d399);color:#070a12}
+.ccn{cursor:pointer;text-decoration:underline dotted rgba(148,163,200,.7);text-underline-offset:3px}
 .rng[data-smt]{display:inline-flex;margin-left:auto}.rng[data-smt] button{flex:none;padding:4px 10px;font-size:10.5px}
 .smrow{display:flex;justify-content:flex-end;margin:0 0 6px}
 .share{height:4px;border-radius:2px;background:#18213b;margin:5px 0 3px;overflow:hidden}.share i{display:block;height:100%;border-radius:2px;opacity:.85}
@@ -478,6 +479,8 @@ function txPage(){
 }
 /* ---------------------------------------------------------------- Copycat live tracker (Alex, Nov 14)
    Same "Right now" view as MAIN, for Copycat's REAL copies (status.json live.open / live.settled; cost includes the fee). */
+// a trader's name that opens their pop-up when tapped (handled by the [data-ccn] click listener)
+const ccN = n => n ? `<span class="ccn" data-ccn="${esc(n)}">${esc(n)}</span>` : "";
 function ccRows(){
   const L = ((S.cc || {}).live) || {};
   return (L.open || []).map(o => { const q = S.quotes[o.ticker] || {}, n = num(o.n, 0);
@@ -520,10 +523,11 @@ function ccLiveHTML(){
     <div class="lbl" style="margin:16px 0 4px">Open copies <span class="mute" style="text-transform:none;letter-spacing:0">· best to worst since we copied</span></div>
     <div class="list">${list.map(r => { const m = ccMark(r), u = m == null ? null : mk.val(r);
       return `<div class="item" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div>
-        <div class="s" style="white-space:normal">${+r.n.toFixed(2)} @ ${c2(r.price)}${m == null ? "" : ` → now ${c2(m)}`} · copied ${esc(r.nick || "")} ${esc(ago(new Date(r.at)))}${r.exp ? ` · settles in ${esc(until(r.exp))}` : ""}</div></div>
+        <div class="s" style="white-space:normal">${+r.n.toFixed(2)} @ ${c2(r.price)}${m == null ? "" : ` → now ${c2(m)}`} · copied ${ccN(r.nick)} ${esc(ago(new Date(r.at)))}${r.exp ? ` · settles in ${esc(until(r.exp))}` : ""}</div></div>
         <div class="r ${u == null ? "" : cls(u)}">${u == null ? "—" : money(u)}</div></div>`; }).join("")}</div>
     ${list.length > 1 ? `<div class="lbl" style="margin:14px 0 2px">Up/down by copy</div><div class="chart" id="ccBets"></div>` : ""}
     <div class="mute" style="font-size:11px;margin-top:6px">Cost includes Kalshi's fee. Prices refresh every 30 s.</div></div>`;
+  h += ccEarnedHTML();
   // accounts copied with real money: real result vs their paper record, and room left before their own stop
   const stop = ccStop(), pnl = L.pnl || {}, benched = L.benched || {};
   const accts = (c.accounts || []).filter(a => a.verdict === "passes" || (a.real || {}).copies || pnl[a.nick] != null || benched[a.nick]);
@@ -531,7 +535,7 @@ function ccLiveHTML(){
     h += `<h2>Live accounts <span class="sub">${accts.length} copied with real money · stop $${stop.toFixed(2)} each</span></h2><div class="card"><div class="list">` + accts.map(a => {
       const R = a.real || {}, rp = pnl[a.nick] != null ? num(pnl[a.nick]) : num(R.pnl), left = stop + Math.min(0, rp), used = Math.max(0, -rp);
       const per = R.contracts && R.settled ? rp / R.contracts * 100 : null;
-      return `<div class="item" style="padding:9px 0;align-items:flex-start"><div class="main"><div class="t" style="font-size:13.5px">${esc(a.nick)} <span class="chip" style="font-size:9.5px;padding:1px 6px;margin-left:4px">${esc(a.grade || "-")}${a.score != null ? " " + Math.round(a.score) : ""}</span>${benched[a.nick] ? ` <span class="chip off" style="font-size:9.5px;padding:1px 6px">BENCHED</span>` : ""}</div>
+      return `<div class="item" style="padding:9px 0;align-items:flex-start"><div class="main"><div class="t" style="font-size:13.5px">${ccN(a.nick)} <span class="chip" style="font-size:9.5px;padding:1px 6px;margin-left:4px">${esc(a.grade || "-")}${a.score != null ? " " + Math.round(a.score) : ""}</span>${benched[a.nick] ? ` <span class="chip off" style="font-size:9.5px;padding:1px 6px">BENCHED</span>` : ""}</div>
         <div class="s" style="white-space:normal">Real: ${num(R.copies)} copies · ${num(R.open)} open · won ${num(R.won)}/${num(R.settled)}${per == null ? "" : ` · ${cents(per)}/ct`}</div>
         <div class="s" style="white-space:normal">Paper: ${a.settle_c == null ? "—" : cents(a.settle_c) + "/copy"} on ${num(a.settled)} settled${a.banked ? ` · ${money(num(a.banked))} banked` : ""}</div>
         <div class="s" style="white-space:normal">${benched[a.nick] ? esc(benched[a.nick]) : `$${left.toFixed(2)} left before its $${stop.toFixed(2)} stop`}</div>
@@ -541,8 +545,57 @@ function ccLiveHTML(){
   }
   const done = (L.settled || []).slice(0, 10);
   if (done.length) h += `<h2>Settled copies <span class="sub">${done.length} newest</span></h2><div class="card list">` + done.map(p => { const q = S.quotes[p.ticker] || {};
-    return `<div class="item" style="padding:7px 0"><span class="side ${esc(String(p.side).toLowerCase())}">${esc(String(p.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(q.title || p.ticker)}</div><div class="s">${esc(p.nick || "")} · ${p.result === p.side ? "won" : "lost"} · ${esc(fdt(new Date(num(p.settled) * 1000)))}</div></div><div class="r ${cls(num(p.pnl))}">${money(num(p.pnl))}</div></div>`; }).join("") + `</div>`;
+    return `<div class="item" style="padding:7px 0"><span class="side ${esc(String(p.side).toLowerCase())}">${esc(String(p.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(q.title || p.ticker)}</div><div class="s">${ccN(p.nick)} · ${p.result === p.side ? "won" : "lost"} · ${esc(fdt(new Date(num(p.settled) * 1000)))}</div></div><div class="r ${cls(num(p.pnl))}">${money(num(p.pnl))}</div></div>`; }).join("") + `</div>`;
   return h;
+}
+// Real money earned (Alex, Nov 14): cumulative settled real P&L (after fees), total + one line per account,
+// and a By account table like MAIN's By strategy. status.json keeps the 30 newest settled copies; anything
+// older is folded into the starting point so the total line still ends at live.total_pnl.
+const CC_COLORS = ["#22d3ee", "#f472b6", "#a3e635", "#fb923c", "#c084fc", "#fde047", "#60a5fa", "#34d399"];
+function ccAccts(){
+  const c = S.cc || {}, L = c.live || {}, pnl = L.pnl || {};
+  const names = new Set([...(L.open || []), ...(L.settled || [])].map(p => p.nick).concat(Object.keys(pnl)));
+  (c.accounts || []).forEach(a => { if (a.verdict === "passes" || (a.real || {}).copies) names.add(a.nick); });
+  return [...names].filter(Boolean);
+}
+function ccEarnedHTML(){
+  const c = S.cc || {}, L = c.live || {}; if (c.mode !== "live" && !(L.settled || []).length) return "";
+  const names = ccAccts(), done = L.settled || [], open = L.open || [], tot = num(L.total_pnl);
+  const acct = n => (c.accounts || []).find(a => a.nick === n) || {};
+  const rows = names.map((n, i) => { const d = done.filter(p => p.nick === n), o = open.filter(p => p.nick === n);
+    const ct = d.reduce((a, p) => a + num(p.n), 0), pl = (L.pnl || {})[n] != null ? num(L.pnl[n]) : d.reduce((a, p) => a + num(p.pnl), 0);
+    const won = d.filter(p => num(p.pnl) > 0).length, staked = d.reduce((a, p) => a + num(p.cost), 0);
+    return {n, i, ct, pl, won, lost:d.length - won, staked, open:o.length, openCost:o.reduce((a, p) => a + num(p.cost), 0), paper:acct(n).settle_c, paperN:acct(n).settled}; })
+    .sort((a, b) => (b.ct > 0) - (a.ct > 0) || b.pl - a.pl);
+  const T = rows.reduce((a, r) => ({ct:a.ct + r.ct, won:a.won + r.won, lost:a.lost + r.lost, staked:a.staked + r.staked, open:a.open + r.open, openCost:a.openCost + r.openCost}), {ct:0, won:0, lost:0, staked:0, open:0, openCost:0});
+  const pc = (pl, ct) => ct ? cents(100 * pl / ct) : "—", wr = r => r.won + r.lost ? pct(r.won / (r.won + r.lost)) : "—";
+  let h = `<h2>Real money earned <span class="sub">settled copies · after fees</span></h2><div class="card">
+    <div class="chead"><b class="${cls(tot)}">${money(tot)}</b><span>${T.won + T.lost} settled cop${T.won + T.lost === 1 ? "y" : "ies"} · ${T.open} open</span></div>
+    <div class="legend" id="ccEqLeg"></div>${smoothBtns()}<div class="chart" id="ccEq"></div>
+    <div class="mute" style="font-size:11px;margin-top:4px">${T.won + T.lost ? "Each step is a real copy settling. One line per account, white is the total." : "Starts with the first real copy that settles."}</div></div>`;
+  h += `<h2>By account <span class="sub">${rows.length} on real money · real vs paper</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Account</th><th>¢/ct</th><th>P&L</th><th>Open</th><th>Ct</th><th>W-L</th><th>Win</th><th>Staked</th><th>Paper ¢/ct</th></tr>`
+    + rows.map(r => `<tr><td><i style="background:${CC_COLORS[r.i % CC_COLORS.length]}"></i>${ccN(r.n)}</td><td class="${r.ct ? cls(r.pl) : "mute"}" style="font-weight:700">${pc(r.pl, r.ct)}</td><td class="${r.ct ? cls(r.pl) : "mute"}">${r.ct ? money(r.pl) : "—"}</td>
+      <td>${r.open}${r.open ? `<small class="mute"> $${r.openCost.toFixed(2)}</small>` : ""}</td><td>${+r.ct.toFixed(2)}</td><td>${r.won}-${r.lost}</td><td>${wr(r)}</td><td>$${r.staked.toFixed(2)}</td>
+      <td class="${cls(r.paper || 0)}">${r.paper == null ? "—" : cents(r.paper)}<small class="mute"> ${num(r.paperN)}</small></td></tr>`).join("")
+    + (rows.length > 1 ? `<tr class="tot"><td>Total</td><td>${pc(tot, T.ct)}</td><td class="${cls(tot)}">${money(tot)}</td><td>${T.open}</td><td>${+T.ct.toFixed(2)}</td><td>${T.won}-${T.lost}</td><td>${wr(T)}</td><td>$${T.staked.toFixed(2)}</td><td></td></tr>` : "")
+    + `</table></div><div class="mute" style="font-size:11px;margin-top:6px">¢/ct = real profit per contract after fees. Paper ¢/ct = the same account's paper record (number = settled paper copies), our yardstick for whether real money keeps up. Open = real copies not settled yet (cost).</div>
+    ${rows.filter(r => r.ct).length > 1 ? `<div class="lbl" style="margin:12px 0 2px">Real vs paper ¢/ct</div><div class="chart" id="ccVs"></div>` : ""}</div>`;
+  return h;
+}
+function drawCCEarned(){
+  const el = $("#ccEq"); if (!el) return;
+  const c = S.cc || {}, L = c.live || {}, done = (L.settled || []).filter(p => p.settled).slice().sort((a, b) => a.settled - b.settled), tot = num(L.total_pnl);
+  const names = ccAccts(), now = Date.now(), base = tot - done.reduce((a, p) => a + num(p.pnl), 0);
+  const line = (ps, b0, name, col) => { let y = b0; const pts = ps.length ? [{x:ps[0].settled * 1000 - 60e3, y:b0}] : [];
+    ps.forEach(p => { y += num(p.pnl); pts.push({x:p.settled * 1000, y:+y.toFixed(2)}); }); if (pts.length) pts.push({x:now, y:+y.toFixed(2)}); return {name, c:col, w:name === "Total" ? 2.6 : 1.8, pts, tot:y}; };
+  const ser = [line(done, base, "Total", "#e6ecff")].concat(names.map((n, i) => line(done.filter(p => p.nick === n), 0, n, CC_COLORS[i % CC_COLORS.length])).filter(s => s.pts.length));
+  $("#ccEqLeg").innerHTML = ser.length > 1 ? ser.map(x => `<span><i style="background:${x.c}"></i>${x.name === "Total" ? "Total" : ccN(x.name)} <b class="${cls(x.tot)}">${money(x.tot)}</b></span>`).join("") : "";
+  lineChart(el, ...smoothOpts(ser, {step:true, h:180, empty:"No real copy has settled yet. The curve starts with the first one."}));
+  const vs = $("#ccVs"); if (vs){ const acc = n => (c.accounts || []).find(a => a.nick === n) || {};
+    const bars = []; names.forEach((n, i) => { const d = done.filter(p => p.nick === n), ct = d.reduce((a, p) => a + num(p.n), 0); if (!ct) return;
+      bars.push({label:n + " · real", short:n.slice(0, 6) + " R", v:100 * d.reduce((a, p) => a + num(p.pnl), 0) / ct, c:CC_COLORS[i % CC_COLORS.length], extra:`${d.length} settled real copies`});
+      if (acc(n).settle_c != null) bars.push({label:n + " · paper", short:n.slice(0, 6) + " P", v:acc(n).settle_c, c:"#64748b", extra:`${num(acc(n).settled)} settled paper copies`}); });
+    barChart(vs, bars, {h:120, fy:v => v.toFixed(0) + "¢", fv:v => cents(v) + "/ct"}); }
 }
 function ccUpPoints(mk){
   const rows = mk.rows; if (!rows.length) return [];
@@ -595,7 +648,7 @@ function ccPage(){
       <div class="r"><span style="color:${gcol(a.grade)};font-weight:800;font-size:18px">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : "no score yet"}</small></div></div>`; };
   const pos = [...(L.open || []).map(p => ({...p, open:1})), ...(L.settled || [])];
   h += `<h2>Real-money copies <span class="sub">${(L.open || []).length} open · ${(L.settled || []).length} settled</span></h2><div class="card">` + (pos.length ? pos.slice(0, 30).map(p =>
-    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(p.nick)} · ${esc((p.side || "").toUpperCase())} × ${p.n} · $${num(p.cost).toFixed(2)}</div><div class="s">${esc(p.ticker)}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${esc(String(p.result || "").toUpperCase())}</small>`}</div></div>`).join("") : `<div class="mute" style="font-size:12px">None yet. The first real copy happens when an account passes its paper test${live ? "" : " and the switch is on"}.</div>`) + `</div>`;
+    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${ccN(p.nick)} · ${esc((p.side || "").toUpperCase())} × ${p.n} · $${num(p.cost).toFixed(2)}</div><div class="s">${esc(p.ticker)}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${esc(String(p.result || "").toUpperCase())}</small>`}</div></div>`).join("") : `<div class="mute" style="font-size:12px">None yet. The first real copy happens when an account passes its paper test${live ? "" : " and the switch is on"}.</div>`) + `</div>`;
   const SORTS = {grade:["Grade", a => a.score ?? -1], real:["Real P&L", a => num((a.real || {}).pnl)], recent:["Recent result", a => a.settle_c ?? -999],
     copies:["Paper copies", a => a.fills || 0], profit:["Lifetime profit", a => a.pnl || 0], volume:["Their volume", a => num(a.contracts)],
     progress:["Closest to qualifying", a => a.verdict === "watching" ? (a.fills || 0) / ((a.score || 0) >= 87 ? 100 : 150) : -1],
@@ -613,7 +666,7 @@ function ccPage(){
   const ctl = `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"><select id="ccView" style="flex:1;min-width:140px;background:#0b1222;color:#e2e8f0;border:1px solid rgba(148,163,200,.25);border-radius:8px;padding:6px 8px;font-size:12px">${Object.entries(views).map(([k, v]) => `<option value="${k}"${k === vw ? " selected" : ""}>Show: ${v[0]} (${vcount(k)})</option>`).join("")}</select><select id="ccSort" style="flex:1;min-width:140px;background:#0b1222;color:#e2e8f0;border:1px solid rgba(148,163,200,.25);border-radius:8px;padding:6px 8px;font-size:12px">${Object.entries(SORTS).map(([k, v]) => `<option value="${k}"${k === sk ? " selected" : ""}>Sort: ${v[0]}</option>`).join("")}</select>
     <input id="ccQ" value="${esc(S.ccQ || "")}" placeholder="Find name, market (KXNBA) or category" style="flex:2;min-width:160px;background:#0b1222;color:#e2e8f0;border:1px solid rgba(148,163,200,.25);border-radius:8px;padding:6px 8px;font-size:12px"></div>`;
   const dq = drops.filter(x => !q || x.nick.toLowerCase().includes(q));
-  const dropList = `<div class="mute" style="font-size:12px;margin-bottom:6px">Not watched or copied for ${(c.scan || {}).drop_days || 30} days, then they can be re-tested from zero. Their trades are still logged from the public feed, so the data is kept.</div>` + (dq.length ? dq.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,200,.12);font-size:12px"><span style="word-break:break-all">${esc(x.nick)}</span><span class="mute" style="text-align:right">${esc(x.reason)}${x.grade ? ` · ${esc(x.score)} ${esc(x.grade)} at ${x.fills} copies` : x.pnl_30d != null ? ` · 30-day ${money(x.pnl_30d)}` : ""} · back ${esc(x.back)}</span></div>`).join("") : `<div class="mute">None dropped yet.</div>`);
+  const dropList = `<div class="mute" style="font-size:12px;margin-bottom:6px">Not watched or copied for ${(c.scan || {}).drop_days || 30} days, then they can be re-tested from zero. Their trades are still logged from the public feed, so the data is kept.</div>` + (dq.length ? dq.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,200,.12);font-size:12px"><span style="word-break:break-all">${ccN(x.nick)}</span><span class="mute" style="text-align:right">${esc(x.reason)}${x.grade ? ` · ${esc(x.score)} ${esc(x.grade)} at ${x.fills} copies` : x.pnl_30d != null ? ` · 30-day ${money(x.pnl_30d)}` : ""} · back ${esc(x.back)}</span></div>`).join("") : `<div class="mute">None dropped yet.</div>`);
   h += `<h2>Report card <span class="sub">${vw === "dropped" ? dq.length : shown.length} accounts${vw === "dropped" ? "" : " · tap one for its full card"}</span></h2><div class="card">` + ctl + (vw === "dropped" ? dropList : shown.length ? top.map(row).join("")
     + (rest.length ? `<details id="ccMore"${S.ccOpen ? " open" : ""} style="margin-top:6px"><summary data-more="Show all ${shown.length} accounts" style="cursor:pointer;font-size:12px;color:#22d3ee;padding:6px 0">${S.ccOpen ? "▲ Collapse to top 5" : `Show all ${shown.length} accounts`}</summary>${rest.map(row).join("")}<button data-cccollapse style="margin-top:8px;width:100%;background:rgba(148,163,200,.16);color:#22d3ee;border:0;border-radius:8px;padding:8px;font-size:12px;cursor:pointer">▲ Collapse to top 5</button></details>` : "")
     : `<div class="mute">${vw === "benched" ? "None benched or paused." : "No accounts yet."}</div>`) + `<div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">"Worst case" = the low end of what this account's copies are likely worth per contract, given how few we've seen so far (95% confidence). The score is built on it, so a lucky streak can't earn a high grade.</div></div>`;
@@ -624,18 +677,22 @@ function ccPage(){
     h += `<h2>Big bets by new accounts <span class="sub">paper only · $${WH.min_usd}+ single bets</span></h2><div class="card">
       <div class="s" style="white-space:normal;font-size:12px;line-height:1.6">Accounts that joined in the last ${WH.new_days} days (or have traded 10 markets or fewer) placing one bet of $${WH.min_usd}+. Possible inside information. We log each bet and score it as if we had copied it at their price, after the fee. Nothing is copied with real money.</div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0;font-size:12px"><div><b>New accounts:</b> ${WH.new_count} bets · ${st(WH.new)}${WH.new_ours ? ` · <b>at the price we'd really get:</b> ${st(WH.new_ours)}` : ""}</div><div class="mute">Older accounts (for comparison): ${WH.count - WH.new_count} bets · ${st(WH.old)}</div>${WH.anon_min_usd ? `<div><b>Anonymous $${Number(WH.anon_min_usd).toLocaleString()}+ bets:</b> ${WH.anon_count || 0} bets · ${st(WH.anon)}</div>` : ""}</div>`
-      + (wl.length ? wl.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,200,.12);font-size:12px"><div style="min-width:0"><div style="word-break:break-all"><b>${esc(x.nick)}</b> <span class="mute">${x.joined ? "joined " + esc(String(x.joined).slice(0, 10)) : ""}${x.markets != null ? " · " + x.markets + " markets" : ""}</span></div><div class="mute" style="word-break:break-all">${esc(x.ticker)} · ${esc(String(x.side || "").toUpperCase())} at ${Math.round(100 * x.paid)}¢ · ${esc(String(x.et || "").slice(5, 16))}</div></div><div style="text-align:right;white-space:nowrap"><div>$${Number(x.usd).toLocaleString()}</div><div class="${x.result_c == null ? "mute" : cls(x.result_c)}">${x.result_c == null ? "open" : (x.result_c > 0 ? "+" : "") + x.result_c + "¢"}</div></div></div>`).join("")
+      + (wl.length ? wl.map(x => `<div style="display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid rgba(148,163,200,.12);font-size:12px"><div style="min-width:0"><div style="word-break:break-all"><b>${x.nick ? ccN(x.nick) : "anonymous"}</b> <span class="mute">${x.joined ? "joined " + esc(String(x.joined).slice(0, 10)) : ""}${x.markets != null ? " · " + x.markets + " markets" : ""}</span></div><div class="mute" style="word-break:break-all">${esc(x.ticker)} · ${esc(String(x.side || "").toUpperCase())} at ${Math.round(100 * x.paid)}¢ · ${esc(String(x.et || "").slice(5, 16))}</div></div><div style="text-align:right;white-space:nowrap"><div>$${Number(x.usd).toLocaleString()}</div><div class="${x.result_c == null ? "mute" : cls(x.result_c)}">${x.result_c == null ? "open" : (x.result_c > 0 ? "+" : "") + x.result_c + "¢"}</div></div></div>`).join("")
         + ((WH.recent_new || []).length > 6 ? `<button data-ccwh style="margin-top:8px;width:100%;background:rgba(148,163,200,.16);color:#22d3ee;border:0;border-radius:8px;padding:8px;font-size:12px;cursor:pointer">${S.ccWh ? "▲ Show fewer" : "Show all " + WH.recent_new.length}</button>` : "")
         : `<div class="mute">None spotted yet.</div>`) + `</div>`;
   }
   const rc = c.recent || [];
   h += `<h2>Latest trades seen <span class="sub">paper record</span></h2><div class="card">` + (rc.length ? rc.slice(0, 25).map(r =>
-    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`) + `</div>`;
+    `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${ccN(r.nick)} · ${esc((r.side || "").toUpperCase())} ${r.yes_price != null ? Math.round((r.side === "no" ? 1 - r.yes_price : r.yes_price) * 100) + "¢" : ""} × ${esc(r.count)}</div><div class="s">${esc(r.ticker)}</div></div><div class="r"><small>${esc((r.et || "").slice(5, 16))} ET${r.lag_s != null ? " · " + r.lag_s + "s" : ""}</small></div></div>`).join("") : `<div class="mute">Nothing yet.</div>`) + `</div>`;
   return h;
 }
 // Copycat: tap an account for its full report card (pop-up)
 function ccCard(nick){
-  const a = ((S.cc || {}).accounts || []).find(x => x.nick === nick); if (!a) return "";
+  const a = ((S.cc || {}).accounts || []).find(x => x.nick === nick);
+  if (!a){ const dr = ((S.cc || {}).dropped || []).find(x => x.nick === nick);
+    return `<div style="font-size:18px;font-weight:800;word-break:break-all">${esc(nick)}</div><div class="mute" style="font-size:12.5px;line-height:1.5;margin-top:8px">${dr
+      ? `Dropped: ${esc(dr.reason || "")}. ${num(dr.fills)} paper copies, score ${dr.score ?? "—"} (${esc(dr.grade || "-")}), real P&L ${money(num(dr.real_pnl))}. Back on the list ${esc(dr.back || "later")}. Its trades are still logged.`
+      : "Copycat isn't testing this trader yet (seen in the big-bet or trade feed only), so there is no report card. It gets one if it shows up as a profitable public trader."}</div>`; }
   const D = a.detail || {}, R = a.real || {};
   const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
   const gcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
@@ -1358,7 +1415,7 @@ function lineChart(el, series, o={}){
 // Smooth = curved lines, and dense lines are averaged into ~24 slices (first and last points stay exact).
 const mainSmooth = () => (ls.get("mainS") || "s") === "s";
 function smoothBtns(){ const on = mainSmooth(); return `<div class="smrow"><div class="rng" data-smt style="--rc:#94a3c8;margin:0">${[["s","Smooth"],["r","Raw"]].map(([k, l]) => `<button data-s="${k}" class="${(k === "s") === on ? "on" : ""}">${l}</button>`).join("")}</div></div>`; }
-function smoothOpts(series, o){ if (!mainSmooth()) return [series, o]; return [o.stack ? thinStack(series, 24) : series.map(x => ({...x, pts:thinPts(x.pts, 24)})), {...o, step:false, smooth:true}]; }
+function smoothOpts(series, o){ if (!mainSmooth() || series.every(x => x.pts.length <= 12)) return [series, o]; return [o.stack ? thinStack(series, 24) : series.map(x => ({...x, pts:thinPts(x.pts, 24)})), {...o, step:false, smooth:true}]; }
 // stacked layers share x: average every layer over the same x slices so they still line up
 function thinStack(series, n){
   const xs = (series[0] || {pts:[]}).pts.map(p => p.x); if (xs.length <= n) return series;
@@ -1705,7 +1762,7 @@ function liveStratsHTML(rows, strats, hist, bench){
   return h + `</div>`;
 }
 function renderOverview(){
-  if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); return; }
+  if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); drawCCEarned(); return; }
   if (S.bot === "tx"){ $("#v-overview").innerHTML = txPage(); return; }
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
