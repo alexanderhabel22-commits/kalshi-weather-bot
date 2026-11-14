@@ -1,5 +1,5 @@
 {
- "at": "2026-11-14T05:17:07+00:00",
+ "at": "2026-11-14T05:32:41+00:00",
  "mode": "live",
  "control": "live",
  "kill_switch": {
@@ -8,7 +8,7 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 8.42,
+ "resting_cost": 10.54,
  "filled_cost": 0,
  "orders": {
   "KXTXINCOMETAX-30JAN01-28JAN01": {
@@ -80,6 +80,26 @@
    "filled": 0.0,
    "at": 1794633424.0958643,
    "mid0": 0.015
+  },
+  "KXNYCASKRENT-27JAN31-T4500": {
+   "id": "01a1d881-a710-72aa-a696-2bb3a9fec316",
+   "cid": "lip-854abc196cf94d94",
+   "side": "yes",
+   "px": 0.01,
+   "n": 106,
+   "filled": 0.0,
+   "at": 1794633738.3304713,
+   "mid0": 0.015
+  },
+  "KXILNUCLEAR-27FEB28-T87.5": {
+   "id": "01a1d886-69d0-75ec-8554-92bd1c6eb276",
+   "cid": "lip-69add55d92c344f1",
+   "side": "no",
+   "px": 0.01,
+   "n": 106,
+   "filled": 0.0,
+   "at": 1794634050.6473706,
+   "mid0": 0.985
   }
  },
  "positions": {},
@@ -561,6 +581,26 @@
     "ahead": 0,
     "others": 1000.0,
     "share": 0.0375
+   },
+   "KXWATECHEMP-27FEB28-T235000": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.095
+   },
+   "KXWAAEROEMP-27APR30-T92000": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.0859
+   },
+   "KXNYCASKRENT-27JAN31-T4500": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.0958
+   },
+   "KXILNUCLEAR-27FEB28-T87.5": {
+    "ahead": 0,
+    "others": 1000.0,
+    "share": 0.0958
    }
   }
  },
@@ -689,21 +729,6 @@
  },
  "credits": [],
  "events": [
-  {
-   "t": 1794460798,
-   "kind": "place",
-   "ticker": "KXAUDITORRACE-UT-28-R",
-   "side": "no",
-   "px": 0.06,
-   "n": 40,
-   "est_day": 1.8961
-  },
-  {
-   "t": 1794477647,
-   "kind": "cancel",
-   "ticker": "KXAUDITORRACE-UT-28-R",
-   "why": "down to 4c (reference price)"
-  },
   {
    "t": 1794477648,
    "kind": "place",
@@ -1389,6 +1414,24 @@
    "side": "yes",
    "px": 0.01,
    "n": 94,
+   "est_day": 3.5714
+  },
+  {
+   "t": 1794633738,
+   "kind": "place",
+   "ticker": "KXNYCASKRENT-27JAN31-T4500",
+   "side": "yes",
+   "px": 0.01,
+   "n": 106,
+   "est_day": 3.5714
+  },
+  {
+   "t": 1794634051,
+   "kind": "place",
+   "ticker": "KXILNUCLEAR-27FEB28-T87.5",
+   "side": "no",
+   "px": 0.01,
+   "n": 106,
    "est_day": 3.5714
   }
  ]
