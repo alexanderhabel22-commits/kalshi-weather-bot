@@ -158,6 +158,7 @@ DEFAULTS = {
     "fv": True,
     "fv_coins": {"KXBTC15M": "BTC", "KXETH15M": "ETH", "KXSOL15M": "SOL"},
     "fv_every_s": 5,
+    "lag_probe": True,          # PAPER: real order book at each fair-value jump (m15_fv.LagProbe)
     # fair-value FILTER (changes trading when on): skip/pull the favourite bid when our side's
     # fair value < bid - margin, with >= min_left seconds left. OFF until the market's 500 review.
     "fv_skip": False,
@@ -1600,7 +1601,7 @@ def main(cfg: Config, once: bool = False) -> int:
         try:
             from .m15_fv import Composite, FairShadow
             fv = FairShadow(Composite(coins.values()).start(client=client), coins, M15_DIR,
-                            every_s=float(s.get("fv_every_s", 5)))
+                            every_s=float(s.get("fv_every_s", 5)), lag=bool(s.get("lag_probe", True)))
         except Exception as exc:               # shadow only: never stop the bot over it
             log.warning("fair-value shadow off: %s", exc)
     bot = Bot(cfg, http, client, uploader=github_uploader(http, token) if token else None,
