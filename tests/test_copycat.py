@@ -37,6 +37,9 @@ class FakeSession:
             return Resp({"metrics": {"pnl": pnl * 10_000, "volume": 5, "num_markets_traded": 3}})
         if url.endswith("/profile"):
             return Resp({"social_profile": {"top_categories": ["Sports"], "joined_at": "2024-01-01"}})
+        if url.endswith("/series"):
+            return Resp({"series": [{"ticker": "KXNBAGAME", "category": "Sports"},
+                                    {"ticker": "SENATEKS", "category": "Elections"}]})
         if "/series/" in url:
             return Resp({"series": {"category": "Politics"}})
         if url.endswith("/markets"):
@@ -653,3 +656,15 @@ def test_honest_grade_counts_games_once_and_needs_30_events():
     k2 = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"},
                               account_stops={"lucky": "own stop"})["accounts"][0]
     assert k2["verdict"] == "benched" and k2["size"] == 0
+
+
+def test_load_cats_fills_category_map_from_full_series_list(tmp_path):
+    s = FakeSession()
+    cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
+    cc.load_cats(1_000_000.0)
+    assert cc.cats == {"KXNBAGAME": "Sports", "SENATEKS": "Elections"}
+    assert cc.cats_next == 1_000_000.0 + copycat.CATS_REFRESH_S
+    assert cc.category("KXNBAGAME-26NOV14LALBOS-BOS") == "Sports"
+    assert not [c for c in s.calls if "/series/" in c[0]]          # served from the map, no per-series call
+    g = copycat.cat_grades([{"ticker": "KXNBAGAME-X", "c": 5.0}, {"ticker": "SENATEKS-Y", "c": -3.0}], cc.cats)
+    assert set(g) == {"Sports", "Elections"}
