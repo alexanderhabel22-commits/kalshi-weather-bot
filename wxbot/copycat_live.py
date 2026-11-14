@@ -14,7 +14,8 @@ the price they got. Rails, all checked before every order:
     of its open real copies never exceed account_stop_usd ($5; or account_stop_pct of the bankroll if
     smaller), plus any real profit it has banked for us. A copy that would pass it is skipped; settled losses alone at the limit send the
     account back to paper. One copy per event (game) as well. Copycat as a whole halts at
-    total_stop_pct. The boss (copycat_boss.py) and copycat_control.json "bench" can bench anyone.
+    the smaller of total_stop_pct and total_stop_usd ($8). Free cash on the main index never drops
+    below cash_floor_usd ($10), so the main bot is never starved. The boss (copycat_boss.py) and copycat_control.json "bench" can bench anyone.
 Every order and settlement is written to the hourly log and to live_state.json.
 """
 from __future__ import annotations
@@ -32,7 +33,7 @@ REPO = "alexanderhabel22-commits/kalshi-weather-bot"
 CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/copycat_control.json"
 SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
-DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_stop_usd": 5.0, "total_stop_pct": 0.25,
+DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_stop_usd": 5.0, "total_stop_pct": 0.25, "total_stop_usd": 8.0, "cash_floor_usd": 10.0,
             "max_contracts": 3, "slip": 0.02, "max_lag_s": 60, "min_px": 0.05, "max_px": 0.95,
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": [],
             "keep": []}     # accounts Alex keeps on real money whatever their score (inside their $ limit)
@@ -66,6 +67,7 @@ class Live:
         self.bankroll = None
         self.read_at = 0.0
         self.ok_at = 0.0
+        self._cash: tuple[float, float] | None = None
         p = self.out / "live_state.json"
         try:
             self.state = json.loads(p.read_text())
@@ -172,6 +174,15 @@ class Live:
             n = 1
             if self.open_cost() + limit > c["pool_pct"] * self.bankroll:
                 return "pool full"
+        floor = _f(c.get("cash_floor_usd"))
+        if floor:                               # never starve the main bot's orders (Nov 14)
+            cash = self.free_cash(now)
+            if cash is None:
+                return "cash unknown"
+            if cash - limit * n < floor:
+                n = 1
+                if cash - limit < floor:
+                    return f"cash floor (${cash:.2f} free, keep ${floor:.0f} for the main bot)"
         lim = self.account_limit(nick)
         if lim is not None and self.at_risk(nick) + limit * n > lim:
             n = 1
@@ -227,21 +238,37 @@ class Live:
             self.state["positions"].pop(t)
         return done
 
+    def free_cash(self, now: float) -> float | None:
+        """Available cash on the main exchange index (index 0), read at most every 30 s."""
+        if self._cash is not None and now - self._cash[0] < 30:
+            return self._cash[1]
+        try:
+            sh = self.client.shard_balances() if hasattr(self.client, "shard_balances") else {}
+            cash = sh.get(0) if sh else self.client.balance()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("copycat cash read: %s", exc)
+            return None
+        self._cash = (now, float(cash))
+        return self._cash[1]
+
+    def total_limit(self) -> float | None:
+        """Copycat's total real loss halt: the smaller of total_stop_pct of bankroll and total_stop_usd."""
+        b, c = self.bankroll or 0, self.cfg
+        lims = [x for x in (c["total_stop_pct"] * b if b else None, _f(c.get("total_stop_usd"))) if x is not None]
+        return min(lims) if lims else None
+
     def check_stops(self, now: float) -> None:
-        b = self.bankroll or 0
-        c = self.cfg
         lim = self.account_limit()               # hard $ stop per account (Nov 14), whichever is smaller
         for nick, pnl in self.state["pnl"].items():
             if lim is not None and pnl <= -lim and nick not in self.state["benched"]:
                 self.state["benched"][nick] = f"own stop: lost ${-pnl:.2f} copying it"
                 self.alert("Copycat benched an account",
                            f"{nick}: lost ${-pnl:.2f} on real copies (stop ${lim:.2f}). Back to paper only.")
-        if not b:
-            return
-        if self.state["total"] < -c["total_stop_pct"] * b and not self.state.get("halted"):
+        tl = self.total_limit()
+        if tl is not None and self.state["total"] <= -tl and not self.state.get("halted"):
             self.state["halted"] = f"total stop: Copycat lost ${-self.state['total']:.2f}"
             self.alert("Copycat halted", f"Copycat lost ${-self.state['total']:.2f} in total "
-                       f"(stop {c['total_stop_pct']:.0%} of bankroll). No more copies until reset.")
+                       f"(stop ${tl:.2f}). Paper only from here until reset.")
 
     def summary(self, now: float) -> dict:
         pos = self.state["positions"]
