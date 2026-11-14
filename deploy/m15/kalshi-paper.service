@@ -17,7 +17,8 @@ Restart=always
 RestartSec=60
 Nice=10
 CPUQuota=10%
-MemoryMax=300M
+# 300M -> 450M Nov 14: peak hit 299 of 300 MB; systemd kills the service at this cap
+MemoryMax=450M
 NoNewPrivileges=true
 
 [Install]
