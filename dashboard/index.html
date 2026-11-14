@@ -158,6 +158,7 @@ details.dd>summary::before{content:"▸";color:var(--mute);display:inline-block;
 details.dd[open]>summary::before{transform:rotate(90deg)}
 details.dd>summary .sub{font-weight:400;font-size:11.5px;color:var(--mute);margin-left:auto;text-align:right}
 details.dd .ddb{padding:0 14px 12px}
+details.dd .ddb>.card,details.dd .ddb>.grid>.card{border:0;background:none;box-shadow:none;padding:0;margin:0 0 6px}
 details.dd.in{margin:10px 0 0;border-radius:10px;background:rgba(148,163,200,.05)}
 details.dd.in>summary{font-size:12.5px;padding:9px 12px}
 .cg{display:inline-flex;gap:5px;align-items:baseline;font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);margin:0 5px 5px 0;white-space:nowrap}
@@ -719,6 +720,18 @@ function drawCCLive(){
 S.dd = S.dd || {};
 function dd(id, title, sub, body, open, cls2){ const o = S.dd[id] ?? !!open;
   return `<details class="dd${cls2 ? " " + cls2 : ""}" data-dd="${id}"${o ? " open" : ""}><summary><span>${title}</span>${sub ? `<span class="sub">${sub}</span>` : ""}</summary><div class="ddb">${body}</div></details>`; }
+function foldSections(html, pre, keep, open){
+  const t = document.createElement("template"); t.innerHTML = html;
+  let out = "", cur = null, i = 0;
+  const flush = () => { if (!cur) return; const id = pre + cur.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    out += i++ < keep ? cur.h + cur.body : dd(id, esc(cur.title), esc(cur.sub), cur.body, (open || []).includes(cur.title)); cur = null; };
+  for (const n of [...t.content.childNodes]){
+    if (n.nodeType === 1 && n.tagName === "H2"){ flush(); const h = n.outerHTML, sp = n.querySelector(".sub"), sub = sp ? sp.textContent : ""; if (sp) sp.remove();
+      cur = {title:n.textContent.trim(), sub, h, body:""}; continue; }
+    const x = n.nodeType === 1 ? n.outerHTML : n.nodeType === 3 ? esc(n.textContent) : "";
+    if (cur) cur.body += x; else out += x; }
+  flush(); return out;
+}
 const ccGcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
 // the server's rules (wxbot/copycat.py): entry bar, copy score, real-vs-paper check
 const CCR = {fast:100, slow:150, fastScore:87, settled:40, events:30, score:80, realMin:20, gap:3, catMin:15};
@@ -1971,9 +1984,9 @@ function liveStratsHTML(rows, strats, hist, bench){
 function renderOverview(){
   if (S.bot === "sum"){ $("#v-overview").innerHTML = sumPage(); drawSum(); return; }
   if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); drawCCEarned(); drawCCTraders(); return; }
-  if (S.bot === "tx"){ $("#v-overview").innerHTML = txPage(); return; }
+  if (S.bot === "tx"){ $("#v-overview").innerHTML = foldSections(txPage(), "t_", 1); return; }
   if (S.bot === "m15"){
-    $("#v-overview").innerHTML = m15Page() + liveFillsHTML(true);
+    $("#v-overview").innerHTML = foldSections(m15Page() + liveFillsHTML(true), "f_", 1, ["How it's doing"]);
     drawM15();
     if ($("#m15Only")) $("#m15Only").querySelector("input").onchange = e => { ls.set("m15Only2", e.target.checked ? "1" : "0"); renderOverview(); };
     $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
@@ -1993,50 +2006,10 @@ function renderOverview(){
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${settledTrades(rows).length} settled · ${st.contracts} contracts${st.contracts ? ` · <span class="${cls(st.edgeC)}">${cents(st.edgeC)}/ct</span>` : ""} · ROI ${st.cost ? (st.roi * 100).toFixed(1) + "%" : "—"}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(st.todayPnl)}">${money(st.todayPnl)}</div>
     <div class="lbl" style="margin-top:8px">Live up/down</div><div class="val ${cls(unrTot)}" style="font-size:17px">${unr.length ? money(unrTot) : "—"}</div></div></div>
-    ${sx.summary}${winsHTML(sx.tr, strats)}${moreBtn("all", "More all-time stats")}</div>`;
+    ${sx.summary}${moreBtn("all", "More all-time stats")}</div>`;
   h = liveAcctHTML() + h;
   if (isOpen("all")) h += sx.h;
-  h += botMoneyHTML(capExp, B);
-  h += `<h2>Right now <span class="sub">open bets</span></h2>`;
-
-  const mk = marked(rows), upAll = upPoints(mode);
-  if (mk.priced.length) upAll.push({x:Date.now(), y:+mk.tot.toFixed(2)});
-  const rng = RANGES[ls.get("upRange")] ? ls.get("upRange") : "1D";
-  let upPts = upAll.filter(p => Date.now() - p.x <= RANGES[rng]);
-  if (upPts.length === 1 && upAll.length > 1) upPts = upAll.slice(-2);
-  const upNow = upPts.length ? upPts.at(-1).y : null, upChg = upPts.length > 1 ? upNow - upPts[0].y : 0, upC = upChg < -0.004 ? "#fb6b7b" : "#34d399";
-  if (mk.held.length || upAll.length){
-    const list = mk.priced.slice().sort((x, y) => unrealized(y) - unrealized(x));
-    const best = list[0], worst = list.at(-1), c = v => Math.round(v * 100) + "¢";
-    h += `<div class="card rh glow" style="--rc:${upC}">
-      <div class="lbl">If you sold everything now <span class="mute" style="text-transform:none;letter-spacing:0">· at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></div>
-      <div class="big ${cls(upNow || 0)}">${upNow == null ? "—" : money(upNow)}</div>
-      <div class="chg ${upChg < -0.004 ? "neg" : "pos"}">${upPts.length > 1 ? `${upChg < -0.004 ? "▼" : "▲"} ${money(upChg)} <span class="mute">${rng === "ALL" ? "all time" : "past " + {"1H":"hour","1D":"day","1W":"week"}[rng]}</span>` : `<span class="mute">history builds every 5 min</span>`}</div>
-      ${smoothBtns()}<div class="chart" id="upc"></div>
-      <div class="rng" id="upRng">${Object.keys(RANGES).map(k => `<button data-r="${k}" class="${k === rng ? "on" : ""}">${k}</button>`).join("")}</div>
-      <div class="grid g3" style="margin-top:14px"><div><div class="lbl">Cost held</div><div class="val">${mk.cost ? "$" + mk.cost.toFixed(2) : "—"}</div></div>
-      <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
-      <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
-      ${moversHTML(rows)}
-      ${sx.next}
-      <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
-      ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
-      ${list.length ? `<button class="seeall" id="upAll">${S.upAll ? "Hide bets ▲" : `Show ${list.length} bets ▼`}</button><div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}.</div>` : ""}
-      ${moreBtn("now", "More current info")}</div>`;
-  }
-  h += biggestHTML(rows);
-  const nowOpen = isOpen("now") || !(mk.held.length || upAll.length);
-  if (nowOpen) h += sx.nextList;
-  if (nowOpen && mk.priced.length > 1) h += `<h2>Up/down by bet <span class="sub">${mk.priced.length} held · tap a bar</span></h2><div class="card"><div class="chart" id="upBets"></div></div>`;
-  if (nowOpen) h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
-    ${meter("Money at risk (trader orders)", capExp, openCap, {txt:`${pct(capExp / B, 1)} of ${pct(capPct)} cap`, sub:`$${capExp.toFixed(2)} open of $${openCap.toFixed(2)} allowed${mode === "paper" ? ` · paper cap ${pct(capPct)}, live cap ${pct(num(t.max_open_pct, .6))}` : ""}`})}
-    ${resExp > 0 ? `<div class="meter"><div class="row"><span class="dim">Weather research log</span><b>$${resExp.toFixed(2)}</b></div><div class="s mute" style="font-size:11px">${research.length} day-before paper orders. Uncapped, no money, not counted against the cap.</div></div>` : ""}
-    ${meter("Today's loss vs daily stop", -st.todayPnl, dayStop, {txt:`${money(st.todayPnl)} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} of bankroll in a day pauses new orders until tomorrow`})}
-    ${meter("Total loss vs halt stop", -st.pnl, totStop, {txt:`${money(st.pnl)} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} overall halts everything and cancels resting orders`})}
-  </div>`;
-
-  const eqRows = equityRows(mode);
-  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">stacked by strategy</span></h2><div class="card">${smoothBtns()}<div class="chead" id="expHead"></div><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div><div class="mute" style="font-size:11px;margin-top:4px">The top edge is the total in open bets (what they cost). The dashed line is the ${pct(capPct)} cap.</div></div>`;
+  const moneyH = botMoneyHTML(capExp, B);
   const bench = (S.data.verdicts || {}).strategies || {};
   h += liveStratsHTML(rows, strats, hist, bench);
   if (!isOpen("strat")) h += moreBtn("strat", `Details for each strategy`);
@@ -2075,10 +2048,52 @@ function renderOverview(){
   }
   h += moreBtn("strat", "");
   }
+
+  h += `<h2>Right now <span class="sub">open bets</span></h2>`;
+
+  const mk = marked(rows), upAll = upPoints(mode);
+  if (mk.priced.length) upAll.push({x:Date.now(), y:+mk.tot.toFixed(2)});
+  const rng = RANGES[ls.get("upRange")] ? ls.get("upRange") : "1D";
+  let upPts = upAll.filter(p => Date.now() - p.x <= RANGES[rng]);
+  if (upPts.length === 1 && upAll.length > 1) upPts = upAll.slice(-2);
+  const upNow = upPts.length ? upPts.at(-1).y : null, upChg = upPts.length > 1 ? upNow - upPts[0].y : 0, upC = upChg < -0.004 ? "#fb6b7b" : "#34d399";
+  if (mk.held.length || upAll.length){
+    const list = mk.priced.slice().sort((x, y) => unrealized(y) - unrealized(x));
+    const best = list[0], worst = list.at(-1), c = v => Math.round(v * 100) + "¢";
+    h += `<div class="card rh glow" style="--rc:${upC}">
+      <div class="lbl">If you sold everything now <span class="mute" style="text-transform:none;letter-spacing:0">· at mid${S.noQuotes ? " · bot snapshot" : " · live"}</span></div>
+      <div class="big ${cls(upNow || 0)}">${upNow == null ? "—" : money(upNow)}</div>
+      <div class="chg ${upChg < -0.004 ? "neg" : "pos"}">${upPts.length > 1 ? `${upChg < -0.004 ? "▼" : "▲"} ${money(upChg)} <span class="mute">${rng === "ALL" ? "all time" : "past " + {"1H":"hour","1D":"day","1W":"week"}[rng]}</span>` : `<span class="mute">history builds every 5 min</span>`}</div>
+      ${smoothBtns()}<div class="chart" id="upc"></div>
+      <div class="rng" id="upRng">${Object.keys(RANGES).map(k => `<button data-r="${k}" class="${k === rng ? "on" : ""}">${k}</button>`).join("")}</div>
+      <div class="grid g3" style="margin-top:14px"><div><div class="lbl">Cost held</div><div class="val">${mk.cost ? "$" + mk.cost.toFixed(2) : "—"}</div></div>
+      <div><div class="lbl">On cost</div><div class="val ${cls(mk.tot)}">${mk.cost ? (mk.tot / mk.cost * 100).toFixed(1) + "%" : "—"}</div></div>
+      <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
+      ${moversHTML(rows)}
+      ${sx.next}
+      <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
+      ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
+      ${list.length ? `<button class="seeall" id="upAll">${S.upAll ? "Hide bets ▲" : `Show ${list.length} bets ▼`}</button><div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}.</div>` : ""}
+      ${moreBtn("now", "More current info")}</div>`;
+  }
+  const bigH = biggestHTML(rows);
+  const nowOpen = isOpen("now") || !(mk.held.length || upAll.length);
+  if (nowOpen) h += sx.nextList;
+  if (nowOpen && mk.priced.length > 1) h += `<h2>Up/down by bet <span class="sub">${mk.priced.length} held · tap a bar</span></h2><div class="card"><div class="chart" id="upBets"></div></div>`;
+  if (nowOpen) h += `<h2>Risk vs stops <span class="sub">bankroll $${B.toFixed(2)}</span></h2><div class="card">
+    ${meter("Money at risk (trader orders)", capExp, openCap, {txt:`${pct(capExp / B, 1)} of ${pct(capPct)} cap`, sub:`$${capExp.toFixed(2)} open of $${openCap.toFixed(2)} allowed${mode === "paper" ? ` · paper cap ${pct(capPct)}, live cap ${pct(num(t.max_open_pct, .6))}` : ""}`})}
+    ${resExp > 0 ? `<div class="meter"><div class="row"><span class="dim">Weather research log</span><b>$${resExp.toFixed(2)}</b></div><div class="s mute" style="font-size:11px">${research.length} day-before paper orders. Uncapped, no money, not counted against the cap.</div></div>` : ""}
+    ${meter("Today's loss vs daily stop", -st.todayPnl, dayStop, {txt:`${money(st.todayPnl)} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} of bankroll in a day pauses new orders until tomorrow`})}
+    ${meter("Total loss vs halt stop", -st.pnl, totStop, {txt:`${money(st.pnl)} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} overall halts everything and cancels resting orders`})}
+  </div>`;
+
+  const eqRows = equityRows(mode);
+  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">stacked by strategy</span></h2><div class="card">${smoothBtns()}<div class="chead" id="expHead"></div><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div><div class="mute" style="font-size:11px;margin-top:4px">The top edge is the total in open bets (what they cost). The dashed line is the ${pct(capPct)} cap.</div></div>`;
   if (manual.length){
     h += `<h2>Your manual trades</h2><div class="card list">` + manual.map(r => `<div class="item"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t">${esc(r.ticker)}</div><div class="s">${esc(r.title)}</div></div><div class="r">${r.count} @ ${Math.round(r.price * 100)}¢</div></div>`).join("") + `</div>`;
   }
-  h += testsHTML();
+  h += `<h2>More</h2>` + dd("mWins", "Biggest wins", "all time", winsHTML(sx.tr, strats))
+    + foldSections(bigH + moneyH + testsHTML(), "m_", 0);
   $("#v-overview").innerHTML = h + liveFillsHTML(false);
   $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
 
