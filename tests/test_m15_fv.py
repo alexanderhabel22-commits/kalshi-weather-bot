@@ -1,3 +1,4 @@
+import csv
 import json
 
 from wxbot import m15_fv as fv
@@ -127,3 +128,60 @@ def test_shadow_logs_cf_side_by_side(tmp_path):
     assert side.exists() and side.read_text().splitlines()[0].split(",") == fv.FV_COLS
     assert sh.files(now) == {}                     # neither file of the current hour goes yet
     assert set(sh.files(now + 3600)) == {old.name, side.name}
+
+
+class LagBot(FakeBot):
+    def __init__(self, markets, tape=()):
+        super().__init__(markets)
+        self.http = object()
+        self.kfeed = type("K", (), {"tape": lambda s, tk, since: [t for t in tape if t[0] > since]})()
+
+
+def test_lag_probe_logs_jump_book_and_follow_ups(tmp_path, monkeypatch):
+    from wxbot import kalshi
+    books = {"n": 0}
+
+    def fake_book(http, tk):
+        books["n"] += 1
+        return {"yes": [(0.40, 5.0)], "no": [(0.45, 7.0), (0.30, 2.0)]}   # buy yes at 0.55 x7
+    monkeypatch.setattr(kalshi, "get_orderbook", fake_book)
+    c = fv.Composite(["BTC"])
+    for i in range(300):
+        t = 10_000.0 + i
+        c.on_price("coinbase", "BTC", 100.0 + 0.002 * (i % 3), t)
+        c.sample(t)
+    now = 10_299.5
+    m = {"ticker": "KXBTC15M-X", "series": "KXBTC15M", "close": int(now) + 400, "strike": 100.0}
+    sh = fv.FairShadow(c, {"KXBTC15M": "BTC"}, tmp_path, lag=True)
+    bot = LagBot({m["ticker"]: m}, tape=[(now + 2, 0.55, 3.0, "yes"), (now + 3, 0.60, 1.0, "yes"),
+                                         (now + 3, 0.50, 4.0, "no")])
+    for k in range(7):                        # flat for 6 s
+        c.on_price("coinbase", "BTC", 100.0, now - 6 + k)
+        c.sample(now - 6 + k)
+        sh.step(bot, now - 6 + k)
+    assert sh.lag.n == 0
+    c.on_price("coinbase", "BTC", 100.08, now + 1)   # index jumps up -> fair yes jumps
+    c.sample(now + 1)
+    sh.step(bot, now + 1)
+    assert sh.lag.n == 1
+    for t in (now + 7, now + 17):
+        c.on_price("coinbase", "BTC", 100.08, t)
+        c.sample(t)
+        sh.step(bot, t)
+    rows = list(csv.DictReader(open(next(tmp_path.glob("lag-*.csv")))))
+    assert [r["stage"] for r in rows] == ["jump", "+5s", "+15s"]
+    j = rows[0]
+    assert j["side"] == "yes" and j["book_ask"] == "0.55" and j["depth_ask"] == "7.0"
+    assert float(j["fair"]) > float(j["fair_before"]) + 0.08
+    assert rows[2]["tape_ct_at_ask"] == "3.0" and rows[2]["tape_ct_any"] == "4.0"
+    assert books["n"] == 3
+    assert not sh.lag.open
+
+
+def test_lag_files_upload(tmp_path):
+    sh = fv.FairShadow(fv.Composite(["BTC"]), {"KXBTC15M": "BTC"}, tmp_path, lag=True)
+    (tmp_path / "lag-2026-11-13-01.csv").write_text("a\n")
+    (tmp_path / "lag-2026-11-13-02.csv").write_text("b\n")
+    from datetime import datetime, timezone
+    now = datetime(2026, 11, 13, 2, 30, tzinfo=timezone.utc).timestamp()
+    assert list(sh.files(now)) == ["lag-2026-11-13-01.csv"]
