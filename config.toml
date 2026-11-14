@@ -163,6 +163,28 @@ min_volume = 500
 max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
 max_event_pct = 0.10             # at most 10% on one release / one Fed meeting
 
+[trading.ai_fade]
+# The Fed/CPI fade rule on Kalshi's weekly "Best AI" market (KXLLM1): resting NO at 71-95c.
+# Replay Feb 2025-Nov 2026: +5.1c +- 1.8 per fill, 85 fills, 40/43 events positive (see
+# wxbot/strats/ai_fade.py and analysis/fade-events/RESULTS.md). ~4 fills a month, often none.
+# REAL money from Nov 14 (Alex: "+5c is +5c let's add it"). 3 contracts: one upset ~ -$2.80.
+# Median ~590 contracts traded at our price per order, so size is bankroll-limited, not market-limited.
+max_week_contracts = 200
+max_market_contracts = 50
+enabled = true
+live = true
+series = ["KXLLM1"]
+contracts = 3
+max_contracts = 3
+max_markets_per_event = 2
+min_price = 0.71
+max_price = 0.95
+min_hours = 2                    # replay used 2 h - 21 days before close (closes 10 AM ET)
+max_hours = 504
+min_volume = 500
+max_open_pct = 0.15
+max_event_pct = 0.10
+
 [trading.macro_wide]
 # 1-CONTRACT REAL-MONEY TEST since Nov 12 (was paper): the macro_fade rule on weekly gas prices and weekly jobless
 # claims (replay Nov 2025-Nov 2026: +6.6c +- 2.7 per fill, ~8 events a month; see
