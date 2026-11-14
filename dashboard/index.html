@@ -270,7 +270,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -1413,15 +1413,16 @@ function settledHTML(mode, rows, strats, B, unrTot){
   </div>`;
   h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card">${smoothBtns()}<div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="chead" id="eqHead"></div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div><div class="mute" style="font-size:11px;margin-top:4px">Each step up or down is a bet settling. Flat stretches mean nothing settled.</div></div>`;
   if (tr.length) h += `<h2>Profit per trade <span class="sub">oldest → newest · tap a bar</span></h2><div class="card"><div class="chart" id="perTrade"></div></div>`;
-  const byNames = strats.concat([...new Set(tr.map(t => t.strategy))].filter(n => n && !strats.includes(n)));
-  const by = byNames.map((n, i) => ({n, i, old:!strats.includes(n), s:settledSum(tr.filter(t => t.strategy === n))})).filter(x => x.s.n).sort((a, b) => b.s.pnl - a.s.pnl);
+  // one row per live strategy, even before its first bet settles (Alex, Nov 14); paper ones stay off MAIN (Nov 13)
+  const openOf = n => rows.filter(r => r.strategy === n && (r.status === "open" || r.status === "filled"));
+  const by = strats.map((n, i) => ({n, i, s:settledSum(tr.filter(t => t.strategy === n)), open:openOf(n)})).sort((a, b) => (b.s.n > 0) - (a.s.n > 0) || b.s.pnl - a.s.pnl);
   // profit per contract (after fees, settled only): the same yardstick as the 15-MIN tab
   const pc = s => s.contracts ? s.pnl / s.contracts * 100 : null, pcTd = s => { const v = pc(s); return `<td class="${cls(v || 0)}" style="font-weight:700">${v == null ? "—" : cents(v)}</td>`; };
   if (by.length){
-    h += `<h2>By strategy <span class="sub">settled only</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>¢/ct</th><th>P&L</th><th>Ct</th><th>W-L</th><th>Win</th><th>Staked</th><th>ROI</th></tr>`
-      + by.map(x => `<tr><td><i style="background:${colorOf(x.n, x.i)}"></i>${esc(histName(x.n))}${x.old ? ` <span class="mute" style="font-size:10px">(paper now)</span>` : ""}</td>${pcTd(x.s)}<td class="${cls(x.s.pnl)}">${money(x.s.pnl)}</td><td>${x.s.contracts}</td><td>${x.s.wins}-${x.s.losses}</td><td>${x.s.winRate == null ? "—" : pct(x.s.winRate)}</td><td>$${x.s.staked.toFixed(2)}</td><td class="${cls(x.s.roi || 0)}">${sp(x.s.roi)}</td></tr>`).join("")
-      + (by.length > 1 ? `<tr class="tot"><td>Total</td>${pcTd(sm)}<td class="${cls(sm.pnl)}">${money(sm.pnl)}</td><td>${sm.contracts}</td><td>${sm.wins}-${sm.losses}</td><td>${sm.winRate == null ? "—" : pct(sm.winRate)}</td><td>$${sm.staked.toFixed(2)}</td><td class="${cls(sm.roi || 0)}">${sp(sm.roi)}</td></tr>` : "")
-      + `</table></div><div class="mute" style="font-size:11px;margin-top:6px">¢/ct = profit per contract after fees. Ct = settled contracts. Under ~100 contracts a strategy's ¢/ct is mostly luck.</div>${by.length > 1 ? `<div class="chart" id="byStrat" style="margin-top:12px"></div>` : ""}</div>`;
+    h += `<h2>By strategy <span class="sub">${strats.length} live · settled results + open bets</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>¢/ct</th><th>P&L</th><th>Open</th><th>Ct</th><th>W-L</th><th>Win</th><th>Staked</th><th>ROI</th></tr>`
+      + by.map(x => `<tr><td><i style="background:${colorOf(x.n, x.i)}"></i>${esc(strategyName(x.n))}</td>${pcTd(x.s)}<td class="${x.s.n ? cls(x.s.pnl) : "mute"}">${x.s.n ? money(x.s.pnl) : "—"}</td><td>${x.open.length}${x.open.length ? `<small class="mute"> $${x.open.reduce((a, r) => a + exposureOf(r), 0).toFixed(2)}</small>` : ""}</td><td>${x.s.contracts}</td><td>${x.s.wins}-${x.s.losses}</td><td>${x.s.winRate == null ? "—" : pct(x.s.winRate)}</td><td>$${x.s.staked.toFixed(2)}</td><td class="${x.s.n ? cls(x.s.roi || 0) : "mute"}">${x.s.n ? sp(x.s.roi) : "—"}</td></tr>`).join("")
+      + (by.length > 1 ? `<tr class="tot"><td>Total</td>${pcTd(sm)}<td class="${cls(sm.pnl)}">${money(sm.pnl)}</td><td>${by.reduce((a, x) => a + x.open.length, 0)}</td><td>${sm.contracts}</td><td>${sm.wins}-${sm.losses}</td><td>${sm.winRate == null ? "—" : pct(sm.winRate)}</td><td>$${sm.staked.toFixed(2)}</td><td class="${cls(sm.roi || 0)}">${sp(sm.roi)}</td></tr>` : "")
+      + `</table></div><div class="mute" style="font-size:11px;margin-top:6px">¢/ct = profit per contract after fees. Ct = settled contracts. Open = bets not settled yet (cost). Under ~100 contracts a strategy's ¢/ct is mostly luck. Total includes strategies now on paper.</div>${by.filter(x => x.s.n).length > 1 ? `<div class="chart" id="byStrat" style="margin-top:12px"></div>` : ""}</div>`;
   }
   h += `<h2>Daily P&L</h2><div class="card"><div class="chart" id="daily"></div></div>`;
   const list = tr.slice().reverse();
@@ -1460,7 +1461,7 @@ function drawSettled(sx, rows, strats, st, dayStop, totStop){
   drawEq();
   if ($("#perTrade")) barChart($("#perTrade"), tr.map(t => ({label:t.title, short:"", v:t.pnl,
     extra:`${t.how ? t.how + " · " : ""}$${t.cost.toFixed(2)} → $${t.payout.toFixed(2)} (${t.roi >= 0 ? "+" : "−"}${Math.abs(t.roi * 100).toFixed(0)}%) · ${t.settled ? fdt(t.settled) + " · " : ""}${strategyName(t.strategy)}`})), {h:140});
-  if ($("#byStrat")) barChart($("#byStrat"), by.map(x => ({label:strategyName(x.n), short:strategyName(x.n).split(" ")[0], v:x.s.pnl, c:colorOf(x.n, x.i),
+  if ($("#byStrat")) barChart($("#byStrat"), by.filter(x => x.s.n).map(x => ({label:strategyName(x.n), short:strategyName(x.n).split(" ")[0], v:x.s.pnl, c:colorOf(x.n, x.i),
     extra:`${x.s.contracts ? cents(x.s.pnl / x.s.contracts * 100) + "/ct over " + x.s.contracts + " ct · " : ""}${x.s.wins}-${x.s.losses} · ROI ${x.s.roi == null ? "—" : (x.s.roi * 100).toFixed(1) + "%"} · $${x.s.staked.toFixed(2)} staked`})), {h:130});
   const byDay = {}; st.settled.forEach(r => { const d = etDay(r.settled); byDay[d] = (byDay[d] || 0) + r.pnl; });
   const days = Object.keys(byDay).sort().slice(-30);
