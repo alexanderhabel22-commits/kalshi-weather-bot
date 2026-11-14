@@ -6,9 +6,13 @@ from wxbot.copycat_live import BANKROLL_URL, CONTROL_URL, SWITCH_URL, Live
 
 
 class FakeClient:
-    def __init__(self, held=0.0, fill=None):
+    def __init__(self, held=0.0, fill=None, cash=1000.0):
         self.held, self.orders = held, []
         self.fill = fill
+        self.cash = cash
+
+    def shard_balances(self):
+        return {0: self.cash, 2: 5.0}
 
     def position(self, ticker):
         return self.held
@@ -300,3 +304,23 @@ def test_trader_limit_counts_open_copies_and_one_copy_per_event(tmp_path):
     lv.state["pnl"]["ace"] = 2.0                     # banked real profit = earned room: limit $7
     assert lv.account_limit("ace") == 7.0 and lv.account_limit("bee") == 5.0
     assert lv.maybe_copy(acct, dict(FILL, ticker="KXG-A-Y"), SNAP, 1201.0) == "copied"
+
+
+def test_cash_floor_keeps_cash_for_main_bot(tmp_path):
+    lv, _ = mk(tmp_path, client=FakeClient(cash=10.50))
+    assert lv.maybe_copy(ACCT, FILL, SNAP, 1000.0).startswith("cash floor")
+    lv2, _ = mk(tmp_path, client=FakeClient(cash=11.0))
+    assert lv2.maybe_copy(ACCT, FILL, SNAP, 1000.0) == "copied"
+    assert lv2.client.orders[-1][3] == 1                # trimmed to 1 contract to stay above the floor
+
+
+def test_total_dollar_halt(tmp_path):
+    alerts = []
+    lv, _ = mk(tmp_path, bankroll=1000.0)               # 25% = $250, so the $8 cap is what bites
+    lv.alert = lambda t, b: alerts.append(t)
+    lv.state["total"] = -7.99
+    lv.check_stops(1000.0)
+    assert not lv.state["halted"]
+    lv.state["total"] = -8.0
+    lv.check_stops(1000.0)
+    assert lv.state["halted"] and alerts == ["Copycat halted"] and lv.mode(1000.0) == "off"
