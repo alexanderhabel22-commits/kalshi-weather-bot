@@ -1,54 +1,54 @@
 {
  "last": {
-  "at": "2026-11-14T04:35:31+00:00",
+  "at": "2026-11-14T04:50:31+00:00",
   "flags": [
    {
     "code": "M15_FUND",
     "sev": "warn",
     "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}",
     "malfunction": false,
-    "runs": 47
+    "runs": 48
    }
   ],
   "haiku": {
    "level": "watch",
-   "summary": "Main bot live, not halted, runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper with control matching, no halt; its live losses today sit inside its stops. Funding 403 persists as the standing engineer item, now 47 checks; not re-escalating. Copycat fresh.",
+   "summary": "Main bot live, not halted, runs succeeding. Rewards bot live, $19.95 resting, no fills, within budget. 15-min bot in paper with control matching, no halt; its 24h P&L is inside its stops. Funding 403 persists (48 checks), a standing engineer item already known. Copycat fresh.",
    "remember": ""
   },
   "opus": null,
   "action": null,
   "ai_spend": {
    "day": "2026-11-14",
-   "total": 0.1725,
+   "total": 0.1768,
    "by": {
-    "foreman": 0.085,
+    "foreman": 0.0893,
     "copycat_boss": 0.0875
    }
   }
  },
  "today": {
   "day": "2026-11-13",
-  "haiku": 93,
+  "haiku": 94,
   "opus": 3,
   "tokens": {
-   "haiku_in": 317138,
-   "haiku_out": 17309,
+   "haiku_in": 320788,
+   "haiku_out": 17434,
    "opus_in": 9577,
    "opus_out": 4813
   }
  },
  "ai_spend": {
   "day": "2026-11-14",
-  "total": 0.1725,
+  "total": 0.1768,
   "by": {
-   "foreman": 0.085,
+   "foreman": 0.0893,
    "copycat_boss": 0.0875
   }
  },
  "ai_history": {
   "2026-11-12": 0.5527,
   "2026-11-13": 0.5699,
-  "2026-11-14": 0.1725
+  "2026-11-14": 0.1768
  },
  "notes": [
   "Control/mode mismatch cleared by 5:05 PM ET Nov 13 (control=paper, mode=paper). Re-flag if it returns past the ~20 min lag.",
@@ -93,40 +93,6 @@
   "Nov 13 10:35 PM ET: check: ok. Main bot live, not halted, Actions runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper mode with control matching, no halt; its live losses sit inside its stops. Copycat fresh. The "
  ],
  "log": [
-  {
-   "action": null,
-   "ai_spend": {
-    "by": {
-     "copycat_boss": 0.1069,
-     "foreman": 0.3518
-    },
-    "day": "2026-11-13",
-    "total": 0.4587
-   },
-   "at": "2026-11-13T18:35:24+00:00",
-   "flags": [
-    {
-     "code": "M15_FUND",
-     "malfunction": false,
-     "runs": 7,
-     "sev": "warn",
-     "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}"
-    },
-    {
-     "code": "M15_REJECT",
-     "malfunction": false,
-     "runs": 5,
-     "sev": "warn",
-     "text": "15-min order reject: {'at': 1794592017, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag"
-    }
-   ],
-   "haiku": {
-    "level": "watch",
-    "remember": "15-min bot now shows control=live and mode=live; the funding 403 and insufficient_balance rejects are the standing pattern to check.",
-    "summary": "Main bot live, not halted, Actions runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot is live now, with no halt and losses inside its stops. Its funding 403 and insufficient_balance rejects are still repeating, so the API key scope and balance need a look. Copycat and paper lab are as already known."
-   },
-   "opus": null
-  },
   {
    "action": null,
    "ai_spend": {
@@ -1167,40 +1133,67 @@
    "opus": null
   },
   {
+   "action": null,
+   "ai_spend": {
+    "by": {
+     "copycat_boss": 0.0875,
+     "foreman": 0.085
+    },
+    "day": "2026-11-14",
+    "total": 0.1725
+   },
    "at": "2026-11-14T04:35:31+00:00",
+   "flags": [
+    {
+     "code": "M15_FUND",
+     "malfunction": false,
+     "runs": 47,
+     "sev": "warn",
+     "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}"
+    }
+   ],
+   "haiku": {
+    "level": "watch",
+    "remember": "",
+    "summary": "Main bot live, not halted, runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper with control matching, no halt; its live losses today sit inside its stops. Funding 403 persists as the standing engineer item, now 47 checks; not re-escalating. Copycat fresh."
+   },
+   "opus": null
+  },
+  {
+   "at": "2026-11-14T04:50:31+00:00",
    "flags": [
     {
      "code": "M15_FUND",
      "sev": "warn",
      "text": "15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}}",
      "malfunction": false,
-     "runs": 47
+     "runs": 48
     }
    ],
    "haiku": {
     "level": "watch",
-    "summary": "Main bot live, not halted, runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper with control matching, no halt; its live losses today sit inside its stops. Funding 403 persists as the standing engineer item, now 47 checks; not re-escalating. Copycat fresh.",
+    "summary": "Main bot live, not halted, runs succeeding. Rewards bot live, $19.95 resting, no fills, within budget. 15-min bot in paper with control matching, no halt; its 24h P&L is inside its stops. Funding 403 persists (48 checks), a standing engineer item already known. Copycat fresh.",
     "remember": ""
    },
    "opus": null,
    "action": null,
    "ai_spend": {
     "day": "2026-11-14",
-    "total": 0.1725,
+    "total": 0.1768,
     "by": {
-     "foreman": 0.085,
+     "foreman": 0.0893,
      "copycat_boss": 0.0875
     }
    }
   }
  ],
- "digest": "Time: 11:35 PM ET Fri Nov 13\n15-MIN: service=active mode=paper control=paper status_at=2026-11-14T04:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-3.22 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV131415-15 1 0.8 -0.8\n  KXBTC15M-26NOV131500-00 1 0.8 -0.8\n  KXBTC15M-26NOV131915-15 1 0.8 -0.8\n  KXBTC15M-26NOV131945-45 1 0.82 -0.82\nSERVER: RAM 56.8% used, 15-min bot at 26.4% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 1.6 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-14T04:28:58+00:00 mode=live halted=None bids=9 resting=$19.95 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXAGRACE-UT-28-D up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-D up to 6c (reference price); cancel KXINSCOMMRACE-DE-28-R up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-R up to 7c (reference price); cancel KXONIONACT-30JAN01-27JAN01 no longer chosen\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$58.94 cash=$15.81 at=2026-11-14T04:32:02.378260+00:00\nRecent Actions runs: weather-scan in_progress 04:35Z; trade success 04:31Z; weather-scan success 04:30Z; trade success 04:25Z; weather-scan success 04:25Z; trade success 04:21Z; weather-scan success 04:20Z; trade success 04:16Z\nRULE FLAGS: [warn] M15_FUND: 15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}} (47 checks in a row)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Control/mode mismatch cleared by 5:05 PM ET Nov 13 (control=paper, mode=paper). Re-flag if it returns past the ~20 min lag.; Insufficient_balance rejects cleared 1:50 PM ET Nov 13; re-check if they return.; Foreman cannot change caps, stops, sizes or code; propose fixes to engineer.; Copycat status file is fresh again as of 6:20 PM ET Nov 13, so the earlier stuck-activating item looks resolved.; Rewards bot cancels on reference-price moves are normal churn, not a fault.; 15-min bot control reads paper now and mode paper, so the earlier control/mode mismatch is gone; a 15-min halt is not present.; 15-min funding 403 count reached 40 by 9:50 PM ET Nov 13; standing engineer item, not re-escalating each check.; 15-min funding 403 is a standing engineer item; do not re-escalate each check unless the error changes or the bot starts trading against it.\nRecent log:\n  Nov 13 11:50 AM ET: new: control file says live, bot last read paper (normal for ~20 min after a change)\n  Nov 13 12:05 PM ET: new: 15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer\n  Nov 13 12:05 PM ET: cleared: M15_CONTROL_LAG\n  Nov 13 12:35 PM ET: new: 15-min order reject: {'at': 1794590395, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag\n  Nov 13 1:50 PM ET: cleared: M15_REJECT\n  Nov 13 5:05 PM ET: check: escalate. 15-min bot shows control=live but mode=paper, and the funding 403 (write::transfer scope) has now failed 21 checks in a row. Its losses sit inside its stops, but the control/mode mismatch and repeated funding failure need a\n  Nov 13 5:05 PM ET: escalated: 15-min bot: funding 403 persists, bot in paper (alert). The funding call to portfolio/intra_exchange_instance_transfer returns 403 insufficient_scope, write::transfer required. The key the 15-min bot uses lacks transfer write sco\n  Nov 13 5:05 PM ET: pushed Alex: 15-min bot: funding 403 persists, bot in paper\n  Nov 13 6:35 PM ET: check: escalate. 15-min bot is live and its losses sit inside its stops, but the funding call still returns 403 insufficient_scope (write::transfer), now 27 checks in a row. That is a standing engineer item and it is still open. Main bot an\n  Nov 13 10:35 PM ET: check: ok. Main bot live, not halted, Actions runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper mode with control matching, no halt; its live losses sit inside its stops. Copycat fresh. The ",
+ "digest": "Time: 11:50 PM ET Fri Nov 13\n15-MIN: service=active mode=paper control=paper status_at=2026-11-14T04:47:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$-3.22 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nLast live fills today (ticker filled cost pnl):\n  KXBTC15M-26NOV131415-15 1 0.8 -0.8\n  KXBTC15M-26NOV131500-00 1 0.8 -0.8\n  KXBTC15M-26NOV131915-15 1 0.8 -0.8\n  KXBTC15M-26NOV131945-45 1 0.82 -0.82\nSERVER: RAM 57.0% used, 15-min bot at 26.5% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 1.6 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-14T04:44:34+00:00 mode=live halted=None bids=9 resting=$19.95 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXAGRACE-UT-28-D up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-D up to 6c (reference price); cancel KXINSCOMMRACE-DE-28-R up to 7c (reference price); cancel KXINSCOMMRACE-ND-28-R up to 7c (reference price); cancel KXONIONACT-30JAN01-27JAN01 no longer chosen\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$60.17 cash=$15.81 at=2026-11-14T04:46:02.750882+00:00\nRecent Actions runs: weather-scan in_progress 04:50Z; trade success 04:45Z; weather-scan success 04:45Z; trade success 04:41Z; weather-scan success 04:40Z; trade success 04:35Z; weather-scan success 04:35Z; trade success 04:31Z\nRULE FLAGS: [warn] M15_FUND: 15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer required\"}} (48 checks in a row)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Control/mode mismatch cleared by 5:05 PM ET Nov 13 (control=paper, mode=paper). Re-flag if it returns past the ~20 min lag.; Insufficient_balance rejects cleared 1:50 PM ET Nov 13; re-check if they return.; Foreman cannot change caps, stops, sizes or code; propose fixes to engineer.; Copycat status file is fresh again as of 6:20 PM ET Nov 13, so the earlier stuck-activating item looks resolved.; Rewards bot cancels on reference-price moves are normal churn, not a fault.; 15-min bot control reads paper now and mode paper, so the earlier control/mode mismatch is gone; a 15-min halt is not present.; 15-min funding 403 count reached 40 by 9:50 PM ET Nov 13; standing engineer item, not re-escalating each check.; 15-min funding 403 is a standing engineer item; do not re-escalate each check unless the error changes or the bot starts trading against it.\nRecent log:\n  Nov 13 11:50 AM ET: new: control file says live, bot last read paper (normal for ~20 min after a change)\n  Nov 13 12:05 PM ET: new: 15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer\n  Nov 13 12:05 PM ET: cleared: M15_CONTROL_LAG\n  Nov 13 12:35 PM ET: new: 15-min order reject: {'at': 1794590395, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag\n  Nov 13 1:50 PM ET: cleared: M15_REJECT\n  Nov 13 5:05 PM ET: check: escalate. 15-min bot shows control=live but mode=paper, and the funding 403 (write::transfer scope) has now failed 21 checks in a row. Its losses sit inside its stops, but the control/mode mismatch and repeated funding failure need a\n  Nov 13 5:05 PM ET: escalated: 15-min bot: funding 403 persists, bot in paper (alert). The funding call to portfolio/intra_exchange_instance_transfer returns 403 insufficient_scope, write::transfer required. The key the 15-min bot uses lacks transfer write sco\n  Nov 13 5:05 PM ET: pushed Alex: 15-min bot: funding 403 persists, bot in paper\n  Nov 13 6:35 PM ET: check: escalate. 15-min bot is live and its losses sit inside its stops, but the funding call still returns 403 insufficient_scope (write::transfer), now 27 checks in a row. That is a standing engineer item and it is still open. Main bot an\n  Nov 13 10:35 PM ET: check: ok. Main bot live, not halted, Actions runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper mode with control matching, no halt; its live losses sit inside its stops. Copycat fresh. The ",
  "services": {
   "kalshi-copycat": {
    "Result": "success",
    "NRestarts": "0",
-   "MemoryCurrent": "659 MB",
-   "MemoryPeak": "666 MB",
+   "MemoryCurrent": "668 MB",
+   "MemoryPeak": "671 MB",
    "MemoryMax": "700 MB",
    "ActiveState": "active",
    "SubState": "running",
