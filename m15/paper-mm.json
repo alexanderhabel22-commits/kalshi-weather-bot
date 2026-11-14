@@ -16,7 +16,7 @@
    "cat": "Mentions",
    "event": "KXJOHNSONMENTION-26NOV14",
    "vol24": 1568.57,
-   "casual": null
+   "casual": 1.0
   },
   "KXHEARINGMENTION-26NOV17-IRAN": {
    "cat": "Mentions",
@@ -58,25 +58,25 @@
    "cat": "Politics",
    "event": "KXGROUNDSTOPCAUSE-26DEC01",
    "vol24": 51993.26,
-   "casual": 0.121
+   "casual": 0.126
   },
   "KXNVDACEODATE-27-27JAN01": {
    "cat": "Financials",
    "event": "KXNVDACEODATE-27",
    "vol24": 46246.08,
-   "casual": 0.183
+   "casual": 0.193
   },
   "KXRT-EBE-55": {
    "cat": "Entertainment",
    "event": "KXRT-EBE",
    "vol24": 37553.08,
-   "casual": 0.292
+   "casual": 0.297
   },
   "KXLAGOVISITCOUNT-26NOV-5": {
    "cat": "Politics",
    "event": "KXLAGOVISITCOUNT-26NOV",
    "vol24": 30458.73,
-   "casual": 0.294
+   "casual": 0.281
   },
   "KXLAGOVISITCOUNT-26NOV-4": {
    "cat": "Politics",
@@ -88,7 +88,7 @@
    "cat": "Financials",
    "event": "KXNVDACEODATE-27",
    "vol24": 24016.25,
-   "casual": 0.15
+   "casual": 0.156
   },
   "KXSUEZWEEKLY-26NOV15-T300": {
    "cat": "Politics",
@@ -100,7 +100,7 @@
    "cat": "Elections",
    "event": "KXMIDTERMMOV-AKSENMPEL",
    "vol24": 19741.18,
-   "casual": 0.069
+   "casual": 0.078
   },
   "KXMIDTERMMOV-AKSENMPEL-P4": {
    "cat": "Elections",
@@ -118,17 +118,17 @@
    "cat": "Elections",
    "event": "KXMIDTERMMOV-MISEND",
    "vol24": 9198.36,
-   "casual": 0.053
+   "casual": 0.049
   }
  },
  "by_category": {
   "Elections": {
-   "fills": 53,
+   "fills": 54,
    "market_hours": 1.0,
-   "fills_per_market_hour": 54.6,
-   "edge_at_fill_c": -2.94,
-   "markout_5m_c": -3.35,
-   "markout_30m_c": -2.94,
+   "fills_per_market_hour": 55.63,
+   "edge_at_fill_c": -3.32,
+   "markout_5m_c": -3.74,
+   "markout_30m_c": -3.27,
    "maker_fee_c": 0.34
   },
   "Climate and Weather": {
@@ -141,12 +141,12 @@
    "maker_fee_c": 0.36
   },
   "Science and Technology": {
-   "fills": 34,
+   "fills": 35,
    "market_hours": 0.4,
-   "fills_per_market_hour": 75.59,
-   "edge_at_fill_c": -0.24,
-   "markout_5m_c": -0.79,
-   "markout_30m_c": 0.12,
+   "fills_per_market_hour": 77.81,
+   "edge_at_fill_c": -0.33,
+   "markout_5m_c": -0.87,
+   "markout_30m_c": 0.06,
    "maker_fee_c": 0.22
   },
   "Mentions": {
@@ -177,13 +177,13 @@
    "maker_fee_c": 0.29
   },
   "Politics": {
-   "fills": 36,
+   "fills": 39,
    "market_hours": 1.0,
-   "fills_per_market_hour": 35.97,
-   "edge_at_fill_c": -0.72,
-   "markout_5m_c": 0.12,
-   "markout_30m_c": -0.48,
-   "maker_fee_c": 0.34
+   "fills_per_market_hour": 38.97,
+   "edge_at_fill_c": -0.74,
+   "markout_5m_c": 0.08,
+   "markout_30m_c": -0.4,
+   "maker_fee_c": 0.33
   },
   "Financials": {
    "fills": 52,
@@ -206,9 +206,9 @@
  },
  "by_flow": {
   "20to50|no": {
-   "fills": 28,
+   "fills": 29,
    "settled": 5,
-   "markout_30m_c": -3.31,
+   "markout_30m_c": -3.12,
    "settled_c": 7.6,
    "maker_fee_c": 0.36
   },
@@ -220,9 +220,9 @@
    "maker_fee_c": 0.34
   },
   "50plus|no": {
-   "fills": 32,
+   "fills": 34,
    "settled": 4,
-   "markout_30m_c": -1.17,
+   "markout_30m_c": -1.14,
    "settled_c": -26.25,
    "maker_fee_c": 0.33
   },
@@ -234,16 +234,16 @@
    "maker_fee_c": 0.29
   },
   "under20|no": {
-   "fills": 52,
+   "fills": 53,
    "settled": 7,
-   "markout_30m_c": -4.2,
+   "markout_30m_c": -4.54,
    "settled_c": -8.29,
    "maker_fee_c": 0.33
   },
   "under20|yes": {
-   "fills": 45,
+   "fills": 46,
    "settled": 2,
-   "markout_30m_c": -2.35,
+   "markout_30m_c": -2.31,
    "settled_c": -36.0,
    "maker_fee_c": 0.33
   },
@@ -270,8 +270,8 @@
   "done": true,
   "candidates": 1285
  },
- "pending": 10,
- "held": 199,
+ "pending": 8,
+ "held": 202,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -330,7 +330,7 @@
   "KXPSAKIMENTION-26NOV11-TRUM": -1,
   "KXPSAKIMENTION-26NOV11-DEMO": -1,
   "KXMIDTERMMOV-AKSENMPEL-P3.5": 2,
-  "KXNVDACEODATE-27-27JAN01": -4,
+  "KXNVDACEODATE-27-27JAN01": -5,
   "KXNVDACEODATE-27-27FEB01": -1,
   "KXEARNINGSMENTIONNVDA-26NOV18-NATI": -1,
   "KXHIGHNY-26NOV13-T50": 0,
@@ -349,10 +349,11 @@
   "KXMIDTERMMOV-MISEND-P7": -1,
   "KXAAAGASD-26NOV14-3.8400": -1,
   "KXGROUNDSTOPCAUSE-26DEC01-UPGR": -1,
-  "KXRT-EBE-55": 1,
+  "KXRT-EBE-55": 2,
   "KXSTARSHIPCATCH-01JAN27-STAR15": 0,
   "KXGROUNDSTOPCAUSE-26DEC01-SOFT": 0,
-  "KXLAGOVISITCOUNT-26NOV-4": -1
+  "KXLAGOVISITCOUNT-26NOV-4": -1,
+  "KXJOHNSONMENTION-26NOV14-POLL": -1
  },
- "at": "2026-11-14T07:32:58+00:00"
+ "at": "2026-11-14T08:29:47+00:00"
 }
