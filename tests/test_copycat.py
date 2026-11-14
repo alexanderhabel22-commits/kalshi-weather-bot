@@ -704,3 +704,22 @@ def test_add_real_counts_only_copies_since_coming_back():
                      "trade_id": f"t{i}", "ts": 100.0} for i in range(20)}
     copycat.add_real(st_, {"positions": pos, "pnl": {}, "bench_log": {"good": {"back_at": 500.0}}})
     assert st_["accounts"][0]["verdict"] == "passes" and st_["accounts"][0]["real"]["settled"] == 0
+
+
+def test_keep_list_real_results_decide():
+    rows_ = _cat_rows(160, lambda i: f"T{i}")
+    res = {f"T{i}": ("yes" if i % 10 < 4 else "no") for i in range(160)}     # weak on paper: fails
+    def run(keep, pos, pnl):
+        st_ = copycat.build_status(rows_, res, {"good": {}}, now=2000.0, keep=keep)
+        copycat.add_real(st_, {"positions": pos, "pnl": {"good": pnl}})
+        return st_["accounts"][0]
+    assert run(set(), {}, 0.0)["verdict"] == "fails"                         # not kept: paper decides
+    a = run({"good"}, {}, 0.0)
+    assert a["verdict"] == "passes" and a["size"] == 1 and "0/20" in a["why_live"]
+    win = {f"T{i}": {"nick": "good", "side": "yes", "n": 1, "cost": 0.5, "settled": 1,
+                     "pnl": (0.5 if i % 2 else -0.5), "trade_id": f"t{i}"} for i in range(20)}
+    assert run({"good"}, win, 0.0)["verdict"] == "passes"                    # 20 real, break-even: stays
+    lose = {k: dict(v, pnl=-0.5) for k, v in win.items()}
+    assert run({"good"}, lose, -10.0)["verdict"] == "real-lag"               # clearly losing: back to paper
+    meh = {k: dict(v, pnl=(0.5 if i < 9 else -0.5)) for i, (k, v) in enumerate(win.items())}
+    assert run({"good"}, meh, -1.0)["verdict"] == "real-lag"                 # below break-even: paper

@@ -666,9 +666,26 @@ def add_real(status: dict, state: dict | None) -> None:
         m, lo = mean_low(real_c)
         gap = round(st.mean(r - q for r, q in same), 2) if same else None
         a["real"].update(c=m, gap_c=gap, gap_n=len(same))
+        if a.get("kept") and a["verdict"] in ("fails", "slump"):
+            # Alex's real-results test (Nov 14, keep list only, expires at keep_until): until REAL_MIN
+            # settled real copies the paper score can't send it to paper ($ stops and the halt still
+            # apply); after that it stays only while its real P&L is at or above break-even.
+            if len(real_c) < REAL_MIN:
+                a["verdict"], a["size"] = "passes", 1
+                a["why_live"] = f"real results decide: {len(real_c)}/{REAL_MIN} settled real copies so far"
+            elif a["real"]["pnl"] >= 0:
+                a["verdict"], a["size"] = "passes", 1
+                a["why_live"] = f"real P&L ${a['real']['pnl']:+.2f} after {len(real_c)} settled real copies (break-even or better)"
+            else:
+                a["verdict"], a["size"] = "real-lag", 0
+                a["real"]["why"] = f"keep test over: real P&L ${a['real']['pnl']:+.2f} after {len(real_c)} settled real copies"
         if len(real_c) >= REAL_MIN and a["verdict"] == "passes":
             hi = m + (m - lo)
-            if (gap is not None and gap < -REAL_GAP_C) or hi < 0:
+            if a.get("why_live"):
+                gap_bad = False                   # the keep test: real P&L decides, not the paper gap
+            else:
+                gap_bad = gap is not None and gap < -REAL_GAP_C
+            if gap_bad or hi < 0:
                 a["verdict"], a["size"] = "real-lag", 0
                 a["real"]["why"] = (f"real trails paper by {-gap:.1f}c/contract" if gap is not None and gap < -REAL_GAP_C
                                     else f"real money clearly losing ({m:+.1f}c/contract over {len(real_c)})")
@@ -1345,6 +1362,9 @@ class Copycat:
             stops.update({k: "boss: " + v["reason"] for k, v in self.boss.benches(now).items()})
             notes = dict(self.boss.state["notes"])
         keep = set((self.live.cfg.get("keep") or []) if self.live is not None else [])
+        ku = self.live.cfg.get("keep_until") if self.live is not None else None
+        if ku and datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d") > str(ku):
+            keep = set()                              # the keep test has expired
         earn = self.live.earn_back_open(now) if self.live is not None else {}
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats,
                               keep=keep, earn_since=earn)
