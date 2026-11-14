@@ -548,3 +548,48 @@ def test_needs_40_settled_before_real(tmp_path):
     more = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(40)}
     a = copycat.build_status(rows_, more, {"good": {}}, now=2000.0)["accounts"][0]
     assert a["verdict"] == "passes"
+
+
+def _cat_rows(n, ticker_fn):
+    rows_ = []
+    for i in range(n):
+        tid = f"t{i}"
+        rows_ += [{"kind": "fill", "trade_id": tid, "nick": "good", "ticker": ticker_fn(i), "side": "yes",
+                   "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
+                  {"kind": "snap", "trade_id": tid, "ticker": ticker_fn(i), "delay": 0, "bid": 0.50, "ask": 0.52}]
+    return rows_
+
+
+def test_category_grades_block_a_clearly_bad_category():
+    tk = lambda i: (f"KXNBA-{i}" if i % 5 == 0 else f"KXBTC-{i}")             # 1 in 5 is sports
+    rows_ = _cat_rows(200, tk)
+    res = {tk(i): ("no" if i % 5 == 0 else ("yes" if i % 10 < 9 else "no")) for i in range(200)}
+    a = copycat.build_status(rows_, res, {"good": {}}, now=2000.0,
+                             cats={"KXNBA": "Sports", "KXBTC": "Crypto"})["accounts"][0]
+    assert a["verdict"] == "passes"
+    assert a["cat_grades"]["Sports"]["n"] == 40 and a["cat_grades"]["Sports"]["blocked"]
+    assert not a["cat_grades"]["Crypto"]["blocked"] and a["blocked_cats"] == ["Sports"]
+
+
+def test_real_lag_sends_account_back_to_paper():
+    rows_ = _cat_rows(160, lambda i: f"T{i}")
+    res = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(160)}
+    st_ = copycat.build_status(rows_, res, {"good": {}}, now=2000.0)
+    assert st_["accounts"][0]["verdict"] == "passes"
+    # 20 real copies of the same trades, but real lost every one (paper says ~+28c)
+    pos = {f"T{i}": {"nick": "good", "side": "yes", "n": 1, "cost": 0.53, "settled": 1, "pnl": -0.53,
+                     "trade_id": f"t{i}"} for i in range(20)}
+    copycat.add_real(st_, {"positions": pos, "pnl": {"good": -10.6}})
+    a = st_["accounts"][0]
+    assert "_paper_c" not in st_
+    assert a["verdict"] == "real-lag" and a["size"] == 0 and a["real"]["gap_n"] == 20 and a["real"]["gap_c"] < -3
+
+
+def test_real_close_to_paper_keeps_copying():
+    rows_ = _cat_rows(160, lambda i: f"T{i}")
+    res = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(160)}
+    st_ = copycat.build_status(rows_, res, {"good": {}}, now=2000.0)
+    pos = {f"T{i}": {"nick": "good", "side": "yes", "n": 1, "cost": 0.54, "settled": 1,
+                     "pnl": (0.46 if i % 10 < 8 else -0.54), "trade_id": f"t{i}"} for i in range(20)}
+    copycat.add_real(st_, {"positions": pos, "pnl": {}})
+    assert st_["accounts"][0]["verdict"] == "passes"
