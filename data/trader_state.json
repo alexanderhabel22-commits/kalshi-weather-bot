@@ -2,18 +2,51 @@
  "ai_fade": {},
  "allocator": {
   "apply": false,
-  "graded_at": "2026-11-07T20:05:44+00:00",
+  "graded_at": "2026-11-14T20:06:11+00:00",
   "grades": {
-   "favorites": {
-    "events_live": 1,
+   "ai_fade": {
+    "events_live": 0,
     "events_paper": 0,
-    "grade": 0.0305,
-    "profit": 0.14,
-    "risked": 1.8,
-    "roi": 0.0778,
-    "se": 0.3333,
-    "target": 1.017,
-    "trust": 0.011
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "favorites": {
+    "events_live": 6,
+    "events_paper": 0,
+    "grade": 0.0322,
+    "profit": 2.52,
+    "risked": 40.9,
+    "roi": 0.0616,
+    "se": 0.1293,
+    "target": 1.073,
+    "trust": 0.068
+   },
+   "favorites_late": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "favorites_wide": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
    },
    "locks": {
     "events_live": 0,
@@ -26,7 +59,29 @@
     "target": 1.0,
     "trust": 0.0
    },
+   "m15_btc": {
+    "events_live": 329,
+    "events_paper": 0,
+    "grade": 0.0153,
+    "profit": 2.63,
+    "risked": 446.37,
+    "roi": 0.0059,
+    "se": 0.0281,
+    "target": 0.51,
+    "trust": 0.608
+   },
    "macro_fade": {
+    "events_live": 2,
+    "events_paper": 0,
+    "grade": 0.0226,
+    "profit": -0.74,
+    "risked": 1.74,
+    "roi": -0.4253,
+    "se": 0.2729,
+    "target": 0.753,
+    "trust": 0.016
+   },
+   "macro_wide": {
     "events_live": 0,
     "events_paper": 0,
     "grade": 0.03,
@@ -38,6 +93,39 @@
     "trust": 0.0
    },
    "mentions": {
+    "events_live": 3,
+    "events_paper": 0,
+    "grade": 0.0307,
+    "profit": 1.2,
+    "risked": 18.8,
+    "roi": 0.0638,
+    "se": 0.2445,
+    "target": 1.023,
+    "trust": 0.02
+   },
+   "mentions_wide": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "rain_evening": {
+    "events_live": 1,
+    "events_paper": 0,
+    "grade": 0.0219,
+    "profit": -0.88,
+    "risked": 1.88,
+    "roi": -0.4681,
+    "se": 0.2714,
+    "target": 0.73,
+    "trust": 0.016
+   },
+   "spx_range": {
     "events_live": 0,
     "events_paper": 0,
     "grade": 0.03,
@@ -49,15 +137,26 @@
     "trust": 0.0
    },
    "weather": {
-    "events_live": 2,
+    "events_live": 37,
     "events_paper": 0,
-    "grade": 0.0303,
-    "profit": 0.36,
-    "risked": 1.64,
-    "roi": 0.2195,
-    "se": 0.8288,
-    "target": 1.01,
-    "trust": 0.002
+    "grade": 0.0255,
+    "profit": -3.43,
+    "risked": 20.84,
+    "roi": -0.1646,
+    "se": 0.2272,
+    "target": 0.85,
+    "trust": 0.023
+   },
+   "weather_late": {
+    "events_live": 29,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.96,
+    "risked": 32.63,
+    "roi": 0.0294,
+    "se": 0.139,
+    "target": 1.0,
+    "trust": 0.06
    }
   },
   "history": [
@@ -70,15 +169,43 @@
      "mentions": 1.0,
      "weather": 1.01
     }
+   },
+   {
+    "at": "2026-11-14T20:06:11+00:00",
+    "multipliers": {
+     "ai_fade": 1.0,
+     "favorites": 1.073,
+     "favorites_late": 1.0,
+     "favorites_wide": 1.0,
+     "locks": 1.0,
+     "m15_btc": 0.75,
+     "macro_fade": 0.753,
+     "macro_wide": 1.0,
+     "mentions": 1.023,
+     "mentions_wide": 1.0,
+     "rain_evening": 0.75,
+     "spx_range": 1.0,
+     "weather": 0.85,
+     "weather_late": 1.0
+    }
    }
   ],
   "hurdle": 0.03,
   "multipliers": {
-   "favorites": 1.017,
+   "ai_fade": 1.0,
+   "favorites": 1.073,
+   "favorites_late": 1.0,
+   "favorites_wide": 1.0,
    "locks": 1.0,
-   "macro_fade": 1.0,
-   "mentions": 1.0,
-   "weather": 1.01
+   "m15_btc": 0.75,
+   "macro_fade": 0.753,
+   "macro_wide": 1.0,
+   "mentions": 1.023,
+   "mentions_wide": 1.0,
+   "rain_evening": 0.75,
+   "spx_range": 1.0,
+   "weather": 0.85,
+   "weather_late": 1.0
   }
  },
  "archive_day": "2026-11-14",
