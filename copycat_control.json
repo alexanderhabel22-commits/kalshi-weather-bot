@@ -1,5 +1,5 @@
 {
- "_note": "Copycat real-money switch (read by the droplet every minute). mode: live | off. Real copies only for accounts whose paper record passes (100 paper copies at a B+ score, else 150; score 80+ to copy). Alex approved going live at that threshold on Nov 10, 2026. bench: list of account nicknames never to copy. exclude_categories: Kalshi categories never copied with real money (Alex, Nov 10 8:57 PM ET: Sports INCLUDED for Copycat, an exception to the main bot's no-sports rule).",
+ "_note": "Copycat real-money switch (read by the droplet every minute). mode: live | off. Real copies only for accounts whose paper record passes (100 paper copies at a B+ score, else 150; score 80+ to copy). Alex approved going live at that threshold on Nov 10, 2026. bench: list of account nicknames never to copy. exclude_categories: Kalshi categories never copied with real money (Alex, Nov 10 8:57 PM ET: Sports INCLUDED for Copycat, an exception to the main bot's no-sports rule). account_stop_usd: hard $ loss stop per account (Nov 14: $3, then back to paper with one push); an account also needs 40+ settled copies to go real.",
  "mode": "live",
  "pool_pct": 0.15,
  "account_stop_pct": 0.1,
@@ -12,5 +12,6 @@
   "KXSILVER15M"
  ],
  "exclude_categories": [],
- "bench": []
+ "bench": [],
+ "account_stop_usd": 3.0
 }

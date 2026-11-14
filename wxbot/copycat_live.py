@@ -10,7 +10,7 @@ the price they got. Rails, all checked before every order:
     bot of ours holds), and never the 15-min bot's live series;
   - size from the account's grade (1-3 contracts) and the hard client ceiling;
   - money at risk in open copies <= pool_pct of the bankroll;
-  - each account has its own stop (account_stop_pct of the bankroll); Copycat as a whole halts at
+  - each account has its own stop (account_stop_pct of the bankroll, at most account_stop_usd = $3); Copycat as a whole halts at
     total_stop_pct. The boss (copycat_boss.py) and copycat_control.json "bench" can bench anyone.
 Every order and settlement is written to the hourly log and to live_state.json.
 """
@@ -29,7 +29,7 @@ REPO = "alexanderhabel22-commits/kalshi-weather-bot"
 CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/copycat_control.json"
 SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.json"
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
-DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "total_stop_pct": 0.25,
+DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_stop_usd": 3.0, "total_stop_pct": 0.25,
             "max_contracts": 3, "slip": 0.02, "max_lag_s": 60, "min_px": 0.05, "max_px": 0.95,
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
 CONTROL_STALE_S = 600
@@ -196,14 +196,17 @@ class Live:
 
     def check_stops(self, now: float) -> None:
         b = self.bankroll or 0
-        if not b:
-            return
         c = self.cfg
+        cap = _f(c.get("account_stop_usd"))      # hard $ stop per account (Nov 14), whichever is smaller
         for nick, pnl in self.state["pnl"].items():
-            if pnl < -c["account_stop_pct"] * b and nick not in self.state["benched"]:
+            lims = [x for x in (c["account_stop_pct"] * b if b else None, cap) if x is not None]
+            lim = min(lims) if lims else None
+            if lim is not None and pnl <= -lim and nick not in self.state["benched"]:
                 self.state["benched"][nick] = f"own stop: lost ${-pnl:.2f} copying it"
                 self.alert("Copycat benched an account",
-                           f"{nick}: lost ${-pnl:.2f} on real copies (stop {c['account_stop_pct']:.0%} of bankroll).")
+                           f"{nick}: lost ${-pnl:.2f} on real copies (stop ${lim:.2f}). Back to paper only.")
+        if not b:
+            return
         if self.state["total"] < -c["total_stop_pct"] * b and not self.state.get("halted"):
             self.state["halted"] = f"total stop: Copycat lost ${-self.state['total']:.2f}"
             self.alert("Copycat halted", f"Copycat lost ${-self.state['total']:.2f} in total "

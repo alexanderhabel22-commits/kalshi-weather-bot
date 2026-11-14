@@ -267,3 +267,17 @@ def test_boss_digest_is_trimmed():
     txt = digest(st, [], None, {})
     assert len(txt) <= copycat_boss.MAX_DIGEST_CHARS and "175 quieter accounts left out" in txt
     assert "- a199:" in txt and "- a0:" not in txt
+
+
+def test_hard_dollar_account_stop(tmp_path):
+    alerts = []
+    lv, _ = mk(tmp_path, bankroll=1000.0)            # 10% = $100, so the $3 cap is what bites
+    lv.alert = lambda t, b: alerts.append(b)
+    lv.state["pnl"]["ace"] = -2.99
+    lv.check_stops(1000.0)
+    assert "ace" not in lv.benched()
+    lv.state["pnl"]["ace"] = -3.0
+    lv.check_stops(1000.0)
+    assert "ace" in lv.benched() and len(alerts) == 1 and "paper" in alerts[0]
+    lv.check_stops(1000.0)
+    assert len(alerts) == 1                           # one push only

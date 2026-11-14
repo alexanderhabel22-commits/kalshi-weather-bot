@@ -73,6 +73,7 @@ ROW_V = 2                   # fresh start (Alex, Nov 10 10:20 PM ET): fills logg
 GO_LIVE_FILLS = 100         # tiered test (Alex, Nov 10): B+ (87+) accounts qualify at 100 paper copies,
 GO_LIVE_FAST_SCORE = 87.0   # everyone else needs 150; no time-based shortcut (a quiet account can't
 GO_LIVE_SLOW_FILLS = 150    # qualify on a handful of trades)
+GO_LIVE_SETTLED = 40        # and at least 40 SETTLED copies before real money (Nov 14)
 DROP_DAYS = 30              # dropped accounts (failed the 150-copy test, or long-run losers) are not
                             # watched, polled or snapshotted; after 30 days they may be re-scouted
                             # and start again from zero (Alex, Nov 10 10:31 PM ET)
@@ -483,7 +484,8 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         f300, _ = mean_low(o.get("follow_300", []))
         f1800, _ = mean_low(o.get("follow_1800", []))
         score, gl = score_grade(settle_all[-GO_LIVE_SLOW_FILLS:])   # rolling: the last 150 copies
-        due = n >= GO_LIVE_SLOW_FILLS or (n >= GO_LIVE_FILLS and (score or 0) >= GO_LIVE_FAST_SCORE)
+        due = (n >= GO_LIVE_SLOW_FILLS or (n >= GO_LIVE_FILLS and (score or 0) >= GO_LIVE_FAST_SCORE)) \
+            and len(settle_all) >= GO_LIVE_SETTLED
         banked = sum(settle_all) / 100            # $ a 1-contract copy would have made, all-time
         leeway = leeway_c(banked, score)
         copyable = score is not None and score >= COPY_SCORE
@@ -508,7 +510,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
-            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}. Score 0-100 from its last 150 copies "
+            "mode": "watch-only", "rule": f"judged at {GO_LIVE_FILLS} paper copies if it scores {GO_LIVE_FAST_SCORE:.0f}+ (B+), otherwise at {GO_LIVE_SLOW_FILLS}, and only with {GO_LIVE_SETTLED}+ settled. Score 0-100 from its last 150 copies "
             "(after fees; 80 = break-even even in the pessimistic case). Copied at 80+ (B- or better) while its "
             f"last {ROLL_WINDOW} copies average better than -leeway (5c, +1c per $1 it has made us, +up to 5c "
             "for a high score); benched below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3",
