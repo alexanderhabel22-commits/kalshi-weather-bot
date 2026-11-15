@@ -114,6 +114,27 @@
      "summary": "Kalshi's prices now forecast tomorrow's temperature better than our models do (1.31F miss vs 1.60F), so the edge is gone. Real test lost $3.95 on 43 contracts. Re-check Jan-Feb."},
     {"date": "2026-11-11", "title": "Late-day lows", "verdict": "LIVE", "area": "Weather",
      "summary": "After midday the market overpays for brackets below the low already recorded. Selling them backtests at +5.7c per contract (Oct 2025-Aug 2026) and +3.7c (Sep-Nov 2026), about 7 fills a day. Real money at 1 contract since Nov 11 (Alex's OK); reviews at 100/300/500 contracts."}
+,
+    {"date": "2026-11-12", "title": "15-minute bot all paper", "verdict": "PAPER", "area": "15-min",
+     "summary": "Rule E2 went 0-4 on real money (-$3.22). Alex: no proven edge, so the whole 15-min bot is paper; it goes back to real money only with his explicit OK."},
+    {"date": "2026-11-12", "title": "Mentions NO fade to paper", "verdict": "PAPER", "area": "Mentions",
+     "summary": "Main-bot audit found no edge in Mentions after fees; it keeps running on paper (AI shadow judged ~Dec 3)."},
+    {"date": "2026-11-12", "title": "Gas + jobless claims fade and election favorites", "verdict": "LIVE", "area": "Econ",
+     "summary": "macro_wide (weekly gas + jobless claims fade, replay +6.6c) and favorites_wide (election favorites by expected decision date) start on real money at 1 contract."},
+    {"date": "2026-11-13", "title": "Evening rain fade", "verdict": "LIVE", "area": "Weather",
+     "summary": "After 8 PM local with no rain recorded, buy NO at 75-95c and hold. Replay +6.1c per contract; real money at 1 contract."},
+    {"date": "2026-11-13", "title": "S&P range fade", "verdict": "LIVE", "area": "Financials",
+     "summary": "Sell S&P 500 daily-close ranges priced 30c+ overnight (NO bids at 65c, cancelled 8:45 AM ET). Replay +12.8c per fill; real money at 1 contract."},
+    {"date": "2026-11-14", "title": "Best-AI fade at 3 contracts", "verdict": "LIVE", "area": "Platform",
+     "summary": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1), replay +5.1c per fill, real money at 3 contracts."},
+    {"date": "2026-11-15", "title": "Nasdaq range fade", "verdict": "LIVE", "area": "Financials",
+     "summary": "The S&P range rule on Nasdaq-100 ranges (replay +22c per fill), real money at 1 contract with a $5 stop. First orders Nov 15 ~4:05 PM ET."},
+    {"date": "2026-11-15", "title": "Rewards test ended", "verdict": "NO-GO", "area": "Platform",
+     "summary": "Five-day real-money test of Kalshi's liquidity rewards: $0 earned, $0 lost. Stopped for good; a last check for a late payout on Nov 22."},
+    {"date": "2026-11-15", "title": "Copycat two stages", "verdict": "LIVE", "area": "Copycat",
+     "summary": "Trial bar (20 counted copies, 15 events, score 77.5+, 4 slots) or full bar (50, 30, 80+). Once on real money only real P&L decides: back to paper when losses use up a $1-5 budget. Rails unchanged: $5 per trader, $8 halt, $10 cash floor."},
+    {"date": "2026-11-15", "title": "Foreman and boss changes", "verdict": "INFO", "area": "Platform",
+     "summary": "The Foreman calls the AI only when a rule flags (all AI under $1/day). New daily live-vs-replay drift check per strategy. The Copycat boss is a shadow judge with no power until it beats a plain rule over 200+ copies (scored ~Dec 1)."}
   ],
   "checkpoints": [
     {"date": "2026-11-07", "title": "LOCK verdict"},
@@ -125,6 +146,13 @@
     {"date": "2026-12-03", "title": "Mentions paper judged"},
     {"date": "2026-11-26", "title": "Late-day lows 100-contract review"},
     {"date": "2027-01-25", "title": "Renew the scan timer token (expires Feb 2)"},
-    {"date": "2027-02-01", "title": "Econ weak leads re-test"}
+    {"date": "2027-02-01", "title": "Econ weak leads re-test"},
+    {"date": "2026-11-18", "title": "Parlay selling + market making paper verdicts"},
+    {"date": "2026-11-21", "title": "Miami hourly-temp market making report"},
+    {"date": "2026-11-22", "title": "Rewards test: last payout check (9 AM ET)"},
+    {"date": "2026-11-24", "title": "Source-lag + casual-flow paper verdicts"},
+    {"date": "2026-11-28", "title": "Copycat re-test (ingredients, categories, bar)"},
+    {"date": "2026-12-01", "title": "Copycat boss scored vs plain rule"},
+    {"date": "2026-12-09", "title": "Fed decision (Dec 9-10): Fed fade fills"}
   ]
 }
