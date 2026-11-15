@@ -416,7 +416,8 @@ async function loadCopycat(){
 const TEST_START = Date.parse("2026-11-11T13:30:00Z");
 async function loadTests(){
   const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${f}?t=${Date.now()}`, {cache:"no-store"}); return r.ok ? await r.json() : null; } catch(e){ return null; } };
-  const [lip, mm, rfq, field] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json")]);
+  const [lip, mm, rfq, field, watch] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json"), get("watch.json")]);
+  if (watch) S.watch = watch;
   let late = [];
   try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
   S.tx = {lip, mm, rfq, late, field};
@@ -440,7 +441,9 @@ function txPage(){
   const ago = a => { const t = Date.parse(a || ""); if (!t) return ""; const m = Math.round((Date.now() - t) / 6e4); return m < 90 ? m + " min ago" : Math.round(m / 60) + " h ago"; };
   const day = a => { const t = Date.parse(a || ""); return t ? new Date(t).toLocaleString("en-US", {timeZone:TZ, month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + " ET" : ""; };
   const c1 = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "¢";
-  let h = `<h2>Rewards test <span class="sub">REAL MONEY · Kalshi pays for resting bids</span></h2>`;
+  const over = L && L.mode !== "live";
+  let h = `<h2>Rewards test <span class="sub">${over ? "ENDED Nov 15 · stopped for good" : "REAL MONEY · Kalshi pays for resting bids"}</span></h2>`;
+  if (over) h += `<div class="card"><div style="font-size:12.5px;line-height:1.55">The rewards test ran Nov 11-15 on real money and is <b>stopped for good</b>. Result: <b>$0 earned and $0 lost</b> (no payouts, no bids filled). A last check for a late payout is on Nov 22 at 9 AM ET. The details below are kept for the record.</div></div>`;
   if (!L) h += `<div class="card"><div class="mute" style="font-size:12px;line-height:1.5">Starting up. The server installs it at its next hourly update; the first status appears ~15 min after that.</div></div>`;
   else {
     const cr = (L.credits || []).filter(c => (Date.parse(c.created_time || "") || 0) >= TEST_START), paid = cr.reduce((a, c) => a + num(c.amount_dollars), 0);
@@ -451,7 +454,7 @@ function txPage(){
       <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${live ? `<span class="pos">● live</span>` : "off"} · switch ${esc(String(L.control || "off").toUpperCase())}${L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : ""} · ${esc(ago(L.at))}</div></div>
       <div style="text-align:right"><div class="lbl">In resting bids</div><div class="val">$${num(L.resting_cost).toFixed(2)} <small class="mute">/ $${num(L.budget).toFixed(0)}</small></div>
       <div class="lbl" style="margin-top:8px">Bids filled (held)</div><div class="val" style="font-size:17px">$${num(L.filled_cost).toFixed(2)}</div></div></div>
-      <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">We rest cheap bids (1-8¢) at the front of the line in quiet reward markets. Kalshi pays daily (~6 AM ET) by our share of the resting size. Model estimate: ~${money(est, false)}/day; the real payouts above are what count. A filled bid is offered straight back at what we paid; if nobody takes it, we hold it to settlement (we can lose at most its cost). $10 of fills halts it; it ends Nov 14.</div></div>`;
+      <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">We rest cheap bids (1-8¢) at the front of the line in quiet reward markets. Kalshi pays daily (~6 AM ET) by our share of the resting size. Model estimate: ~${money(est, false)}/day; the real payouts above are what count. A filled bid is offered straight back at what we paid; if nobody takes it, we hold it to settlement (we can lose at most its cost). $10 of fills halts it. It ran Nov 11-15 and is now stopped.</div></div>`;
     h += `<h2>Payouts <span class="sub">${cr.length} since the test began</span></h2><div class="card">` + (cr.length ? cr.slice().reverse().map(c =>
       `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${esc(c.type || "credit")}</div><div class="s" style="white-space:normal">${esc(c.reason || "")} · ${esc(day(c.created_time))}</div></div><div class="r"><span class="pos">${money(num(c.amount_dollars))}</span><small>${esc(c.status || "")}</small></div></div>`).join("")
       : `<div class="mute" style="font-size:12px">None yet. The first payout should land around 6 AM ET the morning after the bids go up.</div>`) + `</div>`;
@@ -503,6 +506,66 @@ function txPage(){
   }
   return h + `</div>`;
 }
+/* ---------------------------------------------------------------- Foreman + AI spend + drift (Nov 15, PR #292)
+   The Foreman (wxbot/watch.py, every 15 min on the 15-min server) writes m15/watch.json: rule checks, the AI's
+   verdicts (Haiku only when a rule flags), services and the AI bill. All AI together must stay under $1/day. */
+const AI_CAP = 1.0;
+function aiDays(){ const W = S.watch || {}, d = Object.assign({}, W.ai_history || {}); const t = W.ai_spend || {}; if (t.day) d[t.day] = num(t.total); return d; }
+function aiTileHTML(id){
+  const W = S.watch; if (!W) return "";
+  const t = W.ai_spend || {}, by = t.by || {}, days = aiDays(), ks = Object.keys(days).sort(), avg = ks.length ? ks.reduce((a, k) => a + num(days[k]), 0) / ks.length : 0;
+  return `<h2>AI bill <span class="sub">Foreman + Copycat boss · cap $${AI_CAP.toFixed(2)}/day</span></h2><div class="card">
+    ${meter("AI spend today", num(t.total), AI_CAP, {txt:`$${num(t.total).toFixed(2)} / $${AI_CAP.toFixed(2)}`, sub:Object.entries(by).map(([k, v]) => `${esc(k.replace(/_/g, " "))} $${num(v).toFixed(2)}`).join(" · ") + ` · ${ks.length}-day average $${avg.toFixed(2)}/day (about $${(avg * 30).toFixed(0)}/month)`})}
+    <div class="chart" id="${id}" style="margin-top:8px"></div></div>`;
+}
+function drawAI(id){ const el = $("#" + id); if (!el) return; const d = aiDays();
+  barChart(el, Object.keys(d).sort().slice(-14).map(k => ({label:k, short:k.slice(5).replace("-", "/"), v:num(d[k]), c:num(d[k]) >= AI_CAP ? "#fb6b7b" : num(d[k]) >= .8 * AI_CAP ? "#f5b335" : "#a78bfa", extra:"all AI jobs together"})),
+    {h:110, fy:v => "$" + v.toFixed(2), refs:[{y:AI_CAP, c:"#fb6b7b", label:"$1 cap"}], empty:"No AI spend logged yet"}); }
+function foremanHTML(){
+  const W = S.watch;
+  if (!W) return `<h2>The Foreman <span class="sub">AI watcher</span></h2><div class="card"><div class="mute" style="font-size:12px">No status yet (m15/watch.json on the m15-data branch).</div></div>`;
+  const L = W.last || {}, at = pdate(L.at), T = W.today || {}, tk = T.tokens || {}, flags = L.flags || [], hk = L.haiku || {};
+  const lg = Array.isArray(W.log) ? W.log : [];
+  const lvl = r => (r.flags || []).some(f => f.sev === "critical") || (r.haiku || {}).level === "escalate" ? "f" : (r.flags || []).length || (r.haiku || {}).level === "watch" ? "p" : "";
+  let h = `<h2>The Foreman <span class="sub">AI watcher · every 15 min · plain rules first, AI only on a flag</span></h2><div class="card">
+    <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr));text-align:center">
+      <div><div class="val" style="font-size:17px">${at ? esc(ago(at)) : "—"}</div><div class="lbl">Last check</div></div>
+      <div><div class="val ${flags.length ? "neg" : "pos"}" style="font-size:17px">${flags.length}</div><div class="lbl">Flags now</div></div>
+      <div><div class="val" style="font-size:17px">${num(T.haiku)}</div><div class="lbl">AI checks today</div></div>
+      <div><div class="val" style="font-size:17px">${num(T.opus)}</div><div class="lbl">Escalations</div></div></div>
+    <div class="s" style="white-space:normal;font-size:12px;margin-top:10px;line-height:1.5">${hk.skipped ? `Last check clean: <span class="pos">${esc(hk.skipped)}</span>, so no AI was called ($0).` : esc(hk.summary || "")}${L.action ? ` <b class="neg">Action: ${esc(typeof L.action === "string" ? L.action : JSON.stringify(L.action))}</b>` : ""}</div>
+    ${flags.length ? `<div style="margin-top:6px">${flags.map(f => `<div class="err" style="margin-top:4px">${esc(f.sev || "")} · ${esc(f.code || "")}: ${esc(f.text || JSON.stringify(f))}</div>`).join("")}</div>` : ""}
+    <div class="s mute" style="white-space:normal;font-size:11px;margin-top:6px">Tokens today: in ${Number(num(tk.haiku_in) + num(tk.opus_in)).toLocaleString()} · out ${Number(num(tk.haiku_out) + num(tk.opus_out)).toLocaleString()}. Since Nov 15 the AI is asked only when a rule raises a warning (standing flags at most every 2 h); clean checks cost nothing. It may pause the 15-min bot to paper on a clear malfunction only, never for losses, and never changes caps, stops, sizes or code.</div>
+    ${lg.length ? `<div class="lbl" style="margin:12px 0 6px">Last ${Math.min(48, lg.length)} times the AI was asked <span class="mute" style="text-transform:none;letter-spacing:0">· ${esc(fday(pdate(lg.slice(-48)[0].at)))} to ${esc(fday(pdate(lg.at(-1).at)))} · amber = it said watch · red = it escalated (pushed you)</span></div><div class="runs">${lg.slice(-48).map(r => `<i class="${lvl(r)}" title="${esc(fdt(pdate(r.at)))} ${esc(((r.haiku || {}).level) || ((r.flags || []).length ? "flag" : "ok"))}"></i>`).join("")}</div>` : ""}</div>`;
+  h += aiTileHTML("aiDaysH");
+  const sv = Object.entries(W.services || {});
+  if (sv.length) h += `<h2>Server services <span class="sub">${sv.length} on the 15-min server</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Service</th><th>State</th><th>Memory</th><th>Restarts</th><th>Last warning</th></tr>`
+    + sv.map(([k, v]) => `<tr><td>${esc(k.replace(/^kalshi-/, ""))}</td><td class="${v.ActiveState === "active" ? "pos" : "neg"}">${esc(v.ActiveState || "?")}</td><td><small>${esc(v.MemoryCurrent || "—")} / ${esc(v.MemoryMax || "—")}</small></td><td>${esc(v.NRestarts ?? "—")}</td><td><small class="mute" style="white-space:normal;word-break:break-all">${esc(String(v.log || "").replace(/^.*?(WARNING|ERROR|Traceback)/, "$1").slice(0, 90))}</small></td></tr>`).join("") + `</table></div></div>`;
+  const notes = W.notes || [], jr = (W.journal || []).slice().reverse();
+  h += dd("hFmJ", "Foreman journal", `${jr.length} entries · newest first`, jr.slice(0, 40).map(x => `<div class="s" style="white-space:normal;font-size:11.5px;padding:4px 0;border-top:1px solid var(--line)">${esc(x)}</div>`).join("") || `<div class="mute">Empty.</div>`);
+  if (notes.length) h += dd("hFmN", "What the Foreman remembers", `${notes.length} notes`, notes.map(x => `<div class="s" style="white-space:normal;font-size:11.5px;padding:4px 0">• ${esc(x)}</div>`).join(""));
+  return h;
+}
+// Daily live-vs-replay drift check (wxbot/drift.py): per live main-bot strategy, real ¢/ct vs what its replay said.
+// Judges only with 20+ settled events, pushes once per level; read-only (the milestone reviews decide what to do).
+const DRIFT_LVL = {ok:["ON TRACK", "go"], too_few:["TOO FEW", "off"], below_replay:["BELOW REPLAY", "pend"], losing:["LOSING", "nogo"]};
+function driftHTML(){
+  const D = (S.data.tstate || {}).drift; if (!D || !D.by) return "";
+  const at = pdate(D.at), ks = Object.keys(D.by).sort((a, b) => num(D.by[b].events) - num(D.by[a].events));
+  const rows = ks.map(k => { const r = D.by[k], [l, c] = DRIFT_LVL[r.level] || [String(r.level || "?").toUpperCase(), "off"];
+    return `<tr><td><i style="background:${colorOf(k, 0)}"></i>${esc(strategyName(k))}</td><td class="${r.live_c == null ? "mute" : cls(r.live_c)}" style="font-weight:700">${r.live_c == null ? "—" : cents(r.live_c)}</td><td class="mute">${r.replay_c == null ? "none" : cents(r.replay_c)}</td>
+      <td>${r.low_c == null ? "—" : `<small>${cents(r.low_c)} to ${cents(r.high_c)}</small>`}</td><td>${num(r.events)}<small class="mute">/20</small></td><td>${num(r.contracts)}</td><td><span class="chip ${c}" style="font-size:9.5px;padding:1px 6px">${l}</span></td></tr>`; }).join("");
+  return `<h2>Live vs replay <span class="sub">daily drift check${at ? " · ran " + esc(fdt(at)) + " ET" : ""}</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>Live ¢/ct</th><th>Replay</th><th>90% range</th><th>Events</th><th>Ct</th><th>Status</th></tr>${rows}</table></div>
+    <div class="lbl" style="margin:12px 0 2px">Live vs replay ¢/ct <span class="mute" style="text-transform:none;letter-spacing:0">· colored = live · gray = replay</span></div><div class="chart" id="driftC"></div>
+    <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">Once a day the bot compares each live strategy's real profit per contract (settled events only) with its replay. It needs 20+ settled events before it judges; then it pushes you once if even the hopeful end of the 90% range is below the replay ("below replay") or below zero ("losing"). It never changes anything by itself: the 500-contract reviews decide.</div></div>`;
+}
+function drawDrift(){
+  const el = $("#driftC"), D = (S.data.tstate || {}).drift; if (!el || !D || !D.by) return; const bars = [];
+  Object.keys(D.by).filter(k => D.by[k].live_c != null || D.by[k].replay_c != null).sort((a, b) => num(D.by[b].events) - num(D.by[a].events)).forEach(k => { const r = D.by[k], sh = strategyName(k).slice(0, 6);
+    if (r.live_c != null) bars.push({label:strategyName(k) + " · live", short:sh, v:r.live_c, c:colorOf(k, 0), extra:`${r.events} settled events, ${r.contracts} contracts`});
+    if (r.replay_c != null) bars.push({label:strategyName(k) + " · replay", short:"", v:r.replay_c, c:"#64748b", extra:"what the replay said"}); });
+  barChart(el, bars, {h:140, fy:v => v.toFixed(0) + "¢", fv:v => cents(v) + "/ct"});
+}
 /* ---------------------------------------------------------------- Summary (Alex, Nov 14)
    One page for the whole operation: every engine and every strategy, real money only, with the
    detail behind dropdowns. Alex's manual trades are left out (they are his, not the bots'). */
@@ -527,7 +590,7 @@ function sumData(){
   const C = S.cc || {}, L = C.live || {};
   if (S.cc){ const done = (L.settled || []).filter(x => x.settled), tot = num(L.total_pnl);
     out.cc = {pnl:tot, today:done.filter(x => etDay(new Date(x.settled * 1000)) === today).reduce((a, x) => a + num(x.pnl), 0), risk:num(L.open_cost), live:C.mode === "live",
-      note:`${(C.accounts || []).filter(a => a.verdict === "passes").length} traders live`, pts:done.map(x => ({x:x.settled * 1000, y:num(x.pnl)})), base:tot - done.reduce((a, x) => a + num(x.pnl), 0)};
+      note:(() => { const TI = ccTiers(); return `${TI.on.length} traders live (${TI.full.length} full, ${TI.trial.length} trial)`; })(), pts:done.map(x => ({x:x.settled * 1000, y:num(x.pnl)})), base:tot - done.reduce((a, x) => a + num(x.pnl), 0)};
     (C.accounts || []).filter(a => a.verdict === "passes" || (a.real || {}).copies).forEach(a => { const R = a.real || {}, pl = (L.pnl || {})[a.nick] != null ? num(L.pnl[a.nick]) : num(R.pnl);
       strat.push({eng:"cc", key:a.nick, name:"Copycat · " + a.nick, live:a.verdict === "passes", size:a.verdict === "passes" ? num(a.size) + " ct" : "", pnl:pl,
         today:done.filter(x => x.nick === a.nick && etDay(new Date(x.settled * 1000)) === today).reduce((s2, x) => s2 + num(x.pnl), 0), ct:num(R.contracts), c:R.c, n:num(R.settled), won:num(R.won),
@@ -536,7 +599,7 @@ function sumData(){
   const T = (S.tx || {}).lip;
   if (T){ const cr = (T.credits || []).filter(c => (Date.parse(c.created_time || "") || 0) >= TEST_START), paid = cr.reduce((a, c) => a + num(c.amount_dollars), 0);
     out.tx = {pnl:paid, today:cr.filter(c => etDay(new Date(c.created_time)) === today).reduce((a, c) => a + num(c.amount_dollars), 0), risk:num(T.filled_cost), live:T.mode === "live",
-      note:T.mode === "live" ? `$${num(T.resting_cost).toFixed(2)} in bids` : "ended", pts:cr.map(c => ({x:Date.parse(c.created_time), y:num(c.amount_dollars)}))};
+      note:T.mode === "live" ? `$${num(T.resting_cost).toFixed(2)} in bids` : "ended Nov 15", pts:cr.map(c => ({x:Date.parse(c.created_time), y:num(c.amount_dollars)}))};
     strat.push({eng:"tx", key:"lip", name:"Liquidity rewards", live:T.mode === "live", size:"$" + num(T.budget).toFixed(0) + " budget", pnl:paid, today:out.tx.today, ct:0, c:null, n:cr.length, won:null, open:num(T.filled_cost), col:"#67e8f9"}); }
   if (M) strat.push({eng:"m15", key:"m15", name:"15-minute markets", live:out.m15.live, size:out.m15.live ? "1 ct" : "", pnl:out.m15.pnl, today:out.m15.today, ct:out.m15.ct, c:out.m15.ct ? 100 * out.m15.pnl / out.m15.ct : null,
     n:out.m15.n, won:out.m15.won, open:out.m15.risk, col:"#f5b335"});
@@ -555,7 +618,7 @@ function sumPage(){
       <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(tot.today)}">${money(tot.today)}</div>
       <div class="lbl" style="margin-top:8px">At risk now</div><div class="val" style="font-size:17px">$${tot.risk.toFixed(2)} <small class="mute">/ $${B.toFixed(2)}</small></div></div></div>
     <div class="eng">${Object.entries(ENG).map(([k, [nm, col]]) => { const o = out[k] || {};
-      return `<div data-goto="${k}" style="border-left:3px solid ${col}"><div class="nm"><span>${nm}</span><span style="color:${o.live ? "var(--good)" : "var(--mute)"}">${o.live ? "● LIVE" : "PAPER"}</span></div>
+      return `<div data-goto="${k}" style="border-left:3px solid ${col}"><div class="nm"><span>${nm}</span><span style="color:${o.live ? "var(--good)" : "var(--mute)"}">${o.live ? "● LIVE" : k === "tx" ? "ENDED" : "PAPER"}</span></div>
         <div class="pl ${cls(num(o.pnl))}">${o.pnl == null ? "—" : money(num(o.pnl))}</div><div class="td">today ${money(num(o.today))} · ${esc(o.note || "")}</div></div>`; }).join("")}</div>
     <div class="mute" style="font-size:11px;margin-top:10px">Real money only, after fees. Your own manual trades are left out. Tap a box to open that bot's page.</div></div>`;
   h += `<h2>Profit over time <span class="sub">real money · all bots</span></h2><div class="card"><div class="legend" id="sumLeg"></div>${smoothBtns()}<div class="chart" id="sumEq"></div>
@@ -577,6 +640,7 @@ function sumPage(){
     ${Object.entries(ENG).filter(([k]) => num((out[k] || {}).risk) > 0).map(([k, [nm, col]]) => `<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;margin-top:6px"><span style="width:96px;color:${col}">${nm.toLowerCase()}</span><div class="share" style="flex:1;margin:0"><i style="width:${Math.min(100, 100 * out[k].risk / (tot.risk || 1)).toFixed(1)}%;background:${col}"></i></div><span style="width:52px;text-align:right">$${out[k].risk.toFixed(2)}</span></div>`).join("")}
     <div style="margin-top:12px">${meter("Main bot today vs daily stop", -num(out.main.today), dayStop, {txt:`${money(num(out.main.today))} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} in a day pauses new main-bot orders until tomorrow`})}</div>
     ${meter("Main bot all time vs halt", -num(out.main.pnl), totStop, {txt:`${money(num(out.main.pnl))} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} halts the main bot and cancels its resting orders`})}</div>`;
+  h += aiTileHTML("aiDaysS");
   // what's coming and what was decided
   const up = ck.filter(x => x.date >= today).sort((a, b) => a.date.localeCompare(b.date));
   const vcol = v => ({LIVE:"live", PAPER:"paper", NO:"nogo", "NO-GO":"nogo", PENDING:"pend", GO:"go"})[String(v || "").toUpperCase()] || "off";
@@ -595,6 +659,7 @@ function drawSum(){
   const ser = [line(all, base, "Total", "#e6ecff", 2.6)].concat(per);
   if ($("#sumLeg")) $("#sumLeg").innerHTML = ser.map(x => `<span><i style="background:${x.c}"></i>${esc(x.name === "Total" ? "Total" : x.name.toLowerCase())} <b class="${cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
   if ($("#sumEq")) lineChart($("#sumEq"), ...smoothOpts(ser, {step:true, h:200, empty:"No settled real-money bets yet."}));
+  drawAI("aiDaysS");
   if ($("#sumBars")) barChart($("#sumBars"), strat.filter(x => x.n || x.pnl).sort((a, b) => b.pnl - a.pnl).map(x => ({label:x.name, short:x.name.replace("Copycat · ", "").slice(0, 7), v:x.pnl, c:x.col, extra:`${x.n} settled${x.c != null ? " · " + cents(x.c) + "/ct" : ""}`})), {h:150, fy:v => "$" + v.toFixed(Math.abs(v) < 10 ? 1 : 0)});
 }
 /* ---------------------------------------------------------------- Copycat live tracker (Alex, Nov 14)
@@ -744,12 +809,13 @@ function ccCatChips(a, max){
   return ks.slice(0, max || ks.length).map(one).join("") + (max && ks.length > max ? `<span class="cg"><small>+${ks.length - max} more</small></span>` : "");
 }
 function ccRisk(a){ const L = ((S.cc || {}).live) || {}, R = a.real || {};
-  const rp = (L.pnl || {})[a.nick] != null ? num(L.pnl[a.nick]) : num(R.pnl), bud = (a.on_real || {}).budget, base = bud ? Math.min(ccStop(), num(bud)) : ccStop();
+  const rp = (L.pnl || {})[a.nick] != null ? num(L.pnl[a.nick]) : num(R.pnl), base = ccStop();
   return {rp, lim:base + Math.max(0, rp), base, risk:Math.max(0, -rp) + num(R.open_cost)}; }
 function ccStatus(a){ const ben = (((S.cc || {}).live || {}).benched || {})[a.nick];
   if (ben || a.verdict === "benched") return ["BENCHED", "nogo"];
-  if (a.verdict === "passes" && (a.on_real || {}).tier === "trial") return ["LIVE · TRIAL", "live"];
-  return {passes:["LIVE", "live"], ready:["TRIAL READY", "pend"], "real-lag":["BACK TO PAPER", "pend"], slump:["PAUSED", "pend"], fails:["PAPER", "off"], watching:["TESTING", "off"]}[a.verdict] || ["PAPER", "off"]; }
+  if (a.verdict === "passes" && (a.on_real || {}).tier === "trial") return ["LIVE · TRIAL", "pend"];
+  if (a.verdict === "passes" && a.on_real) return ["LIVE · FULL", "live"];
+  return {passes:["LIVE", "live"], ready:["WAITING FOR SLOT", "pend"], "real-lag":["BACK TO PAPER", "pend"], slump:["PAUSED", "pend"], fails:["PAPER", "off"], watching:["TESTING", "off"]}[a.verdict] || ["PAPER", "off"]; }
 // One page: how Copycat grades (Nov 15 cleanup). Same rules as wxbot/copycat.py and copycat_live.py.
 function ccPrior(){
   const P = (S.cc || {}).prior;
@@ -774,11 +840,11 @@ function ccHowGrades(){
   return `${h("1. What counts")}Every public trader we find is copied on <b>paper</b> first. A copy only counts if real money could really have made it: bought within 2¢ of their price, between 5¢ and 95¢, and seen within 60 s. Kalshi's fee is taken off. Copies in the same event (one game, one election, one weather day, one price range) count as <b>one</b> piece of evidence, because they win or lose together. The overall grade, the category grades and the earn-back test all use this same basis.
   ${h("2. The score (new Nov 15)")}The score is our best estimate of what one copy of this trader will make us, in ¢ per contract after fees and delay: <b>score = 80 + 2.5 × expected profit</b>. 80 (B-) = break-even, 90 = +4¢, 70 = −4¢. Every trader starts at what copying earns on average (${ccPrior()}) and only its own counted copies can move it up. A short lucky run barely moves it; hundreds of events move it a lot. The average, the noise and the spread of real skill are re-measured from all watched traders on every update, so the formula loosens by itself if real skill differences show up in the data.
   ${ccWeights()}
-  ${h("3. Getting on real money (two stages, Nov 15)")}<b>Full bar:</b> ${CCR.settled}+ counted copies in ${CCR.events}+ different events and a score of ${CCR.score}+ (expected profit above 0). <b>Trial bar</b> (easier, so new traders get a real try): ${CCR.tSettled}+ counted copies in ${CCR.tEvents}+ events and a score of ${CCR.tScore}+ (expected −1¢ or better), at most ${CCR.slots} trial traders on real money at once. Size: 1 contract. 2 at 90+ and 3 at 95+ (300+ copies) only once 20+ real copies are in profit.
-  ${h("4. Staying on: real money decides")}Once a trader is on real money, paper no longer pauses, blocks or drops it. Only our real P&L counts: it goes back to paper when its real losses use up its <b>budget</b>. The paper score sets the budget when it comes on: $1 at ${CCR.tScore}, rising to $5 at ${CCR.score}+. Paper getting better raises it, paper getting worse never lowers it. Every dollar of real profit it makes us adds a dollar of room.
+  ${h("3. Getting on real money (two stages, Nov 15)")}<b>Full bar:</b> ${CCR.settled}+ counted copies in ${CCR.events}+ different events and a score of ${CCR.score}+ (expected profit above 0). <b>Trial bar</b> (easier, so new traders get a real try): ${CCR.tSettled}+ counted copies in ${CCR.tEvents}+ events and a score of ${CCR.tScore}+ (expected −1¢ or better), at most ${CCR.slots} trial traders on real money at once. A score of ${CCR.score}+ counts as a full pass even a few events short (Nov 15), so it never takes a trial slot; a trial trader that later scores ${CCR.score}+ moves to full and frees its slot. Waiting traders take the next free slot, best score first. Size: 1 contract. 2 at 90+ and 3 at 95+ (300+ copies) only once 20+ real copies are in profit.
+  ${h("4. Staying on: real money decides")}Once a trader is on real money, paper no longer pauses, blocks or drops it. Only our real P&L counts: it goes back to paper when its real losses use up its <b>budget</b>. The paper score sets the budget when it comes on: $1 at ${CCR.tScore}, rising to $5 at ${CCR.score}+ (budget = $1 + $1.60 per point above ${CCR.tScore}, between $1 and $5). Paper getting better raises it, paper getting worse never lowers it. Every dollar of real profit it makes us adds a dollar of room.
   ${h("5. Categories (paper traders only)")}Each category (Sports, Crypto, Weather...) gets its own grade from the same counted copies (its share of the last 150), one credit per event, graded on the cautious end of its average there (80 = break-even even in the cautious case). Before it is on real money, a trader gets no real copies in a category where it has ${CCR.catMin}+ counted copies that are clearly losing (even the hopeful end of the range is below 0). Other categories keep copying.
   ${h("6. Real money vs paper")}After ${CCR.realMin} settled real copies, real results are compared with paper on the same trades (shown for information). It goes back to paper only if real money itself is clearly losing.
-  ${h("7. Benched and coming back")}The AI boss is in a shadow test since Nov 15: once a day it makes keep/skip and market-making calls on the traders near the bar or on real money, scored later against what happened; it benches nobody until it beats plain rules. A trader that hits its own loss stop or fails the real-vs-paper check keeps copying on paper and earns real money back with 50 new counted copies in 30+ events, a score of 80+ on those new copies alone (same formula, starting again from the average) and a positive average: the entry test again, on fresh copies. A second bench within 30 days of coming back lasts 30 days.
+  ${h("7. Back to paper and coming back")}The AI boss is in a shadow test since Nov 15: once a day it makes keep/skip and market-making calls on the traders near the bar or on real money, scored later against what happened; it benches nobody until it beats plain rules. A trader whose real losses use up its budget (one phone push) or whose real money is clearly losing keeps copying on paper and earns real money back with 50 new counted copies in 30+ events, a score of 80+ on those new copies alone (same formula, starting again from the average) and a positive average: the entry test again, on fresh copies. A second bench within 30 days of coming back lasts 30 days.
   ${h("8. Money limits (never loosened by a grade)")}Each trader: $5 at risk at most (open copies plus settled losses), plus whatever real profit it has made us. All of Copycat: 15% of the bankroll open at once, and a hard $8 total loss halt. Copycat never takes the last $10 of cash the main bot needs. One copy per event.
   ${h("9. Dropped")}A trader on paper only that fails its paper test 3 times in a row (judged at ${CCR.settled} counted copies, then every 25 more) or stops being profitable on Kalshi is dropped for 30 days, then can be re-tested from zero.`;
 }
@@ -792,7 +858,7 @@ function ccWhy(a){
   const ex = a.edge_c == null ? "" : `, expected ${cents(a.edge_c)}/ct`;
   if (a.verdict === "ready") return `<b>Cleared the trial bar:</b> score ${sc}${ex} on ${num(a.settled)} counted copies in ${num(a.events)} events. It goes on real money (1 contract, $${num(a.real_budget).toFixed(2)} budget) as soon as one of the ${CCR.slots} trial slots is free.`;
   const OR = a.on_real;
-  if (a.verdict === "passes" && OR) return `<b>On real money${OR.tier === "trial" ? " (trial)" : ""}${OR.restored ? ", restored Nov 15" : ""}:</b> real P&L decides now. Back to paper only if real losses use up its $${num(OR.budget).toFixed(2)} budget (plus any real profit it banks us). Paper score ${sc}${ex} for reference.`;
+  if (a.verdict === "passes" && OR){ const bg = ccBudget(a); return `<b>On real money, ${OR.tier === "trial" ? "trial" : "full"} tier${OR.restored ? " (restored after the Nov 15 restart)" : ""}, since ${esc(fdt(new Date(num(OR.at) * 1000)))} ET:</b> real P&L decides now (${money(bg.p)} so far). Back to paper only if real losses use up its $${bg.b.toFixed(2)} budget (plus any real profit it banks us): $${Math.max(0, bg.left).toFixed(2)} left. Paper score ${sc}${ex} for reference.${OR.tier === "trial" ? ` A score of ${CCR.score}+ moves it to full.` : ""}`; }
   if (a.verdict !== "passes") return `On paper: score ${sc}${ex}${a.score != null && a.score < CCR.score ? ` (needs ${CCR.score}, i.e. above 0¢)` : ""}.`;
   return `<b>Passed its paper test:</b> score ${sc}${ex} (${CCR.score}+ needed) on ${num(a.settled)} counted copies across ${num(a.events)} different events${num(a.real_events) ? `, ${num(a.real_events)} of them real (counted double)` : ""} (needs ${CCR.settled} in ${CCR.events}+).`;
 }
@@ -802,10 +868,12 @@ function ccChecks(a){
   const lag = num(R.settled) < CCR.realMin ? `<b class="mute">…</b> real vs paper: checked after ${CCR.realMin} settled real copies (${num(R.settled)} so far)`
     : `${ok(!(R.gap_c != null && R.gap_c < -CCR.gap))} real vs paper: ${R.gap_c == null ? "no overlap yet" : (R.gap_c >= 0 ? "+" : "") + R.gap_c + "¢ gap"} (more than −${CCR.gap}¢ sends it back to paper)`;
   const blocked = a.blocked_cats || [];
-  return `<div class="tchk">${ok(a.score == null || a.score >= CCR.score)} score ${a.score == null ? "—" : a.score.toFixed(1)}${a.edge_c == null ? "" : ` = expected ${cents(a.edge_c)}/ct ±${a.edge_sd}`} (needs ${CCR.score}+)<br>
-    ${ok(recent)} recent run ${a.settle_c == null ? "—" : cents(a.settle_c)}/ct over its last ${num(a.window)} (needs better than −${a.leeway_c}¢)<br>
+  const bar = (a.on_real || {}).tier === "trial" ? CCR.tScore : CCR.score;
+  return `<div class="tchk">${a.on_real ? `<b class="mute">i</b>` : ok(a.score == null || a.score >= bar)} score ${a.score == null ? "—" : a.score.toFixed(1)}${a.edge_c == null ? "" : ` = expected ${cents(a.edge_c)}/ct ±${a.edge_sd}`} (${a.on_real ? "on real money now: the score only sets its budget" : `needs ${bar}+`})<br>
+    ${a.on_real ? `<b class="mute">i</b>` : ok(recent)} recent run ${a.settle_c == null ? "—" : cents(a.settle_c)}/ct over its last ${num(a.window)} (${a.on_real ? "for information: paper can't take it off real money" : `needs better than −${a.leeway_c}¢`})<br>
     ${lag}<br>
-    ${ok(k.risk < k.lim)} $${k.risk.toFixed(2)} at risk of its $${k.lim.toFixed(2)} limit${k.lim > k.base ? ` ($${k.base.toFixed(2)} + $${(k.lim - k.base).toFixed(2)} it earned us)` : ""}<br>
+    ${a.on_real ? (() => { const bg = ccBudget(a); return `${ok(bg.left > 0)} real P&L ${money(bg.p)}: $${Math.max(0, bg.left).toFixed(2)} of its $${bg.room.toFixed(2)} budget left (at $0 it goes back to paper)<br>`; })() : ""}
+    ${ok(k.risk < k.lim)} $${k.risk.toFixed(2)} at risk of its $${k.lim.toFixed(2)} per-trader limit${k.lim > k.base ? ` ($${k.base.toFixed(2)} + $${(k.lim - k.base).toFixed(2)} it earned us)` : ""}<br>
     ${blocked.length ? `<b class="neg">⛔</b> no real copies in ${blocked.map(x => esc(ccCatName(x))).join(", ")} (clearly losing there)` : `${ok(true)} no category blocked`}</div>`;
 }
 function ccTraderCard(a, i){
@@ -816,23 +884,27 @@ function ccTraderCard(a, i){
       <div><div class="lbl">Seen after</div><div class="val" style="font-size:15px">${a.lag_s ?? "—"}s</div></div></div>
     <div class="grid g3" style="margin-top:10px"><div><div class="lbl">Follow 5 min</div><div class="val ${cls(a.follow_5m_c || 0)}" style="font-size:15px">${a.follow_5m_c == null ? "—" : cents(a.follow_5m_c)}</div></div>
       <div><div class="lbl">Size</div><div class="val" style="font-size:15px">${num(a.size)} ct</div></div>
-      <div><div class="lbl">Style</div><div class="val" style="font-size:15px">${D.maker_pct == null ? "—" : D.maker_pct >= 70 ? "maker" : D.maker_pct <= 30 ? "taker" : "mixed"}</div></div></div>
+      <div><div class="lbl">Style</div><div class="val" style="font-size:15px">${esc(ccMMTxt(a))}</div><small class="mute">${D.maker_pct == null ? "" : D.maker_pct + "% resting orders"}</small></div></div>
+    <div class="grid g3" style="margin-top:10px"><div><div class="lbl">Copyable</div><div class="val" style="font-size:15px">${(() => { const cp = ccCopyable(a); return cp ? pct(cp.r) + `<small> · ${cp.ok}/${cp.n}</small>` : "—"; })()}</div></div>
+      <div><div class="lbl">First real copy</div><div class="val" style="font-size:13px">${(() => { const fr = ccFirstReal(a.nick); return fr ? esc(fdt(fr)) : "none yet"; })()}</div></div>
+      <div><div class="lbl">Boss says</div><div class="val" style="font-size:13px">${(() => { const bc = ccBossCall(a.nick); return bc ? esc(String(bc.call).replace(/_/g, " ")) + `<small> · MM ${esc(bc.market_maker || "?")}</small>` : "—"; })()}</div></div></div>
     ${a.boss_note ? `<div class="s" style="white-space:normal;color:#c4b5fd;margin-top:8px">Boss: ${esc(a.boss_note)}</div>` : ""}
     ${mine.length ? `<div class="lbl" style="margin:10px 0 2px">Open real copies</div>` + mine.map(p => `<div class="s" style="font-size:11.5px;word-break:break-all">${esc(String(p.side).toUpperCase())} ${p.n} · $${num(p.cost).toFixed(2)} · ${esc((S.quotes[p.ticker] || {}).title || p.ticker)}</div>`).join("") : ""}
     <div style="margin-top:10px"><span class="ccn" data-ccn="${esc(a.nick)}" style="font-size:12.5px;color:#22d3ee">Open full report card, charts and categories →</span></div>`;
   return `<div class="tcard"><div style="display:flex;align-items:flex-start;gap:10px">
       <div style="flex:1;min-width:0"><div style="font-size:16px;font-weight:800;word-break:break-all">${ccN(a.nick)}</div>
-        <div style="margin-top:5px"><span class="chip ${chip}">${lbl}</span>${(a.cats || []).length ? ` <span class="mute" style="font-size:11px">${esc(a.cats.join(" / "))}</span>` : ""}</div></div>
+        <div style="margin-top:5px"><span class="chip ${chip}">${lbl}</span>${ccMMChip(a)}${(a.cats || []).length ? ` <span class="mute" style="font-size:11px">${esc(a.cats.join(" / "))}</span>` : ""}</div></div>
       <div style="text-align:right"><div class="gbig" style="color:${ccGcol(a.grade)}">${esc(a.grade || "-")}</div><div class="mute" style="font-size:11px;margin-top:3px">${a.score != null ? a.score.toFixed(1) + " / 100" : "no score"}</div></div></div>
     <div style="font-size:12.5px;line-height:1.5;margin:10px 0">${ccWhy(a)}</div>
     <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr))"><div><div class="lbl">Real P&L</div><div class="val ${cls(k.rp)}" style="font-size:16px">${money(k.rp)}</div><small class="mute">won ${num(R.won)}/${num(R.settled)}</small></div>
       <div><div class="lbl">Real ¢/ct</div><div class="val ${R.c == null ? "" : cls(R.c)}" style="font-size:16px">${R.c == null ? "—" : cents(R.c)}</div><small class="mute">${num(R.contracts)} ct</small></div>
       <div><div class="lbl">Open</div><div class="val" style="font-size:16px">${num(R.open)}</div><small class="mute">$${num(R.open_cost).toFixed(2)}</small></div>
       <div><div class="lbl">Paper ¢/ct</div><div class="val ${cls(a.settle_c || 0)}" style="font-size:16px">${a.settle_c == null ? "—" : cents(a.settle_c)}</div><small class="mute">${num(a.settled)} settled</small></div></div>
+    ${a.on_real ? (() => { const bg = ccBudget(a); return `<div style="margin-top:10px">${meter("Real budget used", bg.used, bg.room, {txt:`${money(bg.p)} · $${Math.max(0, bg.left).toFixed(2)} left of $${bg.room.toFixed(2)}`, sub:`Budget $${bg.b.toFixed(2)} (set by its paper score when it came on ${esc(fdt(new Date(num(a.on_real.at) * 1000)))} ET, never lowered)${bg.p > 0 ? ` + $${bg.p.toFixed(2)} real profit banked` : ""}. Full = back to paper.`})}</div>`; })() : ""}
     ${live || R.copies ? `<div style="margin-top:10px">${meter("Real money at risk", k.risk, k.lim, {txt:`$${k.risk.toFixed(2)} / $${k.lim.toFixed(2)}`, sub:"Settled losses plus open copies. A copy that would pass the limit is skipped."})}</div>` : ""}
     <div class="lbl" style="margin:10px 0 4px">Category grades <span class="mute" style="text-transform:none;letter-spacing:0">· paper ¢/ct · settled</span></div><div>${ccCatChips(a)}</div>
     ${(D.curve || []).length > 2 ? `<div class="lbl" style="margin:8px 0 0">Paper record <span class="mute" style="text-transform:none;letter-spacing:0">· running total, 1 contract per copy</span></div><div class="chart" id="ccTc${i}"></div>` : ""}
-    ${dd("ccChk_" + a.nick, live ? "What keeps it live" : "Checks", live ? "all must hold" : "", ccChecks(a), live, "in")}
+    ${dd("ccChk_" + a.nick, live ? "What keeps it live" : "Checks", live ? (a.on_real ? "✓ must hold · i = information" : "all must hold") : "", ccChecks(a), live, "in")}
     ${dd("ccMore_" + a.nick, "More on " + esc(a.nick), "", more, false, "in")}</div>`;
 }
 function ccWhoLive(){
@@ -840,40 +912,165 @@ function ccWhoLive(){
   const acc = c.accounts || [], live = acc.filter(a => a.verdict === "passes").sort((a, b) => num((b.real || {}).copies) - num((a.real || {}).copies) || (b.score || 0) - (a.score || 0));
   const off = acc.filter(a => a.verdict !== "passes" && ((a.real || {}).copies || (L.benched || {})[a.nick]));
   S.ccTC = live.concat(off);
-  return `<h2>On real money <span class="sub">${live.length} live${off.length ? ` · ${off.length} taken off` : ""}</span></h2><div class="card">`
-    + (S.ccTC.length ? S.ccTC.map(ccTraderCard).join("") : `<div class="mute" style="font-size:12.5px">Nobody is live right now. A trader goes live when it passes its paper test (see Next in line).</div>`) + `</div>`;
+  const tr = live.filter(a => (a.on_real || {}).tier === "trial").length;
+  return `<h2>On real money <span class="sub">${live.length} live · ${live.length - tr} full · ${tr} trial${off.length ? ` · ${off.length} taken off` : ""}</span></h2><div class="card">`
+    + (S.ccTC.length ? S.ccTC.map(ccTraderCard).join("") : `<div class="mute" style="font-size:12.5px">Nobody is live right now. A trader goes live when it clears the trial or full bar (see Two stages and Next in line).</div>`) + `</div>`;
 }
 function drawCCTraders(){ (S.ccTC || []).forEach((a, i) => { const el = document.getElementById("ccTc" + i), cv = (a.detail || {}).curve || []; if (!el) return;
   lineChart(el, [{name:"Paper", c:ccGcol(a.grade), w:2, pts:cv.map((y, j) => ({x:j, y:+(y / 100).toFixed(2)}))}], {h:90, zero:true, xnum:true, xlab:t => "#" + Math.round(t + 1), xtip:v => "copy #" + Math.round(v + 1), fy:v => "$" + v.toFixed(v < 10 && v > -10 ? 1 : 0)}); }); }
 function ccNextUp(){
   const acc = (S.cc || {}).accounts || [];
-  const prog = a => ({st:Math.min(1, num(a.settled) / CCR.settled), ev:Math.min(1, num(a.events) / CCR.events)});
-  const near = acc.filter(a => a.verdict === "watching" && (a.score ?? 0) >= CCR.score).map(a => ({a, p:prog(a)}))
-    .map(x => ({...x, t:Math.min(x.p.st, x.p.ev)})).sort((x, y) => y.t - x.t || (y.a.score || 0) - (x.a.score || 0));
-  const bar = (l, v, txt) => `<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="mute" style="width:62px">${l}</span><div class="share" style="flex:1;margin:0"><i style="width:${(v * 100).toFixed(0)}%;background:${v >= 1 ? "#34d399" : "#22d3ee"}"></i></div><span style="width:56px;text-align:right">${txt}</span></div>`;
-  const row = ({a, p}) => `<div class="tcard"><div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;word-break:break-all">${ccN(a.nick)}</div>
-      <div class="mute" style="font-size:11.5px;margin-top:2px">${(a.cats || []).join(" / ")}${a.settle_c != null ? ` · paper ${cents(a.settle_c)}/ct` : ""}</div></div>
+  const prog = (a, ns, ne) => Math.min(1, num(a.settled) / ns, num(a.events) / ne);
+  const near = acc.filter(a => a.verdict === "watching" && (a.score ?? 0) >= CCR.tScore).map(a => ({a, t:prog(a, CCR.tSettled, CCR.tEvents), f:prog(a, CCR.settled, CCR.events)}))
+    .sort((x, y) => y.t - x.t || y.f - x.f || (y.a.score || 0) - (x.a.score || 0));
+  const bar = (l, v, txt, col) => `<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="mute" style="width:86px">${l}</span><div class="share" style="flex:1;margin:0"><i style="width:${(Math.min(1, v) * 100).toFixed(0)}%;background:${v >= 1 ? "#34d399" : col}"></i></div><span style="width:62px;text-align:right">${txt}</span></div>`;
+  const row = ({a}) => { const full = (a.score || 0) >= CCR.score;
+    return `<div class="tcard"><div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;word-break:break-all">${ccN(a.nick)}${ccMMChip(a)}</div>
+      <div class="mute" style="font-size:11.5px;margin-top:2px">${(a.cats || []).join(" / ")}${a.settle_c != null ? ` · paper ${cents(a.settle_c)}/ct` : ""} · would enter as <b style="color:${full ? "#34d399" : "#f5b335"}">${full ? "FULL" : "TRIAL"}</b>, $${num(a.real_budget).toFixed(2)} budget</div></div>
       <div style="text-align:right"><div class="gbig" style="font-size:19px;color:${ccGcol(a.grade)}">${esc(a.grade || "-")}</div><div class="mute" style="font-size:10.5px">${a.score != null ? a.score.toFixed(1) : ""}</div></div></div>
-    <div style="margin-top:6px">${bar("Counted", p.st, `${num(a.settled)}/${CCR.settled}`)}${bar("Events", p.ev, `${num(a.events)}/${CCR.events}`)}</div>
-    <div style="margin-top:6px">${ccCatChips(a, 4)}</div></div>`;
+    <div style="margin-top:6px">${bar("Trial: counted", num(a.settled) / CCR.tSettled, `${num(a.settled)}/${CCR.tSettled}`, "#f5b335")}${bar("Trial: events", num(a.events) / CCR.tEvents, `${num(a.events)}/${CCR.tEvents}`, "#f5b335")}
+      ${bar("Full: counted", num(a.settled) / CCR.settled, `${num(a.settled)}/${CCR.settled}`, "#22d3ee")}${bar("Full: events", num(a.events) / CCR.events, `${num(a.events)}/${CCR.events}`, "#22d3ee")}</div>
+    <div style="margin-top:6px">${ccCatChips(a, 4)}</div></div>`; };
   const out = acc.filter(a => ["slump", "real-lag", "benched"].includes(a.verdict));
-  let h = `<h2>Next in line <span class="sub">${near.length} scoring ${CCR.score}+ on paper · not enough data yet</span></h2><div class="card">`
+  let h = `<h2>Next in line <span class="sub">${near.length} scoring ${CCR.tScore}+ on paper · need more data</span></h2><div class="card">`
     + (near.length ? near.slice(0, 4).map(row).join("") + (near.length > 4 ? dd("ccNear", "Everyone else in line", `${near.length - 4} more`, near.slice(4, 40).map(row).join(""), false, "in") : "")
-      : `<div class="mute" style="font-size:12.5px">No paper trader is scoring ${CCR.score}+ right now.</div>`)
-    + `<div class="mute" style="font-size:11px;margin-top:8px">A trader goes live once both bars fill (${CCR.settled} counted copies in ${CCR.events}+ events) and its score is still ${CCR.score}+.</div></div>`;
-  if (out.length) h += dd("ccOut", "Paused or taken off real money", `${out.length}`, out.map(a => `<div class="item" style="padding:7px 0"><div class="main" style="white-space:normal"><div class="t" style="font-size:13px">${ccN(a.nick)} <span class="chip ${ccStatus(a)[1]}" style="font-size:9.5px;padding:1px 6px">${ccStatus(a)[0]}</span></div><div class="s" style="white-space:normal">${ccWhy(a)}</div></div><div class="r"><span style="color:${ccGcol(a.grade)};font-weight:800">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : ""}</small></div></div>`).join(""));
+      : `<div class="mute" style="font-size:12.5px">No paper trader is scoring ${CCR.tScore}+ right now.</div>`)
+    + `<div class="mute" style="font-size:11px;margin-top:8px">A trader clears the trial bar at ${CCR.tSettled} counted copies in ${CCR.tEvents}+ events with a score still ${CCR.tScore}+ (it then waits for one of ${CCR.slots} trial slots), or goes straight to full with ${CCR.settled} in ${CCR.events}+ at ${CCR.score}+, or a score of ${CCR.score}+ at the trial amounts.</div></div>`;
+  if (out.length) h += dd("ccOut", "Back on paper (taken off real money)", `${out.length}`, out.map(a => `<div class="item" style="padding:7px 0"><div class="main" style="white-space:normal"><div class="t" style="font-size:13px">${ccN(a.nick)} <span class="chip ${ccStatus(a)[1]}" style="font-size:9.5px;padding:1px 6px">${ccStatus(a)[0]}</span></div><div class="s" style="white-space:normal">${ccWhy(a)}</div></div><div class="r"><span style="color:${ccGcol(a.grade)};font-weight:800">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : ""}</small></div></div>`).join(""));
   return h;
+}
+// ---- Two-stage Copycat (Alex, Nov 15; PRs #291/#293/#294): paper -> trial -> full. Once a trader is on real
+// money only its real P&L decides: back to paper when real losses use up its budget (on_real.budget, $1 at
+// 77.5 up to $5 at 80+, never lowered by paper), plus $1 of room per $1 of real profit it has banked us.
+const ccBudgetOf = a => num((a.on_real || {}).budget, num(a.real_budget, 1));
+function ccRealPnl(a){ const L = ((S.cc || {}).live) || {}; return (L.pnl || {})[a.nick] != null ? num(L.pnl[a.nick]) : num((a.real || {}).pnl); }
+function ccBudget(a){ const b = ccBudgetOf(a), p = ccRealPnl(a); return {b, p, room:b + Math.max(0, p), used:Math.max(0, -p), left:b + p}; }
+// share of a trader's paper copies real money could really have bought (within 2¢ of their price, 5-95¢, seen within 60 s)
+function ccCopyable(a){ let c = 0, u = 0; Object.values(a.cat_grades || {}).forEach(g => { c += num(g.copies); u += num(g.unbuyable); });
+  return c ? {r:(c - u) / c, n:c, ok:c - u} : null; }
+function ccBossCall(nick){ const cs = (((S.cc || {}).boss || {}).calls || []).filter(c => c.nick === nick); return cs.length ? cs[cs.length - 1] : null; }
+// market-maker label: the boss's plain-code classifier (50+ fills, 70%+ maker) for every trader, plus the boss's own call
+function ccMM(a){ const B = (S.cc || {}).boss || {}, plain = ((B.plain_mm || {}).nicks || []).includes(a.nick), bc = ccBossCall(a.nick);
+  return {plain, boss:bc ? bc.market_maker : null, filter:bc ? bc.mm_filter : null, mp:(a.detail || {}).maker_pct}; }
+function ccMMTxt(a){ const m = ccMM(a); return m.plain ? "market maker" : m.mp == null ? "—" : m.mp >= 70 ? "mostly maker" : m.mp <= 30 ? "taker" : "mixed"; }
+function ccMMChip(a){ const m = ccMM(a), s = "font-size:9.5px;padding:1px 6px;margin-left:4px";
+  if (m.plain) return `<span class="chip pend" style="${s}">MARKET MAKER</span>`;
+  if (m.boss === "yes" || m.boss === "partly") return `<span class="chip weak" style="${s}">BOSS: MM ${esc(m.boss.toUpperCase())}</span>`;
+  return ""; }
+function ccFirstReal(nick){ const L = ((S.cc || {}).live) || {};
+  const ts = [...(L.open || []), ...(L.settled || [])].filter(p => p.nick === nick).map(p => num(p.ts)).filter(Boolean);
+  return ts.length ? new Date(Math.min(...ts) * 1000) : null; }
+function ccTiers(){ const acc = (S.cc || {}).accounts || [];
+  const on = acc.filter(a => a.verdict === "passes"), trial = on.filter(a => (a.on_real || {}).tier === "trial"), full = on.filter(a => (a.on_real || {}).tier !== "trial");
+  const wait = acc.filter(a => a.verdict === "ready" && !a.on_real).sort((x, y) => (y.score || 0) - (x.score || 0));
+  return {on, trial, full, wait}; }
+const ccTierChip = a => (a.on_real || {}).tier === "trial" ? `<span class="chip pend" style="font-size:9.5px;padding:1px 6px">TRIAL</span>` : `<span class="chip live" style="font-size:9.5px;padding:1px 6px">FULL</span>`;
+function ccStagesHTML(){
+  const c = S.cc || {}, acc = c.accounts || [], T = ccTiers(), testing = acc.filter(a => a.verdict === "watching" && (a.fills || a.watched)).length;
+  const box = (col, ttl, big, sub, bar) => `<div style="border:1px solid var(--line2);border-top:3px solid ${col};border-radius:10px;padding:9px 8px;min-width:0">
+      <div class="lbl" style="color:${col}">${ttl}</div><div class="val" style="font-size:22px">${big}</div><div class="s mute" style="white-space:normal;font-size:10.5px;line-height:1.4">${sub}</div>${bar || ""}</div>`;
+  let h = `<h2>Two stages <span class="sub">paper → trial → full · real P&L decides once on</span></h2><div class="card">
+    <div class="grid g3" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+      ${box("#94a3c8", "1 · Paper", testing.toLocaleString(), "every trader starts here, copied on paper only")}
+      ${box("#f5b335", "2 · Trial", `${T.trial.length}<small class="mute">/${CCR.slots}</small>`, `${CCR.tSettled}+ counted · ${CCR.tEvents}+ events · score ${CCR.tScore}+`)}
+      ${box("#34d399", "3 · Full", `${T.full.length}`, `${CCR.settled}+ counted · ${CCR.events}+ events · score ${CCR.score}+ (80+ alone counts, Nov 15)`)}</div>
+    <div style="margin-top:12px">${meter("Trial slots in use", T.trial.length, CCR.slots, {txt:`${T.trial.length} / ${CCR.slots}`, sub:`At most ${CCR.slots} trial traders on real money at once. A trader that reaches a score of ${CCR.score}+ moves to FULL and frees its slot.`})}</div>`;
+  h += `<div class="lbl" style="margin:12px 0 4px">Waiting for a trial slot <span class="mute" style="text-transform:none;letter-spacing:0">· ${T.wait.length} cleared the trial bar</span></div>`
+    + (T.wait.length ? T.wait.map(a => `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12.5px">${ccN(a.nick)}${ccMMChip(a)}</div><div class="s">${num(a.settled)} counted · ${num(a.events)} events · expected ${a.edge_c == null ? "—" : cents(a.edge_c)}/ct · would start with a $${num(a.real_budget).toFixed(2)} budget</div></div><div class="r"><span style="color:${ccGcol(a.grade)};font-weight:800">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : ""}</small></div></div>`).join("")
+      : `<div class="mute" style="font-size:12px">Nobody waiting.${T.trial.length < CCR.slots ? ` ${CCR.slots - T.trial.length} trial slot${CCR.slots - T.trial.length === 1 ? "" : "s"} free.` : ""}</div>`);
+  // the table: everyone on real money
+  const rows = T.on.slice().sort((x, y) => ((x.on_real || {}).tier === "trial") - ((y.on_real || {}).tier === "trial") || ccRealPnl(y) - ccRealPnl(x));
+  const tr = a => { const R = a.real || {}, bg = ccBudget(a), cp = ccCopyable(a), OR = a.on_real || {}, fr = ccFirstReal(a.nick);
+    return `<tr><td>${ccN(a.nick)}<br><small class="mute">${esc((a.cats || []).join(" / ") || "")}</small></td><td>${ccTierChip(a)}</td>
+      <td style="color:${ccGcol(a.grade)};font-weight:700">${a.score == null ? "—" : a.score.toFixed(1)}<small class="mute"> ${esc(a.grade || "")}</small></td>
+      <td class="${bg.p ? cls(bg.p) : "mute"}" style="font-weight:700">${money(bg.p)}</td><td>${R.c == null ? "—" : `<span class="${cls(R.c)}">${cents(R.c)}</span>`}</td>
+      <td>${num(R.copies)}<small class="mute"> ${num(R.won)}-${num(R.settled) - num(R.won)}${num(R.open) ? ` · ${num(R.open)} open` : ""}</small></td>
+      <td>$${bg.b.toFixed(2)}${bg.p > 0 ? `<small class="pos"> +$${bg.p.toFixed(2)}</small>` : ""}</td><td class="${bg.left / (bg.room || 1) < .34 ? "neg" : ""}">$${Math.max(0, bg.left).toFixed(2)}</td>
+      <td>${cp ? pct(cp.r) : "—"}<small class="mute"> ${cp ? cp.ok + "/" + cp.n : ""}</small></td><td>${esc(ccMMTxt(a))}</td>
+      <td><small>${OR.at ? esc(fdt(new Date(OR.at * 1000))) : "—"}${OR.restored ? " ↻" : ""}</small></td><td><small>${fr ? esc(fdt(fr)) : "none yet"}</small></td></tr>`; };
+  h += `<div class="lbl" style="margin:14px 0 4px">Who is on real money <span class="mute" style="text-transform:none;letter-spacing:0">· ${T.on.length} trader${T.on.length === 1 ? "" : "s"}</span></div>`
+    + (rows.length ? `<div class="tbl-wrap"><table class="tbl"><tr><th>Trader</th><th>Tier</th><th>Score</th><th>Real P&L</th><th>Real ¢/ct</th><th>Copies</th><th>Budget</th><th>Left</th><th>Copyable</th><th>Style</th><th>On since</th><th>1st real copy</th></tr>${rows.map(tr).join("")}</table></div>
+      <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">Budget = how much real loss it may take before going back to paper (set by its paper score when it came on, never lowered; green = real profit it banked, which adds room). Left = budget plus real P&L. Copyable = share of its trades real money could really have bought (within 2¢ of their price, 5-95¢, seen within 60 s). Style uses the boss's plain classifier (50+ fills, 70%+ resting orders = market maker). ↻ = put back on real money after the Nov 15 restart. 1st real copy = oldest real copy still in the status file.</div>`
+      : `<div class="mute" style="font-size:12px">Nobody on real money right now.</div>`);
+  if (rows.length) h += `<div class="lbl" style="margin:14px 0 4px">Real-money budget used</div>` + rows.map(a => { const bg = ccBudget(a);
+    return meter(`${esc(a.nick)} ${(a.on_real || {}).tier === "trial" ? "· trial" : "· full"}`, bg.used, bg.room, {txt:`${money(bg.p)} · $${Math.max(0, bg.left).toFixed(2)} left of $${bg.room.toFixed(2)}`}); }).join("")
+    + `<div class="mute" style="font-size:11px;margin-top:4px">A full bar sends the trader back to paper (one phone push). Its paper copies keep running and it can earn real money back.</div>`;
+  return h + `</div>`;
+}
+// Score vs the two bars: everyone near them, with the 77.5 trial and 80 full lines
+function ccScoreHTML(){
+  const acc = ((S.cc || {}).accounts || []).filter(a => a.score != null && (a.verdict === "passes" || a.verdict === "ready" || (a.score >= 74 && num(a.events) >= 5)));
+  acc.sort((x, y) => (y.score || 0) - (x.score || 0));
+  const lo = 70, hi = Math.max(88, Math.ceil(Math.max(...acc.map(a => a.score), 0)) + 1), X = v => Math.max(0, Math.min(100, 100 * (v - lo) / (hi - lo)));
+  const col = a => a.verdict === "passes" ? ((a.on_real || {}).tier === "trial" ? "#f5b335" : "#34d399") : a.verdict === "ready" ? "#fde047" : a.score >= CCR.tScore ? "#22d3ee" : "#64748b";
+  const line = (v, c, l) => `<i style="position:absolute;left:${X(v)}%;top:-2px;bottom:-2px;border-left:1.5px dashed ${c}" title="${l}"></i>`;
+  const row = a => `<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;padding:3px 0"><span style="width:96px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ccN(a.nick)}</span>
+      <div style="flex:1;position:relative;height:12px;background:rgba(148,163,200,.12);border-radius:3px"><i style="position:absolute;left:0;top:0;bottom:0;width:${X(a.score)}%;background:${col(a)};border-radius:3px;opacity:.9"></i>${line(CCR.tScore, "#f5b335", "trial 77.5")}${line(CCR.score, "#34d399", "full 80")}</div>
+      <span style="width:34px;text-align:right;font-weight:700">${a.score.toFixed(1)}</span><span class="mute" style="width:52px;text-align:right">${num(a.settled)}/${num(a.events)}ev</span></div>`;
+  const legend = [["#34d399","full, real money"],["#f5b335","trial, real money"],["#fde047","waiting for slot"],["#22d3ee","above trial score, needs data"],["#64748b","below"]].map(([c, l]) => `<span><i style="background:${c}"></i>${l}</span>`).join("");
+  return `<h2>Score vs the bars <span class="sub">${acc.length} traders near them · dashed lines 77.5 trial, 80 full</span></h2><div class="card"><div class="legend" style="margin-bottom:6px">${legend}</div>`
+    + (acc.length ? acc.slice(0, 14).map(row).join("") + (acc.length > 14 ? dd("ccScoreMore", "Everyone else near the bars", `${acc.length - 14} more`, acc.slice(14, 60).map(row).join(""), false, "in") : "") : `<div class="mute">No scores yet.</div>`)
+    + `<div style="display:flex;justify-content:space-between;font-size:10px;margin:2px 0 0 104px;padding-right:90px" class="mute"><span>${lo}</span><span>${hi}</span></div>
+    <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">Score = 80 + 2.5 × expected ¢/ct after fees and delay (80 = break-even, 77.5 = −1¢). Right column = counted copies / different events (trial needs ${CCR.tSettled}/${CCR.tEvents}, full ${CCR.settled}/${CCR.events}). Once a trader is on real money its score only sets its budget: a dip below the line does not take it off.</div></div>`;
+}
+// The boss (copycat_boss.py v2, Nov 15): SHADOW judge. Daily keep/skip and market-making calls on traders near the bar or
+// on real money, logged next to a plain rule. Earns skip power only if it beats that rule over 200+ copies (scored ~Dec 1).
+function ccBossHTML(){
+  const c = S.cc || {}, B = c.boss || {}; if (!B.summary && !(B.calls || []).length && !B.spend) return "";
+  const calls = B.calls || [], acc = c.accounts || [], A = n => acc.find(a => a.nick === n), sp = B.spend || {};
+  const lastAt = calls.length ? Math.max(...calls.map(x => num(x.at))) : 0, latest = calls.filter(x => x.at === lastAt), older = calls.filter(x => x.at !== lastAt);
+  const firstAt = calls.length ? Math.min(...calls.map(x => num(x.at))) : 0, DUE = Date.parse("2026-12-01T17:00:00Z");
+  const dayFrac = firstAt ? Math.max(0, Math.min(1, (Date.now() - firstAt * 1000) / (DUE - firstAt * 1000))) : 0;
+  const cnt = k => calls.filter(x => x.call === k).length, kinds = [...new Set(calls.map(x => x.call))];
+  const agree = calls.filter(x => (x.call === "skip") === !!x.rule_skip).length;
+  const mmYes = calls.filter(x => x.market_maker === "yes").length, mmPart = calls.filter(x => x.market_maker === "partly").length;
+  const mmAgree = calls.filter(x => (x.market_maker === "yes") === !!x.plain_mm).length;
+  const lastOk = B.last_ok ? new Date(B.last_ok * 1000) : null, cap = num(sp.cap, .25);
+  let h = `<h2>The boss <span class="sub">AI judge · SHADOW test · no power yet</span></h2><div class="card">
+    <div style="font-size:12.5px;line-height:1.55;color:#c4b5fd">${esc(B.summary || "No review yet today.")}</div>
+    <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:12px;text-align:center">
+      <div><div class="val" style="font-size:18px">${calls.length}</div><div class="lbl">Calls logged</div></div>
+      <div><div class="val" style="font-size:18px">${num(B.reviews_today)}</div><div class="lbl">Reviews today</div></div>
+      <div><div class="val" style="font-size:18px">$${num(sp.usd).toFixed(2)}</div><div class="lbl">AI today</div></div>
+      <div><div class="val ${B.last_error ? "neg" : "pos"}" style="font-size:18px">${B.last_error ? "1" : "0"}</div><div class="lbl">Failed reviews</div></div></div>
+    <div class="s mute" style="white-space:normal;font-size:11px;margin-top:8px">${esc(B.model || "")} · last review ${lastOk ? esc(fdt(lastOk)) + " ET (" + esc(ago(lastOk)) + ")" : "—"} · ${num(sp.calls)} AI calls today${num(sp.refused) ? ` · ${num(sp.refused)} refused by the cap` : ""}${B.shadow ? " · shadow mode: it benches nobody" : ""}</div>
+    ${B.last_error ? `<div class="err" style="margin-top:6px">Last review failed: ${esc(B.last_error)}</div>` : ""}
+    <div style="margin-top:12px">${meter("Scoring progress", dayFrac, 1, {txt:`${Math.max(0, Math.ceil((DUE - Date.now()) / 864e5))} days to go · ~Dec 1`, sub:`Calls logged since ${firstAt ? esc(fdt(new Date(firstAt * 1000))) + " ET" : "—"}. On ~Dec 1 the server's logs score every call on the copies placed after it. The boss gets skip power only if, over 200+ such copies, traders it said "skip" lost 3¢/ct+ more than its "keep" traders AND it beats the plain rule on the same calls. Until then it changes nothing.`})}</div>
+    <div style="margin-top:8px">${meter("Boss AI spend today", num(sp.usd), cap, {txt:`$${num(sp.usd).toFixed(2)} / $${cap.toFixed(2)}`, sub:"Its own hard daily cap. All AI together must stay under $1/day (Health tab)."})}</div>
+    <div class="lbl" style="margin:12px 0 4px">Its calls so far</div>
+    <div class="grid g3" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;font-size:12px">
+      <div>${kinds.map(k => `<div>${esc(k.replace(/_/g, " "))} <b>${cnt(k)}</b></div>`).join("") || "—"}</div>
+      <div><div>agrees with plain rule <b>${calls.length ? pct(agree / calls.length) : "—"}</b></div><div class="mute">plain rule skips ${calls.filter(x => x.rule_skip).length}</div></div>
+      <div><div>says market maker <b>${mmYes}</b> · partly <b>${mmPart}</b></div><div class="mute">matches plain classifier ${calls.length ? pct(mmAgree / calls.length) : "—"}</div></div></div>
+    <div class="lbl" style="margin:10px 0 2px">Boss AI spend by day</div><div class="chart" id="ccBossSp"></div>`;
+  const tbl = list => list.map(x => {
+      const cc = x.call === "skip" ? "nogo" : x.call === "keep" ? "go" : "pend";
+      return `<div style="padding:8px 0;border-top:1px solid var(--line)"><div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><b style="font-size:13px">${ccN(x.nick)}</b>${x.on_real ? `<span class="chip live" style="font-size:9px;padding:1px 5px">REAL</span>` : ""}
+          <span class="chip ${cc}" style="font-size:9.5px;padding:1px 6px">${esc(String(x.call || "").replace(/_/g, " ").toUpperCase())}</span><span style="margin-left:auto;font-size:12px" class="${x.predicted_c == null ? "mute" : cls(num(x.predicted_c))}">${x.predicted_c == null ? "—" : cents(num(x.predicted_c)) + "/ct"}</span></div>
+        <div class="s" style="white-space:normal;font-size:11px;margin-top:2px">${esc(String(x.source || "").replace(/_/g, " "))} · score ${x.score == null ? "—" : num(x.score).toFixed(1)} · MM: ${esc(x.market_maker || "—")}${x.mm_filter && x.mm_filter !== "none" ? " (" + esc(x.mm_filter.replace(/_/g, " ")) + ")" : ""}${x.plain_mm ? " · plain: MM" : ""} · plain rule: ${x.rule_skip ? "skip (" + esc(x.rule_skip) + ")" : "keep"}</div>
+        <div style="font-size:12px;line-height:1.45;margin-top:3px;color:var(--ink2)">${esc(x.reason || "")}</div></div>`; }).join("");
+  if (latest.length) h += `<div class="lbl" style="margin:12px 0 4px">Latest review <span class="mute" style="text-transform:none;letter-spacing:0">· ${esc(fdt(new Date(lastAt * 1000)))} ET · ${latest.length} traders</span></div>` + tbl(latest)
+    + `<div class="mute" style="font-size:11px;margin-top:4px">Right number = what it predicts one copy makes (¢/ct). Each call is graded later on the copies placed after it.</div>`;
+  if (older.length) h += dd("ccBossOld", "Earlier calls", `${older.length}`, tbl(older.slice().reverse()), false, "in");
+  const pm = B.plain_mm || {};
+  if ((pm.nicks || []).length) h += dd("ccBossMM", "Market makers (plain classifier)", `${num(pm.count)} traders`, `<div class="mute" style="font-size:11px;margin-bottom:6px">50+ logged fills and 70%+ of them resting orders. Shown for information: a market maker's copyable trades can still pay (olekbannick7's did, +1.6¢ ±1.5 over 549 events), so this does not block anyone.</div><div style="font-size:12px;line-height:1.9">${pm.nicks.map(n => ccN(n)).join(" · ")}</div>`, false, "in");
+  return h + `</div>`;
+}
+function drawCCBoss(){
+  const el = $("#ccBossSp"); if (!el) return; const sp = (((S.cc || {}).boss || {}).spend) || {}, cap = num(sp.cap, .25);
+  const days = Object.assign({}, sp.history || {}); if (sp.day) days[sp.day] = num(sp.usd);
+  barChart(el, Object.keys(days).sort().slice(-14).map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:num(days[d]), c:num(days[d]) > cap ? "#fb6b7b" : "#c4b5fd"})), {h:110, fy:v => "$" + v.toFixed(2), refs:[{y:cap, c:"#f5b335", label:"cap"}], empty:"No spend logged yet"});
 }
 function ccPage(){
   const c = S.cc;
   if (!c) return `<h2>Copycat <span class="sub">starting up</span></h2><div class="card"><div class="mute">No data yet. Copycat posts its first status about 5 minutes after it starts on the server.</div></div>`;
   const ct = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(1) + "¢";
   const L = c.live || {}, live = c.mode === "live", B = c.boss || {};
-  const tag = {ready:["#f5b335","trial ready, waiting for a slot"], watching:["#94a3c8","testing on paper"], passes:["#34d399", live ? "COPYING WITH REAL MONEY" : "qualified (real money off)"], slump:["#f5b335","slump, paused"], "real-lag":["#f5b335","back to paper (real money lagged)"], benched:["#f87171","benched"], fails:["#f87171","not copied"]};
+  const tag = {ready:["#f5b335","cleared the trial bar, waiting for a slot"], watching:["#94a3c8","testing on paper"], passes:["#34d399", live ? "COPYING WITH REAL MONEY" : "qualified (real money off)"], slump:["#f5b335","slump, paused"], "real-lag":["#f5b335","back to paper (real money lagged)"], benched:["#f87171","benched"], fails:["#f87171","not copied"]};
   const gcol = ccGcol;
   const acc = (c.accounts || []).slice().sort((a, b) => (((b.real || {}).copies || 0) - ((a.real || {}).copies || 0)) || ((b.score ?? -1) - (a.score ?? -1)) || ((b.fills || 0) - (a.fills || 0)));
   const n = k => acc.filter(a => a.verdict === k).length;
-  const near = acc.filter(a => a.verdict === "watching" && (a.score ?? 0) >= CCR.score).length;
+  const near = acc.filter(a => a.verdict === "watching" && (a.score ?? 0) >= CCR.tScore).length, TI = ccTiers();
   const mk = ccMarked();
   let h = `<h2>Copycat <span class="sub">${live ? "real money on" : "paper only"} · updated ${esc(c.generated || "")}</span></h2>`
     + `<div class="card glow">
@@ -881,31 +1078,34 @@ function ccPage(){
       <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${live ? `<span class="pos">● live</span>` : `switch ${esc(String(L.control || "off").toUpperCase())}`}${L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : ""}${mk.priced.length ? ` · open copies ${money(mk.tot)} now` : ""}</div></div>
       <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div></div></div>
     <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px;text-align:center">
-      <div><div class="val pos" style="font-size:20px">${n("passes")}</div><div class="lbl">Live</div></div>
-      <div><div class="val" style="font-size:20px;color:#22d3ee">${near}</div><div class="lbl">Next in line</div></div>
+      <div><div class="val pos" style="font-size:20px">${n("passes")}</div><div class="lbl">Live</div><div class="mute" style="font-size:10px">${TI.full.length} full · ${TI.trial.length} trial</div></div>
+      <div><div class="val" style="font-size:20px;color:#f5b335">${TI.wait.length + near}</div><div class="lbl">Next in line</div><div class="mute" style="font-size:10px">${TI.wait.length} waiting for a slot</div></div>
       <div><div class="val" style="font-size:20px">${n("watching")}</div><div class="lbl">Testing</div></div>
       <div><div class="val mute" style="font-size:20px">${n("fails") + n("slump") + n("benched") + n("real-lag")}</div><div class="lbl">Out</div></div></div>
     <div style="margin-top:12px">${meter("Real-money pool in use", num(L.open_cost), num(L.pool), {txt:`$${num(L.open_cost).toFixed(2)} / $${num(L.pool).toFixed(2)}`, sub:`At most ${pct(num((S.ccCtl || {}).pool_pct, .15))} of the $${num(L.bankroll).toFixed(2)} account is ever in open copies`})}</div>
     <div style="margin-top:10px">${(() => { const C = S.ccCtl || {}, lim = Math.min(num(C.total_stop_usd, 8), num(C.total_stop_pct, .25) * (num(L.bankroll) || 1e9)), tp = num(L.total_pnl);
       return meter("Copycat real loss vs halt", Math.max(0, -tp), lim, {txt:`${money(tp)} / −$${lim.toFixed(2)}`, sub:`Copycat stops all real copies if it is down $${lim.toFixed(2)} in total. It also never spends the last $${num(C.cash_floor_usd, 10).toFixed(0)} of cash the main bot needs.${L.halted ? " HALTED now." : ""}`}); })()}</div>
     ${dd("ccHow", "How Copycat picks traders", "how it grades, start to finish", `<div style="font-size:12px;line-height:1.6">${ccHowGrades()}${c.scan ? `<br><br>Scanning every public trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> traders seen, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones being tested${c.scan.dropped ? `, <b>${c.scan.dropped}</b> dropped` : ""}.` : ""}<br>Scores count only copies since ${esc(c.fresh_since || "Nov 10")}.</div>`, false, "in")}</div>`;
+  h += ccStagesHTML();
   h += ccWhoLive();
   h += ccLiveHTML();
   h += ccEarnedHTML();
+  h += ccScoreHTML();
   h += ccNextUp();
+  h += ccBossHTML();
   const row = a => { const [col, lbl] = tag[a.verdict] || tag.watching, R = a.real || {};
-    const need = (a.score || 0) >= 87 ? 100 : 150, prog = a.verdict === "watching" ? Math.min(100, 100 * (a.fills || 0) / need) : 100;
+    const prog = a.verdict === "watching" ? 100 * Math.min(1, num(a.settled) / CCR.tSettled, num(a.events) / CCR.tEvents) : 100;
     const realTxt = R.copies ? `${R.copies} real copies (${R.open} open) · won ${R.won}/${R.settled} · <span class="${cls(R.pnl)}">${money(R.pnl)}</span>` : (a.verdict === "passes" ? "no real copies yet" : "none");
-    return `<div class="item" data-ccn="${esc(a.nick)}" style="padding:9px 0;align-items:flex-start;cursor:pointer"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:10px;font-weight:700">${lbl}</span></div>
+    return `<div class="item" data-ccn="${esc(a.nick)}" style="padding:9px 0;align-items:flex-start;cursor:pointer"><div class="main" style="min-width:0;white-space:normal"><div class="t" style="font-size:13px">${esc(a.nick)} <span style="color:${col};font-size:10px;font-weight:700">${lbl}${a.verdict === "passes" && a.on_real ? " · " + (a.on_real.tier === "trial" ? "TRIAL" : "FULL") : ""}</span>${ccMMChip(a)}</div>
       <div class="s" style="white-space:normal">${(a.cats || []).length ? esc(a.cats.join("/")) + " · " : ""}${a.pnl ? "lifetime " + money(a.pnl).replace(".00", "") + " · " : ""}${a.lag_s != null ? "we see trades after " + a.lag_s + "s" : ""}</div>
       <div class="s" style="white-space:normal"><b style="color:#94a3c8">PAPER</b> ${a.fills || 0} copies · ${a.settled || 0} settled · last ${a.window || 0}: ${ct(a.settle_c)}/ct (worst case ${ct(a.settle_low_c)})${a.verdict !== "watching" ? " · leeway " + a.leeway_c + "¢" : ""}${a.retest_at ? ` · <b style="color:#fbbf24">failed once or more: ${a.chances_left} chance${a.chances_left === 1 ? "" : "s"} left, re-test at ${a.retest_at} copies</b>` : ""}</div>
-      ${a.verdict === "watching" ? `<div style="height:4px;background:rgba(148,163,200,.18);border-radius:2px;margin:4px 0 2px;max-width:220px"><div style="height:4px;width:${prog.toFixed(0)}%;background:#22d3ee;border-radius:2px"></div></div><div class="s" style="white-space:normal">${Math.round(prog)}% of the way to its test (${a.fills || 0} of ${need} copies${need === 100 ? ", fast track for B+" : ""})</div>` : ""}
+      ${a.verdict === "watching" ? `<div style="height:4px;background:rgba(148,163,200,.18);border-radius:2px;margin:4px 0 2px;max-width:220px"><div style="height:4px;width:${prog.toFixed(0)}%;background:#22d3ee;border-radius:2px"></div></div><div class="s" style="white-space:normal">${Math.round(prog)}% of the way to the trial bar (${num(a.settled)}/${CCR.tSettled} counted, ${num(a.events)}/${CCR.tEvents} events; score ${CCR.tScore}+ needed)</div>` : ""}
       <div class="s" style="white-space:normal"><b style="color:#34d399">REAL</b> ${realTxt}${a.size ? " · size " + a.size + " ct" : ""}</div>
       ${a.boss_note ? `<div class="s" style="white-space:normal;color:#c4b5fd">Boss: ${esc(a.boss_note)}</div>` : ""}</div>
       <div class="r"><span style="color:${gcol(a.grade)};font-weight:800;font-size:18px">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : "no score yet"}</small></div></div>`; };
   const SORTS = {grade:["Grade", a => a.score ?? -1], real:["Real P&L", a => num((a.real || {}).pnl)], recent:["Recent result", a => a.settle_c ?? -999],
     copies:["Paper copies", a => a.fills || 0], profit:["Lifetime profit", a => a.pnl || 0], volume:["Their volume", a => num(a.contracts)],
-    progress:["Closest to qualifying", a => a.verdict === "watching" ? (a.fills || 0) / ((a.score || 0) >= 87 ? 100 : 150) : -1],
+    progress:["Closest to the trial bar", a => a.verdict === "watching" ? Math.min(1, num(a.settled) / CCR.tSettled, num(a.events) / CCR.tEvents) + (a.score || 0) / 1e4 : -1],
     speed:["Fastest seen", a => -(a.lag_s ?? 999)], name:["Name", a => 0]};
   const sk = SORTS[S.ccSort] ? S.ccSort : "grade", q = (S.ccQ || "").trim().toLowerCase();
   const OUT = ["benched", "slump", "fails", "real-lag"], drops = c.dropped || [];
@@ -928,12 +1128,6 @@ function ccPage(){
   const pos = [...(L.open || []).map(p => ({...p, open:1})), ...(L.settled || [])];
   h += dd("ccHist", "Every real-money copy", `${(L.open || []).length} open · ${(L.settled || []).length} settled`, pos.length ? pos.slice(0, 40).map(p => { const q = S.quotes[p.ticker] || {};
     return `<div class="item" style="padding:6px 0"><span class="side ${esc(String(p.side).toLowerCase())}">${esc(String(p.side || "").toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(q.title || p.ticker)}</div><div class="s">${ccN(p.nick)} · ${p.n} ct · $${num(p.cost).toFixed(2)}${p.settled ? " · " + esc(fdt(new Date(num(p.settled) * 1000))) : ""}</div></div><div class="r">${p.open ? `<small class="mute">open</small>` : `<span class="${cls(p.pnl)}">${money(num(p.pnl))}</span><small>${p.result === p.side ? "won" : "lost"}</small>`}</div></div>`; }).join("") : `<div class="mute" style="font-size:12px">None yet.</div>`);
-  if (B.summary || (B.calls || []).length) {
-    const calls = (B.calls || []), lastAt = calls.length ? calls[calls.length - 1].at : 0;
-    const latest = calls.filter(c => c.at === lastAt);
-    const tbl = latest.length ? `<table style="width:100%;font-size:12px;margin-top:8px;border-collapse:collapse"><tr style="color:#94a3b8"><td>Trader</td><td>Boss call</td><td>Profit source</td><td>Predicted</td><td>Plain rule</td></tr>${latest.map(c => `<tr><td>${esc(c.nick)}</td><td>${esc(c.call)}</td><td>${esc((c.source || "").replace(/_/g, " "))}</td><td>${c.predicted_c == null ? "-" : (c.predicted_c > 0 ? "+" : "") + Number(c.predicted_c).toFixed(1) + "c"}</td><td>${c.rule_skip ? "skip: " + esc(c.rule_skip) : "keep"}</td></tr><tr><td colspan="5" class="s" style="white-space:normal;padding-bottom:6px">${esc(c.reason)}</td></tr>`).join("")}</table>` : "";
-    h += dd("ccBoss", "The boss (shadow test)", `Claude · ${num(calls.length)} calls logged · no power until it beats plain rules`, `<div style="font-size:13px;line-height:1.5;color:#c4b5fd">${esc(B.summary || "")}</div>${B.last_error ? `<div class="s" style="margin-top:6px;white-space:normal">Last review failed: ${esc(B.last_error)}</div>` : ""}${tbl}`);
-  }
   const WH = c.whales;
   if (WH){
     const st = x => x && x.settled ? `${x.settled} settled · ${x.won} won · <span class="${cls(x.avg_c)}">${x.avg_c > 0 ? "+" : ""}${x.avg_c}¢</span> per contract` : "none settled yet";
@@ -1756,11 +1950,12 @@ function thinPts(pts, n){
 function barChart(el, bars, o={}){
   const W = el.clientWidth || 340, H = o.h || 150, P = {l:40, r:8, t:10, b:22};
   if (!bars.length){ el.innerHTML = `<div class="empty">${o.empty || "No data yet"}</div>`; return; }
-  let y0 = Math.min(0, ...bars.map(b => b.v)), y1 = Math.max(0, ...bars.map(b => b.v)); if (y1 - y0 < 1e-9) y1 = 1;
+  let y0 = Math.min(0, ...bars.map(b => b.v)), y1 = Math.max(0, ...bars.map(b => b.v), ...(o.refs || []).map(r => r.y)); if (y1 - y0 < 1e-9) y1 = 1;
   const pad = (y1 - y0) * .1; y1 += pad; if (y0 < 0) y0 -= pad;
   const bw = Math.min(64, (W - P.l - P.r) / bars.length), ox = P.l + Math.max(0, (W - P.l - P.r - bw * bars.length) / 2), Y = y => P.t + (1 - (y - y0) / (y1 - y0)) * (H - P.t - P.b);
   const fy = o.fy || (v => money(v, false));
   let g = niceTicks(y0, y1, 3).map(t => `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(t)}" y2="${Y(t)}" stroke="${t === 0 ? "#3a4870" : "#18213b"}" ${t ? 'stroke-dasharray="2 4"' : ""}/><text x="${P.l - 6}" y="${Y(t) + 3.5}" fill="#6b7699" font-size="10" text-anchor="end" font-family="JetBrains Mono">${fy(t)}</text>`).join("");
+  (o.refs || []).forEach(r => { g += `<line x1="${P.l}" x2="${W - P.r}" y1="${Y(r.y)}" y2="${Y(r.y)}" stroke="${r.c || "#f5b335"}" stroke-dasharray="4 3" stroke-width="1.2"/>` + (r.label ? `<text x="${W - P.r}" y="${Y(r.y) - 3}" fill="${r.c || "#f5b335"}" font-size="9.5" text-anchor="end" font-family="JetBrains Mono">${esc(r.label)}</text>` : ""); });
   const every = Math.ceil(bars.length / 7);
   bars.forEach((b, i) => {
     const x = ox + i * bw + 1, w = Math.max(2, bw - 2), top = Y(Math.max(b.v, 0)), bot = Y(Math.min(b.v, 0)), h = Math.max(1, bot - top);
@@ -2071,7 +2266,7 @@ function liveStratsHTML(rows, strats, hist, bench){
 }
 function renderOverview(){
   if (S.bot === "sum"){ $("#v-overview").innerHTML = sumPage(); drawSum(); return; }
-  if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); drawCCEarned(); drawCCTraders(); return; }
+  if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); drawCCEarned(); drawCCTraders(); drawCCBoss(); return; }
   if (S.bot === "tx"){ $("#v-overview").innerHTML = foldSections(txPage(), "t_", 1); return; }
   if (S.bot === "m15"){
     $("#v-overview").innerHTML = foldSections(m15Page() + liveFillsHTML(true), "f_", 1, ["How it's doing"]);
@@ -2100,6 +2295,7 @@ function renderOverview(){
   const moneyH = botMoneyHTML(capExp, B);
   const bench = (S.data.verdicts || {}).strategies || {};
   h += liveStratsHTML(rows, strats, hist, bench);
+  h += driftHTML();
   if (!isOpen("strat")) h += moreBtn("strat", `Details for each strategy`);
   else { h += `<div class="grid cols2">`;
   strats.forEach((name, i) => {
@@ -2212,6 +2408,7 @@ function renderOverview(){
     lineChart($("#exp"), ...smoothOpts(ex, {h:190, stack:true, step:true, total:"Total", fv:v => "$" + v.toFixed(2), refs:[{y:openCap, c:"#f5b335", label:"cap $" + openCap.toFixed(0)}], y1:openCap * 1.02}));
   }
   if ($("#eq")) drawSettled(sx, rows, strats, st, dayStop, totStop);
+  drawDrift();
 }
 
 // kalshi.com/events/<ticker> is an empty page and fails in the iPhone app; /markets/<series>/<any slug>/<event> works in both
@@ -2398,6 +2595,7 @@ function renderHealth(){
     <div class="card"><div class="lbl">Scans OK</div><div class="val">${fin(scans) ? pct(ok(scans) / fin(scans)) : "—"}<small> of ${fin(scans)}</small></div></div>
     <div class="card"><div class="lbl">Trade runs OK</div><div class="val">${fin(trades) ? pct(ok(trades) / fin(trades)) : "—"}<small> of ${fin(trades)}</small></div></div></div>`;
   const strip = list => `<div class="runs">${list.slice(0, 48).reverse().map(r => `<i class="${r.status !== "completed" ? "p" : r.conclusion === "success" ? "" : r.conclusion === "skipped" || r.conclusion === "cancelled" ? "s" : "f"}" title="${esc(fdt(pdate(r.created_at)))} ${esc(r.conclusion || r.status)}"></i>`).join("")}</div>`;
+  h += foremanHTML();
   h += `<h2>Recent runs <span class="sub">oldest → newest</span></h2><div class="card"><div class="lbl" style="margin-bottom:6px">Weather scan</div>${strip(scans)}<div class="lbl" style="margin:12px 0 6px">Trader</div>${strip(trades)}
     <div class="lbl" style="margin:12px 0 6px">Research jobs</div><div class="list">${runs.filter(r => !["weather-scan","trade"].includes(r.name)).slice(0, 6).map(r => `<div class="item" style="padding:7px 0"><div class="main"><div class="t" style="font-size:12.5px">${esc(r.name)}</div><div class="s">${esc(fdt(pdate(r.created_at)))}</div></div><div class="r ${r.conclusion === "success" ? "pos" : r.conclusion ? "neg" : ""}">${esc(r.conclusion || r.status)}</div></div>`).join("") || `<div class="empty">None</div>`}</div></div>`;
   // newest runs from the 5-minute call + the 24h scan history (deduplicated by id)
@@ -2416,6 +2614,7 @@ function renderHealth(){
       extra:unseen ? "no run history loaded for this hour (not a missed scan)" : "",
       c:unseen ? "#3a4870" : (hours[k] || 0) >= 10 ? "#34d399" : (hours[k] || 0) >= 6 ? "#f5b335" : "#fb6b7b"}); }
   barChart($("#sph"), hist.length ? hs : [], {h:110, fy:v => v.toFixed(0), fv:v => v + " scans", empty:"GitHub API unavailable right now"});
+  drawAI("aiDaysH");
   const md = S.data.report || "";
   $("#rep").innerHTML = md ? mdToHtml(md) : `<div class="empty">No report yet</div>`;
 }
