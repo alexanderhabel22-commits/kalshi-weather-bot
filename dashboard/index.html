@@ -529,7 +529,7 @@ function sumData(){
     out.cc = {pnl:tot, today:done.filter(x => etDay(new Date(x.settled * 1000)) === today).reduce((a, x) => a + num(x.pnl), 0), risk:num(L.open_cost), live:C.mode === "live",
       note:`${(C.accounts || []).filter(a => a.verdict === "passes").length} traders live`, pts:done.map(x => ({x:x.settled * 1000, y:num(x.pnl)})), base:tot - done.reduce((a, x) => a + num(x.pnl), 0)};
     (C.accounts || []).filter(a => a.verdict === "passes" || (a.real || {}).copies).forEach(a => { const R = a.real || {}, pl = (L.pnl || {})[a.nick] != null ? num(L.pnl[a.nick]) : num(R.pnl);
-      strat.push({eng:"cc", key:a.nick, name:"Copycat · " + a.nick, live:a.verdict === "passes", size:a.verdict === "passes" ? (a.kept ? "your pick · " : "") + num(a.size) + " ct" : "", pnl:pl,
+      strat.push({eng:"cc", key:a.nick, name:"Copycat · " + a.nick, live:a.verdict === "passes", size:a.verdict === "passes" ? num(a.size) + " ct" : "", pnl:pl,
         today:done.filter(x => x.nick === a.nick && etDay(new Date(x.settled * 1000)) === today).reduce((s2, x) => s2 + num(x.pnl), 0), ct:num(R.contracts), c:R.c, n:num(R.settled), won:num(R.won),
         open:num(R.open_cost), bt:a.settle_c, btLbl:"paper", col:"#c4b5fd", grade:a.grade}); }); }
   // REWARDS TEST: Kalshi's payouts for our resting bids
@@ -748,15 +748,26 @@ function ccRisk(a){ const L = ((S.cc || {}).live) || {}, R = a.real || {};
   return {rp, lim:base + Math.max(0, rp), base, risk:Math.max(0, -rp) + num(R.open_cost)}; }
 function ccStatus(a){ const ben = (((S.cc || {}).live || {}).benched || {})[a.nick];
   if (ben || a.verdict === "benched") return ["BENCHED", "nogo"];
-  return {passes:[a.kept ? "LIVE · YOUR PICK" : "LIVE", "live"], "real-lag":["BACK TO PAPER", "pend"], slump:["PAUSED", "pend"], fails:["PAPER", "off"], watching:["TESTING", "off"]}[a.verdict] || ["PAPER", "off"]; }
+  return {passes:["LIVE", "live"], "real-lag":["BACK TO PAPER", "pend"], slump:["PAUSED", "pend"], fails:["PAPER", "off"], watching:["TESTING", "off"]}[a.verdict] || ["PAPER", "off"]; }
+// One page: how Copycat grades (Nov 15 cleanup). Same rules as wxbot/copycat.py and copycat_live.py.
+function ccHowGrades(){
+  const h = t => `<div style="font-weight:800;margin:10px 0 2px">${t}</div>`;
+  return `${h("1. What counts")}Every public trader we find is copied on <b>paper</b> first. A copy only counts if real money could really have made it: bought within 2¢ of their price, between 5¢ and 95¢, and seen within 60 s. Kalshi's fee is taken off. Copies in the same event (one game, one election, one weather day, one price range) count as <b>one</b> piece of evidence, because they win or lose together. The overall grade, the category grades and the earn-back test all use this same basis.
+  ${h("2. The score")}A 0-100 score from its last 150 counted copies, built on the pessimistic end of its average (so a short lucky run can't score high). 80 (B-) means break-even even in the pessimistic case; each +1¢ of pessimistic edge is +2.5 points. A small bonus or penalty (up to ±3) reflects its last 50 copies.
+  ${h("3. Getting on real money")}All of these: score ${CCR.score}+; ${CCR.settled}+ settled counted copies in ${CCR.events}+ different events; and ${CCR.fast} copies seen at a B+ (${CCR.fastScore}+) score, otherwise ${CCR.slow}. Size: 1 contract, 2 at a score of 90+, 3 at 95+ with 300+ copies.
+  ${h("4. Staying on")}It is re-graded every 5 minutes. Real copies pause (<b>slump</b>) while its last 50 counted copies average worse than −5¢ (up to −10¢ for a high score) and restart by themselves when it recovers. If its score drops below ${CCR.score} it goes back to paper.
+  ${h("5. Categories")}Each category (Sports, Crypto, Weather...) gets its own grade from the same counted copies. A live trader gets no real copies in a category where it has ${CCR.catMin}+ counted copies that are clearly losing (even the hopeful end of the range is below 0). Other categories keep copying.
+  ${h("6. Real money vs paper")}After ${CCR.realMin} settled real copies, real results are compared with paper on the same trades. It goes back to paper if real trails paper by more than ${CCR.gap}¢ a contract, or if real money is clearly losing.
+  ${h("7. Benched and coming back")}The AI boss can bench a trader for 24 hours (renewable) when something looks off. A trader that hits its own loss stop or fails the real-vs-paper check keeps copying on paper and earns real money back with 50 new counted copies in 30+ events, a score of 80+ and a positive average: the entry test again, on fresh copies. A second bench within 30 days of coming back lasts 30 days.
+  ${h("8. Money limits (never loosened by a grade)")}Each trader: $5 at risk at most (open copies plus settled losses), plus whatever real profit it has made us. All of Copycat: 15% of the bankroll open at once, and a hard $8 total loss halt. Copycat never takes the last $10 of cash the main bot needs. One copy per event.
+  ${h("9. Dropped")}A trader that fails its paper test 3 times (judged at 150 copies seen, then every 50 more) or stops being profitable on Kalshi is dropped for 30 days, then can be re-tested from zero.`;
+}
 function ccWhy(a){
   const R = a.real || {}, L = ((S.cc || {}).live) || {}, ben = (L.benched || {})[a.nick], sc = a.score != null ? a.score.toFixed(1) : "—";
   if (ben || a.verdict === "benched") return `Benched: ${esc(ben || a.boss_note || "its own real-money stop")}.`;
   if (a.verdict === "real-lag") return `Back to paper: ${esc(R.why || "real money trailed its paper record")}.`;
   if (a.verdict === "slump") return `Paused: its recent copies average ${cents(a.settle_c)}, below its −${a.leeway_c}¢ leeway. It goes back on real money by itself when it recovers.`;
   if (a.verdict !== "passes") return `On paper: score ${sc}${a.score != null && a.score < CCR.score ? ` (needs ${CCR.score})` : ""}.`;
-  if (a.kept && a.why_live) return `<b>Your pick: real-money test (Alex, Nov 14).</b> 1 contract, $5 at-risk cap, $8 Copycat halt and $10 cash floor all on. Real results decide, not the paper score: ${esc(a.why_live)}. After 20 settled real copies it stays only while real P&L is break-even or better.`;
-  if (a.kept) return `<b>Your pick (keep list).</b> It skips only the entry bar (${num(a.settled)}/${CCR.settled} settled copies, ${num(a.events)}/${CCR.events} events so far). Every check below still applies.`;
   return `<b>Passed its paper test:</b> score ${sc} (${CCR.score}+ needed) on ${num(a.settled)} settled copies across ${num(a.events)} different events (needs ${CCR.settled} in ${CCR.events}+).`;
 }
 function ccChecks(a){
@@ -850,7 +861,7 @@ function ccPage(){
       <div><div class="val" style="font-size:20px">${n("watching")}</div><div class="lbl">Testing</div></div>
       <div><div class="val mute" style="font-size:20px">${n("fails") + n("slump") + n("benched") + n("real-lag")}</div><div class="lbl">Out</div></div></div>
     <div style="margin-top:12px">${meter("Real-money pool in use", num(L.open_cost), num(L.pool), {txt:`$${num(L.open_cost).toFixed(2)} / $${num(L.pool).toFixed(2)}`, sub:`At most ${pct(num((S.ccCtl || {}).pool_pct, .15))} of the $${num(L.bankroll).toFixed(2)} account is ever in open copies`})}</div>
-    ${dd("ccHow", "How Copycat picks traders", "", `<div style="font-size:12px;line-height:1.6">Every public Kalshi trader we find starts on <b>paper</b>: each of their trades is scored as if we copied it ~16 s later at the price we could really get, after Kalshi's fee. A trader goes on <b>real money</b> (1 contract, up to 3 for top scores) with a score of ${CCR.score}+ once it has ${CCR.fast} copies (B+ and up) or ${CCR.slow}, and ${CCR.settled}+ settled copies across ${CCR.events}+ different events (a game, an election, a weather day, a price range). While live it keeps being re-graded, a losing category gets blocked, real money is compared with paper after ${CCR.realMin} settled real copies, and each trader can never have more than its $ limit at risk.${c.scan ? `<br><br>Scanning every public trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> traders seen, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones being tested${c.scan.dropped ? `, <b>${c.scan.dropped}</b> dropped` : ""}.` : ""}<br>Scores count only copies since ${esc(c.fresh_since || "Nov 10")}.</div>`, false, "in")}</div>`;
+    ${dd("ccHow", "How Copycat picks traders", "how it grades, start to finish", `<div style="font-size:12px;line-height:1.6">${ccHowGrades()}${c.scan ? `<br><br>Scanning every public trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> traders seen, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones being tested${c.scan.dropped ? `, <b>${c.scan.dropped}</b> dropped` : ""}.` : ""}<br>Scores count only copies since ${esc(c.fresh_since || "Nov 10")}.</div>`, false, "in")}</div>`;
   h += ccWhoLive();
   h += ccLiveHTML();
   h += ccEarnedHTML();
