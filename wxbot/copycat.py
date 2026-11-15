@@ -760,10 +760,11 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
             "mode": "watch-only", "prior": prior,
-            "rule": f"Two stages (Nov 15). Real money: full bar {GO_LIVE_SETTLED}+ counted copies in {MIN_EVENTS}+ events at score "
-            f"{COPY_SCORE:.0f}+, or trial bar {TRIAL_SETTLED}+ in {TRIAL_EVENTS}+ events at {TRIAL_SCORE}+ ({TRIAL_SLOTS} trial slots). "
+            "rule": f"Two stages (Nov 15). Real money starts as a trial: {TRIAL_SETTLED}+ counted copies in {TRIAL_EVENTS}+ events "
+            f"at score {TRIAL_SCORE}+ ({TRIAL_SLOTS} trial slots; a paper 80+ is still a trial). Full tier comes ONLY from real "
+            f"results ({PROMOTE_COPIES}+ real copies in {PROMOTE_EVENTS}+ events, profitable). "
             "Once on real money only real P&L decides: back to paper when real losses use up its budget "
-            "($1 at 77.5 up to $5 at 80+, plus real profit banked). "
+            "($1 at 77.5 up to $5 at 80+, set once by its paper score at admission; plus real profit banked). Paper is only the admissions test. "
             f"Paper grade: judged once it has {GO_LIVE_SETTLED}+ counted (buyable, settled) copies in {MIN_EVENTS}+ different events. "
             "Score = 80 + 2.5 x expected profit per copy (c/contract after fees): every trader starts at what copying "
             f"earns on average ({prior['mu']:+.1f}c now) and only its own counted copies move it, one credit per event, "
@@ -1007,18 +1008,17 @@ class Copycat:
         return self.live.state.setdefault("on_real", {}) if self.live is not None else {}
 
     def admit(self, a: dict) -> bool:
-        """Admits a trader that clears the full bar ("passes") or the trial bar ("ready", while a trial slot
-        is free). Returns True when the trader is on real money (then real P&L, not paper, decides)."""
+        """Admits a trader that clears a paper bar ("passes"/"ready") as a TRIAL while a trial slot is free;
+        full tier only comes from real results (promotion). Returns True when the trader is on real money (then real P&L, not paper, decides)."""
         on, nick, now = self.on_real(), a["nick"], self.clock()
         if nick in on:
+            # paper is the admissions test: it got the trader "hired" (a trial), and its score AT ADMISSION set
+            # the leeway ($1 at 77.5 up to $5 at 80+). After that only real results matter: paper never moves the
+            # budget or the tier again; full tier (and the 2-contract step) come only from real promotion.
             if on[nick].get("promoted"):
-                on[nick].update(tier="full", budget=5.0)     # earned on real money: stays full
+                on[nick].update(tier="full", budget=5.0)
             else:
-                # paper sets leeway from the CURRENT score: a brief tick to 80+ no longer locks in full and $5
-                full = (a.get("score") or 0) >= COPY_SCORE
-                # budget follows the current score ($1 at 77.5 up to $5 at 80+); below the bar it is $1, and
-                # paper still never drops it (only real losses using the budget do)
-                on[nick].update(tier="full" if full else "trial", budget=real_budget(a.get("score")))
+                on[nick].update(tier="trial", budget=real_budget(on[nick].get("score")))
             back = ((self.live.state.get("bench_log") or {}).get(nick) or {}).get("back_at") or 0
             rec = real_promotion([dict(p, ticker=t) for t, p in self.live.state["positions"].items()
                                   if p.get("nick") == nick and (p.get("ts") or 0) >= back])
@@ -1031,14 +1031,10 @@ class Copycat:
             a["size"] = self.size_step(nick, on[nick], rec, now)
             a["on_real"] = on[nick]
             return True
-        if a["verdict"] == "ready" and (a.get("score") or 0) >= COPY_SCORE:
-            tier = "full"                         # full-bar score, just short on events (e.g. after a restart)
-        elif a["verdict"] == "ready":
+        if a["verdict"] in ("ready", "passes"):   # any paper pass, even 80+, starts as a trial (full = real only)
             if sum(1 for x in on.values() if x.get("tier") != "full") >= TRIAL_SLOTS:
                 return False                      # waits for a free trial slot
             tier = "trial"
-        elif a["verdict"] == "passes":
-            tier = "full"
         else:
             return False
         on[nick] = {"at": round(now), "tier": tier, "score": a.get("score"), "budget": real_budget(a.get("score"))}

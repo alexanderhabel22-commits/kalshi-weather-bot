@@ -388,16 +388,16 @@ def test_trial_bar_admits_up_to_slots_and_paper_never_drops(tmp_path):
     for a in accts:
         cc.judge(a)
     on = lv.state["on_real"]
-    assert sorted(on) == ["full", "t1", "t2", "t3", "t4"]          # 4 trial slots; the full bar is not limited
-    assert on["t1"]["tier"] == "trial" and on["t1"]["budget"] == 1.8 and on["full"]["budget"] == 5.0
+    assert sorted(on) == ["t1", "t2", "t3", "t4"]                  # 4 trial slots; a paper 80+ also waits for one
+    assert on["t1"]["tier"] == "trial" and on["t1"]["budget"] == 1.8
     assert accts[0]["verdict"] == "passes" and accts[4]["verdict"] == "ready"
     # paper turns bad: an admitted trader gets no strike and is never dropped by paper
     bad = {"nick": "t1", "verdict": "fails", "score": 60.0, "settled": 200, "fills": 300, "grade": "F"}
     for _ in range(5):
         cc.judge(bad)
-    assert "t1" not in cc.dropped and bad["verdict"] == "fails" and bad["on_real"]["budget"] == 1.0
+    assert "t1" not in cc.dropped and bad["verdict"] == "fails" and bad["on_real"]["budget"] == 1.8
     # its real budget also caps what it can have at risk
-    assert lv.account_limit("t1") == 1.0 and lv.account_limit("nobody") == 5.0
+    assert lv.account_limit("t1") == 1.8 and lv.account_limit("nobody") == 5.0
 
 
 def test_admitted_trader_stays_live_in_status_without_category_blocks():
@@ -471,19 +471,18 @@ def test_first_real_copy_push_once_per_trader_ever(tmp_path):
     assert len(pushes) == 1 and lv.state["first_told"] == ["oldie", "sharp"]
 
 
-def test_score_80_does_not_use_a_trial_slot(tmp_path):
+def test_paper_80_is_still_a_trial_full_only_from_real(tmp_path):
     lv, _ = mk(tmp_path)
     cc = _status_cc(tmp_path, lv)
-    lv.state["on_real"] = {f"t{i}": {"tier": "trial", "budget": 1.0} for i in range(1, 5)}
-    lv.state["on_real"]["t1"]["budget"] = 5.0
+    lv.state["on_real"] = {f"t{i}": {"tier": "trial", "budget": 1.0} for i in range(1, 4)}
     cc.judge({"nick": "t1", "verdict": "passes", "score": 81.0, "settled": 59, "fills": 90, "grade": "B-"})
-    assert lv.state["on_real"]["t1"]["tier"] == "full"                 # upgraded: slot freed
-    a = {"nick": "t5", "verdict": "ready", "score": 78.0, "settled": 25, "fills": 30, "grade": "C+"}
-    cc.judge(a)
-    assert lv.state["on_real"]["t5"]["tier"] == "trial" and a["verdict"] == "passes"
-    b = {"nick": "full", "verdict": "ready", "score": 80.5, "settled": 40, "fills": 60, "grade": "B-"}
-    cc.judge(b)                                                        # slots full, but a full-bar score gets in
-    assert lv.state["on_real"]["full"]["tier"] == "full" and b["verdict"] == "passes"
+    assert lv.state["on_real"]["t1"]["tier"] == "trial" and lv.state["on_real"]["t1"]["budget"] == 1.0
+    b = {"nick": "full", "verdict": "passes", "score": 82.0, "settled": 60, "fills": 90, "grade": "B"}
+    cc.judge(b)                                                        # paper full bar: still a trial, uses a slot
+    assert lv.state["on_real"]["full"]["tier"] == "trial"
+    c = {"nick": "t5", "verdict": "ready", "score": 78.0, "settled": 25, "fills": 30, "grade": "C+"}
+    cc.judge(c)                                                        # 4 trials: no slot left
+    assert "t5" not in lv.state["on_real"] and c["verdict"] == "ready"
 
 
 def test_trial_promoted_to_full_on_real_results(tmp_path):
@@ -558,7 +557,7 @@ def test_two_contract_step_on_real_results_and_step_down(tmp_path):
     lv, _ = mk(tmp_path)
     cc = copycat.Copycat(tmp_path, clock=lambda: 5000.0, req_gap=0, live=lv, alert=lambda t, b: pushes.append(t))
     cc.watch = {"pro": {}, "tr": {}}
-    lv.state["on_real"] = {"pro": {"tier": "full", "budget": 5.0, "at": 100}}
+    lv.state["on_real"] = {"pro": {"tier": "full", "budget": 5.0, "at": 100, "promoted": 150}}
     acct = {"nick": "pro", "verdict": "passes", "score": 82.0, "settled": 200, "fills": 300, "grade": "B"}
 
     def give(n, win):                      # n copies, one per event, settled in order; win(i) -> bool
@@ -603,14 +602,14 @@ def test_ready_trader_outside_watch_list_is_watched_again_and_admitted(tmp_path)
     assert "nobody" not in cc.watch             # only bar-clearing traders come back
 
 
-def test_brief_80_tick_does_not_lock_in_full_or_5_dollars(tmp_path):
+def test_admission_score_sets_budget_and_full_needs_real_promotion(tmp_path):
     lv, _ = mk(tmp_path)
     cc = _status_cc(tmp_path, lv)
-    lv.state["on_real"] = {"t1": {"tier": "trial", "score": 79.5, "budget": 4.2, "at": 1}}
-    cc.judge({"nick": "t1", "verdict": "passes", "score": 80.3, "settled": 60, "fills": 90, "grade": "B-"})
-    assert lv.state["on_real"]["t1"]["tier"] == "full" and lv.state["on_real"]["t1"]["budget"] == 5.0
-    cc.judge({"nick": "t1", "verdict": "passes", "score": 79.1, "settled": 61, "fills": 91, "grade": "C+"})
-    assert lv.state["on_real"]["t1"]["tier"] == "trial" and lv.state["on_real"]["t1"]["budget"] == 3.56
+    lv.state["on_real"] = {"t1": {"tier": "full", "score": 79.5, "budget": 5.0, "at": 1}}   # full on paper alone
+    cc.judge({"nick": "t1", "verdict": "passes", "score": 82.0, "settled": 60, "fills": 90, "grade": "B"})
+    assert lv.state["on_real"]["t1"]["tier"] == "trial" and lv.state["on_real"]["t1"]["budget"] == 4.2
+    cc.judge({"nick": "t1", "verdict": "fails", "score": 70.0, "settled": 61, "fills": 91, "grade": "D"})
+    assert lv.state["on_real"]["t1"]["tier"] == "trial" and lv.state["on_real"]["t1"]["budget"] == 4.2
     lv.state["on_real"]["t1"]["promoted"] = 5                 # earned full on real money: paper can't undo it
     cc.judge({"nick": "t1", "verdict": "passes", "score": 75.0, "settled": 62, "fills": 92, "grade": "C"})
     assert lv.state["on_real"]["t1"]["tier"] == "full" and lv.state["on_real"]["t1"]["budget"] == 5.0
