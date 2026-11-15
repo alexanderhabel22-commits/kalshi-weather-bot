@@ -473,7 +473,7 @@ LETTERS = ((97, "A+"), (93, "A"), (90, "A-"), (87, "B+"), (83, "B"), (80, "B-"),
 COPY_SCORE = 80.0           # B- or better is copied
 
 
-MIN_EVENTS = 30             # an account needs settled copies in 30+ different events (games) to go real
+MIN_EVENTS = 30             # an account needs settled copies in 30+ different events (a game, an election, a weather day...) to go real
 
 
 def score_grade(settle: list[float], events: list[str] | None = None) -> tuple[float | None, str]:

@@ -13,7 +13,7 @@ the price they got. Rails, all checked before every order:
   - each account has a hard total-at-risk limit (Alex, Nov 14): its settled real losses plus the cost
     of its open real copies never exceed account_stop_usd ($5; or account_stop_pct of the bankroll if
     smaller), plus any real profit it has banked for us. A copy that would pass it is skipped; settled losses alone at the limit send the
-    account back to paper. One copy per event (game) as well. Copycat as a whole halts at
+    account back to paper. One copy per event (a game, an election, ...) as well. Copycat as a whole halts at
     the smaller of total_stop_pct and total_stop_usd ($8). Free cash on the main index never drops
     below cash_floor_usd ($10), so the main bot is never starved. The boss (copycat_boss.py) and copycat_control.json "bench" can bench anyone.
 Every order and settlement is written to the hourly log and to live_state.json.
