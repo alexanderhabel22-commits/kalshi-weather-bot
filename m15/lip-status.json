@@ -1,6 +1,6 @@
 {
- "at": "2026-11-15T04:46:52+00:00",
- "mode": "live",
+ "at": "2026-11-15T05:02:36+00:00",
+ "mode": "off",
  "control": "live",
  "kill_switch": {
   "mode": "live",
@@ -8,110 +8,9 @@
  },
  "halted": null,
  "budget": 20.0,
- "resting_cost": 10.98,
+ "resting_cost": 0,
  "filled_cost": 0,
- "orders": {
-  "KXTXINCOMETAX-30JAN01-28JAN01": {
-   "id": "01a1d495-0f48-7cda-a47c-f158561194d1",
-   "cid": "lip-da4e73410a334509",
-   "side": "yes",
-   "px": 0.07,
-   "n": 35,
-   "filled": 0.0,
-   "at": 1794567901.9143467,
-   "mid0": 0.075
-  },
-  "KXONIONACT-30JAN01-27JAN01": {
-   "id": "01a1d873-37c0-7bc3-896c-e13da00ba52b",
-   "cid": "lip-fccee39788064d19",
-   "side": "yes",
-   "px": 0.01,
-   "n": 199,
-   "filled": 0.0,
-   "at": 1794632792.4421153,
-   "mid0": 0.015
-  },
-  "KXASPENMTNOPEN-27-29NOV26": {
-   "id": "01a1d877-fe68-76de-9275-9583a91cacc4",
-   "cid": "lip-6fab7dd467eb46a6",
-   "side": "no",
-   "px": 0.01,
-   "n": 80,
-   "filled": 0.0,
-   "at": 1794633105.8042784,
-   "mid0": 0.985
-  },
-  "KXWAAEROEMP-27APR30-T91000": {
-   "id": "01a1d878-0638-78a0-8288-6a21d4fe642c",
-   "cid": "lip-9d63878853cb4b24",
-   "side": "yes",
-   "px": 0.01,
-   "n": 80,
-   "filled": 0.0,
-   "at": 1794633107.7995143,
-   "mid0": 0.015
-  },
-  "KXWAAEROEMP-27APR30-T80000": {
-   "id": "01a1d878-0e08-7ec2-8e8e-f501471120b0",
-   "cid": "lip-53563f45b566453f",
-   "side": "no",
-   "px": 0.01,
-   "n": 39,
-   "filled": 0.0,
-   "at": 1794633109.7687528,
-   "mid0": 0.985
-  },
-  "KXWATECHEMP-27FEB28-T235000": {
-   "id": "01a1d87c-d4b0-70c1-b01e-78c78dfb24da",
-   "cid": "lip-b6dc762d675442c6",
-   "side": "no",
-   "px": 0.01,
-   "n": 105,
-   "filled": 0.0,
-   "at": 1794633422.1051698,
-   "mid0": 0.985
-  },
-  "KXWAAEROEMP-27APR30-T92000": {
-   "id": "01a1d87c-dc80-73de-90ff-73c15e942972",
-   "cid": "lip-ae839c1ae6a14879",
-   "side": "yes",
-   "px": 0.01,
-   "n": 94,
-   "filled": 0.0,
-   "at": 1794633424.0958643,
-   "mid0": 0.015
-  },
-  "KXNYCASKRENT-27JAN31-T4500": {
-   "id": "01a1d881-a710-72aa-a696-2bb3a9fec316",
-   "cid": "lip-854abc196cf94d94",
-   "side": "yes",
-   "px": 0.01,
-   "n": 106,
-   "filled": 0.0,
-   "at": 1794633738.3304713,
-   "mid0": 0.015
-  },
-  "KXILNUCLEAR-27FEB28-T87.5": {
-   "id": "01a1d886-69d0-75ec-8554-92bd1c6eb276",
-   "cid": "lip-69add55d92c344f1",
-   "side": "no",
-   "px": 0.01,
-   "n": 106,
-   "filled": 0.0,
-   "at": 1794634050.6473706,
-   "mid0": 0.985
-  },
-  "KXFLVISITORCOUNT-27FEB26-T136": {
-   "id": "01a1d9f8-39b0-78ca-bf6b-fc161579bc6d",
-   "cid": "lip-e347b171c3af475b",
-   "side": "no",
-   "px": 0.01,
-   "n": 44,
-   "filled": 0.0,
-   "at": 1794658286.9993858,
-   "mid0": 0.985
-  }
- },
+ "orders": {},
  "positions": {},
  "exits": {},
  "chosen": {
@@ -1281,94 +1180,6 @@
  "credits": [],
  "events": [
   {
-   "t": 1794480951,
-   "kind": "select",
-   "programs": 5616,
-   "checked": 25,
-   "chosen": [
-    "KXAGRACE-UT-28-D",
-    "KXAUDITORRACE-UT-28-D",
-    "KXAUDITORRACE-UT-28-R",
-    "KXINSCOMMRACE-DE-28-R",
-    "KXINSCOMMRACE-ND-28-D",
-    "KXINSCOMMRACE-ND-28-R",
-    "KXNASHVILLEMAYOR-27-JSTY",
-    "KXNASHVILLEMAYOR-27-LWIL",
-    "KXONIONACT-30JAN01-27JAN01",
-    "KXTREASRACE-UT-28-R"
-   ],
-   "est_day": 31.14
-  },
-  {
-   "t": 1794480954,
-   "kind": "cancel",
-   "ticker": "KXSENATENOM-SCD-28-BBRO",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794480956,
-   "kind": "cancel",
-   "ticker": "KXSENATENOM-SCD-28-BWEB",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794480958,
-   "kind": "cancel",
-   "ticker": "KXINSCOMMRACE-MS-27-R",
-   "why": "no longer chosen"
-  },
-  {
-   "t": 1794480964,
-   "kind": "place",
-   "ticker": "KXNASHVILLEMAYOR-27-JSTY",
-   "side": "yes",
-   "px": 0.05,
-   "n": 50,
-   "est_day": 1.5466
-  },
-  {
-   "t": 1794480966,
-   "kind": "place",
-   "ticker": "KXAUDITORRACE-UT-28-D",
-   "side": "yes",
-   "px": 0.05,
-   "n": 33,
-   "est_day": 1.5466
-  },
-  {
-   "t": 1794481279,
-   "kind": "place",
-   "ticker": "KXTREASRACE-UT-28-R",
-   "side": "no",
-   "px": 0.05,
-   "n": 50,
-   "est_day": 1.5466
-  },
-  {
-   "t": 1794481281,
-   "kind": "place",
-   "ticker": "KXAGRACE-UT-28-D",
-   "side": "yes",
-   "px": 0.05,
-   "n": 11,
-   "est_day": 1.5466
-  },
-  {
-   "t": 1794481906,
-   "kind": "cancel",
-   "ticker": "KXTREASRACE-UT-28-R",
-   "why": "up to 6c (reference price)"
-  },
-  {
-   "t": 1794481907,
-   "kind": "place",
-   "ticker": "KXTREASRACE-UT-28-R",
-   "side": "no",
-   "px": 0.06,
-   "n": 41,
-   "est_day": 1.5466
-  },
-  {
    "t": 1794502669,
    "kind": "select",
    "programs": 5647,
@@ -2032,6 +1843,66 @@
     "KXWATECHEMP-27FEB28-T235000"
    ],
    "est_day": 46.21
+  },
+  {
+   "t": 1794718939,
+   "kind": "cancel",
+   "ticker": "KXTXINCOMETAX-30JAN01-28JAN01",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718941,
+   "kind": "cancel",
+   "ticker": "KXONIONACT-30JAN01-27JAN01",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718943,
+   "kind": "cancel",
+   "ticker": "KXASPENMTNOPEN-27-29NOV26",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718945,
+   "kind": "cancel",
+   "ticker": "KXWAAEROEMP-27APR30-T91000",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718947,
+   "kind": "cancel",
+   "ticker": "KXWAAEROEMP-27APR30-T80000",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718949,
+   "kind": "cancel",
+   "ticker": "KXWATECHEMP-27FEB28-T235000",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718951,
+   "kind": "cancel",
+   "ticker": "KXWAAEROEMP-27APR30-T92000",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718953,
+   "kind": "cancel",
+   "ticker": "KXNYCASKRENT-27JAN31-T4500",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718955,
+   "kind": "cancel",
+   "ticker": "KXILNUCLEAR-27FEB28-T87.5",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
+  },
+  {
+   "t": 1794718957,
+   "kind": "cancel",
+   "ticker": "KXFLVISITORCOUNT-27FEB26-T136",
+   "why": "mode off (control live, switch {'mode': 'live', 'halted': False})"
   }
  ]
 }
