@@ -43,8 +43,12 @@ DEFAULTS = {"hours_max": 12.0, "hours_min": 5.0, "min_spread": 0.04, "min_readin
             #  - highs "holds": wait while the temperature is still rising (up 1F+ over the
             #    last hour, or unknown). Replay (20 cities) +0.5 -> +5.0c/ct Oct25-Aug26,
             #    holdout Sep-Nov26 +2.2 -> +4.7c (difference +2.5c, 95% +0.5..+4.3).
+            #  - lows "need": spread must be 8c+ (was 4c). Replay 7 old cities +5.0 -> +9.4c/ct
+            #    Oct25-Aug26, holdout Sep-Nov26 +3.2 -> +6.6c (diff +3.3c, 95% +1.6..+5.3);
+            #    16 newer cities Sep 1-Nov 14 +2.9 -> +4.3c (diff +1.4c, 95% +0.3..+2.6),
+            #    about a third fewer fills, total $ the same or higher, less cash tied up.
             #  - min_spread_by: per "metric/kind" minimum spread on top of min_spread.
-            "min_spread_by": {},
+            "min_spread_by": {"low/need": 0.08},
             "wait_while_rising": ["high/holds"], "rise_f": 1.0, "trend_hours": 1.0}
 
 

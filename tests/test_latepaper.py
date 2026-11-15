@@ -122,3 +122,10 @@ def test_waiting_holds_order_is_written_later_once_it_levels_off():
     lp.place(orders, {"e": (HIGH, hi, obs([40.0, 42.0, 44.6, 44.4], later), START)}, later)
     h = [o for o in orders if o["kind"] == "holds"]
     assert len(h) == 1 and h[0]["trend"] == "-0.2"
+
+
+def test_low_need_needs_an_8c_spread():
+    plan = lp.plan_orders("low", ladder(), 44.6, lp.DEFAULTS)
+    got = {(o["bracket"], o["kind"]) for o in plan}
+    # 41-or-below (6c spread) is dropped; 42-43 (10c) and the holds bracket stay
+    assert got == {("42° to 43°", "need"), ("44° to 45°", "holds")}
