@@ -644,7 +644,52 @@ def test_honest_grade_counts_games_once_and_needs_30_events():
     # the same record spread over 160 games passes
     rows2, res2 = _acct_rows("real", 160, lambda i: f"KXG-G{i}-M", lambda i: i % 10 < 8)
     b = copycat.build_status(rows2, res2, {"real": {}}, now=2000.0)["accounts"][0]
-    assert b["events"] == 150 and b["verdict"] == "passes" and b["size"] >= 1
+    assert b["events"] == 160 and b["verdict"] == "passes" and b["size"] >= 1
+
+
+def test_fit_prior_floors_tau_caps_mu_and_falls_back():
+    assert copycat.fit_prior([])["tau"] == copycat.TAU_FLOOR_C           # too few accounts: safe default
+    flat = [[(-3.0 + (10 if i % 2 else -10), 1.0) for i in range(40)] for _ in range(10)]
+    p = copycat.fit_prior(flat)
+    assert p["mu"] == -3.0 and p["tau"] == copycat.TAU_FLOOR_C and p["accounts"] == 10
+    rosy = [[(5.0 + (10 if i % 2 else -10), 1.0) for i in range(40)] for _ in range(10)]
+    assert copycat.fit_prior(rosy)["mu"] == 0.0                          # prior never above break-even
+
+
+def test_edge_post_shrinks_small_samples_and_trusts_big_ones():
+    prior = {"mu": -3.0, "sigma": 39.0, "tau": 3.0}
+    assert copycat.edge_post([], prior)[0] == -3.0
+    few = copycat.edge_post([(10.0, 1.0)] * 30, prior)[0]                # +10c over 30 events
+    many = copycat.edge_post([(10.0, 1.0)] * 600, prior)[0]              # +10c over 600 events
+    assert few < 0 < many < 10
+    # a real-money event counts double: same results, more weight, pulls harder
+    assert copycat.edge_post([(10.0, 2.0)] * 300, prior)[0] > copycat.edge_post([(10.0, 1.0)] * 300, prior)[0]
+    assert copycat.edge_score(0.0) == (80.0, "B-") and copycat.edge_score(4.0)[0] == 90.0
+
+
+def test_event_means_one_credit_per_event_and_real_results_replace_paper():
+    tr = [{"tid": "a", "ticker": "KXG-E1-X", "c": 40.0, "ok": True}, {"tid": "b", "ticker": "KXG-E1-Y", "c": 0.0, "ok": True},
+          {"tid": "c", "ticker": "KXG-E2-X", "c": 48.0, "ok": True}, {"tid": "d", "ticker": "KXG-E3-X", "c": 9.0, "ok": False},
+          {"tid": "e", "ticker": "KXG-E4-X", "c": None, "ok": True}]
+    assert sorted(copycat.event_means(tr)) == [(20.0, 1.0), (48.0, 1.0)]
+    assert sorted(copycat.event_means(tr, {"c": -52.0})) == [(-52.0, copycat.REAL_WEIGHT), (20.0, 1.0)]
+
+
+def test_real_losses_count_double_and_can_end_a_pass():
+    rows2, res2 = _acct_rows("real", 160, lambda i: f"KXG-G{i}-M", lambda i: i % 10 < 8)
+    ok = copycat.build_status(rows2, res2, {"real": {}}, now=2000.0)["accounts"][0]
+    real = {f"real{i}": -52.0 for i in range(60)}                         # our real copies of 60 of them all lost
+    bad = copycat.build_status(rows2, res2, {"real": {}}, now=2000.0, real_c=real)["accounts"][0]
+    assert ok["verdict"] == "passes" and bad["real_events"] == 60 and bad["edge_c"] < ok["edge_c"]
+    assert bad["verdict"] != "passes"
+
+
+def test_size_above_one_needs_real_confirmation():
+    st_ = {"accounts": [{"nick": "x", "verdict": "passes", "size": 2}], "_paper_c": {}}
+    copycat.add_real(st_, {"positions": {}})
+    assert st_["accounts"][0]["size"] == 1
+
+
 def test_load_cats_fills_category_map_from_full_series_list(tmp_path):
     s = FakeSession()
     cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)

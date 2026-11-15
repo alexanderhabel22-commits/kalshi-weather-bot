@@ -750,25 +750,45 @@ function ccStatus(a){ const ben = (((S.cc || {}).live || {}).benched || {})[a.ni
   if (ben || a.verdict === "benched") return ["BENCHED", "nogo"];
   return {passes:["LIVE", "live"], "real-lag":["BACK TO PAPER", "pend"], slump:["PAUSED", "pend"], fails:["PAPER", "off"], watching:["TESTING", "off"]}[a.verdict] || ["PAPER", "off"]; }
 // One page: how Copycat grades (Nov 15 cleanup). Same rules as wxbot/copycat.py and copycat_live.py.
+function ccPrior(){
+  const P = (S.cc || {}).prior;
+  return P ? `${cents(P.mu)} per contract right now, measured on ${num(P.accounts)} traders` : "about −3¢ per contract";
+}
+function ccWeights(){
+  const P = (S.cc || {}).prior || {}, row = (a, b, c) => `<tr><td>${a}</td><td style="text-align:right;white-space:nowrap"><b>${b}</b></td><td class="mute">${c}</td></tr>`;
+  return `<div style="font-weight:800;margin:10px 0 2px">What each piece of evidence weighs</div>
+  <table style="width:100%;font-size:12px;border-collapse:collapse">
+  ${row("Our real-money copy", "2×", "an event we really copied counts twice, at the real result")}
+  ${row("Counted paper copy", "1×", "one credit per event (copies in one game count as one)")}
+  ${row("Starting point", `${P.mu == null ? "−3¢" : cents(P.mu)}`, "what copying the average trader earns; never set above 0")}
+  ${row("Spread of true skill", `${P.tau == null ? "3" : P.tau}¢`, `measured ${P.fitted_tau == null ? "—" : P.fitted_tau + "¢"}, never below 3¢ or above 8¢`)}
+  ${row("Noise of one event", `${P.sigma == null ? "39" : P.sigma}¢`, "how much one event's result swings by luck")}
+  ${row("Recent form", "brake only", "a cold last 50 pauses copying (slump); it did not predict profit")}
+  ${row("Category", "block only", "clearly losing categories are blocked; it did not predict profit elsewhere")}
+  ${row("Lifetime Kalshi profit / ROI", "0", "tested Nov 15: no link to how copies do; re-tested as data grows")}
+  </table><div class="mute" style="font-size:11px;margin-top:4px">With these numbers, ${CCR.events} events at +10¢ still score below 80; about 50 events at +10¢, or 500 at +1¢, get in.</div>`;
+}
 function ccHowGrades(){
   const h = t => `<div style="font-weight:800;margin:10px 0 2px">${t}</div>`;
   return `${h("1. What counts")}Every public trader we find is copied on <b>paper</b> first. A copy only counts if real money could really have made it: bought within 2¢ of their price, between 5¢ and 95¢, and seen within 60 s. Kalshi's fee is taken off. Copies in the same event (one game, one election, one weather day, one price range) count as <b>one</b> piece of evidence, because they win or lose together. The overall grade, the category grades and the earn-back test all use this same basis.
-  ${h("2. The score")}A 0-100 score from its last 150 counted copies, built on the pessimistic end of its average (so a short lucky run can't score high). 80 (B-) means break-even even in the pessimistic case; each +1¢ of pessimistic edge is +2.5 points. A small bonus or penalty (up to ±3) reflects its last 50 copies.
-  ${h("3. Getting on real money")}One bar for everyone (Nov 15): ${CCR.settled}+ counted copies in ${CCR.events}+ different events, and a score of ${CCR.score}+. Size: 1 contract, 2 at a score of 90+, 3 at 95+ with 300+ counted copies.
-  ${h("4. Staying on")}It is re-graded every 5 minutes. Real copies pause (<b>slump</b>) while its last 50 counted copies average worse than −5¢ (up to −10¢ for a high score) and restart by themselves when it recovers. If its score drops below ${CCR.score} it goes back to paper.
-  ${h("5. Categories")}Each category (Sports, Crypto, Weather...) gets its own grade from the same counted copies (its share of the last 150), with the same one-credit-per-event math as the score. A live trader gets no real copies in a category where it has ${CCR.catMin}+ counted copies that are clearly losing (even the hopeful end of the range is below 0). Other categories keep copying.
+  ${h("2. The score (new Nov 15)")}The score is our best estimate of what one copy of this trader will make us, in ¢ per contract after fees and delay: <b>score = 80 + 2.5 × expected profit</b>. 80 (B-) = break-even, 90 = +4¢, 70 = −4¢. Every trader starts at what copying earns on average (${ccPrior()}) and only its own counted copies can move it up. A short lucky run barely moves it; hundreds of events move it a lot. The average, the noise and the spread of real skill are re-measured from all watched traders on every update, so the formula loosens by itself if real skill differences show up in the data.
+  ${ccWeights()}
+  ${h("3. Getting on real money")}One bar for everyone: ${CCR.settled}+ counted copies in ${CCR.events}+ different events, and a score of ${CCR.score}+ (expected profit above 0). Size: 1 contract. 2 at 90+ and 3 at 95+ (300+ copies) only once 20+ real copies are in profit.
+  ${h("4. Staying on")}It is re-graded every 5 minutes. Real copies pause (<b>slump</b>) while its last 50 counted copies average worse than −5¢ (up to −10¢ for a high score) and restart by themselves when it recovers. If its score drops below ${CCR.score} (our real results count double, so real losses pull it down fastest) it goes back to paper.
+  ${h("5. Categories")}Each category (Sports, Crypto, Weather...) gets its own grade from the same counted copies (its share of the last 150), one credit per event, graded on the cautious end of its average there (80 = break-even even in the cautious case). A live trader gets no real copies in a category where it has ${CCR.catMin}+ counted copies that are clearly losing (even the hopeful end of the range is below 0). Other categories keep copying.
   ${h("6. Real money vs paper")}After ${CCR.realMin} settled real copies, real results are compared with paper on the same trades. It goes back to paper if real trails paper by more than ${CCR.gap}¢ a contract, or if real money is clearly losing.
-  ${h("7. Benched and coming back")}The AI boss can bench a trader for 24 hours (renewable) when something looks off. A trader that hits its own loss stop or fails the real-vs-paper check keeps copying on paper and earns real money back with 50 new counted copies in 30+ events, a score of 80+ and a positive average: the entry test again, on fresh copies. A second bench within 30 days of coming back lasts 30 days.
+  ${h("7. Benched and coming back")}The AI boss can bench a trader for 24 hours (renewable) when something looks off. A trader that hits its own loss stop or fails the real-vs-paper check keeps copying on paper and earns real money back with 50 new counted copies in 30+ events, a score of 80+ on those new copies alone (same formula, starting again from the average) and a positive average: the entry test again, on fresh copies. A second bench within 30 days of coming back lasts 30 days.
   ${h("8. Money limits (never loosened by a grade)")}Each trader: $5 at risk at most (open copies plus settled losses), plus whatever real profit it has made us. All of Copycat: 15% of the bankroll open at once, and a hard $8 total loss halt. Copycat never takes the last $10 of cash the main bot needs. One copy per event.
-  ${h("9. Dropped")}A trader that fails its paper test 3 times in a row (judged at ${CCR.settled} counted copies, then every 25 more, always on its last 150) or stops being profitable on Kalshi is dropped for 30 days, then can be re-tested from zero.`;
+  ${h("9. Dropped")}A trader that fails its paper test 3 times in a row (judged at ${CCR.settled} counted copies, then every 25 more) or stops being profitable on Kalshi is dropped for 30 days, then can be re-tested from zero.`;
 }
 function ccWhy(a){
   const R = a.real || {}, L = ((S.cc || {}).live) || {}, ben = (L.benched || {})[a.nick], sc = a.score != null ? a.score.toFixed(1) : "—";
   if (ben || a.verdict === "benched") return `Benched: ${esc(ben || a.boss_note || "its own real-money stop")}.`;
   if (a.verdict === "real-lag") return `Back to paper: ${esc(R.why || "real money trailed its paper record")}.`;
   if (a.verdict === "slump") return `Paused: its recent copies average ${cents(a.settle_c)}, below its −${a.leeway_c}¢ leeway. It goes back on real money by itself when it recovers.`;
-  if (a.verdict !== "passes") return `On paper: score ${sc}${a.score != null && a.score < CCR.score ? ` (needs ${CCR.score})` : ""}.`;
-  return `<b>Passed its paper test:</b> score ${sc} (${CCR.score}+ needed) on ${num(a.settled)} settled copies across ${num(a.events)} different events (needs ${CCR.settled} in ${CCR.events}+).`;
+  const ex = a.edge_c == null ? "" : `, expected ${cents(a.edge_c)}/ct`;
+  if (a.verdict !== "passes") return `On paper: score ${sc}${ex}${a.score != null && a.score < CCR.score ? ` (needs ${CCR.score}, i.e. above 0¢)` : ""}.`;
+  return `<b>Passed its paper test:</b> score ${sc}${ex} (${CCR.score}+ needed) on ${num(a.settled)} counted copies across ${num(a.events)} different events${num(a.real_events) ? `, ${num(a.real_events)} of them real (counted double)` : ""} (needs ${CCR.settled} in ${CCR.events}+).`;
 }
 function ccChecks(a){
   const R = a.real || {}, k = ccRisk(a), ok = v => v ? `<b class="pos">✓</b>` : `<b class="neg">✗</b>`;
@@ -776,7 +796,7 @@ function ccChecks(a){
   const lag = num(R.settled) < CCR.realMin ? `<b class="mute">…</b> real vs paper: checked after ${CCR.realMin} settled real copies (${num(R.settled)} so far)`
     : `${ok(!(R.gap_c != null && R.gap_c < -CCR.gap))} real vs paper: ${R.gap_c == null ? "no overlap yet" : (R.gap_c >= 0 ? "+" : "") + R.gap_c + "¢ gap"} (more than −${CCR.gap}¢ sends it back to paper)`;
   const blocked = a.blocked_cats || [];
-  return `<div class="tchk">${ok(a.score == null || a.score >= CCR.score)} score ${a.score == null ? "—" : a.score.toFixed(1)} (needs ${CCR.score}+)<br>
+  return `<div class="tchk">${ok(a.score == null || a.score >= CCR.score)} score ${a.score == null ? "—" : a.score.toFixed(1)}${a.edge_c == null ? "" : ` = expected ${cents(a.edge_c)}/ct ±${a.edge_sd}`} (needs ${CCR.score}+)<br>
     ${ok(recent)} recent run ${a.settle_c == null ? "—" : cents(a.settle_c)}/ct over its last ${num(a.window)} (needs better than −${a.leeway_c}¢)<br>
     ${lag}<br>
     ${ok(k.risk < k.lim)} $${k.risk.toFixed(2)} at risk of its $${k.lim.toFixed(2)} limit${k.lim > k.base ? ` ($${k.base.toFixed(2)} + $${(k.lim - k.base).toFixed(2)} it earned us)` : ""}<br>
@@ -786,7 +806,7 @@ function ccTraderCard(a, i){
   const R = a.real || {}, k = ccRisk(a), [lbl, chip] = ccStatus(a), live = a.verdict === "passes", D = a.detail || {};
   const mine = (((S.cc || {}).live || {}).open || []).filter(p => p.nick === a.nick);
   const more = `<div class="grid g3"><div><div class="lbl">Paper copies</div><div class="val" style="font-size:15px">${num(a.fills)}<small> · ${num(a.settled)} settled</small></div></div>
-      <div><div class="lbl">Worst case</div><div class="val ${cls(a.settle_low_c || 0)}" style="font-size:15px">${a.settle_low_c == null ? "—" : cents(a.settle_low_c)}</div></div>
+      <div><div class="lbl">Expected ¢/ct</div><div class="val ${cls(a.edge_c || 0)}" style="font-size:15px">${a.edge_c == null ? "—" : cents(a.edge_c)}</div><small class="mute">${a.edge_sd == null ? "" : "±" + a.edge_sd}</small></div>
       <div><div class="lbl">Seen after</div><div class="val" style="font-size:15px">${a.lag_s ?? "—"}s</div></div></div>
     <div class="grid g3" style="margin-top:10px"><div><div class="lbl">Follow 5 min</div><div class="val ${cls(a.follow_5m_c || 0)}" style="font-size:15px">${a.follow_5m_c == null ? "—" : cents(a.follow_5m_c)}</div></div>
       <div><div class="lbl">Size</div><div class="val" style="font-size:15px">${num(a.size)} ct</div></div>

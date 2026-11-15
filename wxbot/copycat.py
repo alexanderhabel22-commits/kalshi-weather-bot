@@ -489,6 +489,71 @@ def score_grade(settle: list[float], events: list[str] | None = None) -> tuple[f
     return round(score, 1), letter
 
 
+# ---- the grade (Nov 15 redesign): expected profit per copy, shrunk toward what copying earns on average ----
+# Walk-forward tests on Nov 11-14 found that copying the average watched trader loses ~3c/contract after fees
+# and delay, that true skill differences between traders are small (~1c sd) next to the noise of one event
+# (~39c sd), and that no extra ingredient (recent form, lifetime Kalshi profit or ROI, category, price band)
+# predicted the next day's copies. So the grade is a Bayesian estimate: start every trader at the population
+# average (never above 0), and let only its own counted copies move it, one credit per event, with OUR real
+# money results counting double. Copied when the expected edge is above 0 (score 80+). As real results and more
+# traders accumulate, mu / sigma / tau are re-fitted every status build, so the formula opens up by itself
+# if real skill differences show up in the data.
+TAU_FLOOR_C = 3.0           # assumed spread of true skill between traders: fitted, but never below 3c
+TAU_CAP_C = 8.0             # ...nor above 8c (one noisy day can't open the gate wide)
+SIGMA_FLOOR_C = 20.0        # noise of one event's result, fitted (~39c on Nov 14), floor 20c
+REAL_WEIGHT = 2.0           # an event with our real-money copy counts twice, at the real result
+EDGE_MIN_EVENTS = 5         # accounts with 5+ events feed the population fit
+
+
+def event_means(trades: list[dict], real_c: dict | None = None) -> list[tuple[float, float]]:
+    """(c/contract, weight) per event from an account's counted copies (buyable and settled). A copy we also
+    made with real money uses the real result, and its event gets REAL_WEIGHT."""
+    by: dict = defaultdict(list)
+    w: dict = {}
+    for t in trades:
+        if t.get("c") is None or not t.get("ok", True):
+            continue
+        e = event_of(t.get("ticker") or "")
+        r = (real_c or {}).get(t.get("tid"))
+        by[e].append(t["c"] if r is None else r)
+        if r is not None:
+            w[e] = REAL_WEIGHT
+    return [(st.mean(v), w.get(e, 1.0)) for e, v in by.items()]
+
+
+def fit_prior(per_acct: list[list[tuple[float, float]]]) -> dict:
+    """Population prior from every graded account: mu = average event result (capped at 0), sigma = noise of
+    one event, tau = spread of true skill (floored at TAU_FLOOR_C, capped at TAU_CAP_C)."""
+    xs = [[y for y, _ in v] for v in per_acct if len(v) >= EDGE_MIN_EVENTS]
+    if len(xs) < 3:
+        return {"mu": -3.0, "sigma": 39.0, "tau": TAU_FLOOR_C, "accounts": len(xs), "fitted_tau": None}
+    allv = [y for v in xs for y in v]
+    mu = st.mean(allv)
+    within = st.mean([st.pvariance(v) for v in xs])
+    means = [st.mean(v) for v in xs]
+    t2 = st.pvariance(means) - within * st.mean([1 / len(v) for v in xs])
+    fitted = max(0.0, t2) ** 0.5
+    return {"mu": round(min(0.0, mu), 2), "sigma": round(max(SIGMA_FLOOR_C, within ** 0.5), 1),
+            "tau": round(max(TAU_FLOOR_C, min(TAU_CAP_C, fitted)), 2), "accounts": len(xs),
+            "fitted_tau": round(fitted, 2), "mu_raw": round(mu, 2)}
+
+
+def edge_post(ev: list[tuple[float, float]], prior: dict) -> tuple[float, float]:
+    """Posterior expected edge (c/contract) and its sd: prior N(mu, tau^2), each event N(edge, sigma^2/w)."""
+    s2, t2 = prior["sigma"] ** 2, prior["tau"] ** 2
+    prec = sum(w for _, w in ev) / s2 + 1 / t2
+    m = (sum(y * w for y, w in ev) / s2 + prior["mu"] / t2) / prec
+    return round(m, 2), round((1 / prec) ** 0.5, 2)
+
+
+def edge_score(edge: float | None) -> tuple[float | None, str]:
+    """Score 0-100 = 80 + 2.5 x expected edge in c/contract: 80 = break-even (B-), +4c = 90, -8c = 60."""
+    if edge is None:
+        return None, "-"
+    score = max(0.0, min(100.0, 80 + 2.5 * edge))
+    return round(score, 1), next((lt for cut, lt in LETTERS if score >= cut), "F")
+
+
 def leeway_c(score: float | None = None) -> float:
     """How bad (c/contract) its last 50 copies may average before real copying pauses ("slump"):
     5c, +up to 5c for a high score. (Until Nov 15 it also grew +1c per $1 of PAPER profit, up to
@@ -566,12 +631,15 @@ def cat_breakdown(trades: list[dict], cats: dict | None, grades: dict) -> dict:
 
 def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float,
                  account_stops: dict | None = None, notes: dict | None = None, cats: dict | None = None,
-                 earn_since: dict | None = None) -> dict:
+                 earn_since: dict | None = None, real_c: dict | None = None) -> dict:
     """earn_since: {nick: bench time} for real-money-benched accounts that may earn back (paper
-    copies settled since then are scored into a["earn_back"])."""
+    copies settled since then are scored into a["earn_back"]). real_c: {trade id: real c/contract} for
+    settled real copies (they replace the paper result and count double in the grade)."""
     g = grade(rows, results)
     accounts = []
     paper_c = {}
+    evs = {k: event_means(v.get("trades") or [], real_c) for k, v in g.items() if k != "ALL"}
+    prior = fit_prior(list(evs.values()))
     for nick in sorted(set(watch) | {n for n in g if n != "ALL"}):
         o = g.get(nick) or {}
         n = len(o.get("lag", []))
@@ -582,9 +650,10 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         settle, settle_low = mean_low(window)
         f300, _ = mean_low(o.get("follow_300", []))
         f1800, _ = mean_low(o.get("follow_1800", []))
-        ev_all = o.get("settle_ev", [])[-SCORE_WINDOW:]
-        score, gl = score_grade(settle_all[-SCORE_WINDOW:], ev_all)   # rolling: the last 150 counted copies
-        n_ev = len(set(ev_all))
+        ev_acct = evs.get(nick) or []
+        edge, edge_sd = edge_post(ev_acct, prior) if len(settle_all) >= MIN_SETTLED else (None, None)
+        score, gl = edge_score(edge)
+        n_ev = len(ev_acct)
         due = len(settle_all) >= GO_LIVE_SETTLED
         banked = sum(settle_all) / 100            # $ a 1-contract copy would have made, all-time
         leeway = leeway_c(score)
@@ -599,7 +668,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
             after = [t for t in o.get("trades") or [] if t.get("c") is not None and t.get("ok", True)
                      and (t.get("ts") or 0) > earn_since[nick]]
             av, aev = [t["c"] for t in after], [event_of(t.get("ticker") or "") for t in after]
-            sc_e, gl_e = score_grade(av, aev)
+            sc_e, gl_e = edge_score(edge_post(event_means(after, real_c), prior)[0]) if len(av) >= MIN_SETTLED else (None, "-")
             earn = {"n": len(av), "events": len(set(aev)), "c": round(st.mean(av), 2) if av else None,
                     "score": sc_e, "grade": gl_e}
         else:
@@ -622,20 +691,30 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "lag_s": round(st.median(o["lag"]), 1) if n else None,
                          "follow_5m_c": f300, "follow_30m_c": f1800,
                          "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict,
-                         "grade": gl, "score": score, "events": n_ev, "banked": round(banked, 2), "leeway_c": round(leeway, 1),
+                         "grade": gl, "score": score, "events": n_ev, "edge_c": edge, "edge_sd": edge_sd,
+                         "real_events": sum(1 for _, w in ev_acct if w > 1), "banked": round(banked, 2), "leeway_c": round(leeway, 1),
                          "size": size_for(score, len(settle_all)) if verdict == "passes" else 0,
                          "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None,
                          "earn_back": earn, "cat_grades": cg, "blocked_cats": sorted(k for k, v in cg.items() if v["blocked"])})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
-            "mode": "watch-only", "rule": f"judged once it has {GO_LIVE_SETTLED}+ counted (buyable, settled) copies in {MIN_EVENTS}+ different events. Score 0-100 from its last {SCORE_WINDOW} counted copies "
-            "that real money could have made (within 2c of their price, 5-95c), counting copies in one game together "
-            "(after fees; 80 = break-even even in the pessimistic case). Copied at 80+ (B- or better) while its "
+            "mode": "watch-only", "prior": prior,
+            "rule": f"judged once it has {GO_LIVE_SETTLED}+ counted (buyable, settled) copies in {MIN_EVENTS}+ different events. "
+            "Score = 80 + 2.5 x expected profit per copy (c/contract after fees): every trader starts at what copying "
+            f"earns on average ({prior['mu']:+.1f}c now) and only its own counted copies move it, one credit per event, "
+            "our real-money results counting double. Copied at 80+ (expected profit above 0) while its "
             f"last {ROLL_WINDOW} copies average better than -leeway (5c, +up to 5c for a high score); paused "
-            "below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3",
+            "below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3, only after 20+ real copies in profit",
             "accounts": accounts, "_paper_c": paper_c,
             "recent": [{k: r.get(k) for k in ("et", "nick", "ticker", "side", "yes_price", "count",
                                                   "role", "lag_s")} for r in reversed(recent)]}
+
+
+def real_results(state: dict | None) -> dict:
+    """{paper trade id: real c/contract} for every settled real copy (all time, also before an earn-back)."""
+    return {p["trade_id"]: 100 * (p.get("pnl") or 0) / p["n"]
+            for p in ((state or {}).get("positions") or {}).values()
+            if p.get("settled") and p.get("n") and p.get("trade_id")}
 
 
 def add_real(status: dict, state: dict | None) -> None:
@@ -661,6 +740,8 @@ def add_real(status: dict, state: dict | None) -> None:
         m, lo = mean_low(real_c)
         gap = round(st.mean(r - q for r, q in same), 2) if same else None
         a["real"].update(c=m, gap_c=gap, gap_n=len(same))
+        if a.get("size", 0) > 1 and (len(real_c) < REAL_MIN or (m or 0) <= 0):
+            a["size"] = 1                     # bigger than 1 contract only once real money confirms it
         if len(real_c) >= REAL_MIN and a["verdict"] == "passes":
             hi = m + (m - lo)
             gap_bad = gap is not None and gap < -REAL_GAP_C
@@ -1345,7 +1426,7 @@ class Copycat:
             notes = dict(self.boss.state["notes"])
         earn = self.live.earn_back_open(now) if self.live is not None else {}
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats,
-                              earn_since=earn)
+                              earn_since=earn, real_c=real_results(self.live.state if self.live else None))
         add_real(status, self.live.state if self.live else None)
         for a in status["accounts"]:
             if a["verdict"] == "real-lag" and a["nick"] not in self.lag_told:
