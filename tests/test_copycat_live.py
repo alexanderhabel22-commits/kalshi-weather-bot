@@ -551,3 +551,29 @@ def test_boss_promotion_note_is_capped_context(tmp_path):
     assert len(note) <= 300 and "PROMOTION NOTE" in seen[0] and "- ace:" in seen[0]
     assert b.budget.state["calls"] == 1                      # through the daily cap
     assert Boss(tmp_path / "none" if (tmp_path / "none").mkdir() is None else None).review_promotion("ace", {}, acct) is None
+
+
+def test_two_contract_step_on_real_results_and_step_down(tmp_path):
+    pushes = []
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 5000.0, req_gap=0, live=lv, alert=lambda t, b: pushes.append(t))
+    cc.watch = {"pro": {}, "tr": {}}
+    lv.state["on_real"] = {"pro": {"tier": "full", "budget": 5.0, "at": 100}}
+    acct = {"nick": "pro", "verdict": "passes", "score": 82.0, "settled": 200, "fills": 300, "grade": "B"}
+
+    def give(n, win):                      # n copies, one per event, settled in order; win(i) -> bool
+        lv.state["positions"] = {f"KXS{i}-A": {"nick": "pro", "side": "yes", "n": 1, "cost": 0.5, "ts": 200 + i,
+                                               "settled": 300 + i, "pnl": 0.5 if win(i) else -0.5} for i in range(n)}
+
+    give(30, lambda i: i % 3 != 0)         # 30 copies: too few
+    a = dict(acct); cc.judge(a)
+    assert a["size"] == 1 and not pushes
+    give(45, lambda i: i % 3 != 0)         # 45 copies, 2/3 won: +$7.5, ~+17c raw -> step 2
+    a = dict(acct); cc.judge(a)
+    assert a["size"] == 2 and pushes == ["Copycat: first 2-contract step-up"]
+    give(45, lambda i: i % 3 != 0 and i < 36)   # last copies lose: P&L falls >$3 below peak -> back to 1
+    a = dict(acct); cc.judge(a)
+    assert a["size"] == 1 and lv.state["on_real"]["pro"]["step"] == 1
+    trial = {"nick": "tr", "verdict": "ready", "score": 92.0, "settled": 60, "fills": 90, "grade": "A-", "size": 3}
+    cc.judge(trial)
+    assert trial["size"] == 1                # new admissions always start at 1 contract

@@ -586,6 +586,11 @@ TRIAL_SCORE = 77.5          # ... and a score of 77.5+ (expected -1c or better; 
 TRIAL_SLOTS = 4             # at most 4 trial traders (admitted below COPY_SCORE) on real money at once
 TRIAL_END_COPIES = 20       # a trial that reaches 20+ settled real copies in 15+ events with real P&L <= $0 ends
 TRIAL_END_EVENTS = 15       # (back to paper, slot freed), even if its budget isn't used up
+STEP2_COPIES = 40           # 2-contract step (Alex OK, Nov 15): 40+ settled real copies ...
+STEP2_EVENTS = 25           # ... in 25+ events ...
+STEP2_PNL = 2.0             # ... +$2 real P&L ...
+STEP2_EDGE_C = 2.0          # ... and shrunk real edge +2c (prior 0c, tau 5c: about +5c raw at 40 events)
+STEP_DOWN_USD = 3.0         # back to 1 contract when real P&L falls $3 below its peak (or the last 40 average < 0)
 PROMOTE_COPIES = 15         # trial -> full on REAL results (Alex, Nov 15: "paper just determines if we give them
 PROMOTE_EVENTS = 10         # trial money"): 15+ settled real copies in 10+ events, real P&L above $0, and the
 PROMOTE_EDGE_C = 1.0        # shrunk real edge (prior 0c, skill spread 5c, event noise 39c) at least +1c/contract:
@@ -605,7 +610,9 @@ def real_promotion(positions: list[dict]) -> dict:
     s2, t2 = 39.0 ** 2, PROMOTE_TAU_C ** 2
     shrunk = round((sum(ev) / s2) / (len(ev) / s2 + 1 / t2), 2) if ev else 0.0
     ok = len(done) >= PROMOTE_COPIES and len(ev) >= PROMOTE_EVENTS and pnl > 0 and shrunk >= PROMOTE_EDGE_C
+    last = [100 * (p.get("pnl") or 0) / p["n"] for p in sorted(done, key=lambda p: p.get("settled") or 0)][-STEP2_COPIES:]
     return {"copies": len(done), "events": len(ev), "pnl": pnl,
+            "last_c": round(st.mean(last), 2) if len(last) >= STEP2_COPIES else None,
             "c": round(st.mean(ev), 2) if ev else None, "shrunk_c": shrunk, "promote": ok}
 
 
@@ -1008,6 +1015,7 @@ class Copycat:
                 self.write({"kind": "promote", "nick": nick, **rec})
                 self.tell_promotion(nick, rec, a)
                 self.live.save()
+            a["size"] = self.size_step(nick, on[nick], rec, now)
             a["on_real"] = on[nick]
             return True
         if a["verdict"] == "ready" and (a.get("score") or 0) >= COPY_SCORE:
@@ -1023,8 +1031,36 @@ class Copycat:
         on[nick] = {"at": round(now), "tier": tier, "score": a.get("score"), "budget": real_budget(a.get("score"))}
         self.live.save()
         self.write({"kind": "admit", "nick": nick, **on[nick]})
-        a.update(verdict="passes", size=max(1, a.get("size") or 0), on_real=on[nick], blocked_cats=[])
+        a.update(verdict="passes", size=1, on_real=on[nick], blocked_cats=[])   # size grows only on real results
         return True
+
+    def size_step(self, nick: str, o: dict, rec: dict, now: float) -> int:
+        """Contracts per copy from REAL results only (Alex OK'd the 2-contract step, Nov 15; no 4-contract step).
+        Step up to 2: full tier, STEP2_COPIES+ settled real copies in STEP2_EVENTS+ events, real P&L >= STEP2_PNL,
+        shrunk real edge >= STEP2_EDGE_C (about +5c raw at 40 events). Step down to 1 when the last
+        STEP2_COPIES real copies average below 0 or real P&L falls STEP_DOWN_USD below its peak; after a step
+        down it needs the bar again AND a new P&L high. The live rails still cut any copy to 1 contract when
+        2 would pass the pool, the cash floor or the trader's $ limit."""
+        pnl = rec.get("pnl") or 0.0
+        o["peak"] = round(max(o.get("peak") or 0.0, pnl), 2)
+        last = rec.get("last_c")
+        if o.get("step") == 2:
+            if (last is not None and last < 0) or pnl <= o["peak"] - STEP_DOWN_USD:
+                o.update(step=1, step_down_peak=o["peak"])
+                self.write({"kind": "size", "nick": nick, "step": 1, **rec})
+                self.live.save()
+        elif (o.get("tier") == "full" and rec.get("copies", 0) >= STEP2_COPIES and rec.get("events", 0) >= STEP2_EVENTS
+              and pnl >= STEP2_PNL and (rec.get("shrunk_c") or 0) >= STEP2_EDGE_C
+              and (last is None or last >= 0) and pnl > (o.get("step_down_peak") or -1e9)):
+            o.update(step=2, step_up_at=round(now))
+            self.write({"kind": "size", "nick": nick, "step": 2, **rec})
+            if not self.live.state.get("stepup_told"):
+                self.live.state["stepup_told"] = nick
+                self.alert("Copycat: first 2-contract step-up", f"{nick}: {rec['copies']} real copies in "
+                           f"{rec['events']} events, ${pnl:+.2f} ({rec.get('c') or 0:+.1f}c/contract). Copies now 2 "
+                           "contracts (cut to 1 whenever the $ limits need it).")
+            self.live.save()
+        return 2 if o.get("step") == 2 else 1
 
     def tell_promotion(self, nick: str, rec: dict, acct: dict) -> None:
         """One push per promotion. Plain code decides; if the boss offers review_promotion(nick, rec, acct) -> str,
