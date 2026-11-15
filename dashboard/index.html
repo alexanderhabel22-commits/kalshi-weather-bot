@@ -971,7 +971,7 @@ function ccCats(a){
   const order = keys.sort((x, y) => (G[y].copies ?? G[y].n) - (G[x].copies ?? G[x].n));
   let h = `<div class="lbl" style="margin:10px 0 2px">Paper ¢ per contract by category</div><div class="chart" id="ccCatC"></div>
     <div class="lbl" style="margin:10px 0 2px">Copies by category <span class="mute" style="text-transform:none;letter-spacing:0">· settled vs still open</span></div><div class="chart" id="ccCatN"></div>`;
-  h += `<div class="mute" style="font-size:11.5px;line-height:1.5;margin:6px 0 10px">Paper grade per category from settled copies (after fees, 1 contract each). A category is <b>blocked</b> for real money once it has ${15}+ settled copies that are clearly negative. Real copies only happen when the account itself passes${passes ? " (it does)" : " (it doesn't yet)"}.</div>`;
+  h += `<div class="mute" style="font-size:11.5px;line-height:1.5;margin:6px 0 10px">Paper grade per category from settled copies we could really have bought (5-95¢, after fees, 1 contract each; the same basis as the account score). Copies outside 5-95¢ are listed but not graded. A category is <b>blocked</b> for real money once it has ${15}+ settled copies that are clearly negative. Real copies only happen when the account itself passes${passes ? " (it does)" : " (it doesn't yet)"}.</div>`;
   h += order.map(k => { const g = G[k], rs = real.filter(p => catOf(p.ticker) === k), rDone = rs.filter(p => p.settled), rp = rDone.reduce((x, p) => x + num(p.pnl), 0), rn = rDone.reduce((x, p) => x + num(p.n), 0);
     const status = g.blocked ? `<span class="chip" style="color:#f87171;border-color:rgba(248,113,113,.5)">BLOCKED</span>` : passes ? `<span class="chip live">REAL OK</span>` : `<span class="chip off">PAPER</span>`;
     const why = g.blocked ? `Blocked: ${g.n} settled copies average ${ct(g.c)}, and even the hopeful end of the range is below zero.`
@@ -980,7 +980,7 @@ function ccCats(a){
     return `<div style="border-top:1px solid var(--line);padding:12px 0 10px">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-weight:800;font-size:15px">${esc(k)}</span>
         <span class="chip" style="color:${gcol(g.grade)};border-color:${gcol(g.grade)}88">${esc(g.grade || "-")}${g.score != null ? " " + Math.round(g.score) : ""}</span><span style="margin-left:auto">${status}</span></div>
-      <div class="grid g3" style="margin-top:8px"><div><div class="lbl">Copies</div><div class="val" style="font-size:16px">${g.copies ?? g.n}<small> · ${g.n} settled</small></div></div>
+      <div class="grid g3" style="margin-top:8px"><div><div class="lbl">Copies</div><div class="val" style="font-size:16px">${g.copies ?? g.n}<small> · ${g.n} graded${g.unbuyable ? ` · ${g.unbuyable} unbuyable` : ""}</small></div></div>
         <div><div class="lbl">Won-lost</div><div class="val" style="font-size:16px">${g.won != null ? `${g.won}-${g.lost}` : "—"}</div></div>
         <div><div class="lbl">Paper ¢/ct</div><div class="val ${cls(g.c || 0)}" style="font-size:16px">${ct(g.c)}</div></div></div>
       ${rs.length ? `<div class="s" style="font-size:12px;margin-top:6px">Real money: ${rs.length} cop${rs.length === 1 ? "y" : "ies"} (${rs.length - rDone.length} open)${rDone.length ? ` · <span class="${cls(rp)}">${money(rp)}</span> · ${ct(rn ? 100 * rp / rn : null)}/ct vs paper ${ct(g.c)}` : ""}</div>` : ""}

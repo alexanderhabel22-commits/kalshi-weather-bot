@@ -723,3 +723,10 @@ def test_keep_list_real_results_decide():
     assert run({"good"}, lose, -10.0)["verdict"] == "real-lag"               # clearly losing: back to paper
     meh = {k: dict(v, pnl=(0.5 if i < 9 else -0.5)) for i, (k, v) in enumerate(win.items())}
     assert run({"good"}, meh, -1.0)["verdict"] == "real-lag"                 # below break-even: paper
+
+
+def test_category_grade_ignores_unbuyable_copies():
+    trades = ([{"ticker": f"KXNEAR15M-{i}", "c": -100.0, "ok": False} for i in range(30)]
+              + [{"ticker": f"KXNEAR15M-x{i}", "c": (40.0 if i % 2 else -30.0), "ok": True} for i in range(20)])
+    g = copycat.cat_grades(trades, {"KXNEAR15M": "Crypto"})["Crypto"]
+    assert g["n"] == 20 and g["c"] == 5.0 and not g["blocked"]
