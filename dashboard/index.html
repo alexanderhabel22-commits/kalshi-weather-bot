@@ -1351,7 +1351,7 @@ async function loadQuotes(){
   // Copycat's real copies first (few, and the COPYCAT tab's live tracker needs them), then the main bot's open bets
   const open = (((S.cc || {}).live || {}).open || []).map(o => o.ticker)
     .concat(model().rows.filter(r => r.status === "open" || r.status === "filled").map(r => r.ticker));
-  const tk = [...new Set(open)].slice(0, 60);
+  const tk = [...new Set(open)];   // every open position (was capped at 60, which left the newest bets unpriced)
   if (!tk.length || S.noQuotes) return;
   const put = m => { const p = k => m[k + "_dollars"] != null && m[k + "_dollars"] !== "" ? num(m[k + "_dollars"], null) : (m[k] != null ? num(m[k]) / 100 : null);
     S.quotes[m.ticker] = {yb:p("yes_bid"), ya:p("yes_ask"), last:p("last_price"), status:m.status, at:Date.now(), src:"live",
@@ -1359,11 +1359,12 @@ async function loadQuotes(){
   let ok = 0;
   // 1) the relay: one batched request for every open ticker
   let relayUp = false;
-  try {
-    const js = await getJSON(RELAY + "/markets?limit=200&tickers=" + encodeURIComponent(tk.join(",")));
-    relayUp = true;
-    for (const m of js.markets || []) if (tk.includes(m.ticker)){ put(m); ok++; }
-  } catch(e){}
+  // batches of 50 tickers per request (keeps the URL short), all at once
+  const want = new Set(tk), parts = [];
+  for (let i = 0; i < tk.length; i += 50) parts.push(tk.slice(i, i + 50));
+  const got = await Promise.allSettled(parts.map(b => getJSON(RELAY + "/markets?limit=200&tickers=" + encodeURIComponent(b.join(",")))));
+  got.forEach(r => { if (r.status !== "fulfilled") return; relayUp = true;
+    for (const m of r.value.markets || []) if (want.has(m.ticker)){ put(m); ok++; } });
   // relay works but the batch answer didn't cover our tickers: one request per ticker, at most every 2 minutes
   if (relayUp && ok < tk.length && Date.now() - (S.lastPerTicker || 0) > 120e3){
     S.lastPerTicker = Date.now();
