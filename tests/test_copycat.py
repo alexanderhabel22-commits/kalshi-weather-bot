@@ -150,7 +150,7 @@ def test_status_verdicts(tmp_path):
     assert len(s["recent"]) == 40
     bad = {f"T{i}": ("yes" if i % 10 < 4 else "no") for i in range(120)}
     s2 = copycat.build_status(rows_, bad, {"good": {}}, now=2000.0)
-    assert s2["accounts"][0]["verdict"] == "watching"   # weak at 120: tested until 150 (B+ fast-tracks at 100)
+    assert s2["accounts"][0]["verdict"] == "fails"      # weak at 120 counted copies: judged (one bar, 50+ copies)
 
 
 def test_update_status_writes_file(tmp_path):
@@ -200,9 +200,9 @@ def test_rolling_window_drops_then_readmits(tmp_path):
     assert a["verdict"] == "slump" and a["size"] == 0
     a = v(good[:150] + bad + good[:50])          # recovers: back in
     assert a["verdict"] == "passes"
-    a = v(bad + bad)                             # bad at 100 copies: no fast track, still testing
+    a = v(bad[:49])                              # under 50 counted copies: still testing
     assert a["verdict"] == "watching"
-    a = v(bad + bad + bad)                       # judged at 150: fails
+    a = v(bad + bad + bad)                       # judged from 50 counted copies on: fails
     assert a["grade"] == "F" and a["score"] < 60 and a["verdict"] == "fails"
 
 
@@ -240,9 +240,9 @@ def test_failed_test_drops_account_then_readmits_from_zero(tmp_path):
     cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now[0], req_gap=0)
     cc.watch = {"loser": {"pnl": 500, "since": 0}, "sharp": {"pnl": 900_000, "since": 0}}
     _fail_rows(cc, "loser", 150, now[0] - 5000)
-    st_ = cc.update_status(now[0])                           # 1st fail: a second chance, re-test at 200
+    st_ = cc.update_status(now[0])                           # 1st fail: a second chance, re-test at 175 counted copies
     a = next(x for x in st_["accounts"] if x["nick"] == "loser")
-    assert "loser" in cc.watch and a["chances_left"] == 2 and a["retest_at"] == 200
+    assert "loser" in cc.watch and a["chances_left"] == 2 and a["retest_at"] == 175
     cc.update_status(now[0])                                 # same 150 copies: not judged again
     assert cc.watch["loser"]["fails_in_row"] == 1
     for k in (1, 2):
@@ -540,17 +540,17 @@ def test_old_whale_rows_never_loaded_and_rows_share_strings(tmp_path):
     copycat._ROW_CACHE.clear()
 
 
-def test_needs_40_settled_before_real(tmp_path):
+def test_needs_50_settled_before_real(tmp_path):
     rows_ = []
     for i in range(160):
         tid = f"t{i}"
         rows_ += [{"kind": "fill", "trade_id": tid, "nick": "good", "ticker": f"T{i}", "side": "yes",
                    "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
                   {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
-    few = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(39)}       # 160 seen, 39 settled
+    few = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(49)}       # 160 seen, 49 settled
     a = copycat.build_status(rows_, few, {"good": {}}, now=2000.0)["accounts"][0]
-    assert a["fills"] == 160 and a["settled"] == 39 and a["verdict"] == "watching"
-    more = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(40)}
+    assert a["fills"] == 160 and a["settled"] == 49 and a["verdict"] == "watching"
+    more = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(50)}
     a = copycat.build_status(rows_, more, {"good": {}}, now=2000.0)["accounts"][0]
     assert a["verdict"] == "passes"
 
@@ -572,7 +572,7 @@ def test_category_grades_block_a_clearly_bad_category():
     a = copycat.build_status(rows_, res, {"good": {}}, now=2000.0,
                              cats={"KXNBA": "Sports", "KXBTC": "Crypto"})["accounts"][0]
     assert a["verdict"] == "passes"
-    assert a["cat_grades"]["Sports"]["n"] == 40 and a["cat_grades"]["Sports"]["blocked"]
+    assert a["cat_grades"]["Sports"]["n"] == 30 and a["cat_grades"]["Sports"]["blocked"]   # last 150 counted
     assert not a["cat_grades"]["Crypto"]["blocked"] and a["blocked_cats"] == ["Sports"]
 
 
