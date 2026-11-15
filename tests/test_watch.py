@@ -78,10 +78,10 @@ def go(tmp_path, monkeypatch, gh, client, seed=True):
     return rec, sent
 
 
-def test_healthy_run_only_calls_haiku(tmp_path, monkeypatch):
+def test_healthy_run_makes_no_ai_call(tmp_path, monkeypatch):
     gh, c = FakeGH(), FakeClient()
     rec, sent = go(tmp_path, monkeypatch, gh, c)
-    assert c.calls == ["claude-haiku-5-5"]
+    assert c.calls == [] and "skipped" in rec["haiku"]      # Nov 15: Haiku only when a rule flags
     assert rec["flags"] == [] and not sent and rec["action"] is None
     assert any(p[0] == "m15/watch.json" and p[1] == "m15-data" for p in gh.puts)
     assert not any(p[0] == "m15_control.json" for p in gh.puts)
@@ -188,6 +188,7 @@ def test_memory_fed_back_and_streaks(tmp_path, monkeypatch):
     orig = c.create
     c.messages.create = lambda model, **kw: (seen.append(kw["messages"][0]["content"]), orig(model, **kw))[1]
     st = {"at": iso(NOW - 60), "mode": "live", "control": "live", "errors": 0, "spot_ok": False}
+    monkeypatch.setitem(watch.DEFAULTS, "haiku_repeat_min", 0)     # re-ask every run for this test
     for _ in range(3):
         go(tmp_path, monkeypatch, FakeGH(status=st), c)
     assert "Coinbase feed drops most nights" in seen[-1]          # its own note comes back
@@ -284,7 +285,8 @@ def test_escalation_defaults_to_haiku_and_spend_is_capped(tmp_path, monkeypatch)
     orig = c.create
     c.messages.create = lambda model, **kw: (seen.append(model), orig(model, **kw))[1]
     (tmp_path / "watch_spend.json").write_text(json.dumps({"day": "2026-11-10", "usd": 0.6999}))
-    rec, sent = go(tmp_path, monkeypatch, FakeGH(), c)
+    st = {"at": iso(NOW - 60), "mode": "live", "control": "live", "errors": 0, "spot_ok": False}
+    rec, sent = go(tmp_path, monkeypatch, FakeGH(status=st), c)
     assert seen == [] and "cap" in rec["haiku"]["error"]          # over the cap: no API call at all
 
 
@@ -328,7 +330,21 @@ def test_side_services_report_parses_memory():
     def r(cmd, **kw):
         if "show" in cmd:
             return SimpleNamespace(stdout="NRestarts=3\nResult=oom-kill\nMemoryMax=314572800\nMemoryPeak=[not set]")
-        return SimpleNamespace(stdout="Nov 13 killed")
+        return SimpleNamespace(stdout="Nov 13 INFO fine\nNov 13 WARNING killed")
     s = watch.side_services(r)
     assert s["kalshi-copycat"]["Result"] == "oom-kill" and s["kalshi-copycat"]["MemoryMax"] == "300 MB"
     assert s["kalshi-copycat"]["MemoryPeak"] == "[not set]" and "killed" in s["kalshi-paper"]["log"]
+
+
+def test_warn_lines_reads_python_levels_not_journald_priority():
+    txt = "2026 INFO all good\n2026 WARNING copycat boss: cut off\nTraceback (most recent call last):\nok"
+    assert watch.warn_lines(txt) == ["2026 WARNING copycat boss: cut off", "Traceback (most recent call last):"]
+    assert watch.warn_lines("unavailable: no systemd") == []
+
+
+def test_same_standing_flag_reasks_haiku_only_every_2h(tmp_path, monkeypatch):
+    c = FakeClient(haiku={"level": "watch", "summary": "spot feed down", "remember": ""})
+    st = {"at": iso(NOW - 60), "mode": "live", "control": "live", "errors": 0, "spot_ok": False}
+    for _ in range(3):
+        rec, _ = go(tmp_path, monkeypatch, FakeGH(status=st), c)
+    assert c.calls == ["claude-haiku-5-5"] and "skipped" in rec["haiku"]

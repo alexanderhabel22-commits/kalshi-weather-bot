@@ -4,7 +4,7 @@ Two records per account, kept apart: PAPER (every trade of theirs we saw, scored
 copied it at the price left ~10-20 s later, after fees) and REAL (copies actually bought with
 money, wxbot/copycat_live.py). Real copies only happen for accounts whose paper record passes
 (100 paper copies at a B+ score, else 150; score 80+ to copy), and only while copycat_control.json on main says "live".
-The boss (wxbot/copycat_boss.py, Claude) reviews the accounts and can bench them.
+The boss (wxbot/copycat_boss.py, Claude) reviews the traders near the bar in SHADOW mode (logged calls, no benches).
 
 How it works (one thread, polite polling of Kalshi's public social API):
   - every 12 h, build the watch list: profitable accounts (lifetime pnl >= MIN_PNL) from the
@@ -1566,10 +1566,7 @@ class Copycat:
                                          for k in ("feed", "poll")}}
         status["mode"] = live["mode"] if live and live["mode"] == "live" else "paper only"
         if self.boss is not None:
-            status["boss"] = {"summary": self.boss.state.get("summary"), "usage": self.boss.state.get("usage"),
-                              "reviews_today": self.boss.state.get("deep_n"),
-                              "spend": self.boss.budget.summary(), "model": getattr(self.boss, "model", None),
-                              "benches": self.boss.benches(now)}
+            status["boss"] = self.boss.summary()     # shadow judge since Nov 15: calls logged, no benches
         self.acct = {a["nick"]: a for a in status["accounts"]}
         self.hot = {a["nick"] for a in status["accounts"] if a["verdict"] == "passes"}
         (self.out / "status.json").write_text(json.dumps(status, separators=(",", ":")))

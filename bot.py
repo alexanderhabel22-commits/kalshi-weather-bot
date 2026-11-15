@@ -121,6 +121,12 @@ def main(argv=None) -> int:
                 print(f"review written: {path}")
         except Exception as exc:  # reviews must never break trading
             logging.exception("reviews failed: %s", exc)
+        try:                         # daily live-vs-replay drift check (Nov 15, plain code)
+            from wxbot import drift
+            for line in drift.run(cfg, now, http, dry_run=args.dry_run):
+                print(f"drift: {line}")
+        except Exception as exc:  # never break trading
+            logging.exception("drift check failed: %s", exc)
         print(f"trade ({out['mode']}): placed {len(out['placed'])}, skipped {len(out['skipped'])}"
               + (f", stops: {out['stops']}" if out["stops"] else ""))
         return 0
