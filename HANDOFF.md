@@ -427,7 +427,8 @@ IP without a token). It never places, changes or cancels anything and needs no s
   decides: paper no longer strikes, drops, slump-pauses or category-blocks them; they go back to paper
   (live bench, usual earn-back) when real losses reach their budget (`real_budget`: $1 at 77.5 rising
   to $5 at 80+, set ONCE by the admission score; paper never moves it or the tier after; FULL tier only
-  via real promotion (Alex Nov 15: paper = admissions test); real profit banked adds room; the budget also
+  via real promotion (Alex Nov 15: paper = admissions test); IDLE: a trial with no real copy for IDLE_H=48 h loses its
+  slot (no bench, `idle_out` 24 h cooldown so the next in line goes first); full traders exempt; real profit banked adds room; the budget also
   caps their at-risk). The real-vs-paper gap no longer benches (only "real clearly losing" does).
   One-time restore of olekbannick7 and DocDahmer (dropped by paper after clearing real money).
   Trial -> full on REAL results (Alex, Nov 15): 15+ settled real copies in 10+ events, real P&L > $0

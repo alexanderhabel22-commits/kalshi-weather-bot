@@ -613,3 +613,56 @@ def test_admission_score_sets_budget_and_full_needs_real_promotion(tmp_path):
     lv.state["on_real"]["t1"]["promoted"] = 5                 # earned full on real money: paper can't undo it
     cc.judge({"nick": "t1", "verdict": "passes", "score": 75.0, "settled": 62, "fills": 92, "grade": "C"})
     assert lv.state["on_real"]["t1"]["tier"] == "full" and lv.state["on_real"]["t1"]["budget"] == 5.0
+
+
+def test_fix_slots_once_trims_extra_untraded_trials_and_restores_history(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    cc.watch["gone"] = {"pnl": None, "since": 999, "src": "scout"}
+    lv.state["on_real"] = {"o": {"tier": "full", "promoted": 5, "at": 1},
+                           **{f"t{i}": {"tier": "trial", "at": i} for i in range(1, 6)}}
+    lv.state["positions"] = {"KXA-1": {"nick": "t5", "n": 1, "cost": 0.5, "ts": 10}}   # t5 has real money in play
+    cc.fix_slots_once()
+    assert sorted(lv.state["on_real"]) == ["o", "t1", "t2", "t3", "t5"]   # newest untraded trial (t4) dropped
+    assert cc.watch["gone"]["since"] == 0
+    lv.state["on_real"]["t9"] = {"tier": "trial", "at": 9}
+    cc.fix_slots_once()                                                    # one time only
+    assert "t9" in lv.state["on_real"]
+
+
+def test_rewatch_keeps_history_window(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    cc.judge({"nick": "back", "verdict": "ready", "score": 78.0, "settled": 30, "fills": 40, "grade": "C+"})
+    assert cc.watch["back"]["since"] == 0
+
+
+def test_idle_trial_loses_slot_full_trader_does_not(tmp_path):
+    pushes, now = [], [1000.0 + 49 * 3600]
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: now[0], req_gap=0, live=lv, alert=lambda t, b: pushes.append(t))
+    cc.watch = {n: {} for n in ("idle", "busy", "pro", "next")}
+    lv.state["on_real"] = {"idle": {"tier": "trial", "at": 1000}, "busy": {"tier": "trial", "at": 1000},
+                           "pro": {"tier": "full", "at": 1000, "promoted": 1000, "budget": 5.0}}
+    lv.state["positions"] = {"KXB-1": {"nick": "busy", "n": 1, "cost": 0.5, "ts": now[0] - 3600}}
+    cc.real_budget_check(now[0])
+    assert sorted(lv.state["on_real"]) == ["busy", "pro"] and pushes == ["Copycat: idle trial ended"]
+    assert "idle" not in lv.benched()                         # no bench: just back to waiting
+    back = {"nick": "idle", "verdict": "ready", "score": 78.0, "settled": 30, "fills": 40, "grade": "C+"}
+    cc.judge(back)                                            # cooldown: can't retake a slot at once
+    assert "idle" not in lv.state["on_real"]
+    nxt = {"nick": "next", "verdict": "ready", "score": 78.0, "settled": 30, "fills": 40, "grade": "C+"}
+    cc.judge(nxt)
+    assert lv.state["on_real"]["next"]["tier"] == "trial" and nxt["on_real"]["idle_h"] == 0.0
+    now[0] += 25 * 3600
+    cc.judge(dict(back))                                      # after 24 h it may come back if a slot is free
+    assert "idle" in lv.state["on_real"]
+
+
+def test_scout_never_evicts_ready_or_real_traders(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    cc.keep = {"t1"}
+    lv.state["on_real"] = {"t2": {"tier": "trial"}}
+    cold = [k for k in cc.watch if k not in cc.hot and k not in cc.keep and k not in cc.on_real()]
+    assert "t1" not in cold and "t2" not in cold and "t3" in cold
