@@ -395,9 +395,9 @@ def test_trial_bar_admits_up_to_slots_and_paper_never_drops(tmp_path):
     bad = {"nick": "t1", "verdict": "fails", "score": 60.0, "settled": 200, "fills": 300, "grade": "F"}
     for _ in range(5):
         cc.judge(bad)
-    assert "t1" not in cc.dropped and bad["verdict"] == "fails" and bad["on_real"]["budget"] == 1.8
+    assert "t1" not in cc.dropped and bad["verdict"] == "fails" and bad["on_real"]["budget"] == 1.0
     # its real budget also caps what it can have at risk
-    assert lv.account_limit("t1") == 1.8 and lv.account_limit("nobody") == 5.0
+    assert lv.account_limit("t1") == 1.0 and lv.account_limit("nobody") == 5.0
 
 
 def test_admitted_trader_stays_live_in_status_without_category_blocks():
@@ -601,3 +601,16 @@ def test_ready_trader_outside_watch_list_is_watched_again_and_admitted(tmp_path)
     assert cc.watch["gone"]["src"] == "scout" and lv.state["on_real"]["gone"]["tier"] == "trial"
     cc.judge({"nick": "nobody", "verdict": "fails", "score": 70.0, "settled": 60, "fills": 80, "grade": "D"})
     assert "nobody" not in cc.watch             # only bar-clearing traders come back
+
+
+def test_brief_80_tick_does_not_lock_in_full_or_5_dollars(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    lv.state["on_real"] = {"t1": {"tier": "trial", "score": 79.5, "budget": 4.2, "at": 1}}
+    cc.judge({"nick": "t1", "verdict": "passes", "score": 80.3, "settled": 60, "fills": 90, "grade": "B-"})
+    assert lv.state["on_real"]["t1"]["tier"] == "full" and lv.state["on_real"]["t1"]["budget"] == 5.0
+    cc.judge({"nick": "t1", "verdict": "passes", "score": 79.1, "settled": 61, "fills": 91, "grade": "C+"})
+    assert lv.state["on_real"]["t1"]["tier"] == "trial" and lv.state["on_real"]["t1"]["budget"] == 3.56
+    lv.state["on_real"]["t1"]["promoted"] = 5                 # earned full on real money: paper can't undo it
+    cc.judge({"nick": "t1", "verdict": "passes", "score": 75.0, "settled": 62, "fills": 92, "grade": "C"})
+    assert lv.state["on_real"]["t1"]["tier"] == "full" and lv.state["on_real"]["t1"]["budget"] == 5.0
