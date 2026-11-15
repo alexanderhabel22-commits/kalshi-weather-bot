@@ -783,7 +783,9 @@ function ccHowGrades(){
 }
 function ccWhy(a){
   const R = a.real || {}, L = ((S.cc || {}).live) || {}, ben = (L.benched || {})[a.nick], sc = a.score != null ? a.score.toFixed(1) : "—";
-  if (ben || a.verdict === "benched") return `Benched: ${esc(ben || a.boss_note || "its own real-money stop")}.`;
+  const eb = a.earn_back, ebT = eb ? ` Earning its way back: ${num(eb.n)}/50 new counted copies in ${num(eb.events)}/30 events, score ${eb.score == null ? "—" : (+eb.score).toFixed(1)} (needs 80+), average ${eb.c == null ? "—" : cents(eb.c)} (needs above 0).` : "";
+  if (ben || a.verdict === "benched") return `Benched: ${esc(ben || a.boss_note || "its own real-money stop")}.${ebT}`;
+  if (a.verdict === "real-lag" && eb) return `Back to paper: ${esc(R.why || "real money trailed its paper record")}.${ebT}`;
   if (a.verdict === "real-lag") return `Back to paper: ${esc(R.why || "real money trailed its paper record")}.`;
   if (a.verdict === "slump") return `Paused: its recent copies average ${cents(a.settle_c)}, below its −${a.leeway_c}¢ leeway. It goes back on real money by itself when it recovers.`;
   const ex = a.edge_c == null ? "" : `, expected ${cents(a.edge_c)}/ct`;
@@ -880,6 +882,8 @@ function ccPage(){
       <div><div class="val" style="font-size:20px">${n("watching")}</div><div class="lbl">Testing</div></div>
       <div><div class="val mute" style="font-size:20px">${n("fails") + n("slump") + n("benched") + n("real-lag")}</div><div class="lbl">Out</div></div></div>
     <div style="margin-top:12px">${meter("Real-money pool in use", num(L.open_cost), num(L.pool), {txt:`$${num(L.open_cost).toFixed(2)} / $${num(L.pool).toFixed(2)}`, sub:`At most ${pct(num((S.ccCtl || {}).pool_pct, .15))} of the $${num(L.bankroll).toFixed(2)} account is ever in open copies`})}</div>
+    <div style="margin-top:10px">${(() => { const C = S.ccCtl || {}, lim = Math.min(num(C.total_stop_usd, 8), num(C.total_stop_pct, .25) * (num(L.bankroll) || 1e9)), tp = num(L.total_pnl);
+      return meter("Copycat real loss vs halt", Math.max(0, -tp), lim, {txt:`${money(tp)} / −$${lim.toFixed(2)}`, sub:`Copycat stops all real copies if it is down $${lim.toFixed(2)} in total. It also never spends the last $${num(C.cash_floor_usd, 10).toFixed(0)} of cash the main bot needs.${L.halted ? " HALTED now." : ""}`}); })()}</div>
     ${dd("ccHow", "How Copycat picks traders", "how it grades, start to finish", `<div style="font-size:12px;line-height:1.6">${ccHowGrades()}${c.scan ? `<br><br>Scanning every public trade: <b>${Number(c.scan.public_traders_seen || 0).toLocaleString()}</b> traders seen, <b>${Number(c.scan.looked_up || 0).toLocaleString()}</b> checked, <b>${c.scan.watched}</b> profitable ones being tested${c.scan.dropped ? `, <b>${c.scan.dropped}</b> dropped` : ""}.` : ""}<br>Scores count only copies since ${esc(c.fresh_since || "Nov 10")}.</div>`, false, "in")}</div>`;
   h += ccWhoLive();
   h += ccLiveHTML();
@@ -1022,18 +1026,18 @@ function ccCats(a){
   if (!detailed) h += `<div class="mute" style="font-size:11px;margin-top:6px">Price and market breakdowns show once an account has 20+ copies.</div>`;
   return h;
 }
-function ccCharts(D){
+function ccCharts(D, real){
   const W = 520, H = 120, cv = D.curve || [], out = [];
   if (cv.length > 1){
     const lo = Math.min(0, ...cv), hi = Math.max(0, ...cv), sy = v => 8 + (H - 16) * (1 - (v - lo) / ((hi - lo) || 1)), sx = i => 4 + (W - 8) * i / (cv.length - 1);
     const last = cv[cv.length - 1], col = last >= 0 ? "#34d399" : "#f87171";
     const pts = cv.map((v, i) => `${sx(i).toFixed(1)},${sy(v).toFixed(1)}`).join(" ");
-    out.push(`<div class="lbl" style="margin-top:14px">Paper results over time <span class="mute">· running total, 1 contract per copy</span></div>
+    out.push(`<div class="lbl" style="margin-top:14px">${real ? "Real money over time" : "Paper results over time"} <span class="mute">· ${real ? "running total in dollars, after fees" : "running total, 1 contract per copy"}</span></div>
       <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;margin-top:4px" role="img" aria-label="Running total of paper copy results">
       <line x1="0" x2="${W}" y1="${sy(0).toFixed(1)}" y2="${sy(0).toFixed(1)}" stroke="rgba(148,163,200,.35)" stroke-dasharray="4 4"/>
       <polyline points="${sx(0).toFixed(1)},${sy(0).toFixed(1)} ${pts} ${sx(cv.length - 1).toFixed(1)},${sy(0).toFixed(1)}" fill="${col}" fill-opacity=".12" stroke="none"/>
       <polyline points="${pts}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round"/></svg>
-      <div class="s" style="font-size:12px;white-space:normal">${cv.length} settled copies · total <span class="${cls(last)}">${money(last / 100)}</span> per contract copied</div>`);
+      <div class="s" style="font-size:12px;white-space:normal">${cv.length} settled ${real ? "real " : ""}copies · total <span class="${cls(last)}">${money(last / 100)}</span>${real ? " real money" : " per contract copied"}</div>`);
   }
   const ser = (D.series || []).filter(x => x.avg_c != null);
   if (ser.length){
@@ -1052,7 +1056,7 @@ function ccCharts(D){
       const p = (a, rr) => `${(c[0] + rr * Math.cos(a)).toFixed(2)},${(c[1] + rr * Math.sin(a)).toFixed(2)}`;
       const d = v === bt ? `M60,14 A46,46 0 1 1 59.99,14 L59.99,32 A28,28 0 1 0 60,32 Z` : `M${p(a0, r)} A${r},${r} 0 ${big} 1 ${p(a1, r)} L${p(a1, ri)} A${ri},${ri} 0 ${big} 0 ${p(a0, ri)} Z`;
       a0 = a1; return `<path d="${d}" fill="${cols[i % 5]}"><title>${k}: ${v}</title></path>`; }).join("");
-    out.push(`<div class="lbl" style="margin-top:16px">What prices they buy at <span class="mute">· share of their trades</span></div>
+    out.push(`<div class="lbl" style="margin-top:16px">${real ? "What prices we paid" : "What prices they buy at"} <span class="mute">· share of ${real ? "our real copies" : "their trades"}</span></div>
       <div style="display:flex;align-items:center;gap:14px;margin-top:4px"><svg viewBox="0 0 120 120" style="width:120px;flex:none" role="img" aria-label="Price mix">${arcs}</svg>
       <div style="font-size:12px;line-height:1.7">${bands.map(([k, v], i) => `<div><span style="display:inline-block;width:9px;height:9px;border-radius:2px;background:${cols[i % 5]};margin-right:6px"></span>${k === "other" ? "under 5¢ or over 95¢" : k} <span class="mute">${Math.round(100 * v / bt)}%</span></div>`).join("")}</div></div>`);
   }
@@ -1060,7 +1064,7 @@ function ccCharts(D){
   if (P.length){
     const ys = P.map(p => p[1]), lo = Math.min(-100, ...ys), hi = Math.max(100, ...ys), Hs = 150;
     const sx = x => 30 + (W - 52) * x / 100, sy = y => 8 + (Hs - 24) * (1 - (y - lo) / (hi - lo));
-    out.push(`<div class="lbl" style="margin-top:16px">Price paid vs result <span class="mute">· each dot is one settled copy</span></div>
+    out.push(`<div class="lbl" style="margin-top:16px">Price paid vs result <span class="mute">· each dot is one settled ${real ? "real " : ""}copy</span></div>
       <svg viewBox="0 0 ${W} ${Hs}" style="width:100%;height:auto;display:block;margin-top:4px" role="img" aria-label="Price paid versus result">
       <line x1="30" x2="${W - 8}" y1="${sy(0).toFixed(1)}" y2="${sy(0).toFixed(1)}" stroke="rgba(148,163,200,.35)" stroke-dasharray="4 4"/>
       ${P.map(([x, y]) => `<circle cx="${sx(x).toFixed(1)}" cy="${sy(y).toFixed(1)}" r="3.2" fill="${y > 0 ? "#34d399" : "#f87171"}" fill-opacity=".75"><title>paid ${x}¢ · ${y > 0 ? "+" : ""}${y}¢</title></circle>`).join("")}
@@ -1071,12 +1075,48 @@ function ccCharts(D){
   const hr = D.hours || [];
   if (hr.some(v => v)){
     const m = Math.max(...hr);
-    out.push(`<div class="lbl" style="margin-top:14px">When they trade <span class="mute">· hour of day, ET</span></div>
+    out.push(`<div class="lbl" style="margin-top:14px">${real ? "When we copied" : "When they trade"} <span class="mute">· hour of day, ET</span></div>
       <svg viewBox="0 0 ${W} 70" style="width:100%;height:auto;display:block;margin-top:4px" role="img" aria-label="Trades by hour of day">${hr.map((v, i) => { const h = 52 * v / m, x = 4 + i * (W - 8) / 24;
         return `<rect x="${x.toFixed(1)}" y="${(54 - h).toFixed(1)}" width="${((W - 8) / 24 - 3).toFixed(1)}" height="${Math.max(h, v ? 2 : 0).toFixed(1)}" rx="2" fill="#22d3ee" fill-opacity="${v ? .85 : 0}"><title>${i}:00 ET: ${v} trades</title></rect>`; }).join("")}
       ${[0, 6, 12, 18].map(i => `<text x="${(4 + i * (W - 8) / 24).toFixed(1)}" y="68" font-size="10" fill="#94a3c8">${i === 0 ? "12a" : i === 12 ? "12p" : i < 12 ? i + "a" : i - 12 + "p"}</text>`).join("")}</svg>`);
   }
-  return out.length ? out.join("") : `<div class="mute" style="margin-top:14px;font-size:13px">No charts yet: they fill in as this account's copies settle.</div>`;
+  return out.length ? out.join("") : `<div class="mute" style="margin-top:14px;font-size:13px">No charts yet: they fill in as this account's ${real ? "real " : ""}copies settle.</div>`;
+}
+// Real-money version of the pop-up charts, built from the bot's own real copies (live.open + live.settled)
+function ccRealD(nick){
+  const L = (S.cc || {}).live || {}, all = (L.open || []).concat(L.settled || []).filter(p => p.nick === nick);
+  const done = all.filter(p => p.settled).sort((a, b) => a.settled - b.settled);
+  let run = 0; const curve = done.map(p => +(run += 100 * num(p.pnl)).toFixed(1));
+  const by = {}; done.forEach(p => { const k = String(p.ticker || "").split("-")[0] || "other"; (by[k] = by[k] || {n:0, pl:0, k:0}); by[k].n += num(p.n); by[k].pl += num(p.pnl); by[k].k++; });
+  const series = Object.entries(by).map(([k, v]) => ({s:`${k} (${v.k})`, avg_c:v.n ? +(100 * v.pl / v.n).toFixed(1) : null})).sort((a, b) => b.avg_c - a.avg_c);
+  const pay = p => num(p.n) ? 100 * num(p.cost) / num(p.n) : 0, bands = {"5-25¢":0, "25-50¢":0, "50-75¢":0, "75-95¢":0, other:0};
+  all.forEach(p => { const x = pay(p); bands[x >= 5 && x < 25 ? "5-25¢" : x >= 25 && x < 50 ? "25-50¢" : x >= 50 && x < 75 ? "50-75¢" : x >= 75 && x <= 95 ? "75-95¢" : "other"]++; });
+  const pts = done.map(p => [+pay(p).toFixed(0), num(p.n) ? +(100 * num(p.pnl) / num(p.n)).toFixed(0) : 0]);
+  const hours = Array(24).fill(0); all.forEach(p => { if (!p.ts) return;
+    const h = +new Intl.DateTimeFormat("en-US", {hour:"numeric", hourCycle:"h23", timeZone:"America/New_York"}).format(new Date(p.ts * 1000)); hours[h % 24]++; });
+  return {all, done, curve, series, bands, pts, hours};
+}
+function ccRealTab(nick){
+  const a = (((S.cc || {}).accounts || []).find(x => x.nick === nick) || {}), R = a.real || {}, D = ccRealD(nick);
+  const head = `<div style="font-size:18px;font-weight:800;word-break:break-all">${esc(nick)}</div><div class="mute" style="font-size:12px;margin-top:2px">Real money only: the copies Copycat actually bought for this trader, after fees.</div>`;
+  if (!D.all.length) return head + `<div class="mute" style="margin-top:14px;font-size:13px">No real copies yet. This tab fills in once this trader passes the real-money bar and we buy a copy. Paper results are on the Charts (paper) tab.</div>`;
+  const pl = D.done.reduce((s, p) => s + num(p.pnl), 0), ctn = D.done.reduce((s, p) => s + num(p.n), 0), won = D.done.filter(p => num(p.pnl) > 0).length;
+  const op = D.all.filter(p => !p.settled), opc = op.reduce((s, p) => s + num(p.cost), 0);
+  const tile = (l, v, c, sub) => `<div><div class="lbl">${l}</div><div class="val ${c || ""}" style="font-size:17px">${v}</div>${sub ? `<small class="mute">${sub}</small>` : ""}</div>`;
+  let h = head + `<div class="grid g2" style="margin-top:12px">${tile("Real P&L", money(pl), cls(pl), `${D.done.length} settled`)}
+    ${tile("Per contract", ctn ? cents(100 * pl / ctn) : "—", cls(pl), a.settle_c == null ? "" : `paper, last ${num(a.window)}: ${cents(a.settle_c)}`)}
+    ${tile("Won-lost", `${won}-${D.done.length - won}`, "", D.done.length ? pct(won / D.done.length) : "")}
+    ${tile("Open", String(op.length), "", op.length ? `$${opc.toFixed(2)} cost` : "")}</div>`;
+  if (R.gap_c != null) h += `<div class="s" style="font-size:12px;white-space:normal;margin-top:8px">Real vs paper on the same ${num(R.gap_n)} trade${num(R.gap_n) === 1 ? "" : "s"}: <b class="${cls(R.gap_c)}">${R.gap_c > 0 ? "+" : ""}${R.gap_c}¢</b> a contract (real trailing paper by more than ${CCR.gap}¢ after ${CCR.realMin} settled real copies sends it back to paper).</div>`;
+  h += ccCharts(D, true);
+  const rows = D.all.slice().sort((x, y) => (y.settled || y.ts || 0) - (x.settled || x.ts || 0));
+  h += `<div class="lbl" style="margin:16px 0 2px">Every real copy <span class="mute">· newest first</span></div><div class="list">${rows.map(p => {
+    const q = (S.quotes || {})[p.ticker] || {}, t = q.title || p.ticker, px = num(p.n) ? Math.round(100 * num(p.cost) / num(p.n)) + "¢" : "—";
+    return `<div class="item" style="padding:7px 0"><span class="side ${esc(p.side)}">${esc(String(p.side || "").toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px;word-break:break-word">${esc(t)}</div>
+      <div class="s" style="white-space:normal">${+num(p.n).toFixed(2)} @ ${px} · ${p.ts ? esc(fdt(new Date(p.ts * 1000))) : ""}</div></div>
+      <div class="pl ${p.settled ? cls(num(p.pnl)) : "mute"}">${p.settled ? money(num(p.pnl)) : "open"}</div></div>`; }).join("")}</div>
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Real = our actual fills with this account's money, after Kalshi's fee. Paper = every trade of theirs we could have copied, 1 contract each. Real copies start later and are fewer, so they can differ from paper by luck alone until there are dozens.</div>`;
+  return h;
 }
 function ccOpen(nick, tab){
   let m = document.getElementById("ccModal");
@@ -1087,8 +1127,8 @@ function ccOpen(nick, tab){
     document.body.appendChild(m); }
   m.innerHTML = `<div class="card glow" style="width:100%;max-width:560px;max-height:86vh;overflow-y:auto;margin:0;border-radius:18px;padding:18px 16px 22px;position:relative">
     <button data-ccclose style="position:sticky;top:0;float:right;background:rgba(148,163,200,.18);color:#e2e8f0;border:0;border-radius:14px;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>
-    <div style="display:flex;gap:6px;margin-bottom:12px">${[["card", "Report card"], ["charts", "Charts"], ["cats", "Categories"]].map(([k, l]) => `<button data-cctab="${k}" style="border:0;border-radius:14px;padding:5px 12px;font-size:12px;cursor:pointer;background:${(tab || "card") === k ? "#22d3ee" : "rgba(148,163,200,.16)"};color:${(tab || "card") === k ? "#04121a" : "#e2e8f0"};font-weight:700">${l}</button>`).join("")}</div>
-    ${tab === "cats" ? `<div style="font-size:18px;font-weight:800;word-break:break-all">${esc(nick)}</div>` + ccCats((((S.cc || {}).accounts || []).find(x => x.nick === nick) || {}))
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding-right:34px">${[["card", "Report card"], ["charts", "Charts (paper)"], ["real", "Real money"], ["cats", "Categories"]].map(([k, l]) => `<button data-cctab="${k}" style="border:0;border-radius:14px;padding:5px 12px;font-size:12px;cursor:pointer;background:${(tab || "card") === k ? "#22d3ee" : "rgba(148,163,200,.16)"};color:${(tab || "card") === k ? "#04121a" : "#e2e8f0"};font-weight:700">${l}</button>`).join("")}</div>
+    ${tab === "real" ? ccRealTab(nick) : tab === "cats" ? `<div style="font-size:18px;font-weight:800;word-break:break-all">${esc(nick)}</div>` + ccCats((((S.cc || {}).accounts || []).find(x => x.nick === nick) || {}))
       : (tab || "card") === "charts" ? `<div style="font-size:18px;font-weight:800;word-break:break-all">${esc(nick)}</div>` + ccCharts((((S.cc || {}).accounts || []).find(x => x.nick === nick) || {}).detail || {}) : ccCard(nick)}</div>`;
   m.dataset.nick = nick;
   if (tab === "cats") ccCatCharts((((S.cc || {}).accounts || []).find(x => x.nick === nick) || {}));

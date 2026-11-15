@@ -317,6 +317,8 @@ class Live:
                 "pool": round((self.cfg["pool_pct"] * self.bankroll) if self.bankroll else 0, 2),
                 "open_cost": round(self.open_cost(), 2), "total_pnl": self.state["total"],
                 "pnl": self.state["pnl"], "benched": self.benched(), "halted": self.state.get("halted"),
-                "open": [dict(p, ticker=t) for t, p in pos.items() if not p.get("settled")][-30:],
+                # every open copy and up to 300 settled ones (30 days are kept): the dashboard's real-money
+                # charts per trader need the full record, not just the newest 30 (Alex, Nov 15)
+                "open": [dict(p, ticker=t) for t, p in pos.items() if not p.get("settled")][-200:],
                 "settled": sorted([dict(p, ticker=t) for t, p in pos.items() if p.get("settled")],
-                                  key=lambda p: -p["settled"])[:30]}
+                                  key=lambda p: -p["settled"])[:300]}
