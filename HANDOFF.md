@@ -429,6 +429,9 @@ IP without a token). It never places, changes or cancels anything and needs no s
   to $5 at 80+, raised if paper improves, never lowered; real profit banked adds room; the budget also
   caps their at-risk). The real-vs-paper gap no longer benches (only "real clearly losing" does).
   One-time restore of olekbannick7 and DocDahmer (dropped by paper after clearing real money).
+  Trial -> full on REAL results (Alex, Nov 15): 15+ settled real copies in 10+ events, real P&L > $0
+  and shrunk real edge (prior 0c, tau 5c, sigma 39c, per event) >= +1c -> tier full, $5 budget, frees
+  the slot, one push (`real_promotion`, on_real[nick].real_check). Paper 80+ is the other route to full.
   Replay Nov 11-15: paper grades still don't predict, so expect trials to cost about the average copy
   (-3c/contract, roughly -$0.35/day); all inside the $8 Copycat halt. Library analysis/copycat-two-stage/.
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing

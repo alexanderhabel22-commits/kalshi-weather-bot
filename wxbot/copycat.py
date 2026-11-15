@@ -584,7 +584,27 @@ TRIAL_SETTLED = 20          # trial bar: 20+ counted copies ...
 TRIAL_EVENTS = 15           # ... in 15+ different events ...
 TRIAL_SCORE = 77.5          # ... and a score of 77.5+ (expected -1c or better; at 20 events that needs ~+16c raw)
 TRIAL_SLOTS = 4             # at most 4 trial traders (admitted below COPY_SCORE) on real money at once
+PROMOTE_COPIES = 15         # trial -> full on REAL results (Alex, Nov 15: "paper just determines if we give them
+PROMOTE_EVENTS = 10         # trial money"): 15+ settled real copies in 10+ events, real P&L above $0, and the
+PROMOTE_EDGE_C = 1.0        # shrunk real edge (prior 0c, skill spread 5c, event noise 39c) at least +1c/contract:
+PROMOTE_TAU_C = 5.0         # at 10 events that needs about +7c real, at 20 about +4c, so a lucky few don't count
 RESTORE = ("olekbannick7", "DocDahmer")   # Nov 15: cleared for real money, then dropped only by paper (one-time)
+
+
+def real_promotion(positions: list[dict]) -> dict:
+    """A trial trader's real record (settled real copies): copies, events, $ P&L, raw and shrunk c/contract
+    (one credit per event, prior 0c with PROMOTE_TAU_C spread), and whether it earns a full pass."""
+    done = [p for p in positions if p.get("settled") and p.get("n")]
+    by: dict = defaultdict(list)
+    for p in done:
+        by[event_of(p.get("ticker") or "")].append(100 * (p.get("pnl") or 0) / p["n"])
+    ev = [st.mean(v) for v in by.values()]
+    pnl = round(sum(p.get("pnl") or 0 for p in done), 2)
+    s2, t2 = 39.0 ** 2, PROMOTE_TAU_C ** 2
+    shrunk = round((sum(ev) / s2) / (len(ev) / s2 + 1 / t2), 2) if ev else 0.0
+    ok = len(done) >= PROMOTE_COPIES and len(ev) >= PROMOTE_EVENTS and pnl > 0 and shrunk >= PROMOTE_EDGE_C
+    return {"copies": len(done), "events": len(ev), "pnl": pnl,
+            "c": round(st.mean(ev), 2) if ev else None, "shrunk_c": shrunk, "promote": ok}
 
 
 def real_budget(score: float | None) -> float:
@@ -977,6 +997,16 @@ class Copycat:
             on[nick]["budget"] = max(on[nick].get("budget") or 1.0, real_budget(a.get("score")))  # paper only adds leeway
             if (a.get("score") or 0) >= COPY_SCORE:
                 on[nick]["tier"] = "full"         # scores like a full pass: frees its trial slot
+            back = ((self.live.state.get("bench_log") or {}).get(nick) or {}).get("back_at") or 0
+            rec = real_promotion([dict(p, ticker=t) for t, p in self.live.state["positions"].items()
+                                  if p.get("nick") == nick and (p.get("ts") or 0) >= back])
+            on[nick]["real_check"] = rec
+            if on[nick].get("tier") != "full" and rec["promote"]:
+                on[nick].update(tier="full", budget=5.0, promoted=round(now))   # real money earned it
+                self.write({"kind": "promote", "nick": nick, **rec})
+                self.alert("Copycat: trial trader promoted", f"{nick}: {rec['copies']} real copies, "
+                           f"${rec['pnl']:+.2f} ({rec['c']:+.1f}c/contract). Now a full pass with a $5 budget.")
+                self.live.save()
             a["on_real"] = on[nick]
             return True
         if a["verdict"] == "ready" and (a.get("score") or 0) >= COPY_SCORE:

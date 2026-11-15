@@ -484,3 +484,28 @@ def test_score_80_does_not_use_a_trial_slot(tmp_path):
     b = {"nick": "full", "verdict": "ready", "score": 80.5, "settled": 40, "fills": 60, "grade": "B-"}
     cc.judge(b)                                                        # slots full, but a full-bar score gets in
     assert lv.state["on_real"]["full"]["tier"] == "full" and b["verdict"] == "passes"
+
+
+def test_trial_promoted_to_full_on_real_results(tmp_path):
+    pushes = []
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 5000.0, req_gap=0, live=lv, alert=lambda t, b: pushes.append(t))
+    cc.watch = {"tr": {}}
+    lv.state["on_real"] = {"tr": {"tier": "trial", "budget": 1.0, "at": 100}}
+    acct = {"nick": "tr", "verdict": "fails", "score": 70.0, "settled": 80, "fills": 100, "grade": "C-"}
+
+    def give(n, win_every):
+        lv.state["positions"] = {f"KXE{i}-A": {"nick": "tr", "side": "yes", "n": 1, "cost": 0.5, "ts": 200 + i,
+                                               "settled": 300 + i, "pnl": 0.5 if i % win_every == 0 else -0.5}
+                                 for i in range(n)}
+    give(2, 1)                                   # 2 lucky wins: not enough
+    cc.judge(dict(acct))
+    assert lv.state["on_real"]["tr"]["tier"] == "trial" and not pushes
+    give(16, 2)                                  # 16 copies, 8 won 8 lost: P&L $0, not promoted
+    cc.judge(dict(acct))
+    assert lv.state["on_real"]["tr"]["tier"] == "trial"
+    give(16, 1)                                  # 16 events all won: real money earned it
+    cc.judge(dict(acct))
+    o = lv.state["on_real"]["tr"]
+    assert o["tier"] == "full" and o["budget"] == 5.0 and o["real_check"]["promote"] and len(pushes) == 1
+    assert copycat.real_promotion([])["promote"] is False
