@@ -65,6 +65,13 @@ informed_pre_news (they buy before the price moves: the one style a copy can sti
 skill_unclear.
 - Is it copyable? Look at the gap between their price and our pay price, and whether the price \
 moved our way or against us after their trade (follow_5m).
+- MARKET MAKING (Alex, Nov 15: this is your job, for every trader you see): decide whether the \
+trader is a market maker (yes / partly / no) and whether we should filter: none, skip_maker_fills \
+(copy only their taker trades) or skip_trader. Known results (Nov 11-15): copies of maker-role \
+fills from heavy-maker accounts made -1.2c +/-1.0 overall, but olekbannick7's maker fills made \
++1.6c +/-1.5, so "mostly maker" alone does NOT mean uncopyable; our 2c-of-their-price rule already \
+drops maker fills we can't match. Look at our pay vs their price and follow_5m on maker fills. \
+Never filter a trader who is on real money unless their REAL results support it.
 - Call: keep (copying looks fine), skip (we should not copy them, with a concrete reason), or \
 less_leeway (copy, but stop sooner in a slump). And predict our c/contract on their next copies.
 Be specific and short (reason max 25 words, note max 25 words, plain English). This is a test of \
@@ -76,20 +83,22 @@ REVIEW_SCHEMA = {
         "summary": {"type": "string"},
         "accounts": {"type": "array", "items": {
             "type": "object", "additionalProperties": False,
-            "required": ["nick", "note", "call", "source", "predicted_c", "reason"],
+            "required": ["nick", "note", "call", "source", "predicted_c", "market_maker", "mm_filter", "reason"],
             "properties": {"nick": {"type": "string"}, "note": {"type": "string"},
                            "call": {"type": "string", "enum": ["keep", "skip", "less_leeway"]},
                            "source": {"type": "string", "enum": SOURCES},
                            "predicted_c": {"type": "number"},
+                           "market_maker": {"type": "string", "enum": ["yes", "partly", "no"]},
+                           "mm_filter": {"type": "string", "enum": ["none", "skip_maker_fills", "skip_trader"]},
                            "reason": {"type": "string"}}}}}}
 
 
 def candidates(status: dict, live: dict | None) -> list[dict]:
     real = set(((live or {}).get("pnl") or {}))
+    on = lambda a: a["nick"] in real or bool(a.get("on_real")) or (a.get("real_events") or 0) > 0  # noqa: E731
     out = [a for a in status.get("accounts", [])
-           if a.get("verdict") == "passes" or (a.get("score") or 0) >= NEAR_SCORE
-           or a["nick"] in real or (a.get("real_events") or 0) > 0]
-    out.sort(key=lambda a: (a["nick"] not in real and a.get("verdict") != "passes", -(a.get("score") or 0)))
+           if a.get("verdict") in ("passes", "ready") or (a.get("score") or 0) >= NEAR_SCORE or on(a)]
+    out.sort(key=lambda a: (not on(a) and a.get("verdict") not in ("passes", "ready"), -(a.get("score") or 0)))
     return out[:MAX_ACCOUNTS]
 
 
@@ -99,11 +108,19 @@ def _gap(det: dict) -> float | None:
     return round(st.mean(g), 1) if g else None
 
 
+MM_MIN_FILLS, MM_MAKER_PCT = 50, 70      # Copycat thread's classifier (analysis/copycat-two-stage/role.py)
+
+
+def plain_mm(a: dict) -> bool:
+    """Plain-code market-maker fallback for EVERY trader: 50+ logged fills, 70%+ of them maker role."""
+    return (a.get("fills") or 0) >= MM_MIN_FILLS and ((a.get("detail") or {}).get("maker_pct") or 0) >= MM_MAKER_PCT
+
+
 def rule_skip(a: dict) -> str:
     """Plain-code baseline the boss must beat: '' = keep."""
     det = a.get("detail") or {}
-    if (det.get("maker_pct") or 0) >= 60:
-        return "mostly maker fills"
+    if plain_mm(a):
+        return "market maker (50+ fills, 70%+ maker)"
     bands = det.get("bands") or {}
     tot = sum(bands.values())
     if tot >= 20 and bands.get("other", 0) / tot >= 0.6:
@@ -132,6 +149,8 @@ def digest(status: dict, rows: list[dict], live: dict | None, benches: dict | No
             f"Copyability: our pay minus their price {_gap(det)}c (last 10), follow_5m {a.get('follow_5m_c')}c, "
             f"lag {a.get('lag_s')}s, maker {det.get('maker_pct')}%, median price {det.get('median_price_c')}c, "
             f"median size {det.get('median_size')}, price bands {det.get('bands')}. Markets: {ser}."
+            + (f" ON REAL MONEY ({(a.get('on_real') or {}).get('tier', 'yes')})." if a.get("on_real") else "")
+            + (" Plain classifier: market maker." if plain_mm(a) else "")
             + (f" Blocked categories: {a.get('blocked_cats')}." if a.get("blocked_cats") else ""))
     return "\n".join(lines)[:MAX_DIGEST_CHARS]
 
@@ -193,8 +212,9 @@ class Boss:
             raise RuntimeError("no text in the answer")
         return json.loads(text_out)
 
-    def summary(self) -> dict:
-        return {"summary": self.state.get("summary"), "shadow": SHADOW, "usage": self.state.get("usage"),
+    def summary(self, status: dict | None = None) -> dict:
+        mm = sorted(a["nick"] for a in (status or {}).get("accounts", []) if plain_mm(a))
+        return {"plain_mm": {"count": len(mm), "nicks": mm[:300]}, "summary": self.state.get("summary"), "shadow": SHADOW, "usage": self.state.get("usage"),
                 "reviews_today": self.state.get("deep_n"), "last_ok": self.state.get("ok_at"),
                 "last_error": self.state.get("last_error"), "spend": self.budget.summary(),
                 "model": self.model, "benches": {}, "calls": self.state["calls"][-400:]}
@@ -234,6 +254,8 @@ class Boss:
             self.state["calls"].append({
                 "at": round(now), "nick": a["nick"], "call": c.get("call"), "source": c.get("source"),
                 "predicted_c": c.get("predicted_c"), "reason": (c.get("reason") or "")[:200],
+                "market_maker": c.get("market_maker"), "mm_filter": c.get("mm_filter"),
+                "plain_mm": plain_mm(a), "on_real": bool(a.get("on_real")),
                 "rule_skip": rule_skip(a), "score": a.get("score"), "verdict": a.get("verdict"),
                 "settled": a.get("settled"), "banked": a.get("banked")})
         self.state["calls"] = self.state["calls"][-KEEP_CALLS:]

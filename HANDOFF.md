@@ -447,7 +447,13 @@ IP without a token). It never places, changes or cancels anything and needs no s
   the bar (score 74+), passing, or real-copied (max 20), fed copyability facts (our pay minus their
   price, follow_5m, maker %, price bands, real vs paper, leeway). Per trader: keep / skip /
   less_leeway, profit source, predicted c/contract, logged in boss.json "calls" (and status.json
-  boss.calls) beside a plain-code baseline `rule_skip` (maker >= 60% or 60%+ copies at <=5c/>=95c).
+  boss.calls) beside a plain-code baseline `rule_skip`. MARKET MAKING is the boss's call (Alex, Nov 15): per
+  trader it says market_maker yes/partly/no and mm_filter none/skip_maker_fills/skip_trader; the
+  plain fallback `plain_mm()` labels EVERY trader (50+ fills, 70%+ maker; the Copycat thread's
+  classifier) and the list is in status.json boss.plain_mm. Baseline (Nov 11-15): heavy makers'
+  maker copies -1.2c +/-1.0, olekbannick7's +1.6c, so no filter is applied; on-real traders are
+  never to be filtered without real-money support. The scoreboard also reports what each filter
+  would have removed.
   Benches nothing. Score it with `python tools/boss_scoreboard.py DIR status.json` (~Dec 1): it
   earns real skip power (via a reviewed PR + Alex) only if its skipped traders lose >= 3c/contract
   more than its kept ones over 200+ forward copies AND beat the plain rule's gap. Cap $0.25/day.

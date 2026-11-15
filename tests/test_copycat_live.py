@@ -113,7 +113,7 @@ def boss_status():
 def review(text):
     return {"summary": "ok", "accounts": [
         {"nick": "ace", "note": "Trades weather; fine.", "call": "skip", "source": "market_making",
-         "predicted_c": -2.0, "reason": "maker fills"}]}
+         "predicted_c": -2.0, "market_maker": "yes", "mm_filter": "skip_maker_fills", "reason": "maker fills"}]}
 
 
 def test_boss_shadow_logs_calls_never_benches(tmp_path):
@@ -130,7 +130,9 @@ def test_boss_shadow_logs_calls_never_benches(tmp_path):
     assert "our pay minus their price 3c" in texts[0]
     assert b.benches(t[0]) == {} and b.state["notes"]["ace"].startswith("Trades")
     c = b.state["calls"][-1]
-    assert c["call"] == "skip" and c["rule_skip"] == "mostly maker fills" and c["settled"] == 40
+    assert c["call"] == "skip" and c["mm_filter"] == "skip_maker_fills" and c["settled"] == 40
+    assert c["plain_mm"] and c["rule_skip"].startswith("market maker")         # 120 fills, 80% maker
+    assert b.summary(boss_status())["plain_mm"]["nicks"] == ["ace"]
     t[0] += 4000
     assert not b.step(boss_status(), [], None)                          # once a day
     t[0] += 23 * 3600
@@ -177,10 +179,13 @@ def test_scoreboard_compares_boss_with_plain_rule():
     import boss_scoreboard as sb
     calls = [{"nick": "bad", "at": 0, "call": "skip", "rule_skip": ""},
              {"nick": "good", "at": 0, "call": "keep", "rule_skip": ""}]
-    trades = {"bad": [{"ok": True, "c": -10.0, "ts": 5}] * 150, "good": [{"ok": True, "c": 2.0, "ts": 5}] * 150}
+    trades = {"bad": [{"ok": True, "c": -10.0, "ts": 5, "role": "maker"}] * 150,
+              "good": [{"ok": True, "c": 2.0, "ts": 5}] * 150}
+    calls[0]["mm_filter"] = "skip_maker_fills"
     r = sb.score(sb.forward(calls, trades))
     assert r["boss_gap_c"] == 12.0 and r["verdict"].startswith("PASS")
-    calls[0]["rule_skip"] = "mostly maker fills"                         # the plain rule saw it too
+    assert r["mm_filter"]["boss_removed"] == {"copies": 150, "c": -10.0}
+    calls[0]["rule_skip"] = "market maker"                         # the plain rule saw it too
     assert sb.score(sb.forward(calls, trades))["verdict"].startswith("FAIL")
 
 

@@ -1566,7 +1566,7 @@ class Copycat:
                                          for k in ("feed", "poll")}}
         status["mode"] = live["mode"] if live and live["mode"] == "live" else "paper only"
         if self.boss is not None:
-            status["boss"] = self.boss.summary()     # shadow judge since Nov 15: calls logged, no benches
+            status["boss"] = self.boss.summary(status)     # shadow judge since Nov 15: calls logged, no benches
         self.acct = {a["nick"]: a for a in status["accounts"]}
         self.hot = {a["nick"] for a in status["accounts"] if a["verdict"] == "passes"}
         (self.out / "status.json").write_text(json.dumps(status, separators=(",", ":")))

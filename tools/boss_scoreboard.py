@@ -38,7 +38,8 @@ def forward(calls: list[dict], trades: dict[str, list[dict]]) -> list[dict]:
         tr = [t for t in trades.get(nick, []) if t.get("ok") and t.get("c") is not None and t.get("ts")]
         for i, c in enumerate(cs):
             end = cs[i + 1]["at"] if i + 1 < len(cs) else float("inf")
-            out.append({**c, "fwd": [t["c"] for t in tr if c["at"] < t["ts"] <= end]})
+            w = [t for t in tr if c["at"] < t["ts"] <= end]
+            out.append({**c, "fwd": [t["c"] for t in w], "fwd_maker": [t["c"] for t in w if t.get("role") == "maker"]})
     return out
 
 
@@ -61,6 +62,13 @@ def score(scored: list[dict]) -> dict:
                 if groups["rule_keep"] and groups["rule_skip"] else None)
     passed = (n >= MIN_COPIES and boss_gap is not None and boss_gap >= GAP_C
               and (rule_gap is None or boss_gap > rule_gap))
+    # market-making filter: what "skip their maker fills" would have removed (helps only if clearly < 0)
+    boss_mm = [x for c in scored if c.get("mm_filter") == "skip_maker_fills" for x in c.get("fwd_maker", [])]
+    plain_mm = [x for c in scored if c.get("plain_mm") for x in c.get("fwd_maker", [])]
+    res["mm_filter"] = {"boss_removed": {"copies": len(boss_mm), "c": _mean(boss_mm)},
+                        "plain_removed": {"copies": len(plain_mm), "c": _mean(plain_mm)},
+                        "note": "a filter helps only if the copies it removes average clearly below 0 "
+                                "(baseline Nov 11-15: maker copies of heavy makers -1.2c +/-1.0, olek +1.6c)"}
     res.update(forward_copies=n, boss_gap_c=None if boss_gap is None else round(boss_gap, 2),
                rule_gap_c=None if rule_gap is None else round(rule_gap, 2),
                verdict="PASS: earns skip power (needs a reviewed PR)" if passed
