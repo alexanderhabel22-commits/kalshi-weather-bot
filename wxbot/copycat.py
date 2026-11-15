@@ -584,6 +584,8 @@ TRIAL_SETTLED = 20          # trial bar: 20+ counted copies ...
 TRIAL_EVENTS = 15           # ... in 15+ different events ...
 TRIAL_SCORE = 77.5          # ... and a score of 77.5+ (expected -1c or better; at 20 events that needs ~+16c raw)
 TRIAL_SLOTS = 4             # at most 4 trial traders (admitted below COPY_SCORE) on real money at once
+TRIAL_END_COPIES = 20       # a trial that reaches 20+ settled real copies in 15+ events with real P&L <= $0 ends
+TRIAL_END_EVENTS = 15       # (back to paper, slot freed), even if its budget isn't used up
 PROMOTE_COPIES = 15         # trial -> full on REAL results (Alex, Nov 15: "paper just determines if we give them
 PROMOTE_EVENTS = 10         # trial money"): 15+ settled real copies in 10+ events, real P&L above $0, and the
 PROMOTE_EDGE_C = 1.0        # shrunk real edge (prior 0c, skill spread 5c, event noise 39c) at least +1c/contract:
@@ -705,7 +707,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
             cg = cat_breakdown(o.get("trades") or [], cats, cg)
         if nick in (earn_since or {}):
             # earn-back = the entry test again, on copies settled since the bench (same basis: buyable
-            # copies, one credit per event): EARN_N+ copies in EARN_EVENTS+ events, score 80+, average > 0
+            # copies, one credit per event): EARN_N+ copies in EARN_EVENTS+ events, score 77.5+, average > 0
             after = [t for t in o.get("trades") or [] if t.get("c") is not None and t.get("ok", True)
                      and (t.get("ts") or 0) > earn_since[nick]]
             av, aev = [t["c"] for t in after], [event_of(t.get("ticker") or "") for t in after]
@@ -1053,6 +1055,14 @@ class Copycat:
                 on.pop(nick)
                 continue
             pnl, b = self.live.state["pnl"].get(nick, 0.0), on[nick].get("budget") or 1.0
+            rc = on[nick].get("real_check") or {}
+            if (on[nick].get("tier") != "full" and (rc.get("copies") or 0) >= TRIAL_END_COPIES
+                    and (rc.get("events") or 0) >= TRIAL_END_EVENTS and (rc.get("pnl") or 0) <= 0):
+                on.pop(nick)                      # a full trial that made us nothing: frees the slot for the next one
+                self.live.bench(nick, f"trial ended: {rc['copies']} real copies, ${rc['pnl']:+.2f}", now)
+                self.alert("Copycat: trial ended", f"{nick}: {rc['copies']} real copies in {rc['events']} events, "
+                           f"${rc['pnl']:+.2f}. Back to paper; {self.live.earn_back_note(nick)}.")
+                continue
             if pnl <= -b:
                 on.pop(nick)
                 self.live.bench(nick, f"real budget used: lost ${-pnl:.2f} of ${b:.2f}", now)
@@ -1605,12 +1615,17 @@ class Copycat:
                            + (f"; {self.live.earn_back_note(a['nick'])}." if self.live is not None else "."))
             eb = a.get("earn_back")
             if (self.live is not None and eb and a["nick"] in earn and eb["n"] >= EARN_N and eb["events"] >= EARN_EVENTS
-                    and (eb["score"] or 0) >= EARN_SCORE and (eb["c"] or 0) > 0):
+                    and (eb["score"] or 0) >= EARN_SCORE and (eb["c"] or 0) > 0
+                    and sum(1 for x in self.on_real().values() if x.get("tier") != "full") < TRIAL_SLOTS):
                 self.live.unbench(a["nick"], now)
                 self.lag_told.discard(a["nick"])
+                self.on_real()[a["nick"]] = {"at": round(now), "tier": "trial", "score": eb["score"],
+                                             "budget": real_budget(eb["score"]), "earned_back": True}
+                self.live.save()
+                self.write({"kind": "admit", "nick": a["nick"], "earned_back": True})
                 self.alert("Copycat: earned real money back",
                            f"{a['nick']}: {eb['n']} paper copies since its bench, {eb['grade']} ({eb['c']:+.1f}c/contract). "
-                           "Real copies resume next cycle with a fresh limit.")
+                           f"Back on a trial with a fresh ${real_budget(eb['score']):.2f} budget.")
         for a in status["accounts"]:
             self.judge(a)
         if any(a["nick"] in self.dropped for a in status["accounts"]):

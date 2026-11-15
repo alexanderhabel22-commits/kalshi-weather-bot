@@ -525,3 +525,19 @@ def test_promotion_push_carries_boss_review(tmp_path):
     cc.boss = B()
     cc.tell_promotion("tr", {"copies": 16, "events": 16, "pnl": 8.0, "c": 50.0, "shrunk_c": 7.0}, {})
     assert done.wait(5) and len(pushes) == 1 and "Boss: looks like" in pushes[0] and "tr: 16 real copies" in pushes[0]
+
+
+def test_trial_that_makes_nothing_ends_and_frees_slot(tmp_path):
+    pushes = []
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 1000.0, req_gap=0, live=lv, alert=lambda t, b: pushes.append(t))
+    lv.state["on_real"] = {"flat": {"tier": "trial", "budget": 5.0,
+                                    "real_check": {"copies": 22, "events": 16, "pnl": -0.1}},
+                           "young": {"tier": "trial", "budget": 5.0,
+                                     "real_check": {"copies": 8, "events": 8, "pnl": -0.5}}}
+    lv.state["pnl"] = {"flat": -0.1, "young": -0.5}
+    cc.real_budget_check(1000.0)
+    assert "flat" not in lv.state["on_real"] and "flat" in lv.benched() and pushes == ["Copycat: trial ended"]
+    assert "young" in lv.state["on_real"]
+    assert lv.earn_back_open(1000.0).get("flat") == 1000.0      # can earn its way back (trial bar on fresh copies)
+    assert copycat.EARN_N == 20 and copycat.EARN_EVENTS == 15 and copycat.EARN_SCORE == 77.5
