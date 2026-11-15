@@ -979,7 +979,7 @@ class Copycat:
         if v is None and self.live is not None and a["verdict"] in ("ready", "passes") and not self.is_dropped(a["nick"]):
             # cleared a bar on its logged history but fell out of the watch list (1,000 cap): watch it again,
             # or it shows "ready" forever without ever being admitted or copied
-            v = self.watch[a["nick"]] = {"pnl": None, "since": round(self.clock()), "checked": self.clock(), "src": "scout"}
+            v = self.watch[a["nick"]] = {"pnl": None, "since": 0, "checked": self.clock(), "src": "scout"}   # keep its history
             self.write({"kind": "rewatch", "nick": a["nick"], "verdict": a["verdict"], "score": a.get("score")})
             self.save_watch()
         if v is None:
@@ -1032,7 +1032,7 @@ class Copycat:
             a["on_real"] = on[nick]
             return True
         if a["verdict"] in ("ready", "passes"):   # any paper pass, even 80+, starts as a trial (full = real only)
-            if sum(1 for x in on.values() if x.get("tier") != "full") >= TRIAL_SLOTS:
+            if sum(1 for x in on.values() if not x.get("promoted")) >= TRIAL_SLOTS:
                 return False                      # waits for a free trial slot
             tier = "trial"
         else:
@@ -1113,6 +1113,30 @@ class Copycat:
                 self.live.bench(nick, f"real budget used: lost ${-pnl:.2f} of ${b:.2f}", now)
                 self.alert("Copycat: back to paper", f"{nick}: real copies lost ${-pnl:.2f}, its ${b:.2f} budget. "
                            f"Paper copies continue; {self.live.earn_back_note(nick)}.")
+        self.live.save()
+
+    def fix_slots_once(self) -> None:
+        """One-time (Nov 15, after PR #304): the re-watch used since=now and hid those traders' paper history,
+        and the slot count ran before paper-full traders were turned into trials, so 5 trials got 4 slots.
+        Restores the history window of re-watched scouts and drops the newest trials with no real copy until
+        at most TRIAL_SLOTS remain (they go back to waiting on paper, no bench)."""
+        st_ = self.live.state
+        if st_.get("slots_fixed_nov15"):
+            return
+        st_["slots_fixed_nov15"] = True
+        for v in self.watch.values():
+            if v.get("src") == "scout" and v.get("pnl") is None:
+                v["since"] = 0
+        on = self.on_real()
+        traded = {p.get("nick") for p in (st_.get("positions") or {}).values()}
+        trials = sorted((n for n, x in on.items() if not x.get("promoted")), key=lambda n: (-(on[n].get("at") or 0), on[n].get("score") or 0))   # newest, then lowest score
+        for n in trials:
+            if sum(1 for x in on.values() if not x.get("promoted")) <= TRIAL_SLOTS:
+                break
+            if n not in traded and not on[n].get("restored"):
+                on.pop(n)
+                self.write({"kind": "unadmit", "nick": n, "why": "over the trial slots (one-time fix)"})
+        self.save_watch()
         self.live.save()
 
     def restore_once(self) -> None:
@@ -1645,6 +1669,7 @@ class Copycat:
         earn = self.live.earn_back_open(now) if self.live is not None else {}
         if self.live is not None:
             self.restore_once()
+            self.fix_slots_once()
             self.real_budget_check(now)
             stops.update(self.live.benched())
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats,
@@ -1661,7 +1686,7 @@ class Copycat:
             eb = a.get("earn_back")
             if (self.live is not None and eb and a["nick"] in earn and eb["n"] >= EARN_N and eb["events"] >= EARN_EVENTS
                     and (eb["score"] or 0) >= EARN_SCORE and (eb["c"] or 0) > 0
-                    and sum(1 for x in self.on_real().values() if x.get("tier") != "full") < TRIAL_SLOTS):
+                    and sum(1 for x in self.on_real().values() if not x.get("promoted")) < TRIAL_SLOTS):
                 self.live.unbench(a["nick"], now)
                 self.lag_told.discard(a["nick"])
                 self.on_real()[a["nick"]] = {"at": round(now), "tier": "trial", "score": eb["score"],

@@ -613,3 +613,25 @@ def test_admission_score_sets_budget_and_full_needs_real_promotion(tmp_path):
     lv.state["on_real"]["t1"]["promoted"] = 5                 # earned full on real money: paper can't undo it
     cc.judge({"nick": "t1", "verdict": "passes", "score": 75.0, "settled": 62, "fills": 92, "grade": "C"})
     assert lv.state["on_real"]["t1"]["tier"] == "full" and lv.state["on_real"]["t1"]["budget"] == 5.0
+
+
+def test_fix_slots_once_trims_extra_untraded_trials_and_restores_history(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    cc.watch["gone"] = {"pnl": None, "since": 999, "src": "scout"}
+    lv.state["on_real"] = {"o": {"tier": "full", "promoted": 5, "at": 1},
+                           **{f"t{i}": {"tier": "trial", "at": i} for i in range(1, 6)}}
+    lv.state["positions"] = {"KXA-1": {"nick": "t5", "n": 1, "cost": 0.5, "ts": 10}}   # t5 has real money in play
+    cc.fix_slots_once()
+    assert sorted(lv.state["on_real"]) == ["o", "t1", "t2", "t3", "t5"]   # newest untraded trial (t4) dropped
+    assert cc.watch["gone"]["since"] == 0
+    lv.state["on_real"]["t9"] = {"tier": "trial", "at": 9}
+    cc.fix_slots_once()                                                    # one time only
+    assert "t9" in lv.state["on_real"]
+
+
+def test_rewatch_keeps_history_window(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    cc.judge({"nick": "back", "verdict": "ready", "score": 78.0, "settled": 30, "fills": 40, "grade": "C+"})
+    assert cc.watch["back"]["since"] == 0
