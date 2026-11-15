@@ -469,3 +469,18 @@ def test_first_real_copy_push_once_per_trader_ever(tmp_path):
                           alert=lambda t, b: pushes.append((t, b)))     # restart
     run(cc2, "d", "KXD-1")
     assert len(pushes) == 1 and lv.state["first_told"] == ["oldie", "sharp"]
+
+
+def test_score_80_does_not_use_a_trial_slot(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    lv.state["on_real"] = {f"t{i}": {"tier": "trial", "budget": 1.0} for i in range(1, 5)}
+    lv.state["on_real"]["t1"]["budget"] = 5.0
+    cc.judge({"nick": "t1", "verdict": "passes", "score": 81.0, "settled": 59, "fills": 90, "grade": "B-"})
+    assert lv.state["on_real"]["t1"]["tier"] == "full"                 # upgraded: slot freed
+    a = {"nick": "t5", "verdict": "ready", "score": 78.0, "settled": 25, "fills": 30, "grade": "C+"}
+    cc.judge(a)
+    assert lv.state["on_real"]["t5"]["tier"] == "trial" and a["verdict"] == "passes"
+    b = {"nick": "full", "verdict": "ready", "score": 80.5, "settled": 40, "fills": 60, "grade": "B-"}
+    cc.judge(b)                                                        # slots full, but a full-bar score gets in
+    assert lv.state["on_real"]["full"]["tier"] == "full" and b["verdict"] == "passes"
