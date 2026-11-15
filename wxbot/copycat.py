@@ -571,8 +571,27 @@ CAT_MIN = 15                # category grades (Nov 14): a passing account is not
                             # category where its 15+ settled paper copies there are clearly negative (even the
                             # optimistic 95% bound < 0). Unlocking categories for non-passing accounts tested noisy
                             # out of sample on 3.7 days of data (sign flipped between splits): revisit ~Nov 28.
-REAL_MIN = 20               # real-money check: after 20 settled real copies, back to paper if real trails paper
-REAL_GAP_C = 3.0            # (same trades) by more than 3c/contract, or real is clearly negative
+REAL_MIN = 20               # real-money check: after 20 settled real copies, back to paper if real money is
+REAL_GAP_C = 3.0            # clearly negative (the real-vs-paper gap, 3c, is shown but no longer benches: Nov 15)
+
+# ---- two stages (Alex, Nov 15: "how are we ever gonna find people that make us money if we never let anyone
+# try"): an easier TRIAL bar gets a trader onto real money with a small $ budget; once on real money, OUR REAL
+# P&L decides. Paper no longer drops, pauses (slump) or category-blocks a trader on real money; its paper score
+# only sets how much real loss it may take (the budget). Replay Nov 11-15 (8,937 buyable event-level copies):
+# nothing on paper predicted the next copies, so trials cost about the average copy (-3c/contract), roughly
+# -$0.35/day with 4 slots; every dollar is inside the per-trader limit and the $8 Copycat halt.
+TRIAL_SETTLED = 20          # trial bar: 20+ counted copies ...
+TRIAL_EVENTS = 15           # ... in 15+ different events ...
+TRIAL_SCORE = 77.5          # ... and a score of 77.5+ (expected -1c or better; at 20 events that needs ~+16c raw)
+TRIAL_SLOTS = 4             # at most 4 trial traders (admitted below COPY_SCORE) on real money at once
+RESTORE = ("olekbannick7", "DocDahmer")   # Nov 15: cleared for real money, then dropped only by paper (one-time)
+
+
+def real_budget(score: float | None) -> float:
+    """$ of real loss a trader on real money may take before it goes back to paper: $1 at the trial bar
+    (77.5), rising linearly to $5 at 80+ (the full bar). Real profit it has banked for us is added on top
+    by the live rails ("earned room"), and the per-trader hard limit still caps it."""
+    return round(max(1.0, min(5.0, 1.0 + 1.6 * ((score or 0) - TRIAL_SCORE))), 2)
 
 
 def cat_grades(trades: list[dict], cats: dict | None) -> dict:
@@ -631,10 +650,12 @@ def cat_breakdown(trades: list[dict], cats: dict | None, grades: dict) -> dict:
 
 def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: float,
                  account_stops: dict | None = None, notes: dict | None = None, cats: dict | None = None,
-                 earn_since: dict | None = None, real_c: dict | None = None) -> dict:
+                 earn_since: dict | None = None, real_c: dict | None = None, on_real: dict | None = None) -> dict:
     """earn_since: {nick: bench time} for real-money-benched accounts that may earn back (paper
     copies settled since then are scored into a["earn_back"]). real_c: {trade id: real c/contract} for
-    settled real copies (they replace the paper result and count double in the grade)."""
+    settled real copies (they replace the paper result and count double in the grade). on_real: {nick: {...}}
+    traders admitted to real money (two stages, Nov 15): they stay "passes" whatever paper says, with no paper
+    category blocks, until their real P&L uses up real_budget (checked by Copycat.update_status)."""
     g = grade(rows, results)
     accounts = []
     paper_c = {}
@@ -674,18 +695,28 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         else:
             earn = None
         paper_c.update({t["tid"]: t["c"] for t in o.get("trades") or [] if t.get("c") is not None})
-        if (account_stops or {}).get(nick) and due:
+        admitted = nick in (on_real or {})
+        trial_ok = (len(settle_all) >= TRIAL_SETTLED and n_ev >= TRIAL_EVENTS and score is not None
+                    and score >= TRIAL_SCORE)
+        if (account_stops or {}).get(nick) and (due or admitted):
             verdict = "benched"                   # its own real-money loss stop, or the boss
+        elif admitted:
+            verdict = "passes"                    # on real money: real P&L decides from here, not paper
+        elif not due and trial_ok:
+            verdict = "ready"                     # clears the trial bar: admitted when a trial slot is free
         elif not due:
             verdict = "watching"
         elif copyable and rmean is not None and rmean >= -leeway:
             verdict = "passes"
         elif copyable:
             verdict = "slump"                     # good record, recent run below its leeway
+        elif trial_ok:
+            verdict = "ready"
         elif score is not None and score >= COPY_SCORE:
             verdict = "watching"                  # good score but too few different events yet: not a fail
         else:
             verdict = "fails"
+        blocked = [] if admitted else sorted(k for k, v in cg.items() if v["blocked"])
         accounts.append({"nick": nick, "watched": nick in watch, **(watch.get(nick) or {}),
                          "fills": n, "settled": len(settle_all), "window": len(window), "days": round(days, 1),
                          "lag_s": round(st.median(o["lag"]), 1) if n else None,
@@ -693,13 +724,18 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "settle_c": settle, "settle_low_c": settle_low, "verdict": verdict,
                          "grade": gl, "score": score, "events": n_ev, "edge_c": edge, "edge_sd": edge_sd,
                          "real_events": sum(1 for _, w in ev_acct if w > 1), "banked": round(banked, 2), "leeway_c": round(leeway, 1),
-                         "size": size_for(score, len(settle_all)) if verdict == "passes" else 0,
+                         "size": max(1, size_for(score, len(settle_all))) if verdict == "passes" else 0,
                          "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None,
-                         "earn_back": earn, "cat_grades": cg, "blocked_cats": sorted(k for k, v in cg.items() if v["blocked"])})
+                         "earn_back": earn, "cat_grades": cg, "blocked_cats": blocked,
+                         "on_real": (on_real or {}).get(nick), "real_budget": real_budget(score)})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
     return {"generated": datetime.fromtimestamp(now, ET).strftime("%Y-%m-%d %H:%M ET"),
             "mode": "watch-only", "prior": prior,
-            "rule": f"judged once it has {GO_LIVE_SETTLED}+ counted (buyable, settled) copies in {MIN_EVENTS}+ different events. "
+            "rule": f"Two stages (Nov 15). Real money: full bar {GO_LIVE_SETTLED}+ counted copies in {MIN_EVENTS}+ events at score "
+            f"{COPY_SCORE:.0f}+, or trial bar {TRIAL_SETTLED}+ in {TRIAL_EVENTS}+ events at {TRIAL_SCORE}+ ({TRIAL_SLOTS} trial slots). "
+            "Once on real money only real P&L decides: back to paper when real losses use up its budget "
+            "($1 at 77.5 up to $5 at 80+, plus real profit banked). "
+            f"Paper grade: judged once it has {GO_LIVE_SETTLED}+ counted (buyable, settled) copies in {MIN_EVENTS}+ different events. "
             "Score = 80 + 2.5 x expected profit per copy (c/contract after fees): every trader starts at what copying "
             f"earns on average ({prior['mu']:+.1f}c now) and only its own counted copies move it, one credit per event, "
             "our real-money results counting double. Copied at 80+ (expected profit above 0) while its "
@@ -744,11 +780,9 @@ def add_real(status: dict, state: dict | None) -> None:
             a["size"] = 1                     # bigger than 1 contract only once real money confirms it
         if len(real_c) >= REAL_MIN and a["verdict"] == "passes":
             hi = m + (m - lo)
-            gap_bad = gap is not None and gap < -REAL_GAP_C
-            if gap_bad or hi < 0:
+            if hi < 0:                        # real money decides (Nov 15): a paper gap alone no longer benches
                 a["verdict"], a["size"] = "real-lag", 0
-                a["real"]["why"] = (f"real trails paper by {-gap:.1f}c/contract" if gap is not None and gap < -REAL_GAP_C
-                                    else f"real money clearly losing ({m:+.1f}c/contract over {len(real_c)})")
+                a["real"]["why"] = f"real money clearly losing ({m:+.1f}c/contract over {len(real_c)})"
 
 
 class Copycat:
@@ -914,6 +948,8 @@ class Copycat:
         if v is None:
             return
         v.pop("retest_at", None)
+        if self.live is not None and self.admit(a):
+            return                                # on real money: paper no longer strikes or drops it
         due_at = v.get("retest_settled") or GO_LIVE_SETTLED
         if a["verdict"] == "passes" and v.get("fails_in_row"):
             v["fails_in_row"], v["retest_settled"] = 0, None
@@ -929,6 +965,67 @@ class Copycat:
             self.save_watch()
         a["chances_left"] = TEST_CHANCES - (v.get("fails_in_row") or 0)
         a["retest_at"] = v.get("retest_settled")
+
+    def on_real(self) -> dict:
+        """Traders admitted to real money (two stages, Nov 15), kept in the live state file."""
+        return self.live.state.setdefault("on_real", {}) if self.live is not None else {}
+
+    def admit(self, a: dict) -> bool:
+        """Admits a trader that clears the full bar ("passes") or the trial bar ("ready", while a trial slot
+        is free). Returns True when the trader is on real money (then real P&L, not paper, decides)."""
+        on, nick, now = self.on_real(), a["nick"], self.clock()
+        if nick in on:
+            on[nick]["budget"] = max(on[nick].get("budget") or 1.0, real_budget(a.get("score")))  # paper only adds leeway
+            a["on_real"] = on[nick]
+            return True
+        if a["verdict"] == "ready":
+            if sum(1 for x in on.values() if x.get("tier") != "full") >= TRIAL_SLOTS:
+                return False                      # waits for a free trial slot
+            tier = "trial"
+        elif a["verdict"] == "passes":
+            tier = "full"
+        else:
+            return False
+        on[nick] = {"at": round(now), "tier": tier, "score": a.get("score"), "budget": real_budget(a.get("score"))}
+        self.live.save()
+        self.write({"kind": "admit", "nick": nick, **on[nick]})
+        a.update(verdict="passes", size=max(1, a.get("size") or 0), on_real=on[nick], blocked_cats=[])
+        return True
+
+    def real_budget_check(self, now: float) -> None:
+        """Real money decides: a trader whose real P&L (since it last came on) has used up its budget goes
+        back to paper (the live bench, with the usual earn-back). Benched traders leave the real list."""
+        on, benched = self.on_real(), self.live.benched()
+        for nick in list(on):
+            if nick in benched:
+                on.pop(nick)
+                continue
+            pnl, b = self.live.state["pnl"].get(nick, 0.0), on[nick].get("budget") or 1.0
+            if pnl <= -b:
+                on.pop(nick)
+                self.live.bench(nick, f"real budget used: lost ${-pnl:.2f} of ${b:.2f}", now)
+                self.alert("Copycat: back to paper", f"{nick}: real copies lost ${-pnl:.2f}, its ${b:.2f} budget. "
+                           f"Paper copies continue; {self.live.earn_back_note(nick)}.")
+        self.live.save()
+
+    def restore_once(self) -> None:
+        """One-time (Nov 15): traders that had cleared real money and were then dropped only by the paper
+        test come back on real money, with real P&L deciding (Alex: don't stop people making us money)."""
+        st_ = self.live.state
+        if st_.get("restored_nov15"):
+            return
+        st_["restored_nov15"] = True
+        for nick in RESTORE:
+            d = self.dropped.get(nick)
+            if not d or not str(d.get("reason", "")).startswith("failed its paper test"):
+                continue
+            self.dropped.pop(nick)
+            self.watch[nick] = {"pnl": None, "since": 0, "checked": self.clock(), "src": "scout"}   # kept across watch rebuilds
+            self.on_real()[nick] = {"at": round(self.clock()), "tier": "trial", "score": d.get("score"),
+                                    "budget": real_budget(d.get("score")), "restored": True}
+            self.write({"kind": "admit", "nick": nick, "restored": True})
+        self.save_watch()
+        self.live.save()
 
     def drop(self, n: str, reason: str, **extra) -> None:
         """Stops watching an account (no polls, snapshots or copies) for DROP_DAYS."""
@@ -949,7 +1046,7 @@ class Copycat:
         for n in old[:RECHECK_PER_SCOUT]:
             self.tick()
             v = self.watch.get(n)
-            if v is None:                         # dropped by the status update meanwhile
+            if v is None or n in self.on_real():  # dropped meanwhile; or on real money (real P&L decides)
                 continue
             try:
                 m = self.get(f"{SOCIAL}/profile/metrics", nickname=n).get("metrics") or {}
@@ -1425,8 +1522,13 @@ class Copycat:
             stops.update({k: "boss: " + v["reason"] for k, v in self.boss.benches(now).items()})
             notes = dict(self.boss.state["notes"])
         earn = self.live.earn_back_open(now) if self.live is not None else {}
+        if self.live is not None:
+            self.restore_once()
+            self.real_budget_check(now)
+            stops.update(self.live.benched())
         status = build_status(rows, self.results, self.watch, now, account_stops=stops, notes=notes, cats=self.cats,
-                              earn_since=earn, real_c=real_results(self.live.state if self.live else None))
+                              earn_since=earn, real_c=real_results(self.live.state if self.live else None),
+                              on_real=self.on_real())
         add_real(status, self.live.state if self.live else None)
         for a in status["accounts"]:
             if a["verdict"] == "real-lag" and a["nick"] not in self.lag_told:

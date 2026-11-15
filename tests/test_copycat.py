@@ -549,7 +549,10 @@ def test_needs_50_settled_before_real(tmp_path):
                   {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
     few = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(49)}       # 160 seen, 49 settled
     a = copycat.build_status(rows_, few, {"good": {}}, now=2000.0)["accounts"][0]
-    assert a["fills"] == 160 and a["settled"] == 49 and a["verdict"] == "watching"
+    assert a["fills"] == 160 and a["settled"] == 49 and a["verdict"] == "ready"    # clears the trial bar only
+    few = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(19)}
+    a = copycat.build_status(rows_, few, {"good": {}}, now=2000.0)["accounts"][0]
+    assert a["verdict"] == "watching"                                             # under 20: not even a trial
     more = {f"T{i}": ("yes" if i % 10 < 8 else "no") for i in range(50)}
     a = copycat.build_status(rows_, more, {"good": {}}, now=2000.0)["accounts"][0]
     assert a["verdict"] == "passes"

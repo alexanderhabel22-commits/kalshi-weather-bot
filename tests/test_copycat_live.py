@@ -338,3 +338,75 @@ def test_earn_back_and_second_bench_is_final(tmp_path):
     lv.check_stops(5000.0 + 86400)
     assert "ace" in lv.benched() and lv.earn_back_open(5000.0 + 86400) == {}
     assert lv.earn_back_open(5000.0 + 86400 + EARN_FINAL_S + 1) == {"ace": 5000.0 + 86400}
+
+
+# ---- two stages (Nov 15): trial bar onto real money, then real P&L decides
+def _status_cc(tmp_path, lv):
+    cc = copycat.Copycat(tmp_path, clock=lambda: 1000.0, req_gap=0, live=lv)
+    cc.watch = {n: {} for n in ("t1", "t2", "t3", "t4", "t5", "full")}
+    return cc
+
+
+def test_trial_bar_admits_up_to_slots_and_paper_never_drops(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    accts = [{"nick": f"t{i}", "verdict": "ready", "score": 78.0, "settled": 25, "fills": 30, "grade": "C+"}
+             for i in range(1, 6)] + [{"nick": "full", "verdict": "passes", "score": 81.0, "settled": 60,
+                                       "fills": 80, "grade": "B-", "size": 1}]
+    for a in accts:
+        cc.judge(a)
+    on = lv.state["on_real"]
+    assert sorted(on) == ["full", "t1", "t2", "t3", "t4"]          # 4 trial slots; the full bar is not limited
+    assert on["t1"]["tier"] == "trial" and on["t1"]["budget"] == 1.8 and on["full"]["budget"] == 5.0
+    assert accts[0]["verdict"] == "passes" and accts[4]["verdict"] == "ready"
+    # paper turns bad: an admitted trader gets no strike and is never dropped by paper
+    bad = {"nick": "t1", "verdict": "fails", "score": 60.0, "settled": 200, "fills": 300, "grade": "F"}
+    for _ in range(5):
+        cc.judge(bad)
+    assert "t1" not in cc.dropped and bad["verdict"] == "fails" and bad["on_real"]["budget"] == 1.8
+    # its real budget also caps what it can have at risk
+    assert lv.account_limit("t1") == 1.8 and lv.account_limit("nobody") == 5.0
+
+
+def test_admitted_trader_stays_live_in_status_without_category_blocks():
+    rows_, res = [], {}
+    for i in range(60):
+        tid = f"x{i}"
+        rows_ += [{"kind": "fill", "trade_id": tid, "nick": "ace", "ticker": f"KXS-{i}", "side": "yes",
+                   "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i, "et": "x"},
+                  {"kind": "snap", "trade_id": tid, "ticker": f"KXS-{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
+        res[f"KXS-{i}"] = "no"                                          # loses every paper copy
+    cats = {"KXS": "Sports"}
+    a = copycat.build_status(rows_, res, {"ace": {}}, now=2000.0, cats=cats)["accounts"][0]
+    assert a["verdict"] == "fails" and a["blocked_cats"] == ["Sports"]
+    on = {"ace": {"tier": "trial", "budget": 1.0}}
+    a = copycat.build_status(rows_, res, {"ace": {}}, now=2000.0, cats=cats, on_real=on)["accounts"][0]
+    assert a["verdict"] == "passes" and a["blocked_cats"] == [] and a["size"] == 1
+    a = copycat.build_status(rows_, res, {"ace": {}}, now=2000.0, cats=cats, on_real=on,
+                             account_stops={"ace": "real budget used"})["accounts"][0]
+    assert a["verdict"] == "benched"
+
+
+def test_real_budget_sends_back_to_paper(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    lv.state["on_real"] = {"t1": {"tier": "trial", "budget": 1.0}, "full": {"tier": "full", "budget": 5.0}}
+    lv.state["pnl"] = {"t1": -1.02, "full": -3.0}
+    cc.real_budget_check(1000.0)
+    assert "t1" in lv.benched() and "t1" not in lv.state["on_real"]
+    assert "full" in lv.state["on_real"] and "full" not in lv.benched()
+    assert copycat.real_budget(77.5) == 1.0 and copycat.real_budget(80) == 5.0 and copycat.real_budget(70) == 1.0
+
+
+def test_restore_once_brings_back_paper_dropped_traders(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 1000.0, req_gap=0, live=lv)
+    cc.dropped = {"olekbannick7": {"at": 900, "reason": "failed its paper test 3 times", "score": 76.5},
+                  "DocDahmer": {"at": 900, "reason": "long-run loser"}, "other": {"at": 900, "reason": "failed its paper test 3 times"}}
+    cc.restore_once()
+    assert "olekbannick7" in cc.watch and "olekbannick7" not in cc.dropped
+    assert lv.state["on_real"]["olekbannick7"]["restored"] and "DocDahmer" in cc.dropped and "other" in cc.dropped
+    lv.state["on_real"].clear()
+    cc.dropped["olekbannick7"] = {"at": 950, "reason": "failed its paper test 3 times"}
+    cc.restore_once()                                                  # one time only
+    assert "olekbannick7" in cc.dropped
