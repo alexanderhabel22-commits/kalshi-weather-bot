@@ -410,3 +410,30 @@ def test_restore_once_brings_back_paper_dropped_traders(tmp_path):
     cc.dropped["olekbannick7"] = {"at": 950, "reason": "failed its paper test 3 times"}
     cc.restore_once()                                                  # one time only
     assert "olekbannick7" in cc.dropped
+
+
+def test_first_real_copy_push_once_per_trader_ever(tmp_path):
+    from datetime import datetime, timezone
+
+    from tests.test_copycat import FakeSession, trade
+    now = datetime(2026, 11, 10, 20, 0, 15, tzinfo=timezone.utc).timestamp()
+    pushes = []
+    lv, _ = mk(tmp_path)
+    lv.state["pnl"] = {"oldie": 0.5}                   # copied before this existed: already told
+
+    def run(cc, tid, ticker, nick="sharp"):
+        t = dict(trade(tid, taker=nick, px="0.61", t="2026-11-10T20:00:05Z"), ticker=ticker)
+        cc.hot, cc.acct = {nick}, {nick: {"nick": nick, "verdict": "passes", "size": 1}}
+        cc.based.add(nick)
+        cc.ingest(nick, [t], now, src="feed")
+
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now, req_gap=0, live=lv,
+                         alert=lambda t, b: pushes.append((t, b)))
+    run(cc, "a", "KXA-1")
+    run(cc, "b", "KXB-1")                               # second copy of the same trader: no push
+    run(cc, "c", "KXC-1", nick="oldie")
+    assert len(pushes) == 1 and "sharp" in pushes[0][1] and "KXA-1" in pushes[0][1] and "65c" in pushes[0][1]
+    cc2 = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: now, req_gap=0, live=lv,
+                          alert=lambda t, b: pushes.append((t, b)))     # restart
+    run(cc2, "d", "KXD-1")
+    assert len(pushes) == 1 and lv.state["first_told"] == ["oldie", "sharp"]

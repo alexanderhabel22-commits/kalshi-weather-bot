@@ -814,7 +814,6 @@ class Copycat:
         self.live = live                         # copycat_live.Live (real money) or None
         self.boss = boss                         # copycat_boss.Boss or None
         self.alert = alert or (lambda t, b: None)
-        self.copied_once: set[str] = set()
         self.cats: dict[str, str | None] = {}    # series -> Kalshi category
         self.cats_next = 0.0                     # next full refresh of the series -> category map
         self.lag_told: set[str] = set()           # accounts already pushed as "back to paper" (real-lag)
@@ -1441,11 +1440,25 @@ class Copycat:
             what = f"error: {str(exc)[:120]}"
         self.write({"kind": "copy", "nick": row["nick"], "ticker": row.get("ticker"),
                     "trade_id": row.get("trade_id"), "what": what})
-        if what == "copied" and row["nick"] not in self.copied_once:
-            self.copied_once.add(row["nick"])
-            p = self.live.state["positions"].get(row.get("ticker")) or {}
-            self.alert("Copycat: first real copy", f"Copied {row['nick']}: {p.get('n')} x {row.get('side')} "
-                       f"{row.get('ticker')} for ${p.get('cost')}.")
+        if what == "copied":
+            # one push per trader EVER (Alex, Nov 15): remembered in live_state.json so restarts don't repeat it;
+            # traders we had already copied before this was added count as told
+            st_ = self.live.state
+            told = st_.get("first_told")
+            if told is None:
+                told = st_["first_told"] = sorted({p.get("nick") for t, p in st_["positions"].items()
+                                                   if t != row.get("ticker") and p.get("nick")}
+                                                  | set(st_.get("pnl") or {}))
+            if row["nick"] not in told:
+                told.append(row["nick"])
+                self.live.save()
+                p = st_["positions"].get(row.get("ticker")) or {}
+                n = p.get("n") or 0
+                tier = ((st_.get("on_real") or {}).get(row["nick"]) or {}).get("tier") or "full"
+                px = f"{round(100 * (p.get('cost') or 0) / n)}c" if n else "?"
+                self.alert("Copycat: first real copy of a new trader",
+                           f"{row['nick']} ({tier}): bought {n:g} x {str(row.get('side')).upper()} {row.get('ticker')} "
+                           f"at {px} incl. fee (${p.get('cost')}).")
 
     def run_snaps(self, now: float) -> None:
         due = [x for x in self.snaps if x[0] <= now]
