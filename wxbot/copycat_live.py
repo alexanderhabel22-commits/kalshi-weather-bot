@@ -132,7 +132,11 @@ class Live:
         lims = [x for x in (c["account_stop_pct"] * b if b else None, _f(c.get("account_stop_usd"))) if x is not None]
         if not lims:
             return None
-        return min(lims) + (max(0.0, self.state["pnl"].get(nick, 0.0)) if nick else 0.0)
+        base = min(lims)
+        b = ((self.state.get("on_real") or {}).get(nick) or {}).get("budget") if nick else None
+        if b:
+            base = min(base, float(b))           # its real budget (two stages, Nov 15): $1 trial ... $5 full
+        return base + (max(0.0, self.state["pnl"].get(nick, 0.0)) if nick else 0.0)
 
     def at_risk(self, nick: str) -> float:
         """Settled real losses on this account plus the cost of its open real copies."""

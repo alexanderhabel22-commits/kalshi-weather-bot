@@ -408,6 +408,17 @@ IP without a token). It never places, changes or cancels anything and needs no s
   inside their $ limit (PrettyFlacko42: Alex's one $5-capped real test). Audit report:
   Library analysis/copycat-audit/RESULTS.md: on 3.7 days of data the old grade did not predict
   (score 80+ accounts went on to lose 7c/contract); re-test ~Nov 28.
+  TWO STAGES (Alex, Nov 15: "how are we ever gonna find people that make us money if we never let
+  anyone try"): full bar unchanged (50 counted copies, 30+ events, score 80+); TRIAL bar 20 counted
+  copies in 15+ events at score 77.5+ (`TRIAL_*`), at most 4 trial traders on real money at once.
+  Admitted traders live in live_state.json `on_real` {nick: tier, budget}. From then on REAL P&L
+  decides: paper no longer strikes, drops, slump-pauses or category-blocks them; they go back to paper
+  (live bench, usual earn-back) when real losses reach their budget (`real_budget`: $1 at 77.5 rising
+  to $5 at 80+, raised if paper improves, never lowered; real profit banked adds room; the budget also
+  caps their at-risk). The real-vs-paper gap no longer benches (only "real clearly losing" does).
+  One-time restore of olekbannick7 and DocDahmer (dropped by paper after clearing real money).
+  Replay Nov 11-15: paper grades still don't predict, so expect trials to cost about the average copy
+  (-3c/contract, roughly -$0.35/day); all inside the $8 Copycat halt. Library analysis/copycat-two-stage/.
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
   account's new fill is bought immediately-or-cancel at their price + 2c max, 5-95c, within 60 s of
   their trade, one copy per market, never a market we already hold (any bot) and never the 15-min
