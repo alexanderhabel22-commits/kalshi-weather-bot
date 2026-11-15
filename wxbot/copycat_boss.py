@@ -93,6 +93,10 @@ REVIEW_SCHEMA = {
                            "reason": {"type": "string"}}}}}}
 
 
+PROMO_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["note"],
+                "properties": {"note": {"type": "string"}}}
+
+
 def candidates(status: dict, live: dict | None) -> list[dict]:
     real = set(((live or {}).get("pnl") or {}))
     on = lambda a: a["nick"] in real or bool(a.get("on_real")) or (a.get("real_events") or 0) > 0  # noqa: E731
@@ -218,6 +222,20 @@ class Boss:
                 "reviews_today": self.state.get("deep_n"), "last_ok": self.state.get("ok_at"),
                 "last_error": self.state.get("last_error"), "spend": self.budget.summary(),
                 "model": self.model, "benches": {}, "calls": self.state["calls"][-400:]}
+
+    def review_promotion(self, nick: str, rec: dict, acct: dict) -> str | None:
+        """Short context for the promotion push when plain code moves a trial trader to full on real
+        results (Copycat thread, PR #296). Context only: no veto. One Haiku call, through the daily cap."""
+        if self.client is None and self._ask is None:
+            return None
+        one = digest({"accounts": [{**acct, "on_real": acct.get("on_real") or {"tier": "trial"}}],
+                      "generated": acct.get("generated")}, [], None)
+        text = (f"PROMOTION NOTE. Plain code just promoted {nick} from trial to full real money on its real "
+                f"results: {rec.get('copies')} real copies in {rec.get('events')} events, ${rec.get('pnl')}, "
+                f"{rec.get('c')}c/contract ({rec.get('shrunk_c')}c after shrinking). In max 40 words for Alex: "
+                "is this likely skill or luck, how it makes money, and one thing to watch. No veto.\n" + one)
+        r = self.ask(self.model, text, PROMO_SCHEMA, "low", 1500)
+        return (r.get("note") or "").strip()[:300] or None
 
     def step(self, status: dict, rows: list[dict], live: dict | None) -> bool:
         """Runs the daily review when due. Returns True when it logged new calls."""

@@ -541,3 +541,13 @@ def test_trial_that_makes_nothing_ends_and_frees_slot(tmp_path):
     assert "young" in lv.state["on_real"]
     assert lv.earn_back_open(1000.0).get("flat") == 1000.0      # can earn its way back (trial bar on fresh copies)
     assert copycat.EARN_N == 20 and copycat.EARN_EVENTS == 15 and copycat.EARN_SCORE == 77.5
+
+
+def test_boss_promotion_note_is_capped_context(tmp_path):
+    seen = []
+    b = Boss(tmp_path, ask=lambda m, x, s: (seen.append(x), {"note": "Looks like skill on NBA favorites. " * 20})[1])
+    acct = boss_status()["accounts"][0]
+    note = b.review_promotion("ace", {"copies": 22, "events": 16, "pnl": 1.2, "c": 5.4, "shrunk_c": 1.1}, acct)
+    assert len(note) <= 300 and "PROMOTION NOTE" in seen[0] and "- ace:" in seen[0]
+    assert b.budget.state["calls"] == 1                      # through the daily cap
+    assert Boss(tmp_path / "none" if (tmp_path / "none").mkdir() is None else None).review_promotion("ace", {}, acct) is None
