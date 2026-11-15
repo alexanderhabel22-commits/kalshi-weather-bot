@@ -7132,6 +7132,24 @@
    "status": "live",
    "title": "US-China trade truce extension",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-15T18:30:28+00:00",
+   "example": "KXVANHOLLENBACKERS-27JAN03-TDUC",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-13T16:30:31+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-15T18:30:28+00:00",
+   "median_spread": 0.66,
+   "n_open": 31,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (66c), so makers haven't arrived yet.",
+   "series": "KXVANHOLLENBACKERS",
+   "status": "live",
+   "title": "Which senators will back Van Hollen for Senate Democratic leader?",
+   "volume": 17617.07
   }
  ],
  "known": [
@@ -18696,6 +18714,7 @@
   "KXRETIREMM",
   "KXRETIRENP",
   "KXRETIREPELOSI",
+  "KXRETIRESCALISE",
   "KXRETURNREREQ",
   "KXREVELSTOKEMAYOR",
   "KXREVETH",
@@ -19426,6 +19445,7 @@
   "KXSENATEWYR",
   "KXSENCONVICTHEGSETH",
   "KXSENDEMLEADRUN",
+  "KXSENDEMLEADVOTE",
   "KXSENDEMNO3",
   "KXSENDEMWHIP",
   "KXSENEGALIMF",
@@ -23584,7 +23604,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-15T18:00:28+00:00",
+ "last_check": "2026-11-15T18:30:28+00:00",
  "pending": {
   "KXAAAGASCDAK": {
    "category": "Economics",
@@ -25921,7 +25941,7 @@
   },
   "KXRAINDCOACHELLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-11T22:00:46+00:00",
    "frequency": "daily",
@@ -25937,6 +25957,15 @@
    "new_category": false,
    "series": "KXREDISTRICTBANHOUSE",
    "title": "House passage of a ban on mid-decade redistricting"
+  },
+  "KXRETIRESCALISE": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-15T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXRETIRESCALISE",
+   "title": "Steve Scalise Out"
   },
   "KXRICEAPPS": {
    "category": "Entertainment",
@@ -26054,6 +26083,15 @@
    "series": "KXSENATESUBPOENA",
    "title": "Senate committee subpoena votes"
   },
+  "KXSENDEMLEADVOTE": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-15T18:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXSENDEMLEADVOTE",
+   "title": "Will Senate Democrats vote on their leader before Dec 1?"
+  },
   "KXSFINANCECHAIR": {
    "category": "Politics",
    "checked": "2026-11-12T19:00:28+00:00",
@@ -26076,7 +26114,7 @@
   },
   "KXSNOWDAYSAUS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26086,7 +26124,7 @@
   },
   "KXSNOWDAYSBAL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26096,7 +26134,7 @@
   },
   "KXSNOWDAYSBOS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26106,7 +26144,7 @@
   },
   "KXSNOWDAYSCHI": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26116,7 +26154,7 @@
   },
   "KXSNOWDAYSCLE": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26126,7 +26164,7 @@
   },
   "KXSNOWDAYSCLT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26136,7 +26174,7 @@
   },
   "KXSNOWDAYSCVG": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26146,7 +26184,7 @@
   },
   "KXSNOWDAYSDC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26156,7 +26194,7 @@
   },
   "KXSNOWDAYSDEN": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26166,7 +26204,7 @@
   },
   "KXSNOWDAYSDFW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26176,7 +26214,7 @@
   },
   "KXSNOWDAYSDTW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26186,7 +26224,7 @@
   },
   "KXSNOWDAYSHOU": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26196,7 +26234,7 @@
   },
   "KXSNOWDAYSIND": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26206,7 +26244,7 @@
   },
   "KXSNOWDAYSKC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26216,7 +26254,7 @@
   },
   "KXSNOWDAYSMSP": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26226,7 +26264,7 @@
   },
   "KXSNOWDAYSNASH": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26236,7 +26274,7 @@
   },
   "KXSNOWDAYSNOLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26246,7 +26284,7 @@
   },
   "KXSNOWDAYSNYC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26256,7 +26294,7 @@
   },
   "KXSNOWDAYSPDX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26266,7 +26304,7 @@
   },
   "KXSNOWDAYSPHL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26276,7 +26314,7 @@
   },
   "KXSNOWDAYSPHX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26286,7 +26324,7 @@
   },
   "KXSNOWDAYSPIT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26296,7 +26334,7 @@
   },
   "KXSNOWDAYSSEA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-15T18:00:28+00:00",
+   "checked": "2026-11-15T18:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26760,15 +26798,6 @@
    "new_category": false,
    "series": "KXVANDYRATE",
    "title": "Vanderbilt Admissions Rate"
-  },
-  "KXVANHOLLENBACKERS": {
-   "category": "Politics",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-13T16:30:31+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXVANHOLLENBACKERS",
-   "title": "Which senators will back Van Hollen for Senate Democratic leader?"
   },
   "KXVASTATELEG": {
    "category": "Elections",
