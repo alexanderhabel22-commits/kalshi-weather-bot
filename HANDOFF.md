@@ -436,6 +436,11 @@ IP without a token). It never places, changes or cancels anything and needs no s
   freed); budget used up also ends it. Earn-back is now the TRIAL bar on fresh paper copies (20 / 15
   events / 77.5+, avg > 0, a free slot) -> trial with a fresh budget; second bench within 30 days = 30 days
   out. Promotion push carries an optional boss review (`Boss.review_promotion`, no veto until ~Dec 1).
+  SIZE (Alex OK Nov 15, decision card): size comes ONLY from real results (`size_step`): 2 contracts for a
+  full trader with 40+ settled real copies in 25+ events, real P&L >= +$2 and shrunk real edge >= +2c;
+  back to 1 when the last 40 real copies average < 0 or real P&L falls $3 below its peak (then needs a new
+  high). No 4-contract step (needs ~$500 bankroll + scale-up kit and Alex's OK). New admissions start at 1.
+  The live rails cut any copy to 1 contract when 2 would pass the pool, cash floor or trader limit.
   Replay Nov 11-15: paper grades still don't predict, so expect trials to cost about the average copy
   (-3c/contract, roughly -$0.35/day); all inside the $8 Copycat halt. Library analysis/copycat-two-stage/.
 - REAL record (`wxbot/copycat_live.py`, state `/var/lib/kalshi-copycat/live_state.json`): a passing
