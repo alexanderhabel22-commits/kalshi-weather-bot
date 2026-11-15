@@ -1011,9 +1011,14 @@ class Copycat:
         is free). Returns True when the trader is on real money (then real P&L, not paper, decides)."""
         on, nick, now = self.on_real(), a["nick"], self.clock()
         if nick in on:
-            on[nick]["budget"] = max(on[nick].get("budget") or 1.0, real_budget(a.get("score")))  # paper only adds leeway
-            if (a.get("score") or 0) >= COPY_SCORE:
-                on[nick]["tier"] = "full"         # scores like a full pass: frees its trial slot
+            if on[nick].get("promoted"):
+                on[nick].update(tier="full", budget=5.0)     # earned on real money: stays full
+            else:
+                # paper sets leeway from the CURRENT score: a brief tick to 80+ no longer locks in full and $5
+                full = (a.get("score") or 0) >= COPY_SCORE
+                # budget follows the current score ($1 at 77.5 up to $5 at 80+); below the bar it is $1, and
+                # paper still never drops it (only real losses using the budget do)
+                on[nick].update(tier="full" if full else "trial", budget=real_budget(a.get("score")))
             back = ((self.live.state.get("bench_log") or {}).get(nick) or {}).get("back_at") or 0
             rec = real_promotion([dict(p, ticker=t) for t, p in self.live.state["positions"].items()
                                   if p.get("nick") == nick and (p.get("ts") or 0) >= back])
