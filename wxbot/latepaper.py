@@ -34,9 +34,18 @@ log = logging.getLogger("wxbot")
 ORDERS = DATA_DIR / "paper_late.csv"
 FIELDS = ["id", "placed_at", "ticker", "event", "series", "city", "metric", "date", "bracket",
           "kind", "side", "price", "bid", "ask", "extreme", "current", "hours_left",
-          "close", "status", "touched", "through", "result", "pnl", "settled_at"]
+          "close", "status", "touched", "through", "result", "pnl", "settled_at", "trend"]
 DEFAULTS = {"hours_max": 12.0, "hours_min": 5.0, "min_spread": 0.04, "min_readings": 3,
-            "max_reading_age_hours": 2.0, "min_price": 0.03, "max_price": 0.97}
+            "max_reading_age_hours": 2.0, "min_price": 0.03, "max_price": 0.97,
+            # Nov 15 filters (research_wx/RESULTS_filters.md; Alex Nov 15 1:32 AM ET: "if a change
+            # clears the bar then implement it"). They only skip or delay orders, never add any.
+            # A skipped bracket can still be written at a later scan once it passes.
+            #  - highs "holds": wait while the temperature is still rising (up 1F+ over the
+            #    last hour, or unknown). Replay (20 cities) +0.5 -> +5.0c/ct Oct25-Aug26,
+            #    holdout Sep-Nov26 +2.2 -> +4.7c (difference +2.5c, 95% +0.5..+4.3).
+            #  - min_spread_by: per "metric/kind" minimum spread on top of min_spread.
+            "min_spread_by": {},
+            "wait_while_rising": ["high/holds"], "rise_f": 1.0, "trend_hours": 1.0}
 
 
 def load_orders() -> list[dict]:
@@ -68,9 +77,28 @@ def extreme_so_far(metric: str, obs, start: datetime, now: datetime, params: dic
     return (max(vals) if metric == "high" else min(vals)), vals[-1]
 
 
-def plan_orders(metric: str, markets: list[dict], extreme: float, params: dict) -> list[dict]:
-    """Paper orders for one event given the extreme recorded so far."""
+def trend_toward(metric: str, obs, now: datetime, params: dict) -> float | None:
+    """How far the temperature moved toward a new extreme over the last `trend_hours`
+    (highs: rise, lows: drop), in F. None when no precise reading sits near that time."""
+    pts = [o for o in (obs.temps if obs else []) if o.precise and o.time <= now]
+    if len(pts) < 2:
+        return None
+    back = now - timedelta(hours=float(params.get("trend_hours", 1.0)))
+    old = [o for o in pts if o.time <= back]
+    if not old or back - old[-1].time > timedelta(minutes=90):
+        return None
+    d = pts[-1].temp_f - old[-1].temp_f
+    return d if metric == "high" else -d
+
+
+def plan_orders(metric: str, markets: list[dict], extreme: float, params: dict,
+                trend: float | None = None) -> list[dict]:
+    """Paper orders for one event given the extreme recorded so far. `trend`: the last
+    hour's move toward a new extreme (trend_toward), used by wait_while_rising."""
     k = math.floor(extreme + 0.5)                      # whole degree the station is at
+    by_spread = {str(a): float(b) for a, b in (params.get("min_spread_by") or {}).items()}
+    waiting = {str(x) for x in (params.get("wait_while_rising") or [])}
+    rising = trend is None or trend >= float(params.get("rise_f", 1.0)) - 1e-9
     out = []
     for m in markets:
         br = kalshi.parse_bracket(m)
@@ -82,6 +110,11 @@ def plan_orders(metric: str, markets: list[dict], extreme: float, params: dict) 
         lo, hi = br
         holds = (lo is None or k >= lo) and (hi is None or k <= hi)
         need = (hi is not None and hi < k) if metric == "low" else (lo is not None and lo > k)
+        key = f"{metric}/{'need' if need else 'holds'}"
+        if (need or holds) and ask - bid < by_spread.get(key, 0.0) - 1e-9:
+            continue                                                # Nov 15 spread filter
+        if (need or holds) and key in waiting and rising:
+            continue                                                # wait: still heading for a new extreme
         if need:
             side, price = "no", round(1 - (ask - 0.01), 2)          # sell YES at ask - 1c
         elif holds:
@@ -114,7 +147,8 @@ def place(orders: list[dict], today: dict, now: datetime, params: dict | None = 
             continue
         ext, cur = got
         day = kalshi.event_date(ev)
-        for o in plan_orders(si.metric, ms, ext, P):
+        tr = trend_toward(si.metric, obs, now, P)
+        for o in plan_orders(si.metric, ms, ext, P, tr):
             oid = f"{o['ticker']}|{o['side']}"
             if oid in have:
                 continue
@@ -126,6 +160,7 @@ def place(orders: list[dict], today: dict, now: datetime, params: dict | None = 
                 "side": o["side"], "price": f"{o['price']:.2f}", "bid": f"{o['bid']:.2f}",
                 "ask": f"{o['ask']:.2f}", "extreme": f"{ext:.1f}", "current": f"{cur:.1f}",
                 "hours_left": f"{hours:.1f}", "close": min(closes).isoformat(timespec="seconds"),
+                "trend": "" if tr is None else f"{tr:.1f}",
                 "status": "open"})
             placed += 1
     return placed
