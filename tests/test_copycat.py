@@ -206,10 +206,9 @@ def test_rolling_window_drops_then_readmits(tmp_path):
     assert a["grade"] == "F" and a["score"] < 60 and a["verdict"] == "fails"
 
 
-def test_leeway_grows_with_banked_profit_and_score():
-    assert copycat.leeway_c(0) == 5 and copycat.leeway_c(-3) == 5
-    assert copycat.leeway_c(8) == 13 and copycat.leeway_c(100) == 20
-    assert copycat.leeway_c(100, 99) == 25 and copycat.leeway_c(0, 70) == 5
+def test_leeway_is_5c_plus_up_to_5c_for_a_high_score():
+    assert copycat.leeway_c() == 5 and copycat.leeway_c(70) == 5 and copycat.leeway_c(80) == 5
+    assert copycat.leeway_c(86) == 8 and copycat.leeway_c(99) == 10   # paper profit no longer adds leeway
 
 
 def test_score_letters():
@@ -413,7 +412,6 @@ def test_big_bets_by_new_accounts_logged_and_scored(tmp_path):
     assert [c[0].rsplit("/", 1)[-1] for c in s.calls[n:]] == ["KXTEST-1"]
 
 
-
 def test_big_anonymous_bets_logged_without_lookups(tmp_path):
     s = FakeSession()
     cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
@@ -425,7 +423,6 @@ def test_big_anonymous_bets_logged_without_lookups(tmp_path):
     assert len(w) == 1 and w[0]["anon"] and w[0]["usd"] == 2400 and not s.calls and not cc.whale_queue
     sm = copycat.whale_summary(w, {"KXTEST-1": "yes"}, 1_000_000.0)
     assert sm["anon_count"] == 1 and sm["anon"]["settled"] == 1 and sm["count"] == 0
-
 
 
 def test_full_feed_rolling_log(tmp_path):
@@ -451,7 +448,6 @@ def test_full_feed_rolling_log(tmp_path):
     assert [ln.split(",")[8] for ln in lines] == ["b1", "b2"] and "x y" in lines[1]
 
 
-
 def test_big_order_split_into_many_fills_counts_as_one_bet(tmp_path):
     fills = [dict(trade(f"s{i}", side="no", px="0.10", maker=f"m{i}"), count_fp="600.00") for i in range(4)]
     o = copycat.orders(fills)
@@ -464,7 +460,6 @@ def test_big_order_split_into_many_fills_counts_as_one_bet(tmp_path):
         cc.spot_whale(x, 1_000_000.0)
     w = [r for r in rows(tmp_path) if r.get("kind") == "whale"]
     assert len(w) == 1 and w[0]["anon"] and w[0]["usd"] == 2160 and w[0]["fills"] == 4   # $2,160 on NO at 90c
-
 
 
 def test_whale_rows_survive_load_rows(tmp_path):
@@ -650,31 +645,6 @@ def test_honest_grade_counts_games_once_and_needs_30_events():
     rows2, res2 = _acct_rows("real", 160, lambda i: f"KXG-G{i}-M", lambda i: i % 10 < 8)
     b = copycat.build_status(rows2, res2, {"real": {}}, now=2000.0)["accounts"][0]
     assert b["events"] == 150 and b["verdict"] == "passes" and b["size"] >= 1
-    # a kept account skips only the sample-size bar (8 games here): good score -> 1 contract, unless its own stop benched it
-    rows_, res = _acct_rows("lucky", 110, lambda i: f"KXG-G{i % 20}-M{i}", lambda i: (i % 20) % 10 < 9)
-    w = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0)["accounts"][0]
-    assert w["events"] == 20 and w["score"] >= copycat.COPY_SCORE and w["verdict"] == "watching"
-    k = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"})["accounts"][0]
-    assert k["verdict"] == "passes" and k["size"] == 1 and k["kept"]
-    k2 = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"},
-                              account_stops={"lucky": "own stop"})["accounts"][0]
-    assert k2["verdict"] == "benched" and k2["size"] == 0
-    # ...but a kept account with a losing record still goes back to paper (Alex, Nov 14)
-    rows3, res3 = _acct_rows("cold", 60, lambda i: f"KXG-G{i}-M", lambda i: i % 10 < 3)
-    c = copycat.build_status(rows3, res3, {"cold": {}}, now=2000.0, keep={"cold"})["accounts"][0]
-    assert c["kept"] and c["score"] < copycat.COPY_SCORE and c["verdict"] == "fails" and c["size"] == 0
-
-
-def test_kept_account_still_gets_real_lag_check():
-    rows_, res = _acct_rows("lucky", 110, lambda i: f"KXG-G{i % 20}-M{i}", lambda i: (i % 20) % 10 < 9)
-    pos = {f"p{i}": {"nick": "lucky", "n": 1, "cost": 0.6, "settled": 1.0, "pnl": -0.6, "trade_id": f"x{i}"}
-           for i in range(copycat.REAL_MIN)}
-    st_ = copycat.build_status(rows_, res, {"lucky": {}}, now=2000.0, keep={"lucky"})
-    copycat.add_real(st_, {"positions": pos, "pnl": {"lucky": -0.6 * copycat.REAL_MIN}})
-    a = st_["accounts"][0]
-    assert a["verdict"] == "real-lag" and a["size"] == 0
-
-
 def test_load_cats_fills_category_map_from_full_series_list(tmp_path):
     s = FakeSession()
     cc = copycat.Copycat(tmp_path, session=s, clock=lambda: 1_000_000.0, req_gap=0)
@@ -706,27 +676,15 @@ def test_add_real_counts_only_copies_since_coming_back():
     assert st_["accounts"][0]["verdict"] == "passes" and st_["accounts"][0]["real"]["settled"] == 0
 
 
-def test_keep_list_real_results_decide():
-    rows_ = _cat_rows(160, lambda i: f"T{i}")
-    res = {f"T{i}": ("yes" if i % 10 < 4 else "no") for i in range(160)}     # weak on paper: fails
-    def run(keep, pos, pnl):
-        st_ = copycat.build_status(rows_, res, {"good": {}}, now=2000.0, keep=keep)
-        copycat.add_real(st_, {"positions": pos, "pnl": {"good": pnl}})
-        return st_["accounts"][0]
-    assert run(set(), {}, 0.0)["verdict"] == "fails"                         # not kept: paper decides
-    a = run({"good"}, {}, 0.0)
-    assert a["verdict"] == "passes" and a["size"] == 1 and "0/20" in a["why_live"]
-    win = {f"T{i}": {"nick": "good", "side": "yes", "n": 1, "cost": 0.5, "settled": 1,
-                     "pnl": (0.5 if i % 2 else -0.5), "trade_id": f"t{i}"} for i in range(20)}
-    assert run({"good"}, win, 0.0)["verdict"] == "passes"                    # 20 real, break-even: stays
-    lose = {k: dict(v, pnl=-0.5) for k, v in win.items()}
-    assert run({"good"}, lose, -10.0)["verdict"] == "real-lag"               # clearly losing: back to paper
-    meh = {k: dict(v, pnl=(0.5 if i < 9 else -0.5)) for i, (k, v) in enumerate(win.items())}
-    assert run({"good"}, meh, -1.0)["verdict"] == "real-lag"                 # below break-even: paper
-
-
 def test_category_grade_ignores_unbuyable_copies():
     trades = ([{"ticker": f"KXNEAR15M-{i}", "c": -100.0, "ok": False} for i in range(30)]
               + [{"ticker": f"KXNEAR15M-x{i}", "c": (40.0 if i % 2 else -30.0), "ok": True} for i in range(20)])
     g = copycat.cat_grades(trades, {"KXNEAR15M": "Crypto"})["Crypto"]
     assert g["n"] == 20 and g["c"] == 5.0 and not g["blocked"]
+
+
+def test_earn_back_counts_events_like_the_entry_test():
+    rows_ = _cat_rows(160, lambda i: f"KXG-G{i % 10}-M{i}")       # 160 copies but only 10 events
+    res = {f"KXG-G{i % 10}-M{i}": ("yes" if i % 10 < 8 else "no") for i in range(160)}
+    a = copycat.build_status(rows_, res, {"good": {}}, now=2000.0, earn_since={"good": 0.0})["accounts"][0]
+    assert a["earn_back"]["n"] == 160 and a["earn_back"]["events"] == 10 < copycat.EARN_EVENTS

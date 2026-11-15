@@ -35,10 +35,10 @@ SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.j
 BANKROLL_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/bankroll.json"
 DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_stop_usd": 5.0, "total_stop_pct": 0.25, "total_stop_usd": 8.0, "cash_floor_usd": 10.0,
             "max_contracts": 3, "slip": 0.02, "max_lag_s": 60, "min_px": 0.05, "max_px": 0.95,
-            "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": [],
-            "keep": [], "keep_until": None}  # keep_until "YYYY-MM-DD" (ET): the keep list's real-results test expires     # accounts Alex keeps on real money whatever their score (inside their $ limit)
+            "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
 CONTROL_STALE_S = 600
 EARN_N = 50                 # earn-back: new settled paper copies needed since the bench
+EARN_EVENTS = 30            # ... in this many different events (the entry test again, on fresh copies; Nov 15)
 EARN_SCORE = 80.0           # ... at this score or better, with a positive average
 EARN_FINAL_S = 30 * 86400   # a second bench within 30 days of coming back is final for 30 days
 
@@ -276,7 +276,8 @@ class Live:
         fu = (self.state["bench_log"].get(nick) or {}).get("final_until")
         if fu:
             return "second bench within 30 days, so no earn-back for 30 days"
-        return f"it can earn real money back after {EARN_N} new settled paper copies at score {EARN_SCORE:.0f}+ and a positive average"
+        return (f"it can earn real money back after {EARN_N} new settled paper copies in {EARN_EVENTS}+ events "
+                f"at score {EARN_SCORE:.0f}+ and a positive average")
 
     def earn_back_open(self, now: float) -> dict:
         """{nick: bench time} for benched traders allowed to earn back now."""
