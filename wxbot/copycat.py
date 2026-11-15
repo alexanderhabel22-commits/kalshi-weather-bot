@@ -945,7 +945,9 @@ class Copycat:
         scouted = {n: v for n, v in self.watch.items() if v.get("src") == "scout" and n not in keep}
         keep.update(scouted)
         if keep:
-            self.watch = dict(sorted(keep.items(), key=lambda kv: -(kv[1].get("pnl") or 0))[:MAX_WATCH])
+            on = set(self.on_real()) if self.live is not None else set()
+            self.watch = dict(sorted(keep.items(), key=lambda kv: (kv[0] not in on and kv[1].get("src") != "scout",
+                                                                  -(kv[1].get("pnl") or 0)))[:MAX_WATCH])   # real/scouted traders never trimmed
         self.checked.update(names)
         self.write({"kind": "watch", "accounts": self.watch})
         self.save_watch()
@@ -973,6 +975,12 @@ class Copycat:
         them; dropped for DROP_DAYS only when all are used up. ("retest_settled"; the old "retest_at"
         counted copies seen and is ignored since Nov 15.)"""
         v = self.watch.get(a["nick"])
+        if v is None and self.live is not None and a["verdict"] in ("ready", "passes") and not self.is_dropped(a["nick"]):
+            # cleared a bar on its logged history but fell out of the watch list (1,000 cap): watch it again,
+            # or it shows "ready" forever without ever being admitted or copied
+            v = self.watch[a["nick"]] = {"pnl": None, "since": round(self.clock()), "checked": self.clock(), "src": "scout"}
+            self.write({"kind": "rewatch", "nick": a["nick"], "verdict": a["verdict"], "score": a.get("score")})
+            self.save_watch()
         if v is None:
             return
         v.pop("retest_at", None)
