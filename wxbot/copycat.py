@@ -1004,8 +1004,7 @@ class Copycat:
             if on[nick].get("tier") != "full" and rec["promote"]:
                 on[nick].update(tier="full", budget=5.0, promoted=round(now))   # real money earned it
                 self.write({"kind": "promote", "nick": nick, **rec})
-                self.alert("Copycat: trial trader promoted", f"{nick}: {rec['copies']} real copies, "
-                           f"${rec['pnl']:+.2f} ({rec['c']:+.1f}c/contract). Now a full pass with a $5 budget.")
+                self.tell_promotion(nick, rec, a)
                 self.live.save()
             a["on_real"] = on[nick]
             return True
@@ -1024,6 +1023,26 @@ class Copycat:
         self.write({"kind": "admit", "nick": nick, **on[nick]})
         a.update(verdict="passes", size=max(1, a.get("size") or 0), on_real=on[nick], blocked_cats=[])
         return True
+
+    def tell_promotion(self, nick: str, rec: dict, acct: dict) -> None:
+        """One push per promotion. Plain code decides; if the boss offers review_promotion(nick, rec, acct) -> str,
+        its short review rides along in the same push (context only, no veto: Alex Nov 15, until the boss is
+        scored ~Dec 1). Runs in a thread so an AI call never holds up copying."""
+        plain = (f"{nick}: {rec['copies']} real copies in {rec['events']} events, ${rec['pnl']:+.2f} "
+                 f"({rec['c']:+.1f}c/contract, {rec['shrunk_c']:+.1f}c after shrinking). Now a full pass, $5 budget.")
+        review = getattr(self.boss, "review_promotion", None)
+        if review is None:
+            self.alert("Copycat: trial trader promoted", plain)
+            return
+
+        def run() -> None:
+            note = None
+            try:
+                note = review(nick, rec, acct)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("copycat boss promotion review %s: %s", nick, exc)
+            self.alert("Copycat: trial trader promoted", plain + (f"\nBoss: {str(note)[:300]}" if note else ""))
+        threading.Thread(target=run, daemon=True).start()
 
     def real_budget_check(self, now: float) -> None:
         """Real money decides: a trader whose real P&L (since it last came on) has used up its budget goes

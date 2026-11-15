@@ -509,3 +509,19 @@ def test_trial_promoted_to_full_on_real_results(tmp_path):
     o = lv.state["on_real"]["tr"]
     assert o["tier"] == "full" and o["budget"] == 5.0 and o["real_check"]["promote"] and len(pushes) == 1
     assert copycat.real_promotion([])["promote"] is False
+
+
+def test_promotion_push_carries_boss_review(tmp_path):
+    import threading as th
+    pushes, done = [], th.Event()
+
+    class B:
+        def review_promotion(self, nick, rec, acct):
+            return "looks like real skill on NBA spreads"
+
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 1.0, req_gap=0, live=lv,
+                         alert=lambda t, b: (pushes.append(b), done.set()))
+    cc.boss = B()
+    cc.tell_promotion("tr", {"copies": 16, "events": 16, "pnl": 8.0, "c": 50.0, "shrunk_c": 7.0}, {})
+    assert done.wait(5) and len(pushes) == 1 and "Boss: looks like" in pushes[0] and "tr: 16 real copies" in pushes[0]
