@@ -607,7 +607,7 @@ function ccRows(){
     return {ticker:o.ticker, side:String(o.side || "").toLowerCase(), n, cost:num(o.cost), price:n ? num(o.cost) / n : 0, nick:o.nick, at:num(o.ts) * 1000,
       title:q.title ? q.title + (q.sub && !String(q.title).includes(q.sub) ? " · " + q.sub : "") : o.ticker, exp:q.exp || null}; });
 }
-function ccMark(r){ const sq = sideQuote(r); if (!sq) return null; if (sq.bid != null && sq.ask != null) return (sq.bid + sq.ask) / 2; return sq.bid; }
+function ccMark(r){ const sq = sideQuote(r); if (!sq) return null; if (sq.dead) return sq.last; if (sq.bid != null && sq.ask != null) return (sq.bid + sq.ask) / 2; return sq.bid; }
 function ccMarked(){
   const rows = ccRows(), priced = rows.filter(r => ccMark(r) != null);
   const val = r => (ccMark(r) - r.price) * r.n, tot = priced.reduce((a, r) => a + val(r), 0);
@@ -1381,7 +1381,13 @@ async function loadQuotes(){
 }
 function sideQuote(r){ const q = S.quotes[r.ticker]; if (!q) return null;
   const bid = r.side === "yes" ? q.yb : (q.ya != null ? +(1 - q.ya).toFixed(2) : null), ask = r.side === "yes" ? q.ya : (q.yb != null ? +(1 - q.yb).toFixed(2) : null);
-  return {bid, ask, at:q.at, src:q.src}; }
+  // trading stopped, waiting for the result (Kalshi shows 0¢ bid / 100¢ ask, or the market is closed): the mid would
+  // say 50¢ whatever the bet, so value it at the last trade instead (Nov 15 fix: a fake -$9 hour at 1 AM ET)
+  const shut = ["closed", "determined", "settled", "finalized"].includes(String(q.status || "").toLowerCase());
+  const dead = shut || ((q.yb == null || q.yb <= 0) && (q.ya == null || q.ya >= 1));
+  const last = q.last != null && q.last > 0 ? (r.side === "yes" ? q.last : +(1 - q.last).toFixed(2)) : null;
+  return {bid, ask, at:q.at, src:q.src, dead, last}; }
+const awaiting = r => { const sq = sideQuote(r); return !!(sq && sq.dead); };
 
 /* ---------------------------------------------------------------- model */
 const STATUS = {resting:"open", filled:"filled", settled:"settled", "done-unfilled":"unfilled", cancelled:"cancelled"};
@@ -1539,6 +1545,7 @@ function stats(rows){
 }
 function markPrice(r){ // value of our side now: mid of bid/ask, or the bid alone
   const sq = sideQuote(r); if (!sq) return null;
+  if (sq.dead) return sq.last;
   if (sq.bid != null && sq.ask != null) return (sq.bid + sq.ask) / 2;
   return sq.bid != null ? sq.bid : null;
 }
@@ -2073,8 +2080,9 @@ function renderOverview(){
       <div><div class="lbl">Up / down</div><div class="val"><span class="pos">${mk.up}▲</span> <span class="neg">${mk.down}▼</span></div></div></div>
       ${moversHTML(rows)}
       ${sx.next}
-      <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → now ${c(m)}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
+      <div class="list" style="margin-top:8px">${list.slice(0, S.upAll ? list.length : 0).map(r => { const u = unrealized(r), m = markPrice(r); return `<div class="item tap" style="padding:8px 0"><span class="side ${esc(r.side)}">${esc(r.side.toUpperCase())}</span><div class="main"><div class="t" style="font-size:12.5px">${esc(r.title)}</div><div class="s">${r.filled || r.count} @ ${c(r.price)} → ${awaiting(r) ? "last trade" : "now"} ${c(m)}${awaiting(r) ? " · ⏳ awaiting settlement" : ""}</div></div><div class="r ${cls(u)}">${money(u)}</div>${details(r)}</div>`; }).join("")}</div>
       ${mk.held.length > mk.priced.length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">${mk.held.length - mk.priced.length} held position(s) have no current price yet.</div>` : ""}
+      ${mk.held.filter(awaiting).length ? `<div class="note mute" style="font-size:11.5px;margin-top:6px">⏳ ${mk.held.filter(awaiting).length} bet(s) awaiting settlement: trading has stopped, so they are valued at their last trade price, not the 0¢/100¢ quote.</div>` : ""}
       ${list.length ? `<button class="seeall" id="upAll">${S.upAll ? "Hide bets ▲" : `Show ${list.length} bets ▼`}</button><div class="note mute" style="font-size:11.5px;margin-top:6px">Best ${money(unrealized(best))}, worst ${money(unrealized(worst))}.</div>` : ""}
       ${moreBtn("now", "More current info")}</div>`;
   }
