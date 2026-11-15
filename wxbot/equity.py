@@ -41,8 +41,13 @@ def _rows(path) -> list[dict]:
 
 
 def side_mid(q: dict, side: str) -> float | None:
-    """Mid price of our side (bid alone if there is no ask)."""
+    """Mid price of our side (bid alone if there is no ask).
+    A market that has stopped trading (closed / awaiting settlement) shows an empty
+    0-100c book, so its mid is a meaningless 50c: use the last trade there instead."""
     yb, ya = q.get("yes_bid"), q.get("yes_ask")
+    last = q.get("last")
+    if (q.get("status") or "active") not in ("active", "open") and last is not None:
+        return last if side == "yes" else round(1 - last, 4)
     if side == "yes":
         bid, ask = yb, ya
     else:
