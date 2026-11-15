@@ -105,47 +105,88 @@ def test_add_real_keeps_paper_and_real_apart(tmp_path):
 
 def boss_status():
     return {"generated": "now", "mode": "live", "accounts": [
-        {"nick": "ace", "fills": 120, "settled": 40, "score": 88.0, "grade": "B+", "verdict": "passes"}]}
+        {"nick": "ace", "fills": 120, "settled": 40, "score": 88.0, "grade": "B+", "verdict": "passes",
+         "detail": {"maker_pct": 80, "latest": [{"their_c": 40, "pay_c": 43}]}},
+        {"nick": "busy", "fills": 9000, "settled": 3, "score": None, "verdict": "watching"}]}
 
 
-def test_boss_benches_and_unbenches(tmp_path):
+def review(text):
+    return {"summary": "ok", "accounts": [
+        {"nick": "ace", "note": "Trades weather; fine.", "call": "skip", "source": "market_making",
+         "predicted_c": -2.0, "market_maker": "yes", "mm_filter": "skip_maker_fills", "reason": "maker fills"}]}
+
+
+def test_boss_shadow_logs_calls_never_benches(tmp_path):
     t = [100000.0]
-    calls = []
-
     texts = []
 
     def ask(model, text, schema):
-        calls.append(model)
         texts.append(text)
-        if "TRIAGE" in text:
-            return {"review_now": True, "why": "x"}
-        n = sum("FULL REVIEW" in x for x in texts)
-        act = {1: "bench", 2: "none"}.get(n, "unbench")
-        return {"summary": "ok", "alert": "", "accounts": [
-            {"nick": "ace", "note": "Trades weather; fine.", "action": act, "reason": "market maker"}]}
+        return review(text)
 
     b = Boss(tmp_path, ask=ask, clock=lambda: t[0])
-    assert b.step(boss_status(), [], None)            # first: changed -> straight to a review
-    assert calls == ["claude-haiku-5-5"]              # Haiku since Nov 12 (Opus cost $24/day)
-    assert "ace" in b.benches(t[0]) and b.state["notes"]["ace"].startswith("Trades")
-    assert not b.step(boss_status(), [], None)        # too soon
+    assert b.step(boss_status(), [], None)
+    assert "- ace:" in texts[0] and "- busy:" not in texts[0]          # near-bar traders, not the busiest
+    assert "our pay minus their price 3c" in texts[0]
+    assert b.benches(t[0]) == {} and b.state["notes"]["ace"].startswith("Trades")
+    c = b.state["calls"][-1]
+    assert c["call"] == "skip" and c["mm_filter"] == "skip_maker_fills" and c["settled"] == 40
+    assert c["plain_mm"] and c["rule_skip"].startswith("market maker")         # 120 fills, 80% maker
+    assert b.summary(boss_status())["plain_mm"]["nicks"] == ["ace"]
     t[0] += 4000
-    assert b.step(boss_status(), [], None)            # unchanged -> Haiku triage asks for review
-    assert "TRIAGE" in texts[1] and "ace" in b.benches(t[0])
-    t[0] += 4000
-    b.step(boss_status(), [], None)
-    assert "ace" not in b.benches(t[0])
-    assert json.loads((tmp_path / "boss.json").read_text())["deep_n"] == 3
+    assert not b.step(boss_status(), [], None)                          # once a day
+    t[0] += 23 * 3600
+    assert b.step(boss_status(), [], None) and len(texts) == 2
+    assert b.summary()["shadow"] and len(b.summary()["calls"]) == 2
 
 
-def test_boss_bench_expires_and_digest(tmp_path):
+def test_boss_cut_off_answer_is_an_error_and_retried(tmp_path):
+    from types import SimpleNamespace
+    t = [100000.0]
+    resp = SimpleNamespace(stop_reason="max_tokens", usage=SimpleNamespace(input_tokens=100, output_tokens=8000),
+                           content=[SimpleNamespace(type="text", text='{"summary": "cut')])
+    client = SimpleNamespace(messages=SimpleNamespace(create=lambda **kw: resp))
+    b = Boss(tmp_path, client=client, clock=lambda: t[0])
+    assert not b.step(boss_status(), [], None)
+    assert "cut off" in b.state["last_error"] and b.budget.spent() > 0   # billed, and logged
+    t[0] += 3 * 3600 + 1
+    good = SimpleNamespace(stop_reason="end_turn", usage=SimpleNamespace(input_tokens=100, output_tokens=50),
+                           content=[SimpleNamespace(type="text", text=json.dumps(review("")))])
+    client.messages.create = lambda **kw: good
+    assert b.step(boss_status(), [], None) and b.state["last_error"] == ""
+
+
+def test_boss_v1_state_is_reset(tmp_path):
+    (tmp_path / "boss.json").write_text(json.dumps({"summary": "old", "benches": {"x": {"until": 1e12}},
+                                                    "notes": {"x": "old"}}))
     b = Boss(tmp_path, ask=lambda *a: {})
-    b.state["benches"]["ace"] = {"reason": "x", "until": 50}
-    assert b.benches(10) and not b.benches(60)
-    rows = [{"kind": "fill", "nick": "ace", "ticker": "KXHIGHNY-1", "side": "no", "yes_price": 0.2,
-             "count": 3, "role": "taker"}]
-    txt = digest(boss_status(), rows, {"pnl": {"ace": 1.5}, "total_pnl": 1.5, "open_cost": 0, "pool": 8}, {})
-    assert "KXHIGHNY" in txt and "real P&L $1.50" in txt and "median 80c" in txt
+    assert b.state["summary"] == "" and b.state["notes"] == {} and b.benches(0) == {}
+
+
+def test_boss_digest_has_real_pnl_and_rule():
+    from wxbot import copycat_boss
+    txt = digest(boss_status(), [], {"pnl": {"ace": 1.5}, "total_pnl": 1.5, "open_cost": 0, "pool": 8})
+    assert "$1.50" in txt and "maker 80%" in txt
+    st = {"accounts": [{"nick": f"a{i}", "score": 75 + i / 100} for i in range(200)]}
+    assert len(digest(st, [], None)) <= copycat_boss.MAX_DIGEST_CHARS
+    assert copycat_boss.rule_skip({"detail": {"bands": {"other": 15, "5-25c": 5}}}) == "mostly <=5c or >=95c"
+
+
+def test_scoreboard_compares_boss_with_plain_rule():
+    sys_path = __import__("sys").path
+    from pathlib import Path
+    sys_path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+    import boss_scoreboard as sb
+    calls = [{"nick": "bad", "at": 0, "call": "skip", "rule_skip": ""},
+             {"nick": "good", "at": 0, "call": "keep", "rule_skip": ""}]
+    trades = {"bad": [{"ok": True, "c": -10.0, "ts": 5, "role": "maker"}] * 150,
+              "good": [{"ok": True, "c": 2.0, "ts": 5}] * 150}
+    calls[0]["mm_filter"] = "skip_maker_fills"
+    r = sb.score(sb.forward(calls, trades))
+    assert r["boss_gap_c"] == 12.0 and r["verdict"].startswith("PASS")
+    assert r["mm_filter"]["boss_removed"] == {"copies": 150, "c": -10.0}
+    calls[0]["rule_skip"] = "market maker"                         # the plain rule saw it too
+    assert sb.score(sb.forward(calls, trades))["verdict"].startswith("FAIL")
 
 
 def test_poll_copies_new_fill_of_hot_account(tmp_path):
@@ -250,27 +291,18 @@ def test_fresh_start_ignores_old_fills(tmp_path):
     assert {a["nick"]: a["fills"] for a in st_["accounts"]}["sharp"] == 1
 
 
-def test_boss_hard_daily_cap_and_failed_review_counts(tmp_path, monkeypatch):
-    from wxbot import copycat_boss
+def test_boss_hard_daily_cap_and_failed_review_counts(tmp_path):
     t = [100000.0]
     b = Boss(tmp_path, ask=lambda m, x, s: (_ for _ in ()).throw(RuntimeError("timeout")), clock=lambda: t[0])
     assert not b.step(boss_status(), [], None)
     assert b.state["deep_n"] == 1                     # a failed (billed) review still counts
     assert b.budget.spent() > 0
-    b2 = Boss(tmp_path / "x" if (tmp_path / "x").mkdir() is None else None, ask=lambda m, x, s: {"review_now": True},
-              clock=lambda: t[0])
+    (tmp_path / "x").mkdir()
+    b2 = Boss(tmp_path / "x", ask=lambda m, x, s: review(x), clock=lambda: t[0])
     b2.budget.cap = 0.0001
-    monkeypatch.setattr(copycat_boss, "MAX_DEEP_PER_DAY", 99)
     assert not b2.step(boss_status(), [], None)       # over the cap: no call at all
     assert b2.budget.state["refused"] >= 1 and b2.budget.state["calls"] == 0
 
-
-def test_boss_digest_is_trimmed():
-    from wxbot import copycat_boss
-    st = {"accounts": [{"nick": f"a{i}", "fills": i + 1} for i in range(200)]}
-    txt = digest(st, [], None, {})
-    assert len(txt) <= copycat_boss.MAX_DIGEST_CHARS and "175 quieter accounts left out" in txt
-    assert "- a199:" in txt and "- a0:" not in txt
 
 
 def test_hard_dollar_account_stop(tmp_path):

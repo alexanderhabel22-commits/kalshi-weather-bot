@@ -372,6 +372,18 @@ IP without a token). It never places, changes or cancels anything and needs no s
   un-pauses, never changes caps/stops/sizes/code. Results: `m15/watch.json` on branch m15-data;
   the scheduled Claude check-ins read it and turn proposed fixes into PRs.
 
+- Nov 15 (thread "Explain what the Foreman does", Alex: "make all the changes you feel like are
+  beneficial"): Haiku is now called ONLY when a rule raises a warn/critical flag (same standing
+  flags: at most every 2 h, `haiku_repeat_min`); clean checks cost $0 (it had said "ok" on 51 of 51
+  clean checks, ~$0.55/day). Its instructions describe the Nov 15 bots. Log-reading fix: Python logs
+  to stderr, which journald files at priority info, so `journalctl -p warning` always showed
+  nothing (the side-service "log" and the 15-min M15_LOG_ERRORS check were blind); `warn_lines()`
+  now filters WARNING/ERROR/Traceback by text.
+- Daily live-vs-replay DRIFT check (`wxbot/drift.py`, plain code, no AI, runs in the trade job ~once
+  a day): per live main-bot strategy with 20+ settled events, pushes once when even the 90% best
+  case of live c/contract is under its replay number (REPLAY_C) or under zero. Read-only; state in
+  trader_state.json "drift".
+
 ## Copycat (built Nov 10, 2026; real money per account once its paper test passes)
 
 - Alex's idea and name: copy proven Kalshi winners' trades. `wxbot/copycat.py`, `python bot.py copycat`,
@@ -428,11 +440,23 @@ IP without a token). It never places, changes or cancels anything and needs no s
   plus whatever real profit it has banked for us ("earned room"); a copy that would pass it is
   skipped, and settled losses alone at the limit send it back to paper with one push. Copycat halts
   at -25% total (reset: edit live_state.json "halted" to null). Alex approved real money at the 100-copy threshold on Nov 10.
-- The boss (`wxbot/copycat_boss.py`): Claude Haiku triage every 15 min; Claude Opus full review every
-  2 h when something changed or when Haiku asks (max 16/day). Writes a plain-English note per
-  account and a summary (dashboard), can bench an account 24 h for a reason the numbers can't see
-  (style change, market maker, broken bot) and lift its own benches. Can't promote or raise sizes.
-  ~$0.20-0.70/day. Needs ANTHROPIC_API_KEY in /etc/kalshi-m15/env (already there for the watcher).
+- The boss (`wxbot/copycat_boss.py`), v2 since Nov 15: a SHADOW judge with NO power. v1 read the 25
+  busiest accounts (market makers/bots), could bench for 24 h, and its reviews died after billing
+  (3,000-token cut-off), so its summary froze ~Nov 13-14. v2: one Haiku review a day (retry after
+  3 h on failure, max 2/day, 8,000 tokens, cut-offs logged as `last_error`) of only the traders near
+  the bar (score 74+), passing, or real-copied (max 20), fed copyability facts (our pay minus their
+  price, follow_5m, maker %, price bands, real vs paper, leeway). Per trader: keep / skip /
+  less_leeway, profit source, predicted c/contract, logged in boss.json "calls" (and status.json
+  boss.calls) beside a plain-code baseline `rule_skip`. MARKET MAKING is the boss's call (Alex, Nov 15): per
+  trader it says market_maker yes/partly/no and mm_filter none/skip_maker_fills/skip_trader; the
+  plain fallback `plain_mm()` labels EVERY trader (50+ fills, 70%+ maker; the Copycat thread's
+  classifier) and the list is in status.json boss.plain_mm. Baseline (Nov 11-15): heavy makers'
+  maker copies -1.2c +/-1.0, olekbannick7's +1.6c, so no filter is applied; on-real traders are
+  never to be filtered without real-money support. The scoreboard also reports what each filter
+  would have removed.
+  Benches nothing. Score it with `python tools/boss_scoreboard.py DIR status.json` (~Dec 1): it
+  earns real skip power (via a reviewed PR + Alex) only if its skipped traders lose >= 3c/contract
+  more than its kept ones over 200+ forward copies AND beat the plain rule's gap. Cap $0.25/day.
 - Dashboard COPYCAT tab: real P&L, at-risk vs pool, boss summary, per-account PAPER and REAL lines,
   progress bar to the 100-copy test, list of real copies. Data: `copycat/status.json` on branch
   `copycat-data` (every 5 min) plus hourly logs (fills, snaps, copy decisions, orders, settlements).

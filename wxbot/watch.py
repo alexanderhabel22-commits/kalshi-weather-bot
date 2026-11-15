@@ -48,6 +48,7 @@ DEFAULTS = {
     "haiku_model": "claude-haiku-5-5",
     "opus_model": "claude-haiku-5-5",   # escalations too since Nov 12 (Opus key spend: $24 on Nov 11)
     "max_haiku_per_day": 120,
+    "haiku_repeat_min": 120,       # same standing flags: re-ask Haiku at most every 2 h
     "max_opus_per_day": 6,
     "daily_cap_usd": 0.70,         # hard cap for the Foreman's own calls (ai_budget.py)
     "spend_alert_usd": 0.90,       # push Alex when the server AI spend passes this (all caps total $0.95)
@@ -75,22 +76,20 @@ Alex must fix. You never touch the money settings; you watch, report, and stop t
 when a machine is clearly broken."""
 
 HAIKU_SYSTEM = PERSONA + """
-You watch the small automated Kalshi trading bots for their owner, Alex.
-- MAIN BOT: GitHub Actions. A weather scan is dispatched every 5 minutes, then a trade run.
-  Strategies: Mentions NO, big-event favorites, Fed/CPI fade, weather day-before. Halts itself
-  at its stops (-10%/day pause, -25% total halt).
-- 15-MIN BOT: always-on server, bids the 71-95c favourite in 15-minute BTC and silver markets,
-  1 contract (2 at 80-87c). Paper markets also run for data. Its own stops: rolling 24h -35%,
-  total -50%. A losing window costs ~$0.75-1.60; a winning one makes ~$0.05-0.45. Losing days
-  happen and are NOT a malfunction while within the stops.
-- REWARDS BOT (kalshi-lip, real money test Nov 11-15): rests small 1-8c bids in ~8 quiet Kalshi
-  liquidity-reward markets to earn Kalshi's daily reward pool (paid after the period ends, so
-  $0 credits before then is NORMAL). Budget ~$20 resting + filled, own $10 fill stop, news guard
-  (pulls a bid for 6 h when the price jumps 3c). A fill is not a malfunction; it is the risk we
-  accepted, and the bot alerts Alex itself. Its halting at the fill stop is the stop WORKING.
-  Danger signs: bot down/stale while bids still rest (nobody watching them), bids above budget,
-  bids still up after it was switched off, repeated rejects or errors.
-- PAPER LAB (kalshi-paper): read-only paper tests (market making, parlay quotes). Low stakes.
+You watch the small automated Kalshi trading bots for their owner, Alex (bots as of Nov 15, 2026).
+- MAIN BOT: GitHub Actions, a scan + trade run every 5 minutes. REAL money, 1-3 contracts:
+  big-event favorites (last 24 h before close), Fed/CPI fade, best-AI-rank fade, gas + jobless
+  claims fade, election favorites, late-day weather lows/highs, evening rain fade, S&P and
+  Nasdaq-100 overnight range fades (rest overnight, cancel 8:45 AM ET). Mentions and day-before
+  weather are PAPER. Halts itself at its stops (-10%/day pause, -25% total halt).
+- 15-MIN BOT: always-on server, ALL PAPER since Nov 13 (control "paper"). Paper losses are not a
+  problem. A live order or live mode while control says paper IS a malfunction.
+- COPYCAT (kalshi-copycat): paper-scores ~1,000 public Kalshi traders; copies only passing
+  traders with real money at 1 contract (open copies <= 15% of bankroll, $5 at-risk limit per
+  trader, halts on its own stops). Its outages lose data, not money, unless real copies are open.
+- REWARDS BOT (kalshi-lip): the test ENDED Nov 15 and it is switched off. Zero bids is correct;
+  resting bids now would be a malfunction.
+- PAPER LAB (kalshi-paper) and source-lag logger (kalshi-srclog): paper/data only. Low stakes.
 You get a digest with health facts and rule flags. Decide:
 - ok: healthy (losses inside the stops are fine).
 - watch: something odd but not urgent; note it.
@@ -237,6 +236,17 @@ def svc_mem_pct(text: str | None) -> float | None:
         return None
 
 
+_WARN = re.compile(r"\b(WARNING|ERROR|CRITICAL)\b|Traceback|Error:")
+
+
+def warn_lines(text: str) -> list[str]:
+    """Warning/error lines of a service journal. Python logs to stderr, which journald files at
+    priority info, so `journalctl -p warning` showed nothing at all (found Nov 15): filter by text."""
+    if not text or text.startswith("unavailable"):
+        return []
+    return [ln for ln in text.splitlines() if _WARN.search(ln)]
+
+
 SIDE_SERVICES = ("kalshi-copycat", "kalshi-paper", "kalshi-lip", "kalshi-srclog")
 
 
@@ -253,8 +263,9 @@ def side_services(runner=subprocess.run) -> dict:
                 kv[k] = f"{int(kv[k]) / 2**20:.0f} MB"
             except (KeyError, ValueError):
                 pass
-        kv["log"] = _sh(["journalctl", "-u", u, "--since", "-3 h", "-p", "warning", "--no-pager",
-                         "-o", "short-iso", "-n", "6"], runner)[-1500:]
+        kv["log"] = "\n".join(warn_lines(_sh(["journalctl", "-u", u, "--since", "-3 h", "--no-pager",
+                                                "-o", "short-iso", "-n", "2000"], runner))[-6:])[-1500:] \
+            or "-- No warnings --"
         out[u] = kv
     return out
 
@@ -284,8 +295,8 @@ def gather(gh: GitHub, now: float, runner=subprocess.run, meminfo: str = "/proc/
     f["service"] = _sh(["systemctl", "is-active", "kalshi-m15"], runner)
     f["mem"] = mem_used(meminfo)
     f["svc_mem"] = _sh(["systemctl", "show", "-p", "MemoryCurrent", "-p", "MemoryMax", "kalshi-m15"], runner)
-    f["journal"] = _sh(["journalctl", "-u", "kalshi-m15", "--since", "-20 min", "-p", "warning",
-                        "--no-pager", "-o", "cat", "-n", "40"], runner)
+    f["journal"] = "\n".join(warn_lines(_sh(["journalctl", "-u", "kalshi-m15", "--since", "-20 min",
+                                              "--no-pager", "-o", "cat", "-n", "2000"], runner))[-40:])
     f["cc_service"] = _sh(["systemctl", "is-active", "kalshi-copycat"], runner)
     grab("lip", lambda: gh.json("m15/lip-status.json", "m15-data"))
     grab("lip_control", lambda: gh.json("lip_control.json"))
@@ -682,8 +693,23 @@ def run(cfg: Config, http: Http | None = None, client=None, gh: GitHub | None = 
     rec = {"at": datetime.fromtimestamp(now, timezone.utc).isoformat(timespec="seconds"),
            "flags": flags, "haiku": None, "opus": None, "action": None}
 
+    # Haiku only when a rule flags something (Nov 15: it said "ok" on 51 of 51 clean checks, ~$0.55/day
+    # for restating the rules). Same flags as last time: ask again only every haiku_repeat_min.
+    need = [x for x in flags if x["sev"] != "info"]
+    sig = ",".join(sorted({x["code"] for x in need}))
+    recent = now - float(state.get("haiku_at") or 0) < s["haiku_repeat_min"] * 60
     level = "ok"
-    if state["haiku"] < s["max_haiku_per_day"]:
+    if not need:
+        rec["haiku"] = {"skipped": "no warn/critical flags"}
+        if state.get("last_level", "ok") != "ok":
+            jot("check: ok. All rule checks clear.")
+        state["last_level"] = "ok"
+        state["haiku_sig"] = ""
+    elif sig == state.get("haiku_sig") and recent:
+        rec["haiku"] = {"skipped": "same flags as the last AI check"}
+        level = state.get("last_level", "ok")
+    elif state["haiku"] < s["max_haiku_per_day"]:
+        state["haiku_sig"], state["haiku_at"] = sig, now
         try:
             h, u = ask(s["haiku_model"], HAIKU_SYSTEM, text, HAIKU_SCHEMA, "low", 2000)
             state["haiku"] += 1
