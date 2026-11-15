@@ -577,3 +577,16 @@ def test_two_contract_step_on_real_results_and_step_down(tmp_path):
     trial = {"nick": "tr", "verdict": "ready", "score": 92.0, "settled": 60, "fills": 90, "grade": "A-", "size": 3}
     cc.judge(trial)
     assert trial["size"] == 1                # new admissions always start at 1 contract
+
+
+def test_no_balance_index_series_skipped_after_reject(tmp_path):
+    class Rej(FakeClient):
+        def buy_now(self, ticker, side, price, n, coid):
+            self.orders.append(ticker)
+            raise RuntimeError('HTTP 404 {"error":{"code":"insufficient_shard_balance"}}')
+    lv, _ = mk(tmp_path, client=Rej())
+    assert lv.maybe_copy(ACCT, dict(FILL, ticker="KXATP-1-A"), SNAP, 1000.0).startswith("order failed")
+    assert lv.maybe_copy(ACCT, dict(FILL, ticker="KXATP-2-B"), SNAP, 1001.0) == "no cash on this market's exchange index"
+    assert lv.client.orders == ["KXATP-1-A"]
+    lv.no_index["KXATP"] -= 7 * 3600                                    # 7 hours later: tried again
+    assert lv.maybe_copy(ACCT, dict(FILL, ticker="KXATP-3-C"), SNAP, 1002.0).startswith("order failed")
