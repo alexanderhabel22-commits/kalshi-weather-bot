@@ -37,9 +37,9 @@ DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_
             "max_contracts": 3, "slip": 0.02, "max_lag_s": 60, "min_px": 0.05, "max_px": 0.95,
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
 CONTROL_STALE_S = 600
-EARN_N = 50                 # earn-back: new settled paper copies needed since the bench
-EARN_EVENTS = 30            # ... in this many different events (the entry test again, on fresh copies; Nov 15)
-EARN_SCORE = 80.0           # ... at this score or better, with a positive average
+EARN_N = 20                 # earn-back: new settled paper copies needed since the bench
+EARN_EVENTS = 15            # ... in this many different events: the TRIAL bar again, on fresh copies (Alex, Nov 15:
+EARN_SCORE = 77.5           # "back to paper and then can earn their way back to trial"), score 77.5+, average > 0
 EARN_FINAL_S = 30 * 86400   # a second bench within 30 days of coming back is final for 30 days
 
 
@@ -281,7 +281,7 @@ class Live:
         if fu:
             return "second bench within 30 days, so no earn-back for 30 days"
         return (f"it can earn real money back after {EARN_N} new settled paper copies in {EARN_EVENTS}+ events "
-                f"at score {EARN_SCORE:.0f}+ and a positive average")
+                f"at score {EARN_SCORE:g}+ and a positive average")
 
     def earn_back_open(self, now: float) -> dict:
         """{nick: bench time} for benched traders allowed to earn back now."""

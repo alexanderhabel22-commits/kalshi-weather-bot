@@ -484,3 +484,60 @@ def test_score_80_does_not_use_a_trial_slot(tmp_path):
     b = {"nick": "full", "verdict": "ready", "score": 80.5, "settled": 40, "fills": 60, "grade": "B-"}
     cc.judge(b)                                                        # slots full, but a full-bar score gets in
     assert lv.state["on_real"]["full"]["tier"] == "full" and b["verdict"] == "passes"
+
+
+def test_trial_promoted_to_full_on_real_results(tmp_path):
+    pushes = []
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 5000.0, req_gap=0, live=lv, alert=lambda t, b: pushes.append(t))
+    cc.watch = {"tr": {}}
+    lv.state["on_real"] = {"tr": {"tier": "trial", "budget": 1.0, "at": 100}}
+    acct = {"nick": "tr", "verdict": "fails", "score": 70.0, "settled": 80, "fills": 100, "grade": "C-"}
+
+    def give(n, win_every):
+        lv.state["positions"] = {f"KXE{i}-A": {"nick": "tr", "side": "yes", "n": 1, "cost": 0.5, "ts": 200 + i,
+                                               "settled": 300 + i, "pnl": 0.5 if i % win_every == 0 else -0.5}
+                                 for i in range(n)}
+    give(2, 1)                                   # 2 lucky wins: not enough
+    cc.judge(dict(acct))
+    assert lv.state["on_real"]["tr"]["tier"] == "trial" and not pushes
+    give(16, 2)                                  # 16 copies, 8 won 8 lost: P&L $0, not promoted
+    cc.judge(dict(acct))
+    assert lv.state["on_real"]["tr"]["tier"] == "trial"
+    give(16, 1)                                  # 16 events all won: real money earned it
+    cc.judge(dict(acct))
+    o = lv.state["on_real"]["tr"]
+    assert o["tier"] == "full" and o["budget"] == 5.0 and o["real_check"]["promote"] and len(pushes) == 1
+    assert copycat.real_promotion([])["promote"] is False
+
+
+def test_promotion_push_carries_boss_review(tmp_path):
+    import threading as th
+    pushes, done = [], th.Event()
+
+    class B:
+        def review_promotion(self, nick, rec, acct):
+            return "looks like real skill on NBA spreads"
+
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 1.0, req_gap=0, live=lv,
+                         alert=lambda t, b: (pushes.append(b), done.set()))
+    cc.boss = B()
+    cc.tell_promotion("tr", {"copies": 16, "events": 16, "pnl": 8.0, "c": 50.0, "shrunk_c": 7.0}, {})
+    assert done.wait(5) and len(pushes) == 1 and "Boss: looks like" in pushes[0] and "tr: 16 real copies" in pushes[0]
+
+
+def test_trial_that_makes_nothing_ends_and_frees_slot(tmp_path):
+    pushes = []
+    lv, _ = mk(tmp_path)
+    cc = copycat.Copycat(tmp_path, clock=lambda: 1000.0, req_gap=0, live=lv, alert=lambda t, b: pushes.append(t))
+    lv.state["on_real"] = {"flat": {"tier": "trial", "budget": 5.0,
+                                    "real_check": {"copies": 22, "events": 16, "pnl": -0.1}},
+                           "young": {"tier": "trial", "budget": 5.0,
+                                     "real_check": {"copies": 8, "events": 8, "pnl": -0.5}}}
+    lv.state["pnl"] = {"flat": -0.1, "young": -0.5}
+    cc.real_budget_check(1000.0)
+    assert "flat" not in lv.state["on_real"] and "flat" in lv.benched() and pushes == ["Copycat: trial ended"]
+    assert "young" in lv.state["on_real"]
+    assert lv.earn_back_open(1000.0).get("flat") == 1000.0      # can earn its way back (trial bar on fresh copies)
+    assert copycat.EARN_N == 20 and copycat.EARN_EVENTS == 15 and copycat.EARN_SCORE == 77.5
