@@ -37,6 +37,7 @@ DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_
             "max_contracts": 3, "slip": 0.02, "max_lag_s": 60, "min_px": 0.05, "max_px": 0.95,
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
 CONTROL_STALE_S = 600
+NO_INDEX_S = 6 * 3600       # skip a series this long after "insufficient shard balance" (e.g. tennis, Nov 15)
 EARN_N = 20                 # earn-back: new settled paper copies needed since the bench
 EARN_EVENTS = 15            # ... in this many different events: the TRIAL bar again, on fresh copies (Alex, Nov 15:
 EARN_SCORE = 77.5           # "back to paper and then can earn their way back to trial"), score 77.5+, average > 0
@@ -71,6 +72,7 @@ class Live:
         self.read_at = 0.0
         self.ok_at = 0.0
         self._cash: tuple[float, float] | None = None
+        self.no_index: dict[str, float] = {}    # series -> when Kalshi said our index there has no balance
         p = self.out / "live_state.json"
         try:
             self.state = json.loads(p.read_text())
@@ -163,6 +165,9 @@ class Live:
             return "excluded series"
         if snap.get("category") == "unknown" or snap.get("category") in (c.get("exclude_categories") or []):
             return f"excluded category ({snap.get('category')})"
+        ser = ticker.split("-")[0]
+        if now - self.no_index.get(ser, -1e18) < NO_INDEX_S:
+            return "no cash on this market's exchange index"
         if ticker in self.state["positions"]:
             return "already copied this market"
         ev = event_of(ticker)
@@ -208,6 +213,8 @@ class Live:
         except Exception as exc:  # noqa: BLE001
             self.write({"kind": "order", "nick": nick, "ticker": ticker, "side": side, "n": n,
                         "limit": limit, "error": str(exc)[:300], "trade_id": fill.get("trade_id")})
+            if "insufficient_shard_balance" in str(exc):   # market on an exchange index with no cash: stop
+                self.no_index[ticker.split("-")[0]] = now     # retrying that series for NO_INDEX_S (Nov 15)
             return f"order failed: {str(exc)[:80]}"
         got = fill_qty(o, n)
         cost = _f(o.get("taker_fill_cost_dollars")) or got * pay
