@@ -512,10 +512,11 @@ REAL_GAP_C = 3.0            # (same trades) by more than 3c/contract, or real is
 
 
 def cat_grades(trades: list[dict], cats: dict | None) -> dict:
-    """Per Kalshi category: settled paper copies, c/contract, grade, and whether it is blocked."""
+    """Per Kalshi category: settled paper copies, c/contract, grade, and whether it is blocked.
+    Only buyable copies (5-95c, the same basis as the account score; Nov 15 fix) count."""
     by: dict = defaultdict(list)
     for t in trades:
-        if t.get("c") is not None:
+        if t.get("c") is not None and t.get("ok", True):
             by[(cats or {}).get((t.get("ticker") or "").split("-")[0]) or "unknown"].append(t["c"])
     out = {}
     for k, v in by.items():
@@ -541,8 +542,9 @@ def cat_breakdown(trades: list[dict], cats: dict | None, grades: dict) -> dict:
     out = {k: dict(v) for k, v in grades.items()}
     for k, tr in by.items():
         g = out.setdefault(k, {"n": 0, "c": None, "low": None, "grade": "-", "score": None, "blocked": False})
-        done = [t for t in tr if t.get("c") is not None]
-        g.update(copies=len(tr), won=sum(1 for t in done if t["c"] > 0), lost=sum(1 for t in done if t["c"] <= 0))
+        done = [t for t in tr if t.get("c") is not None and t.get("ok", True)]
+        g.update(copies=len(tr), won=sum(1 for t in done if t["c"] > 0), lost=sum(1 for t in done if t["c"] <= 0),
+                 unbuyable=sum(1 for t in tr if not t.get("ok", True)))
         bands, ser = {}, defaultdict(list)
         for lbl, lo, hi in BANDS:
             b = [t for t in tr if lo <= (t.get("pay_c") or 0) < hi]
