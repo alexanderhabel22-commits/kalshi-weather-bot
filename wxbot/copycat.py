@@ -586,6 +586,10 @@ TRIAL_SCORE = 77.5          # ... and a score of 77.5+ (expected -1c or better; 
 TRIAL_SLOTS = 4             # at most 4 trial traders (admitted below COPY_SCORE) on real money at once
 TRIAL_END_COPIES = 20       # a trial that reaches 20+ settled real copies in 15+ events with real P&L <= $0 ends
 TRIAL_END_EVENTS = 15       # (back to paper, slot freed), even if its budget isn't used up
+IDLE_H = 48                 # a trial with no real copy for 48 h loses its slot (Alex, Nov 15: idle traders give up
+                            # their spot). Nov 11-15 data: 98% of trial-level traders never went 48 h without a
+                            # buyable trade (median longest gap 20 h; Flacko's weekend gap 40 h). Full traders exempt.
+IDLE_COOLDOWN_H = 24        # an idled trader waits 24 h before it can take a free slot again (next in line goes first)
 STEP2_COPIES = 40           # 2-contract step (Alex OK, Nov 15): 40+ settled real copies ...
 STEP2_EVENTS = 25           # ... in 25+ events ...
 STEP2_PNL = 2.0             # ... +$2 real P&L ...
@@ -765,6 +769,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
             f"results ({PROMOTE_COPIES}+ real copies in {PROMOTE_EVENTS}+ events, profitable). "
             "Once on real money only real P&L decides: back to paper when real losses use up its budget "
             "($1 at 77.5 up to $5 at 80+, set once by its paper score at admission; plus real profit banked). Paper is only the admissions test. "
+            f"A trial with no real copy for {IDLE_H} h gives up its slot to the next in line ({IDLE_COOLDOWN_H} h wait to return). "
             f"Paper grade: judged once it has {GO_LIVE_SETTLED}+ counted (buyable, settled) copies in {MIN_EVENTS}+ different events. "
             "Score = 80 + 2.5 x expected profit per copy (c/contract after fees): every trader starts at what copying "
             f"earns on average ({prior['mu']:+.1f}c now) and only its own counted copies move it, one credit per event, "
@@ -840,6 +845,7 @@ class Copycat:
         self.checked: set[str] = set()           # names already looked up by the scout
         self.scout_next = 0.0
         self.hot: set[str] = set()               # passing accounts, polled more often
+        self.keep: set[str] = set()              # passing or "ready" accounts: the scout never evicts them
         self.acct: dict[str, dict] = {}          # nick -> last status row
         self.live = live                         # copycat_live.Live (real money) or None
         self.boss = boss                         # copycat_boss.Boss or None
@@ -1029,15 +1035,20 @@ class Copycat:
                 self.tell_promotion(nick, rec, a)
                 self.live.save()
             a["size"] = self.size_step(nick, on[nick], rec, now)
+            on[nick]["idle_h"] = round((now - self.last_real_copy(nick)) / 3600, 1)   # trial loses its slot at IDLE_H
             a["on_real"] = on[nick]
             return True
+        out = (self.live.state.get("idle_out") or {}).get(nick)
+        if out is not None and now - out < IDLE_COOLDOWN_H * 3600:
+            return False                          # idled recently: the next trader in line gets the slot first
         if a["verdict"] in ("ready", "passes"):   # any paper pass, even 80+, starts as a trial (full = real only)
             if sum(1 for x in on.values() if not x.get("promoted")) >= TRIAL_SLOTS:
                 return False                      # waits for a free trial slot
             tier = "trial"
         else:
             return False
-        on[nick] = {"at": round(now), "tier": tier, "score": a.get("score"), "budget": real_budget(a.get("score"))}
+        on[nick] = {"at": round(now), "tier": tier, "score": a.get("score"), "budget": real_budget(a.get("score")),
+                    "idle_h": 0.0}
         self.live.save()
         self.write({"kind": "admit", "nick": nick, **on[nick]})
         a.update(verdict="passes", size=1, on_real=on[nick], blocked_cats=[])   # size grows only on real results
@@ -1091,6 +1102,13 @@ class Copycat:
             self.alert("Copycat: trial trader promoted", plain + (f"\nBoss: {str(note)[:300]}" if note else ""))
         threading.Thread(target=run, daemon=True).start()
 
+    def last_real_copy(self, nick: str) -> float:
+        """When this trader last gave us a real copy, or when it (last) came on real money if later."""
+        o = self.on_real().get(nick) or {}
+        back = ((self.live.state.get("bench_log") or {}).get(nick) or {}).get("back_at") or 0
+        ts = [p.get("ts") or 0 for p in (self.live.state.get("positions") or {}).values() if p.get("nick") == nick]
+        return max([o.get("at") or 0, back] + ts)
+
     def real_budget_check(self, now: float) -> None:
         """Real money decides: a trader whose real P&L (since it last came on) has used up its budget goes
         back to paper (the live bench, with the usual earn-back). Benched traders leave the real list."""
@@ -1101,6 +1119,14 @@ class Copycat:
                 continue
             pnl, b = self.live.state["pnl"].get(nick, 0.0), on[nick].get("budget") or 1.0
             rc = on[nick].get("real_check") or {}
+            idle_h = (now - self.last_real_copy(nick)) / 3600
+            if not on[nick].get("promoted") and idle_h >= IDLE_H:
+                on.pop(nick)                      # idle trial: the slot goes to the next trader in line (no bench)
+                self.live.state.setdefault("idle_out", {})[nick] = round(now)
+                self.write({"kind": "idle", "nick": nick, "idle_h": round(idle_h, 1)})
+                self.alert("Copycat: idle trial ended", f"{nick}: no real copy in {idle_h:.0f} h. The trial slot goes to "
+                           f"the next trader in line; it can come back after {IDLE_COOLDOWN_H} h if it still passes.")
+                continue
             if (on[nick].get("tier") != "full" and (rc.get("copies") or 0) >= TRIAL_END_COPIES
                     and (rc.get("events") or 0) >= TRIAL_END_EVENTS and (rc.get("pnl") or 0) <= 0):
                 on.pop(nick)                      # a full trial that made us nothing: frees the slot for the next one
@@ -1241,7 +1267,7 @@ class Copycat:
             if not info:
                 continue
             if len(self.watch) >= MAX_WATCH:
-                cold = [k for k in self.watch if k not in self.hot]
+                cold = [k for k in self.watch if k not in self.hot and k not in self.keep and k not in self.on_real()]
                 low = min(cold, key=lambda k: self.watch[k].get("pnl") or 0, default=None)
                 if low is None or (self.watch[low].get("pnl") or 0) >= info["pnl"]:
                     continue
@@ -1720,6 +1746,7 @@ class Copycat:
             status["boss"] = self.boss.summary(status)     # shadow judge since Nov 15: calls logged, no benches
         self.acct = {a["nick"]: a for a in status["accounts"]}
         self.hot = {a["nick"] for a in status["accounts"] if a["verdict"] == "passes"}
+        self.keep = {a["nick"] for a in status["accounts"] if a["verdict"] in ("passes", "ready")}   # never evicted by the scout
         (self.out / "status.json").write_text(json.dumps(status, separators=(",", ":")))
         if self.uploader:
             try:
