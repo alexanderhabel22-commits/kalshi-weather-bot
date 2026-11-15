@@ -590,3 +590,14 @@ def test_no_balance_index_series_skipped_after_reject(tmp_path):
     assert lv.client.orders == ["KXATP-1-A"]
     lv.no_index["KXATP"] -= 7 * 3600                                    # 7 hours later: tried again
     assert lv.maybe_copy(ACCT, dict(FILL, ticker="KXATP-3-C"), SNAP, 1002.0).startswith("order failed")
+
+
+def test_ready_trader_outside_watch_list_is_watched_again_and_admitted(tmp_path):
+    lv, _ = mk(tmp_path)
+    cc = _status_cc(tmp_path, lv)
+    cc.watch.pop("gone", None)                  # fell out of the 1,000 cap, history still on disk
+    a = {"nick": "gone", "verdict": "ready", "score": 77.8, "settled": 53, "fills": 70, "grade": "C+"}
+    cc.judge(a)
+    assert cc.watch["gone"]["src"] == "scout" and lv.state["on_real"]["gone"]["tier"] == "trial"
+    cc.judge({"nick": "nobody", "verdict": "fails", "score": 70.0, "settled": 60, "fills": 80, "grade": "D"})
+    assert "nobody" not in cc.watch             # only bar-clearing traders come back
