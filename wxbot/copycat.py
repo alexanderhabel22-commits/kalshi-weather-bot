@@ -975,9 +975,13 @@ class Copycat:
         on, nick, now = self.on_real(), a["nick"], self.clock()
         if nick in on:
             on[nick]["budget"] = max(on[nick].get("budget") or 1.0, real_budget(a.get("score")))  # paper only adds leeway
+            if (a.get("score") or 0) >= COPY_SCORE:
+                on[nick]["tier"] = "full"         # scores like a full pass: frees its trial slot
             a["on_real"] = on[nick]
             return True
-        if a["verdict"] == "ready":
+        if a["verdict"] == "ready" and (a.get("score") or 0) >= COPY_SCORE:
+            tier = "full"                         # full-bar score, just short on events (e.g. after a restart)
+        elif a["verdict"] == "ready":
             if sum(1 for x in on.values() if x.get("tier") != "full") >= TRIAL_SLOTS:
                 return False                      # waits for a free trial slot
             tier = "trial"
