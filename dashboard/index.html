@@ -734,7 +734,7 @@ function foldSections(html, pre, keep, open){
 }
 const ccGcol = g => !g || g === "-" ? "#94a3c8" : g[0] === "A" ? "#34d399" : g[0] === "B" ? "#22d3ee" : g[0] === "C" ? "#f5b335" : "#f87171";
 // the server's rules (wxbot/copycat.py): entry bar, copy score, real-vs-paper check
-const CCR = {fast:100, slow:150, fastScore:87, settled:40, events:30, score:80, realMin:20, gap:3, catMin:15};
+const CCR = {settled:50, events:30, score:80, realMin:20, gap:3, catMin:15};
 const ccCatName = k => k === "unknown" ? "Uncategorized" : k;
 function ccCatChips(a, max){
   const G = a.cat_grades || {}, ks = Object.keys(G).sort((x, y) => (G[y].copies ?? G[y].n) - (G[x].copies ?? G[x].n));
@@ -754,13 +754,13 @@ function ccHowGrades(){
   const h = t => `<div style="font-weight:800;margin:10px 0 2px">${t}</div>`;
   return `${h("1. What counts")}Every public trader we find is copied on <b>paper</b> first. A copy only counts if real money could really have made it: bought within 2¢ of their price, between 5¢ and 95¢, and seen within 60 s. Kalshi's fee is taken off. Copies in the same event (one game, one election, one weather day, one price range) count as <b>one</b> piece of evidence, because they win or lose together. The overall grade, the category grades and the earn-back test all use this same basis.
   ${h("2. The score")}A 0-100 score from its last 150 counted copies, built on the pessimistic end of its average (so a short lucky run can't score high). 80 (B-) means break-even even in the pessimistic case; each +1¢ of pessimistic edge is +2.5 points. A small bonus or penalty (up to ±3) reflects its last 50 copies.
-  ${h("3. Getting on real money")}All of these: score ${CCR.score}+; ${CCR.settled}+ settled counted copies in ${CCR.events}+ different events; and ${CCR.fast} copies seen at a B+ (${CCR.fastScore}+) score, otherwise ${CCR.slow}. Size: 1 contract, 2 at a score of 90+, 3 at 95+ with 300+ copies.
+  ${h("3. Getting on real money")}One bar for everyone (Nov 15): ${CCR.settled}+ counted copies in ${CCR.events}+ different events, and a score of ${CCR.score}+. Size: 1 contract, 2 at a score of 90+, 3 at 95+ with 300+ counted copies.
   ${h("4. Staying on")}It is re-graded every 5 minutes. Real copies pause (<b>slump</b>) while its last 50 counted copies average worse than −5¢ (up to −10¢ for a high score) and restart by themselves when it recovers. If its score drops below ${CCR.score} it goes back to paper.
-  ${h("5. Categories")}Each category (Sports, Crypto, Weather...) gets its own grade from the same counted copies. A live trader gets no real copies in a category where it has ${CCR.catMin}+ counted copies that are clearly losing (even the hopeful end of the range is below 0). Other categories keep copying.
+  ${h("5. Categories")}Each category (Sports, Crypto, Weather...) gets its own grade from the same counted copies (its share of the last 150), with the same one-credit-per-event math as the score. A live trader gets no real copies in a category where it has ${CCR.catMin}+ counted copies that are clearly losing (even the hopeful end of the range is below 0). Other categories keep copying.
   ${h("6. Real money vs paper")}After ${CCR.realMin} settled real copies, real results are compared with paper on the same trades. It goes back to paper if real trails paper by more than ${CCR.gap}¢ a contract, or if real money is clearly losing.
   ${h("7. Benched and coming back")}The AI boss can bench a trader for 24 hours (renewable) when something looks off. A trader that hits its own loss stop or fails the real-vs-paper check keeps copying on paper and earns real money back with 50 new counted copies in 30+ events, a score of 80+ and a positive average: the entry test again, on fresh copies. A second bench within 30 days of coming back lasts 30 days.
   ${h("8. Money limits (never loosened by a grade)")}Each trader: $5 at risk at most (open copies plus settled losses), plus whatever real profit it has made us. All of Copycat: 15% of the bankroll open at once, and a hard $8 total loss halt. Copycat never takes the last $10 of cash the main bot needs. One copy per event.
-  ${h("9. Dropped")}A trader that fails its paper test 3 times (judged at 150 copies seen, then every 50 more) or stops being profitable on Kalshi is dropped for 30 days, then can be re-tested from zero.`;
+  ${h("9. Dropped")}A trader that fails its paper test 3 times in a row (judged at ${CCR.settled} counted copies, then every 25 more, always on its last 150) or stops being profitable on Kalshi is dropped for 30 days, then can be re-tested from zero.`;
 }
 function ccWhy(a){
   const R = a.real || {}, L = ((S.cc || {}).live) || {}, ben = (L.benched || {})[a.nick], sc = a.score != null ? a.score.toFixed(1) : "—";
@@ -821,21 +821,20 @@ function drawCCTraders(){ (S.ccTC || []).forEach((a, i) => { const el = document
   lineChart(el, [{name:"Paper", c:ccGcol(a.grade), w:2, pts:cv.map((y, j) => ({x:j, y:+(y / 100).toFixed(2)}))}], {h:90, zero:true, xnum:true, xlab:t => "#" + Math.round(t + 1), xtip:v => "copy #" + Math.round(v + 1), fy:v => "$" + v.toFixed(v < 10 && v > -10 ? 1 : 0)}); }); }
 function ccNextUp(){
   const acc = (S.cc || {}).accounts || [];
-  const prog = a => { const need = (a.score || 0) >= CCR.fastScore ? CCR.fast : CCR.slow;
-    return {need, f:Math.min(1, num(a.fills) / need), st:Math.min(1, num(a.settled) / CCR.settled), ev:Math.min(1, num(a.events) / CCR.events)}; };
+  const prog = a => ({st:Math.min(1, num(a.settled) / CCR.settled), ev:Math.min(1, num(a.events) / CCR.events)});
   const near = acc.filter(a => a.verdict === "watching" && (a.score ?? 0) >= CCR.score).map(a => ({a, p:prog(a)}))
-    .map(x => ({...x, t:Math.min(x.p.f, x.p.st, x.p.ev)})).sort((x, y) => y.t - x.t || (y.a.score || 0) - (x.a.score || 0));
+    .map(x => ({...x, t:Math.min(x.p.st, x.p.ev)})).sort((x, y) => y.t - x.t || (y.a.score || 0) - (x.a.score || 0));
   const bar = (l, v, txt) => `<div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="mute" style="width:62px">${l}</span><div class="share" style="flex:1;margin:0"><i style="width:${(v * 100).toFixed(0)}%;background:${v >= 1 ? "#34d399" : "#22d3ee"}"></i></div><span style="width:56px;text-align:right">${txt}</span></div>`;
   const row = ({a, p}) => `<div class="tcard"><div style="display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:14px;word-break:break-all">${ccN(a.nick)}</div>
       <div class="mute" style="font-size:11.5px;margin-top:2px">${(a.cats || []).join(" / ")}${a.settle_c != null ? ` · paper ${cents(a.settle_c)}/ct` : ""}</div></div>
       <div style="text-align:right"><div class="gbig" style="font-size:19px;color:${ccGcol(a.grade)}">${esc(a.grade || "-")}</div><div class="mute" style="font-size:10.5px">${a.score != null ? a.score.toFixed(1) : ""}</div></div></div>
-    <div style="margin-top:6px">${bar("Copies", p.f, `${num(a.fills)}/${p.need}`)}${bar("Settled", p.st, `${num(a.settled)}/${CCR.settled}`)}${bar("Events", p.ev, `${num(a.events)}/${CCR.events}`)}</div>
+    <div style="margin-top:6px">${bar("Counted", p.st, `${num(a.settled)}/${CCR.settled}`)}${bar("Events", p.ev, `${num(a.events)}/${CCR.events}`)}</div>
     <div style="margin-top:6px">${ccCatChips(a, 4)}</div></div>`;
   const out = acc.filter(a => ["slump", "real-lag", "benched"].includes(a.verdict));
   let h = `<h2>Next in line <span class="sub">${near.length} scoring ${CCR.score}+ on paper · not enough data yet</span></h2><div class="card">`
     + (near.length ? near.slice(0, 4).map(row).join("") + (near.length > 4 ? dd("ccNear", "Everyone else in line", `${near.length - 4} more`, near.slice(4, 40).map(row).join(""), false, "in") : "")
       : `<div class="mute" style="font-size:12.5px">No paper trader is scoring ${CCR.score}+ right now.</div>`)
-    + `<div class="mute" style="font-size:11px;margin-top:8px">A trader goes live once all three bars fill and its score is still ${CCR.score}+ (${CCR.fast} copies at ${CCR.fastScore}+, otherwise ${CCR.slow}).</div></div>`;
+    + `<div class="mute" style="font-size:11px;margin-top:8px">A trader goes live once both bars fill (${CCR.settled} counted copies in ${CCR.events}+ events) and its score is still ${CCR.score}+.</div></div>`;
   if (out.length) h += dd("ccOut", "Paused or taken off real money", `${out.length}`, out.map(a => `<div class="item" style="padding:7px 0"><div class="main" style="white-space:normal"><div class="t" style="font-size:13px">${ccN(a.nick)} <span class="chip ${ccStatus(a)[1]}" style="font-size:9.5px;padding:1px 6px">${ccStatus(a)[0]}</span></div><div class="s" style="white-space:normal">${ccWhy(a)}</div></div><div class="r"><span style="color:${ccGcol(a.grade)};font-weight:800">${esc(a.grade || "-")}</span><small>${a.score != null ? a.score.toFixed(1) : ""}</small></div></div>`).join(""));
   return h;
 }
