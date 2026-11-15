@@ -40,6 +40,19 @@ Fewer fills (about -35%) but more total dollars in both periods, and less cash t
 (cash cap was nearly full on Nov 14). Live paper Nov 11-14 agrees: 8c+ +11.5c (15 fills)
 vs under 8c +1.2c (45).
 
+**16 newer low cities** (independent check, Kalshi data fetched Nov 15, Sep 1 - Nov 14):
+live rule +2.9c ±0.7 (925 fills) $+26.6 vs 8c+ +4.3c ±1.0 (634) $+27.1; difference
++1.4c [+0.3, +2.6]. Oct 15 - Nov 14 alone: +2.6 -> +5.1c. Smaller than on the old cities
+but the same sign, and the same dollars for a third less cash.
+Flat or negative cities either way (not dropped, too noisy to single out): Houston,
+New Orleans, Trenton, Boston, Seattle.
+
+## Status (Nov 15, under Alex's 1:32 AM ET OK)
+- Highs holds wait-while-rising: merged (PR #285), live from the next scan.
+- Lows need 8c+ spread: merged in the follow-up PR, live from the next scan.
+- Both are in `wxbot/latepaper.py` DEFAULTS, so the paper log and the real mirror
+  (weather_late) follow them. To undo: set `min_spread_by = {}` / `wait_while_rising = []`.
+
 ## Looked at, not changed (did not clear the bar)
 - Lows "need", skip while still falling: +3.2 -> +3.9c holdout, inside the noise.
 - Lows "need", max price 90c: +3.2 -> +4.4c holdout, total $ about flat.
