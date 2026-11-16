@@ -135,3 +135,17 @@ def test_disabled_does_nothing():
 def test_pause_others_while_active():
     assert swing.pause_others(cfg(pause_others=True), NOW)
     assert not swing.pause_others(cfg(pause_others=False), NOW)
+
+
+def test_hourly_track_one_bet_at_a_time():
+    hc = cfg()
+    hc.raw["swing"]["crypto"]["hourly"] = True
+    hc.raw["swing"]["crypto"]["last_entry_min"] = 40
+    loc = datetime(2026, 11, 16, 21, 10, tzinfo=timezone.utc)          # 4:10 PM ET -> 5 PM close
+    assert swing.next_hourly_close(loc.astimezone(swing.ET), 40).hour == 17
+    assert swing.next_hourly_close(datetime(2026, 11, 16, 21, 30, tzinfo=timezone.utc).astimezone(swing.ET), 40).hour == 18
+    c = Client()
+    swing.run(hc, now=loc, http=Http(), client=c)
+    assert len(c.orders) == 1
+    swing.run(hc, now=loc, http=Http(), client=c)                       # still open: no second bet
+    assert len(c.orders) == 1

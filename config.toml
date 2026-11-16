@@ -581,10 +581,12 @@ from_et = "10:00"
 last_entry_min = 30
 days = [0, 1, 2, 3, 4]
 
-[swing.crypto]                   # Crypto balance (shard 2): Bitcoin above X at 5 PM ET, every day
+[swing.crypto]                   # Crypto balance (shard 2): Bitcoin above X at the next hourly close, 24/7
+# Alex, Nov 16 5:22 PM ET: "Just always have a trade going if you think it's worth". One bet at a
+# time on the soonest hourly KXBTCD close at least 40 min away; next bet right after it settles.
 series = "KXBTCD"
-close_hour_et = 17
+hourly = true
+close_hour_et = 17               # unused while hourly = true
 shard = 2
-from_et = "10:00"
-last_entry_min = 20
+last_entry_min = 40
 days = [0, 1, 2, 3, 4, 5, 6]
