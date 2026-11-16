@@ -24,3 +24,15 @@ def clean_dirs():
 def no_aicost_network(monkeypatch):
     from wxbot import aicost
     monkeypatch.setattr(aicost, "_get", lambda path: None)   # reports never hit GitHub in tests
+
+
+@pytest.fixture(autouse=True)
+def no_swing_pause(request, monkeypatch):
+    """The $500 swing ([swing] in config.toml) puts other strategies on paper while it runs;
+    trader tests check normal live behaviour, so they run as if no swing were active."""
+    if request.module.__name__.endswith("test_swing"):
+        yield
+        return
+    from wxbot import swing
+    monkeypatch.setattr(swing, "pause_others", lambda cfg, now: False)
+    yield

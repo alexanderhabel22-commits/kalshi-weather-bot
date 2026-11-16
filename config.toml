@@ -553,3 +553,38 @@ total_loss_pct = 0.10
 m15_daily_loss_pct = 0.06
 m15_total_loss_pct = 0.10
 m15_stop_guard = true
+
+[swing]
+# $500-by-Friday swing (wxbot/swing.py). Alex, Nov 16 2026 3:09 PM ET: "Your main goal is $500
+# in the account by EOW, do what you need to do to get there" ("$500 or die trying").
+# Bold play: each bet buys YES on the "above" strike priced nearest 30c (~3.3x), sized so a
+# win reaches $500, or all of that track's cash if that's not enough. Immediate-or-cancel,
+# held to settlement. Honest odds: ~8-10% to reach $500; most likely result is ~$0-30 left.
+# While active, every other main-bot strategy trades on PAPER so the cash goes here.
+# Stops by itself at $500 or at `end`. Turn off: enabled = false (or TRADING_MODE=off).
+enabled = true
+target = 500.0
+end = "2026-11-20T22:30:00Z"     # Fri Nov 20 5:30 PM ET
+pause_others = true
+aim = 0.30
+min_price = 0.20
+max_price = 0.42
+slip = 0.02
+min_stake = 1.0
+max_tries = 4
+
+[swing.main]                     # main balance (shard 0): S&P 500 close above X, 4 PM ET, weekdays
+series = "KXINXU"
+close_hour_et = 16
+shard = 0
+from_et = "10:00"
+last_entry_min = 30
+days = [0, 1, 2, 3, 4]
+
+[swing.crypto]                   # Crypto balance (shard 2): Bitcoin above X at 5 PM ET, every day
+series = "KXBTCD"
+close_hour_et = 17
+shard = 2
+from_et = "10:00"
+last_entry_min = 20
+days = [0, 1, 2, 3, 4, 5, 6]

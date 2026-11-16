@@ -28,6 +28,10 @@ HARD_MAX_CONTRACTS = 25          # no single order bigger than this, whatever th
 LIP_MAX_CONTRACTS = 500
 LIP_MAX_PRICE = 0.10
 LIP_MAX_ORDER_COST = 6.0
+# $500-by-Friday swing (wxbot/swing.py, Alex Nov 16) only: one big immediate-or-cancel buy.
+# Each order <= 2,000 contracts and <= $600, so it can never exceed what the target needs.
+SWING_MAX_CONTRACTS = 2000
+SWING_MAX_ORDER_COST = 600.0
 
 
 class OrderRejected(Exception):
@@ -195,8 +199,10 @@ class KalshiClient:
     # as a dollar string, count a string.
     def _order_v2(self, ticker: str, side: str, buy: bool, price: float, count: int,
                   client_order_id: str, tif: str, post_only: bool = False,
-                  reduce_only: bool = False, lip: bool = False) -> dict:
-        if lip:
+                  reduce_only: bool = False, lip: bool = False, swing: bool = False) -> dict:
+        if swing:
+            check_swing_order(side, price, count)
+        elif lip:
             check_lip_order(side, price, count)
         else:
             check_order(side, price, count)
@@ -280,11 +286,12 @@ class KalshiClient:
         return out
 
     def buy_now(self, ticker: str, side: str, price: float, count: int,
-                client_order_id: str) -> dict:
+                client_order_id: str, swing: bool = False) -> dict:
         """Buy at `price` or better right now (takes the ask); whatever doesn't
-        fill immediately is cancelled, never left resting."""
+        fill immediately is cancelled, never left resting. swing=True: the swing's
+        own size ceiling (SWING_MAX_*) instead of HARD_MAX_CONTRACTS."""
         return self._order_v2(ticker, side, True, price, count, client_order_id,
-                              "immediate_or_cancel")
+                              "immediate_or_cancel", swing=swing)
 
     def sell_now(self, ticker: str, side: str, price: float, count: int,
                  client_order_id: str) -> dict:
@@ -310,6 +317,14 @@ def check_lip_order(side: str, price: float, count: int) -> None:
         raise OrderRejected(f"bad lip size {count!r}")
     if price > LIP_MAX_PRICE + 1e-9 or price * count > LIP_MAX_ORDER_COST + 1e-9:
         raise OrderRejected(f"lip order too big: {count} @ {price}")
+
+
+def check_swing_order(side: str, price: float, count: int) -> None:
+    check_order(side, price, 1)
+    if not isinstance(count, int) or not (1 <= count <= SWING_MAX_CONTRACTS):
+        raise OrderRejected(f"bad swing size {count!r}")
+    if price * count > SWING_MAX_ORDER_COST + 1e-9:
+        raise OrderRejected(f"swing order too big: {count} @ {price}")
 
 
 def fill_qty(order: dict, placed: float) -> float:

@@ -1040,6 +1040,13 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
     specs = {name: strategy_settings(cfg, name, t) for name in strategies()}
     modes = {n: m for n, sp in specs.items() if (m := strategy_mode(gmode, sp))}
     need_live = "live" in modes.values()
+    try:                    # $500 swing (wxbot/swing.py): its cash isn't spent elsewhere
+        from . import swing
+        if swing.pause_others(cfg, now):
+            modes = {n: ("paper" if m == "live" else m) for n, m in modes.items()}
+            out["stops"].append("swing active: other strategies on paper")
+    except Exception as exc:          # never block the run
+        log.warning("swing check failed: %s", exc)
     if need_live and client is None:
         client = KalshiClient.from_env(http)
         if client is None:
