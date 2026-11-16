@@ -1287,6 +1287,17 @@ class Copycat:
             self.write({"kind": "scout", "added": added, "looked_up": min(len(names), SCOUT_CHECKS)})
         self.recheck()
 
+    def side_bid(self, ticker: str, side: str) -> float | None:
+        """What we'd get selling one contract of `side` now (YES: yes bid; NO: 1 - yes ask)."""
+        try:
+            q = self.snapshot(ticker)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("copycat bid %s: %s", ticker, exc)
+            return None
+        if side == "yes":
+            return q.get("bid")
+        return round(1 - q["ask"], 2) if q.get("ask") else None
+
     def snapshot(self, ticker: str) -> dict:
         m = self.get(f"{KALSHI}/markets/{ticker}").get("market") or {}
         return {"bid": _px(m.get("yes_bid_dollars", m.get("yes_bid"))),
@@ -1696,6 +1707,9 @@ class Copycat:
         if self.live is not None:
             self.live.refresh(now, force=True)
             self.live.settle(self.results, now)
+            for d in self.live.exit_if_profit(self.side_bid, now):   # one-off: Alex's two long-dated copies
+                self.alert("Copycat: sold at a profit", f"{d['nick']}: {d['ticker']} {d['side'].upper()} sold at "
+                           f"{d['sold_at'] * 100:.0f}c, ${d['pnl']:+.2f} after fees.")
             stops.update(self.live.benched())
             live = self.live.summary(now)
         if self.boss is not None:

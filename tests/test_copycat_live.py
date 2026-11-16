@@ -680,3 +680,26 @@ def test_settles_too_far_out_skipped(tmp_path):
     assert lv.client.orders == []
     near = dict(SNAP, expires=1000.0 + 2 * 86400)
     assert lv.maybe_copy(ACCT, dict(FILL), near, 1000.0) == "copied"
+
+
+def test_one_off_exit_sells_only_when_net_positive(tmp_path):
+    class Sell(FakeClient):
+        sold = []
+
+        def sell_now(self, ticker, side, price, n, coid):
+            self.sold.append((ticker, side, price, n))
+            return {"fill_count": n, "taker_fees_dollars": "0.02"}
+    lv, _ = mk(tmp_path, client=Sell())
+    lv.state["positions"] = {
+        "KXNFLPLAYOFF-27-LAR": {"nick": "PrettyFlacko42", "side": "no", "n": 1.0, "cost": 0.55, "ts": 1},
+        "KXOSCARACTO-27-JOH": {"nick": "PrettyFlacko42", "side": "yes", "n": 1.0, "cost": 0.49, "ts": 1},
+        "KXOTHER-1-A": {"nick": "x", "side": "yes", "n": 1.0, "cost": 0.10, "ts": 1}}
+    bids = {"KXNFLPLAYOFF-27-LAR": 0.57, "KXOSCARACTO-27-JOH": 0.52, "KXOTHER-1-A": 0.99}
+    done = lv.exit_if_profit(lambda t, s: bids[t], 1000.0)
+    # Rams 57c - 2c fee = 55c = cost: not positive, held. Oscars 52c - 2c = 50c > 49c: sold. Others never sold.
+    assert [d["ticker"] for d in done] == ["KXOSCARACTO-27-JOH"] and lv.client.sold == [("KXOSCARACTO-27-JOH", "yes", 0.52, 1)]
+    assert lv.state["positions"]["KXOSCARACTO-27-JOH"]["pnl"] == 0.01
+    assert lv.state["pnl"]["PrettyFlacko42"] == 0.01 and not lv.state["positions"]["KXNFLPLAYOFF-27-LAR"].get("settled")
+    bids["KXNFLPLAYOFF-27-LAR"] = 0.58
+    assert [d["ticker"] for d in lv.exit_if_profit(lambda t, s: bids[t], 1001.0)] == ["KXNFLPLAYOFF-27-LAR"]
+    assert lv.exit_if_profit(lambda t, s: bids[t], 1002.0) == []        # sold once only
