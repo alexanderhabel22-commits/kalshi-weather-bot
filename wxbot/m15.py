@@ -158,7 +158,8 @@ DEFAULTS = {
     "fv": True,
     "fv_coins": {"KXBTC15M": "BTC", "KXETH15M": "ETH", "KXSOL15M": "SOL"},
     "fv_every_s": 5,
-    "lag_probe": True,          # PAPER: real order book at each fair-value jump (m15_fv.LagProbe)
+    "lag_probe": True,
+    "place_check_paper": ["KXBTC15M", "KXSILVER15M", "KXETH15M", "KXSOL15M"],   # also log paper bids          # PAPER: real order book at each fair-value jump (m15_fv.LagProbe)
     # fair-value FILTER (changes trading when on): skip/pull the favourite bid when our side's
     # fair value < bid - margin, with >= min_left seconds left. OFF until the market's 500 review.
     "fv_skip": False,
@@ -598,13 +599,13 @@ class Bot(FillQuality):
 
     def _place(self, m: dict, side: str, q: float, n: int, now: float) -> bool:
         o = {"side": side, "q": q, "n": n, "filled": 0, "t0": now, "id": None}
+        lag = getattr(self.fv, "lag", None) if self.fv is not None else None
+        if lag is not None and (m["mode"] == "live" or m["series"] in (self.s.get("place_check_paper") or [])):
+            try:                                 # shadow: is the cached quote stale vs the real book?
+                lag.place_check(self, m, side, q, n, now, stage="place" if m["mode"] == "live" else "place_paper")
+            except Exception as exc:
+                log.warning("place check %s: %s", m["ticker"], exc)
         if m["mode"] == "live":
-            lag = getattr(self.fv, "lag", None) if self.fv is not None else None
-            if lag is not None:                  # shadow: is the cached quote stale vs the real book?
-                try:
-                    lag.place_check(self, m, side, q, n, now)
-                except Exception as exc:
-                    log.warning("place check %s: %s", m["ticker"], exc)
             cid = f"m15-{m['ticker']}-{int(now)}"[:60]
             try:
                 r = self.client.place_limit(m["ticker"], side, q, n, cid)
