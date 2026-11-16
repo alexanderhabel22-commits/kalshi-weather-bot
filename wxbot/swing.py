@@ -89,6 +89,14 @@ def close_time(day, hour: int) -> datetime:
     return datetime(day.year, day.month, day.day, hour, 0, tzinfo=ET)
 
 
+def next_hourly_close(local: datetime, lead_min: int) -> datetime:
+    """The first top of the hour at least lead_min minutes after `local` (ET)."""
+    c = local.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+    while c - local < timedelta(minutes=lead_min):
+        c += timedelta(hours=1)
+    return c
+
+
 def pick(markets: list[dict], close: datetime, p: dict) -> dict | None:
     """The "above" strike closing at `close` whose YES ask is nearest `aim` (inside the band)."""
     best = None
@@ -202,12 +210,19 @@ def run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None =
     for name, tr in p["tracks"].items():
         if not tr.get("enabled", True) or local.weekday() not in tr.get("days", [0, 1, 2, 3, 4]):
             continue
-        close = close_time(local.date(), int(tr["close_hour_et"]))
-        h0, m0 = (int(x) for x in str(tr.get("from_et", "10:00")).split(":"))
-        start = local.replace(hour=h0, minute=m0, second=0, microsecond=0)
-        last = close - timedelta(minutes=int(tr.get("last_entry_min", 30)))
-        if not (start <= local <= last):
-            continue
+        if tr.get("hourly"):
+            # "always have a trade going" (Alex, Nov 16 5:22 PM ET): one bet at a time on the
+            # soonest hourly close at least last_entry_min away, around the clock
+            if any(b["track"] == name and b.get("status") == "open" for b in st["bets"]):
+                continue
+            close = next_hourly_close(local, int(tr.get("last_entry_min", 40)))
+        else:
+            close = close_time(local.date(), int(tr["close_hour_et"]))
+            h0, m0 = (int(x) for x in str(tr.get("from_et", "10:00")).split(":"))
+            start = local.replace(hour=h0, minute=m0, second=0, microsecond=0)
+            last = close - timedelta(minutes=int(tr.get("last_entry_min", 30)))
+            if not (start <= local <= last):
+                continue
         try:
             lines += _track(name, tr, p, st, close, total, now, http, client, cfg, dry_run)
         except Exception as exc:   # one track must not stop the other
