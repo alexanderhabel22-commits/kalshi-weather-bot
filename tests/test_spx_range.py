@@ -79,5 +79,5 @@ def test_config_is_one_contract_live():
     from wxbot.util import load_config
     c = load_config()
     sp = c.raw["trading"]["spx_range"]
-    assert sp["live"] is True and sp["contracts"] == sp["max_contracts"] == 1
+    assert sp["live"] is True and sp["contracts"] == sp["max_contracts"] == 2   # 1 -> 2 Nov 16 scale-up
     assert sp["max_price"] == 0.65 and sp["sell_yes"] == 0.35

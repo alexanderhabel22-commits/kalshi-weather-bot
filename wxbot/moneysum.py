@@ -42,9 +42,56 @@ def _record(rs) -> str:
     return s + (f", {sold} sold early" if sold else "")
 
 
+def _short(title: str, n: int = 48) -> str:
+    t = (title or "").strip()
+    return t if len(t) <= n else t[:n - 1].rstrip() + "…"
+
+
+def day_story(rows: list[dict], midnight: datetime) -> list[str]:
+    """Plain lines on what the main bot DID today (Nov 16, Alex: "make it not as boring"):
+    orders placed, fills, settled record, best and worst result, biggest open bet, month pace."""
+    live = [r for r in rows if r.get("mode") == "live"]
+    placed = [r for r in live if (parse_iso(r.get("placed_at")) or midnight) >= midnight
+              and r.get("placed_at")]
+    filled_today = [r for r in live if r.get("filled_at") and (parse_iso(r.get("filled_at")) or midnight) >= midnight]
+    today = _settled(live, "live", midnight)
+    strats = sorted({r.get("strategy") for r in placed if r.get("strategy")})
+    ct = sum(int(float(r.get("count") or 0)) for r in placed)
+    fct = sum(int(float(r.get("filled") or 0)) for r in filled_today)
+    pnl = sum(float(r["pnl"]) for r in today)
+    out = [f"Main bot today: placed {len(placed)} orders ({ct} contracts)"
+           + (f" in {len(strats)} strategies" if strats else "")
+           + f", {len(filled_today)} filled ({fct} contracts), "
+           + (f"settled {_record(today)} for {_money(pnl)}." if today else "nothing settled yet.")]
+    if today:
+        best = max(today, key=lambda r: float(r["pnl"]))
+        worst = min(today, key=lambda r: float(r["pnl"]))
+        out.append(f"Best: {_money(float(best['pnl']))} {best.get('strategy')}, {_short(best.get('title'))}")
+        if worst is not best and float(worst["pnl"]) < 0:
+            out.append(f"Worst: {_money(float(worst['pnl']))} {worst.get('strategy')}, {_short(worst.get('title'))}")
+    held = [r for r in live if r.get("status") == "filled"]
+    if held:
+        big = max(held, key=lambda r: float(r.get("filled") or 0) * float(r.get("price") or 0))
+        out.append(f"Biggest bet riding: {int(float(big.get('filled') or 0))} x {str(big.get('side', '')).upper()} "
+                   f"@ {round(float(big.get('price') or 0) * 100)}c, {_short(big.get('title'))} ({big.get('strategy')})")
+    first = midnight.replace(day=1)
+    month = _settled(live, "live", first)
+    if month:
+        import calendar
+        mp = sum(float(r["pnl"]) for r in month)
+        days = calendar.monthrange(midnight.year, midnight.month)[1]
+        pace = mp / max(1, midnight.day) * days
+        out.append(f"This month: {_money(mp)} real ({len(month)} results), on pace for {_money(pace)}/month")
+    return out
+
+
 def format_summary(rows: list[dict], midnight: datetime, alert_line: str = "",
                    problems: list[str] = ()) -> tuple[str, str]:
     lines = []
+    try:
+        lines += day_story(rows, midnight)
+    except Exception:                               # the story is a nice-to-have; never block the push
+        pass
     bank = read_json(BANKROLL_FILE) or {}
     if bank.get("total") is not None:
         lines.append(f"Balance: ${float(bank['total']):.2f} (cash ${float(bank.get('cash') or 0):.2f}"
@@ -79,4 +126,5 @@ def format_summary(rows: list[dict], midnight: datetime, alert_line: str = "",
         lines.append(alert_line)
     for p in list(problems)[:5]:
         lines.append(f"Problem: {p}")
-    return "Kalshi bot: daily money summary", "\n".join(lines)
+    td = sum(float(r["pnl"]) for r in today)
+    return f"Kalshi bot: daily money summary · {_money(td)} today", "\n".join(lines)

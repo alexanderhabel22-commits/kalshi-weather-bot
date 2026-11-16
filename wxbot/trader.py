@@ -428,6 +428,19 @@ def model_exit(r: dict, m: dict | None, value: float, margin: float) -> tuple[fl
 
 # ---------------------------------------------------------------- checks
 
+def fit_to_caps(it: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
+                others: list, mode: str) -> str | None:
+    """vet(), but takers (LOCKs) and strategies with shrink_to_fit = true take a smaller
+    order that fits the open-$ caps instead of skipping (Nov 16 favorites scale-up: a 3rd or
+    4th market in an event gets whatever room the event cap leaves)."""
+    why = vet(it, rows, t, sp, now, others, mode)
+    if it.taker or sp.get("shrink_to_fit"):
+        while why and "cap" in why and it.count > 1:
+            it.count -= 1
+            why = vet(it, rows, t, sp, now, others, mode)
+    return why
+
+
 def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
         planned: list[Intent], mode: str = "live") -> str | None:
     """Why this intent is NOT allowed (None = allowed)."""
@@ -1123,10 +1136,7 @@ def _run(cfg: Config, *, now: datetime, http: Http, client: KalshiClient | None 
             if it.count > room:
                 it.count = room             # shrink to what the market can take
             others = [p for p in planned if plan_mode[id(p)] == mode]
-            why = vet(it, same, t, sp, now, others, mode)
-            while it.taker and why and "cap" in why and it.count > 1:
-                it.count -= 1               # LOCKs shrink to fit the caps instead of skipping
-                why = vet(it, same, t, sp, now, others, mode)
+            why = fit_to_caps(it, same, t, sp, now, others, mode)
             if why in ("overall open-$ cap", "strategy open-$ cap") and not dry_run:
                 try:
                     if free_cap_for(http, it, why, mode, rows, others, t, specs, now, client, cfg, dry_run):

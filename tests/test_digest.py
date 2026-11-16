@@ -102,3 +102,29 @@ def test_money_summary_sent_once_from_trade_run_after_9pm(monkeypatch):
     assert digest.run_money_summary(cfg, datetime(2026, 11, 8, 2, 5, tzinfo=UTC), h)            # 9:05 PM ET
     assert digest.run_money_summary(cfg, datetime(2026, 11, 8, 2, 10, tzinfo=UTC), h) is False  # once a day
     assert len(h.posts) == 1 and "money summary" in h.posts[0]["title"]
+
+
+def test_daily_push_tells_what_the_main_bot_did_today():
+    from wxbot import moneysum
+    mid = datetime(2026, 11, 16, 5, 0, tzinfo=UTC)
+    rows = [{"id": "p", "mode": "live", "strategy": "favorites", "ticker": "F1", "event": "EF",
+             "title": "Will the shutdown end by Friday?", "side": "yes", "price": "0.91", "count": 4,
+             "filled": 4, "status": "filled", "placed_at": "2026-11-16T14:00:00+00:00",
+             "filled_at": "2026-11-16T15:00:00+00:00"},
+            {"id": "q", "mode": "live", "strategy": "weather_late", "ticker": "W1", "event": "EW",
+             "title": "Low temp in Chicago", "side": "no", "price": "0.80", "count": 2, "filled": 2,
+             "status": "settled", "pnl": "-1.60", "placed_at": "2026-11-15T18:00:00+00:00",
+             "settled_at": "2026-11-16T12:00:00+00:00"},
+            {"id": "r", "mode": "live", "strategy": "macro_fade", "ticker": "C1", "event": "EC",
+             "title": "CPI above 3%?", "side": "no", "price": "0.88", "count": 3, "filled": 3,
+             "status": "settled", "pnl": "0.36", "placed_at": "2026-11-10T18:00:00+00:00",
+             "settled_at": "2026-11-16T13:00:00+00:00"}]
+    title, body = moneysum.format_summary(rows, mid)
+    assert title == "Kalshi bot: daily money summary · -$1.24 today"
+    lines = body.splitlines()
+    assert lines[0] == ("Main bot today: placed 1 orders (4 contracts) in 1 strategies, 1 filled (4 contracts), "
+                        "settled 1-1 for -$1.24.")
+    assert "Best: +$0.36 macro_fade, CPI above 3%?" in lines
+    assert "Worst: -$1.60 weather_late, Low temp in Chicago" in lines
+    assert "Biggest bet riding: 4 x YES @ 91c, Will the shutdown end by Friday? (favorites)" in lines
+    assert any(x.startswith("This month: -$1.24 real (2 results), on pace for") for x in lines)

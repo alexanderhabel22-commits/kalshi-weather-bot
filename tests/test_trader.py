@@ -513,7 +513,8 @@ def test_only_approved_strategies_trade_real_money():
     assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range"}
     assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 3
     assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 1
-    assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 1
+    # Nov 16 scale-up (Alex: "give it the wheel"): macro_wide, favorites_wide, spx/ndx ranges 1 -> 2
+    assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 2
     assert c.raw["trading"]["macro_fade"]["contracts"] == 3
     wl = c.raw["trading"]["weather_late"]
     assert wl["contracts"] == 1 and wl["contracts_by"] == {"low/need": 2} and wl["max_open_pct"] <= 0.40 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
@@ -866,7 +867,7 @@ def test_favorites_wide_logs_decision_date_markets_on_paper():
     out = favorites_wide.extra(events, NOW, wide, live, None, None)
     assert {i.ticker for i in out} == {"KXGOV-A-X", "KXGOV-A-Y"}
     assert not ({i.ticker for i in out} & live_pick)
-    assert all(i.strategy == "favorites_wide" and i.count == 1 and i.close == far for i in out)
+    assert all(i.strategy == "favorites_wide" and i.count == 2 and i.close == far for i in out)
     sides = {i.ticker: (i.side, i.price) for i in out}
     assert sides["KXGOV-A-X"] == ("yes", 0.91) and sides["KXGOV-A-Y"] == ("no", 0.95)
 
@@ -882,7 +883,7 @@ def test_macro_wide_is_paper_and_relabels_macro_fade_picks():
     base = macro_fade.candidates(ms, p, NOW)
     out = macro_wide.candidates(ms, p, NOW)
     assert [i.ticker for i in out] == [i.ticker for i in base] == ["KXJOBLESSCLAIMS-26NOV19-A"]
-    assert out[0].strategy == "macro_wide" and out[0].price == 0.87 and out[0].count == 1
+    assert out[0].strategy == "macro_wide" and out[0].price == 0.87 and out[0].count == 2
 
 
 def test_ai_fade_relabels_macro_fade_picks_on_kxllm1():
@@ -924,3 +925,26 @@ def test_favorites_late_logs_last_24h_markets_on_paper():
     assert all(i.strategy == "favorites_late" and i.count == 1 for i in out)
     held = {"KXRT-A": {"KXRT-A-X", "KXRT-A-Y"}}
     assert favorites_late.extra(events, NOW, late, live, held) == []
+
+
+def test_shrink_to_fit_takes_the_room_the_event_cap_leaves():
+    t = trader.settings(cfg(mode="live", bankroll=50))
+    sp = {"max_event_dollars": 10.0, "max_price": 0.96, "min_price": 0.85}
+    held = [{"id": "a", "mode": "live", "strategy": "favorites", "ticker": "E-A", "event": "E", "side": "yes",
+             "price": "0.90", "count": 8, "filled": 8, "status": "filled", "close": CLOSE}]
+    it = trader.Intent("favorites", "E-B", "E", "yes", 0.90, 4, CLOSE)
+    assert trader.fit_to_caps(it, held, t, sp, NOW, [], "live") == "event open-$ cap"    # maker: skip
+    it = trader.Intent("favorites", "E-B", "E", "yes", 0.90, 4, CLOSE)
+    assert trader.fit_to_caps(it, held, t, sp | {"shrink_to_fit": True}, NOW, [], "live") is None
+    assert it.count == 3                                     # $7.20 held + 3 x 90c = $9.90 <= $10
+
+
+def test_scale_up_nov16_sizes():
+    from wxbot.util import load_config
+    tr = load_config().raw["trading"]
+    assert tr["favorites"]["contracts"] == 4 and tr["favorites"]["max_markets_per_event"] == 4
+    assert tr["favorites"]["shrink_to_fit"] is True and tr["favorites"]["max_event_pct"] <= tr["max_event_pct"]
+    assert tr["macro_fade"]["contracts"] == 3
+    for n in ("spx_range", "ndx_range"):
+        assert tr[n]["contracts"] == 2 and tr[n]["max_market_contracts"] >= 2
+    assert tr["daily_loss_pct"] == 0.10 and tr["total_loss_pct"] == 0.25 and tr["max_event_pct"] == 0.20

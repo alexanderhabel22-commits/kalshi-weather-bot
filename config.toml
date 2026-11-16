@@ -194,8 +194,8 @@ max_market_contracts = 100
 enabled = true
 live = true                      # REAL money, 1 contract test (Alex Nov 12 2:38 PM ET: "ok testing with real money")
 series = ["KXAAAGASW", "KXJOBLESSCLAIMS"]
-contracts = 1
-max_contracts = 1
+contracts = 2                    # 1 -> 2 Nov 16 scale-up (replay +6.6c +- 2.7; same fade as Fed/CPI at 3)
+max_contracts = 2
 max_markets_per_event = 3
 min_price = 0.71
 max_price = 0.95
@@ -203,7 +203,7 @@ min_hours = 1
 max_hours = 504
 min_volume = 500
 max_open_pct = 0.20
-max_event_pct = 0.05
+max_event_pct = 0.10             # 5 -> 10% Nov 16 (= macro_fade's) so 3 markets at 2 contracts fit
 
 [trading.favorites]
 # Resting bids on the 85-96c favorite in BIG Elections / Politics / Entertainment
@@ -217,15 +217,18 @@ categories = ["Elections", "Politics", "Entertainment"]
 min_event_volume = 1000000       # contracts traded so far across the event's markets
 min_series_volume = 1000000      # only look at series that have traded 1M+ contracts in total
 contracts = 4                    # doubled Nov 7 (Alex: "up to you"); was 2
-max_markets_per_event = 2
+max_markets_per_event = 4        # 2 -> 4 Nov 16 (Alex: "give it the wheel"). Audit replay: in-band markets the
+                                 # 2-slot limit skipped earned +3.8c +- 1.3 (610 fills, 111 events), same as live
+shrink_to_fit = true             # Nov 16: a 3rd/4th market takes whatever the event cap leaves instead of skipping
 min_price = 0.85                 # favorite-side price band
 max_price = 0.96
 min_hours = 1                    # market closes 1 hour - 24 hours from now
 max_hours = 24                   # 168 -> 24 Nov 13 (Alex: "implement if you think it is smart"). Entry-timing
                                  # replay: last-24h bids +4.6c/fill vs +2.0c for the 7-day window (reachable
                                  # markets, ~20% fewer fills). Orders already resting stay until they fill or close.
-max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
-max_event_pct = 0.15             # at most 15% on one event (was 10%; room for 2 markets at 4 contracts)
+max_open_pct = 0.40              # at most 40% of the bankroll in this strategy (30 -> 40 Nov 16 scale-up)
+max_event_pct = 0.20             # at most 20% on one event = the bot-wide per-event rail (15 -> 20 Nov 16;
+                                 # was 10% before Nov 7). ~3 markets at 4 contracts at a ~$58 bankroll
 
 [trading.favorites_wide]
 # 1-CONTRACT REAL-MONEY TEST since Nov 12 (main-bot audit): the favorites bet on markets the live rule skips
@@ -237,15 +240,15 @@ enabled = true
 live = true                      # REAL money, 1 contract test (Alex Nov 12 2:38 PM ET: "ok testing with real money")
 categories = ["Elections", "Politics", "Entertainment"]
 min_event_volume = 1000000
-contracts = 1
-max_contracts = 1
+contracts = 2                    # 1 -> 2 Nov 16 scale-up (audit: elections +6.5c +- 1.4, the best favorites slice)
+max_contracts = 2
 max_markets_per_event = 2
 min_price = 0.85
 max_price = 0.96
 min_hours = 1                    # expected decision 1 hour - 7 days from now
 max_hours = 168
 max_open_pct = 0.20
-max_event_pct = 0.05
+max_event_pct = 0.08             # 5 -> 8% Nov 16 so 2 contracts fit
 
 [trading.favorites_late]
 # PAPER SHADOW ONLY (Nov 13, 2026, thread "Check entry timing in main-bot strategies"): the live
@@ -368,18 +371,19 @@ max_market_contracts = 1
 enabled = true
 live = true
 taker = true                     # a YES bid already at 35c+ is taken (buy NO at its ask)
-contracts = 1
-max_contracts = 1
+contracts = 2                    # 1 -> 2 Nov 16 scale-up (replay +12.8c/fill, every period positive)
+max_contracts = 2
 sell_yes = 0.35
 n_markets = 6
 min_price = 0.40                 # NO price band (taker NO when YES bid is 35-60c)
 max_price = 0.65
-max_open_pct = 0.10              # 6 resting NO bids at 65c = $3.90
-max_event_pct = 0.10
+max_open_pct = 0.15              # 6 resting NO bids x 2 at 65c = $7.80 (10 -> 15% Nov 16). Only one range
+                                 # can win, so a night's real worst case is ~2 x 65c = $1.30
+max_event_pct = 0.15             # one close = one event: 6 x 2 x 65c fits (10 -> 15% Nov 16)
 max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
 exit = "hold"
-max_week_contracts = 100             # ~6 resting a night count as placed, even when cancelled unfilled
-max_market_contracts = 1
+max_week_contracts = 200             # ~12 resting a night count as placed, even when cancelled unfilled (100 -> 200 Nov 16)
+max_market_contracts = 2
 
 [trading.ndx_range]
 # Same rule as spx_range on the Nasdaq-100 daily close (wxbot/strats/ndx_range.py,
@@ -394,19 +398,19 @@ max_market_contracts = 1
 enabled = true
 live = true
 taker = true
-contracts = 1
-max_contracts = 1
+contracts = 2                    # 1 -> 2 Nov 16 scale-up (replay +22.4c/fill, 12% lose)
+max_contracts = 2
 sell_yes = 0.35
 n_markets = 6
 min_price = 0.40
 max_price = 0.65
-max_open_pct = 0.10              # 6 resting NO bids at 65c = $3.90
-max_event_pct = 0.10
+max_open_pct = 0.15              # 6 resting NO bids x 2 at 65c = $7.80 (10 -> 15% Nov 16)
+max_event_pct = 0.15             # one close = one event: 6 x 2 x 65c fits (10 -> 15% Nov 16)
 max_loss_pct = 0.10
 max_loss_usd = 5.0               # own stop: down $5 settled real money (or 10% of bankroll if smaller) -> no new orders + one push
 exit = "hold"
-max_week_contracts = 100
-max_market_contracts = 1
+max_week_contracts = 200
+max_market_contracts = 2
 
 [allocator]
 # Grades every strategy on profit per $1 risked (settled REAL-money results only,
