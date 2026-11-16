@@ -13,6 +13,14 @@ his call once paper results earn it. It is a small real-money test (~$37 bankrol
 started Nov 3, 2026; topped up to $49.71 on Nov 5) in place of paper trading; Alex adds money only if the
 record earns it. Be candid about odds and risk; no hype.
 
+## $500 swing (Nov 16-20, 2026)
+Alex (Nov 16 3:09 PM ET): "Your main goal is $500 in the account by EOW." `wxbot/swing.py` + `[swing]`
+in config.toml (PRs #314, #315). Bold play: buys YES on the "above" strike nearest 30c, sized so a win
+reaches $500 (or all of that balance's cash). Main balance: S&P KXINXU 4 PM close, weekdays. Crypto balance:
+BTC KXBTCD next hourly close, 24/7, one bet at a time. While it runs, every other main-bot strategy is on
+PAPER. Ends by itself at $500 or Fri Nov 20 5:30 PM ET, then the others return to normal. Ledger:
+data/orders/swing.json and the "$500 swing" card on the dashboard. Honest odds ~8-10%.
+
 ## Where everything lives
 - Repo (public): **github.com/alexanderhabel22-commits/kalshi-weather-bot**,
   branch `main`. Get access in a new chat with the add_repo tool
