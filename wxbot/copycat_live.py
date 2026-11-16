@@ -38,6 +38,8 @@ DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
 CONTROL_STALE_S = 600
 NO_INDEX_S = 6 * 3600       # skip a series this long after "insufficient shard balance" (e.g. tennis, Nov 15)
+EXIT_IF_PROFIT = ("KXOSCARACTO-27-JOH", "KXNFLPLAYOFF-27-LAR")   # ONE-OFF (Alex, Nov 15): sell these two
+                            # long-dated copies as soon as selling nets a profit after fees. Not a general sell rule.
 MAX_EXPIRY_DAYS = 7         # skip markets that settle more than 7 days out (Alex, Nov 16: NFL playoffs, Oscars).
                             # Nov 11-15: 96.6% of buyable copies settle within 7 days; 30d+ copies (2%) tie up
                             # ~49c each for a median 105 days in the 15% pool with no measurable edge.
@@ -236,6 +238,44 @@ class Live:
                                            "ts": now, "trade_id": fill.get("trade_id")}
         self.save()
         return "copied"
+
+    def exit_if_profit(self, bid_of: Callable[[str, str], float | None], now: float) -> list[dict]:
+        """One-off exit for EXIT_IF_PROFIT: sells the whole position at our side's bid once
+        bid * n - sell fee > what we paid (cost already includes the buy fee). Books it like a settlement."""
+        import math
+        done = []
+        for t in EXIT_IF_PROFIT:
+            p = self.state["positions"].get(t)
+            if not p or p.get("settled"):
+                continue
+            b = bid_of(t, p["side"])
+            if not b or b <= 0:
+                continue
+            fee = math.ceil(round(7 * p["n"] * b * (1 - b), 6)) / 100
+            if b * p["n"] - fee <= p["cost"] + 1e-9:
+                continue
+            coid = f"cc-exit-{int(now)}-{abs(hash(t)) % 10**6}"
+            try:
+                o = self.client.sell_now(t, p["side"], b, int(math.ceil(p["n"])), coid)
+            except Exception as exc:  # noqa: BLE001
+                self.write({"kind": "exit", "ticker": t, "bid": b, "error": str(exc)[:300]})
+                continue
+            got = fill_qty(o, p["n"])
+            if got <= 0:
+                self.write({"kind": "exit", "ticker": t, "bid": b, "filled": 0})
+                continue
+            fee_paid = _f(o.get("taker_fees_dollars"))
+            fee_paid = fee if fee_paid is None else fee_paid
+            pnl = round(got * b - fee_paid - p["cost"] * got / p["n"], 4)
+            p.update(settled=now, result="sold", pnl=pnl, sold_at=b)
+            nick = p["nick"]
+            self.state["pnl"][nick] = round(self.state["pnl"].get(nick, 0.0) + pnl, 4)
+            self.state["total"] = round(self.state["total"] + pnl, 4)
+            self.write({"kind": "exit", "nick": nick, "ticker": t, "bid": b, "filled": got, "fee": fee_paid, "pnl": pnl})
+            done.append(dict(p, ticker=t))
+        if done:
+            self.save()
+        return done
 
     # -- settlement and stops
     def settle(self, results: dict[str, str], now: float) -> list[dict]:
