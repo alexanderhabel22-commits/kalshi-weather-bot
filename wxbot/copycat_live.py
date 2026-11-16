@@ -38,6 +38,9 @@ DEFAULTS = {"mode": "off", "pool_pct": 0.15, "account_stop_pct": 0.10, "account_
             "exclude_series": ["KXBTC15M", "KXSILVER15M"], "exclude_categories": ["Sports"], "bench": []}
 CONTROL_STALE_S = 600
 NO_INDEX_S = 6 * 3600       # skip a series this long after "insufficient shard balance" (e.g. tennis, Nov 15)
+MAX_EXPIRY_DAYS = 7         # skip markets that settle more than 7 days out (Alex, Nov 16: NFL playoffs, Oscars).
+                            # Nov 11-15: 96.6% of buyable copies settle within 7 days; 30d+ copies (2%) tie up
+                            # ~49c each for a median 105 days in the 15% pool with no measurable edge.
 EARN_N = 20                 # earn-back: new settled paper copies needed since the bench
 EARN_EVENTS = 15            # ... in this many different events: the TRIAL bar again, on fresh copies (Alex, Nov 15:
 EARN_SCORE = 77.5           # "back to paper and then can earn their way back to trial"), score 77.5+, average > 0
@@ -165,6 +168,8 @@ class Live:
             return "excluded series"
         if snap.get("category") == "unknown" or snap.get("category") in (c.get("exclude_categories") or []):
             return f"excluded category ({snap.get('category')})"
+        if snap.get("expires") and snap["expires"] - now > MAX_EXPIRY_DAYS * 86400:
+            return f"settles too far out ({(snap['expires'] - now) / 86400:.0f} days)"
         ser = ticker.split("-")[0]
         if now - self.no_index.get(ser, -1e18) < NO_INDEX_S:
             return "no cash on this market's exchange index"

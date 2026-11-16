@@ -101,6 +101,14 @@ SEED = ("BWmarkets", "thebigdon", "BitcoinTradingChallenge", "szg.szg", "brief.t
         "balla23", "crow.hcis", "reluctant.fox5394", "spoon.rope", "pentasir", "far.bike")
 
 
+def _ts(iso) -> float | None:
+    """ISO time ("2027-01-11T15:00:00Z") -> unix seconds, or None."""
+    try:
+        return datetime.fromisoformat(str(iso).replace("Z", "+00:00")).timestamp() if iso else None
+    except ValueError:
+        return None
+
+
 def _px(v) -> float | None:
     try:
         v = float(v)
@@ -1284,7 +1292,8 @@ class Copycat:
         return {"bid": _px(m.get("yes_bid_dollars", m.get("yes_bid"))),
                 "ask": _px(m.get("yes_ask_dollars", m.get("yes_ask"))),
                 "last": _px(m.get("last_price_dollars", m.get("last_price"))),
-                "status": m.get("status"), "result": m.get("result") or None}
+                "status": m.get("status"), "result": m.get("result") or None,
+                "expires": _ts(m.get("expected_expiration_time") or m.get("close_time"))}
 
     def fetch_results(self, want: set[str], now: float) -> None:
         """Looks up settlement results in batches of RESULT_BATCH markets per call, least recently

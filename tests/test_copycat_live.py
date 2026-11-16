@@ -666,3 +666,17 @@ def test_scout_never_evicts_ready_or_real_traders(tmp_path):
     lv.state["on_real"] = {"t2": {"tier": "trial"}}
     cold = [k for k in cc.watch if k not in cc.hot and k not in cc.keep and k not in cc.on_real()]
     assert "t1" not in cold and "t2" not in cold and "t3" in cold
+
+
+def test_far_out_markets_are_skipped():
+    from wxbot import copycat as cc_mod
+    assert cc_mod._ts("2027-01-11T15:00:00Z") == 1799679600.0 and cc_mod._ts(None) is None and cc_mod._ts("x") is None
+
+
+def test_settles_too_far_out_skipped(tmp_path):
+    lv, _ = mk(tmp_path)
+    far = dict(SNAP, expires=1000.0 + 56 * 86400)                     # Rams playoffs: 56 days out
+    assert lv.maybe_copy(ACCT, dict(FILL), far, 1000.0) == "settles too far out (56 days)"
+    assert lv.client.orders == []
+    near = dict(SNAP, expires=1000.0 + 2 * 86400)
+    assert lv.maybe_copy(ACCT, dict(FILL), near, 1000.0) == "copied"
