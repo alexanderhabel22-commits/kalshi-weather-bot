@@ -411,6 +411,25 @@ async function loadCopycat(){
   try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/copycat-data/copycat/status.json?t=${Date.now()}`, {cache:"no-store"});
     S.cc = r.ok ? await r.json() : null; } catch(e){ S.cc = null; }
   try { S.ccCtl = await raw("copycat_control.json", "json"); } catch(e){}
+  try { S.swing = await raw("data/orders/swing.json", "json"); } catch(e){ S.swing = null; }
+}
+// $500-by-Friday swing (wxbot/swing.py, Alex Nov 16): plain ledger of every bet
+function swingHTML(){
+  const w = S.swing; if (!w) return "";
+  const bets = w.bets || [], usd = x => (x < 0 ? "-$" : "$") + Math.abs(+x || 0).toFixed(2);
+  const pnl = bets.reduce((a, b) => a + (b.pnl == null ? 0 : +b.pnl), 0);
+  const risk = bets.filter(b => b.status === "open").reduce((a, b) => a + (+b.cost || 0) + (+b.fee || 0), 0);
+  let h = `<h2>$500 swing <span class="sub">bold-play bets to reach $500 by Fri Nov 20 · other main strategies on paper while it runs</span></h2><div class="card">`;
+  h += `<div style="font-size:12.5px;line-height:1.55">${w.done ? "<b>Finished:</b> " + esc(w.done) : "<b>Running.</b>"} Account ${w.last_total != null ? "<b>" + usd(w.last_total) + "</b>" : "?"} of $500 target · settled swing P&amp;L <b>${usd(pnl)}</b> · at risk now ${usd(risk)} · ${bets.length} bet(s)</div>`;
+  if (bets.length){
+    h += `<div style="overflow-x:auto"><table style="width:100%;font-size:12px;margin-top:8px"><tr><th align="left">Placed (ET)</th><th align="left">Balance</th><th align="left">Bet</th><th align="right">Contracts</th><th align="right">Cost+fee</th><th align="right">Win pays</th><th align="left">Result</th><th align="right">P&amp;L</th></tr>`;
+    for (const b of bets.slice().reverse()){
+      const t = new Date(b.placed_at).toLocaleString("en-US", {timeZone:"America/New_York", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+      h += `<tr><td>${esc(t)}</td><td>${esc(b.track)}</td><td>YES ${esc(b.label)}</td><td align="right">${(+b.count).toFixed(0)}</td><td align="right">${usd((+b.cost||0)+(+b.fee||0))}</td><td align="right">${usd(b.count)}</td><td>${esc(b.status)}</td><td align="right">${b.pnl == null ? "" : usd(b.pnl)}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+  return h + `</div>`;
 }
 // New-idea tests (Nov 11): liquidity-reward test (real money) + two paper tests, all on the 15-min server
 const TEST_START = Date.parse("2026-11-11T13:30:00Z");
@@ -2421,7 +2440,7 @@ function renderOverview(){
   }
   h += `<h2>More</h2>` + dd("mWins", "Biggest wins", "all time", winsHTML(sx.tr, strats))
     + foldSections(bigH + moneyH + testsHTML(), "m_", 0);
-  $("#v-overview").innerHTML = h + liveFillsHTML(false);
+  $("#v-overview").innerHTML = swingHTML() + h + liveFillsHTML(false);
   $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
 
   if ($("#setAll")) $("#setAll").onclick = () => { S.setAll = !S.setAll; renderOverview(); };

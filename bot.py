@@ -93,6 +93,12 @@ def main(argv=None) -> int:
             from wxbot import balance
             balance.refresh(http, now)       # bankroll follows the Kalshi balance
         out = trader.run(cfg, now=now, http=http, dry_run=args.dry_run)   # syncs fills + settlements
+        try:                         # $500-by-Friday swing (Alex, Nov 16)
+            from wxbot import swing
+            for line in swing.run(cfg, now=now, http=http, dry_run=args.dry_run):
+                print(f"swing: {line}")
+        except Exception as exc:     # never break the rest of the run
+            logging.exception("swing failed: %s", exc)
         if not args.dry_run:
             try:
                 from wxbot import quotes
