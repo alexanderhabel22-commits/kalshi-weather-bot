@@ -198,3 +198,13 @@ def test_place_check_logs_cached_vs_real_book(tmp_path, monkeypatch):
     assert r["stage"] == "place" and r["ws_ask"] == "0.8" and r["book_bid"] == "0.8"
     assert r["book_ask"] == "0.82" and r["depth_ask"] == "5.0" and r["depth_edge"] == "0.8"
     assert r["tape_ct_at_ask"] == "2" and r["fair"] == ""
+
+
+def test_place_check_paper_stage(tmp_path, monkeypatch):
+    from wxbot import kalshi
+    monkeypatch.setattr(kalshi, "get_orderbook", lambda http, tk: {"yes": [(0.80, 5.0)], "no": [(0.18, 1.0)]})
+    sh = fv.FairShadow(fv.Composite(["BTC"]), {"KXBTC15M": "BTC"}, tmp_path, lag=True)
+    m = {"ticker": "KXSILVER15M-X", "series": "KXSILVER15M", "close": 10_400}
+    sh.lag.place_check(LagBot({m["ticker"]: m}), m, "yes", 0.80, 1, 10_000.0, stage="place_paper")
+    r = list(csv.DictReader(open(next(tmp_path.glob("lag-*.csv")))))[0]
+    assert r["stage"] == "place_paper" and r["book_bid"] == "0.8"
