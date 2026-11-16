@@ -25,24 +25,6 @@
  "found": [
   {
    "alert_worthy": false,
-   "category": "Elections",
-   "checked": "2026-11-06T01:00:31+00:00",
-   "example": "KXTHIRDPARTYSTATEWIN-28DEC19-AL1",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-05T19:00:30+00:00",
-   "frequency": "one_off",
-   "markets_seen": "2026-11-06T01:00:31+00:00",
-   "median_spread": 0.98,
-   "n_open": 1,
-   "new_category": false,
-   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (98c), so makers haven't arrived yet.",
-   "series": "KXTHIRDPARTYSTATEWIN",
-   "status": "live",
-   "title": "Will an independent or third-party candidate win a state in a presidential election?",
-   "volume": 0.0
-  },
-  {
-   "alert_worthy": false,
    "category": "Politics",
    "checked": "2026-11-06T01:00:31+00:00",
    "example": "KXPAMINWAGE-29JAN01-29JAN01",
@@ -7222,6 +7204,24 @@
    "status": "live",
    "title": "West Virginia gas price",
    "volume": 3110.78
+  },
+  {
+   "alert_worthy": false,
+   "category": "Economics",
+   "checked": "2026-11-16T18:00:29+00:00",
+   "example": "KXAAAGASCDWY-26NOV17-SI",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-13T19:30:27+00:00",
+   "frequency": "daily",
+   "markets_seen": "2026-11-16T18:00:29+00:00",
+   "median_spread": 0.02,
+   "n_open": 5,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads already tight (2c): probably already efficient.",
+   "series": "KXAAAGASCDWY",
+   "status": "live",
+   "title": "Wyoming gas price",
+   "volume": 1200.0
   }
  ],
  "known": [
@@ -8283,6 +8283,7 @@
   "KXAHL",
   "KXAHLGAME",
   "KXAIADOPTION",
+  "KXAIADSHOUSE",
   "KXAIAPPARRAY",
   "KXAIAUTHOR",
   "KXAIBILL",
@@ -8303,6 +8304,7 @@
   "KXAILIMITSUSCHINA",
   "KXAIMANU",
   "KXAIMILLENNIUM",
+  "KXAINATCHAMP",
   "KXAINEURALESE",
   "KXAIOPEN",
   "KXAIORDER",
@@ -9844,6 +9846,7 @@
   "KXCANAL",
   "KXCANALBERTAREMAIN",
   "KXCANARIAS",
+  "KXCANARYMIGRANTS",
   "KXCANAUTOSTEEL50",
   "KXCANBQSEATS",
   "KXCANCARBON",
@@ -11487,7 +11490,9 @@
   "KXEARTHQUAKEM7",
   "KXEASLGAME",
   "KXEASTCOASTPORTSTRIKE",
+  "KXEASTPOTOMACBLOCK",
   "KXEASTPOTOMACCONTEMPT",
+  "KXEASTPOTOMACCOURT",
   "KXEASTPOTOMACRESUME",
   "KXEBASKETBALLGAME",
   "KXEBAY",
@@ -12630,6 +12635,7 @@
   "KXGAETZ",
   "KXGAETZCOUNT",
   "KXGAFILMSPEND",
+  "KXGAGAUZIAGOV",
   "KXGAINSURANCE",
   "KXGALABOR",
   "KXGALLEGOOUT",
@@ -17387,6 +17393,7 @@
   "KXNHLPRES",
   "KXNHLPRICE",
   "KXNHLPSEASONGOALS",
+  "KXNHLPSEASONPOINTS",
   "KXNHLPTS",
   "KXNHLRECORDWORST",
   "KXNHLRETIRE",
@@ -17575,6 +17582,7 @@
   "KXNVIDIAGROQFINE",
   "KXNVIDIARASGONQ",
   "KXNVLTGOV",
+  "KXNVMINWAGE",
   "KXNVPAIDLEAVE",
   "KXNVPRIMARY",
   "KXNVSTATELEG",
@@ -22631,6 +22639,7 @@
   "KXWIMEDICAIDEXP",
   "KXWIMFGEMP",
   "KXWIMILK",
+  "KXWIMINWAGE",
   "KXWIMMEN",
   "KXWIMWOMEN",
   "KXWINDSORWEST",
@@ -23687,7 +23696,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-16T17:32:19+00:00",
+ "last_check": "2026-11-16T18:00:29+00:00",
  "pending": {
   "KXAAAGASCDAK": {
    "category": "Economics",
@@ -23969,15 +23978,6 @@
    "series": "KXAAAGASCDSC",
    "title": "South Carolina gas price"
   },
-  "KXAAAGASCDWY": {
-   "category": "Economics",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-13T19:30:27+00:00",
-   "frequency": "daily",
-   "new_category": false,
-   "series": "KXAAAGASCDWY",
-   "title": "Wyoming gas price"
-  },
   "KXABA2GAME": {
    "category": "Sports",
    "checked": "2026-11-12T17:30:28+00:00",
@@ -24057,6 +24057,24 @@
    "new_category": false,
    "series": "KXAFCCL2TOTAL",
    "title": "Total"
+  },
+  "KXAIADSHOUSE": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXAIADSHOUSE",
+   "title": "House passage of an AI political ads bill"
+  },
+  "KXAINATCHAMP": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXAINATCHAMP",
+   "title": "Which companies will be named AI national champions?"
   },
   "KXAISCORE": {
    "category": "Science and Technology",
@@ -24474,6 +24492,15 @@
    "series": "KXCALTECHRATE",
    "title": "Caltech Admissions Rate"
   },
+  "KXCANARYMIGRANTS": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXCANARYMIGRANTS",
+   "title": "How many migrants will reach the Canary Islands?"
+  },
   "KXCEOAMD": {
    "category": "Financials",
    "checked": "2026-11-12T16:00:32+00:00",
@@ -24791,6 +24818,24 @@
    "series": "KXEASLGAME",
    "title": "East Asia Super League Game"
   },
+  "KXEASTPOTOMACBLOCK": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXEASTPOTOMACBLOCK",
+   "title": "Will a judge block the East Potomac closure?"
+  },
+  "KXEASTPOTOMACCOURT": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXEASTPOTOMACCOURT",
+   "title": "Will a judge block the East Potomac closure?"
+  },
   "KXEFLL2ADVANCE": {
    "category": "Sports",
    "checked": "2026-11-12T17:30:28+00:00",
@@ -24968,6 +25013,15 @@
    "new_category": false,
    "series": "KXFAAGROUNDSTOPLIFT",
    "title": "When will the FAA Lift the Ground Stop"
+  },
+  "KXGAGAUZIAGOV": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXGAGAUZIAGOV",
+   "title": "Gagauzia gubernatorial election winner"
   },
   "KXGBPUSDUD": {
    "category": "Financials",
@@ -25563,6 +25617,15 @@
    "series": "KXNHDELSEATED",
    "title": "Will New Hampshire's state-run primary delegates be seated at the DNC?"
   },
+  "KXNHLPSEASONPOINTS": {
+   "category": "Sports",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXNHLPSEASONPOINTS",
+   "title": "Player Season Points"
+  },
   "KXNKLGAME": {
    "category": "Sports",
    "checked": "2026-11-12T18:30:41+00:00",
@@ -25672,6 +25735,15 @@
    "new_category": false,
    "series": "KXNOTREDAMERATE",
    "title": "Notre Dame Admissions Rate"
+  },
+  "KXNVMINWAGE": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXNVMINWAGE",
+   "title": "Will Nevada raise its minimum wage?"
   },
   "KXOSCARS": {
    "category": "Entertainment",
@@ -25870,7 +25942,7 @@
   },
   "KXRAINDCOACHELLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-11T22:00:46+00:00",
    "frequency": "daily",
@@ -26025,7 +26097,7 @@
   },
   "KXSNOWDAYSAUS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26035,7 +26107,7 @@
   },
   "KXSNOWDAYSBAL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26045,7 +26117,7 @@
   },
   "KXSNOWDAYSBOS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26055,7 +26127,7 @@
   },
   "KXSNOWDAYSCHI": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26065,7 +26137,7 @@
   },
   "KXSNOWDAYSCLE": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26075,7 +26147,7 @@
   },
   "KXSNOWDAYSCLT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26085,7 +26157,7 @@
   },
   "KXSNOWDAYSCVG": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26095,7 +26167,7 @@
   },
   "KXSNOWDAYSDC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26105,7 +26177,7 @@
   },
   "KXSNOWDAYSDEN": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26115,7 +26187,7 @@
   },
   "KXSNOWDAYSDFW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26125,7 +26197,7 @@
   },
   "KXSNOWDAYSDTW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26135,7 +26207,7 @@
   },
   "KXSNOWDAYSHOU": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26145,7 +26217,7 @@
   },
   "KXSNOWDAYSIND": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26155,7 +26227,7 @@
   },
   "KXSNOWDAYSKC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26165,7 +26237,7 @@
   },
   "KXSNOWDAYSMSP": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26175,7 +26247,7 @@
   },
   "KXSNOWDAYSNASH": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26185,7 +26257,7 @@
   },
   "KXSNOWDAYSNOLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26195,7 +26267,7 @@
   },
   "KXSNOWDAYSNYC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26205,7 +26277,7 @@
   },
   "KXSNOWDAYSPDX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26215,7 +26287,7 @@
   },
   "KXSNOWDAYSPHL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26225,7 +26297,7 @@
   },
   "KXSNOWDAYSPHX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26235,7 +26307,7 @@
   },
   "KXSNOWDAYSPIT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26245,7 +26317,7 @@
   },
   "KXSNOWDAYSSEA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-16T17:32:19+00:00",
+   "checked": "2026-11-16T18:00:29+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26749,6 +26821,15 @@
    "new_category": false,
    "series": "KXWHEATD",
    "title": "Wheat Daily"
+  },
+  "KXWIMINWAGE": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-16T18:00:29+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXWIMINWAGE",
+   "title": "Will Wisconsin raise its minimum wage?"
   }
  },
  "queue": []
