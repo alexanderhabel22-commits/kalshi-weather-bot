@@ -25,24 +25,6 @@
  "found": [
   {
    "alert_worthy": false,
-   "category": "Elections",
-   "checked": "2026-11-06T19:30:26+00:00",
-   "example": "KXISRGOVTYPE-26NOV06-E0",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-06T16:00:30+00:00",
-   "frequency": "one_off",
-   "markets_seen": "2026-11-06T19:30:26+00:00",
-   "median_spread": 0.1,
-   "n_open": 3,
-   "new_category": false,
-   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (10c), so makers haven't arrived yet.",
-   "series": "KXISRGOVTYPE",
-   "status": "live",
-   "title": "What kind of government will Israel form?",
-   "volume": 0.0
-  },
-  {
-   "alert_worthy": false,
    "category": "Politics",
    "checked": "2026-11-06T19:30:26+00:00",
    "example": "KXISRSPEAKERDATE-27JAN01-27JAN01",
@@ -7222,6 +7204,24 @@
    "status": "live",
    "title": "Nike shoes for Mississippi valedictorians",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Science and Technology",
+   "checked": "2026-11-17T17:30:28+00:00",
+   "example": "KXGOOGLMILLENNIUM-29-01JAN28",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T00:30:32+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-17T17:30:28+00:00",
+   "median_spread": 0.08,
+   "n_open": 2,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads are wide (8c), so makers haven't arrived yet.",
+   "series": "KXGOOGLMILLENNIUM",
+   "status": "live",
+   "title": "Google Millennium Prize claim",
+   "volume": 0.0
   }
  ],
  "known": [
@@ -9151,6 +9151,7 @@
   "KXBCNDPLEAD",
   "KXBCNDPSEATS",
   "KXBCPREMIER",
+  "KXBCSGOV",
   "KXBDONMENTION",
   "KXBDS3PT",
   "KXBDS3PTOU",
@@ -9565,6 +9566,7 @@
   "KXBROADCASTNBCYTTV",
   "KXBROADLINEADS",
   "KXBROADWAYEVITA",
+  "KXBROCCOLI",
   "KXBRONSONDROPOUT",
   "KXBROS",
   "KXBROSA",
@@ -10372,6 +10374,7 @@
   "KXCOLCUPGAME",
   "KXCOLCUPSPREAD",
   "KXCOLCUPTOTAL",
+  "KXCOLIMAGOV",
   "KXCOLLECTIONSALE",
   "KXCOLLEGEDROP",
   "KXCOLLEGEGAMEDAY",
@@ -13232,6 +13235,7 @@
   "KXGUATEMALACONGRESS",
   "KXGUATEMALAPRES",
   "KXGUAYAQUILMAYOR",
+  "KXGUERREROGOV",
   "KXGUILFOYLEOUT",
   "KXGUINEAREF",
   "KXGUINEAWORM",
@@ -15386,11 +15390,13 @@
   "KXMETXCOMBO",
   "KXMEWIND",
   "KXMEXAMB",
+  "KXMEXCOALSEATS",
   "KXMEXCUBOIL",
   "KXMEXICOCITY",
   "KXMEXICODEPUTIES",
   "KXMEXICOPRES",
   "KXMEXICOPRESPARTY",
+  "KXMEXMINWAGE",
   "KXMFT",
   "KXMFTD",
   "KXMI11D",
@@ -15752,6 +15758,7 @@
   "KXMORATORIUMCOUNT",
   "KXMORECHAOS",
   "KXMOREDISTREF",
+  "KXMORENASEATS",
   "KXMORESTREAMSPUSHAT",
   "KXMORGANWALLEN",
   "KXMORTGAGEDEF",
@@ -16043,6 +16050,7 @@
   "KXNAVAJOPRES",
   "KXNAVARRA",
   "KXNAVITASCHARGE",
+  "KXNAYARITGOV",
   "KXNBA",
   "KXNBA1H",
   "KXNBA1HSPREAD",
@@ -18534,6 +18542,7 @@
   "KXQEMOMENSSINGLES",
   "KXQOWOMENSINGLES",
   "KXQRECESS",
+  "KXQROOGOV",
   "KXQSTARSADVANCE",
   "KXQSTARSBTTS",
   "KXQSTARSGAME",
@@ -23047,6 +23056,7 @@
   "KXYUMA",
   "KXYUMPHFT",
   "KXYUMTBFT",
+  "KXZACATECASGOV",
   "KXZACHARIABRIEFING",
   "KXZACHARIAMENTION",
   "KXZACHARIANEXTBRIEF",
@@ -23735,7 +23745,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-17T17:00:32+00:00",
+ "last_check": "2026-11-17T17:30:28+00:00",
  "pending": {
   "KXAAAGASCDAK": {
    "category": "Economics",
@@ -24283,6 +24293,15 @@
    "series": "KXBCEA",
    "title": "BCE Annual KPI"
   },
+  "KXBCSGOV": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXBCSGOV",
+   "title": "Baja California Sur gubernatorial election winner"
+  },
   "KXBELCHALLADVANCE": {
    "category": "Sports",
    "checked": "2026-11-12T17:30:28+00:00",
@@ -24412,6 +24431,15 @@
    "new_category": false,
    "series": "KXBOTOLATOTAL",
    "title": "Total"
+  },
+  "KXBROCCOLI": {
+   "category": "Economics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXBROCCOLI",
+   "title": "Los Angeles broccoli prices"
   },
   "KXBROWNAPPS": {
    "category": "Entertainment",
@@ -24651,6 +24679,15 @@
    "new_category": false,
    "series": "KXCOLCUPTOTAL",
    "title": "Point Total"
+  },
+  "KXCOLIMAGOV": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXCOLIMAGOV",
+   "title": "Colima Governor winner"
   },
   "KXCOLUMBIAAPPS": {
    "category": "Entertainment",
@@ -25077,14 +25114,14 @@
    "series": "KXGEOSLGAME",
    "title": "Georgia Superleague Game"
   },
-  "KXGOOGLMILLENNIUM": {
-   "category": "Science and Technology",
+  "KXGUERREROGOV": {
+   "category": "Elections",
    "fee_multiplier": 1,
-   "first_seen": "2026-11-17T00:30:32+00:00",
+   "first_seen": "2026-11-17T17:30:28+00:00",
    "frequency": "one_off",
    "new_category": false,
-   "series": "KXGOOGLMILLENNIUM",
-   "title": "Google Millennium Prize claim"
+   "series": "KXGUERREROGOV",
+   "title": "Guerrero Governor winner"
   },
   "KXHARMEDSERVICESCHAIR": {
    "category": "Politics",
@@ -25494,6 +25531,24 @@
    "series": "KXMAJLEAD120",
    "title": "House Majority Leader (120th Congress)"
   },
+  "KXMEXCOALSEATS": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXCOALSEATS",
+   "title": "Mexico Chamber of Deputies: Morena, PT and PVEM seats"
+  },
+  "KXMEXMINWAGE": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXMINWAGE",
+   "title": "Mexico general minimum wage increase"
+  },
   "KXMFTD": {
    "category": "Financials",
    "fee_multiplier": 1,
@@ -25542,6 +25597,15 @@
    "series": "KXMNERA",
    "title": "Minnesota Equal Rights Amendment"
   },
+  "KXMORENASEATS": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMORENASEATS",
+   "title": "Mexican Chamber of Deputies election: how many seats will Morena win?"
+  },
   "KXMPBLGAME": {
    "category": "Sports",
    "checked": "2026-11-12T18:30:41+00:00",
@@ -25551,6 +25615,15 @@
    "new_category": false,
    "series": "KXMPBLGAME",
    "title": "Philippines Maharlika Basketball League Game"
+  },
+  "KXNAYARITGOV": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXNAYARITGOV",
+   "title": "Nayarit gubernatorial election winner"
   },
   "KXNBA2DPROT": {
    "category": "Sports",
@@ -25959,6 +26032,15 @@
    "series": "KXPRYCUPTOTAL",
    "title": "Point Total"
   },
+  "KXQROOGOV": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXQROOGOV",
+   "title": "Quintana Roo Governor winner"
+  },
   "KXRAFMATCH": {
    "category": "Sports",
    "checked": "2026-11-12T18:30:41+00:00",
@@ -25981,7 +26063,7 @@
   },
   "KXRAINDCOACHELLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-11T22:00:46+00:00",
    "frequency": "daily",
@@ -26119,7 +26201,7 @@
   },
   "KXSNOWDAYSAUS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26129,7 +26211,7 @@
   },
   "KXSNOWDAYSBAL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26139,7 +26221,7 @@
   },
   "KXSNOWDAYSBOS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26149,7 +26231,7 @@
   },
   "KXSNOWDAYSCHI": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26159,7 +26241,7 @@
   },
   "KXSNOWDAYSCLE": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26169,7 +26251,7 @@
   },
   "KXSNOWDAYSCLT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26179,7 +26261,7 @@
   },
   "KXSNOWDAYSCVG": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26189,7 +26271,7 @@
   },
   "KXSNOWDAYSDC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26199,7 +26281,7 @@
   },
   "KXSNOWDAYSDEN": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26209,7 +26291,7 @@
   },
   "KXSNOWDAYSDFW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26219,7 +26301,7 @@
   },
   "KXSNOWDAYSDTW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26229,7 +26311,7 @@
   },
   "KXSNOWDAYSHOU": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26239,7 +26321,7 @@
   },
   "KXSNOWDAYSIND": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26249,7 +26331,7 @@
   },
   "KXSNOWDAYSKC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26259,7 +26341,7 @@
   },
   "KXSNOWDAYSMSP": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26269,7 +26351,7 @@
   },
   "KXSNOWDAYSNASH": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26279,7 +26361,7 @@
   },
   "KXSNOWDAYSNOLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26289,7 +26371,7 @@
   },
   "KXSNOWDAYSNYC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26299,7 +26381,7 @@
   },
   "KXSNOWDAYSPDX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26309,7 +26391,7 @@
   },
   "KXSNOWDAYSPHL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26319,7 +26401,7 @@
   },
   "KXSNOWDAYSPHX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -26329,7 +26411,7 @@
   },
   "KXSNOWDAYSPIT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26339,7 +26421,7 @@
   },
   "KXSNOWDAYSSEA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-17T17:00:32+00:00",
+   "checked": "2026-11-17T17:30:28+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -26926,6 +27008,15 @@
    "new_category": false,
    "series": "KXWMTCCD",
    "title": "Walmart Daily Credit Card Spend"
+  },
+  "KXZACATECASGOV": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-17T17:30:28+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXZACATECASGOV",
+   "title": "Zacatecas Governor winner"
   }
  },
  "queue": []
