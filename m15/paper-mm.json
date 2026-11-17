@@ -10,7 +10,7 @@
    "cat": "Mentions",
    "event": "KXEARNINGSMENTIONNVDA-26NOV18",
    "vol24": 4015.26,
-   "casual": null
+   "casual": 0.539
   },
   "KXLUCKEYMENTION-26NOV18-IPO": {
    "cat": "Mentions",
@@ -28,7 +28,7 @@
    "cat": "Entertainment",
    "event": "KXRT-VIO",
    "vol24": 36787.68,
-   "casual": null
+   "casual": 0.001
   },
   "KXINXU-26NOV17H1600-T7399.9999": {
    "cat": "Financials",
@@ -64,7 +64,7 @@
    "cat": "Entertainment",
    "event": "KXRT-IPL",
    "vol24": 11743.05,
-   "casual": 0.194
+   "casual": 0.199
   },
   "KXAAAGASW-26NOV23-3.6200": {
    "cat": "Economics",
@@ -76,7 +76,7 @@
    "cat": "Climate and Weather",
    "event": "KXHIGHNY-26NOV17",
    "vol24": 11097.54,
-   "casual": 0.187
+   "casual": 0.16
   },
   "KXCPI-26DEC-T0.0": {
    "cat": "Economics",
@@ -88,25 +88,25 @@
    "cat": "Entertainment",
    "event": "KXRT-FUR",
    "vol24": 9132.36,
-   "casual": null
+   "casual": 0.167
   },
   "KXAAAGASD-26NOV18-3.7500": {
    "cat": "Economics",
    "event": "KXAAAGASD-26NOV18",
    "vol24": 9026.51,
-   "casual": 0.132
+   "casual": 0.192
   },
   "KXAPRPOTUS-26NOV20-38.3": {
    "cat": "Politics",
    "event": "KXAPRPOTUS-26NOV20",
    "vol24": 8778.2,
-   "casual": 0.138
+   "casual": 0.139
   },
   "KXHIGHMIA-26NOV17-B78.5": {
    "cat": "Climate and Weather",
    "event": "KXHIGHMIA-26NOV17",
    "vol24": 7867.59,
-   "casual": 0.865
+   "casual": 0.923
   },
   "KXLEADERSALL-27JAN15": {
    "cat": "Elections",
@@ -118,17 +118,17 @@
    "cat": "Entertainment",
    "event": "KXRT-IPL",
    "vol24": 7619.54,
-   "casual": 0.152
+   "casual": 0.122
   }
  },
  "by_category": {
   "Elections": {
-   "fills": 80,
+   "fills": 81,
    "market_hours": 1.0,
-   "fills_per_market_hour": 82.41,
-   "edge_at_fill_c": -2.5,
-   "markout_5m_c": -2.82,
-   "markout_30m_c": -2.66,
+   "fills_per_market_hour": 83.44,
+   "edge_at_fill_c": -2.46,
+   "markout_5m_c": -2.77,
+   "markout_30m_c": -2.6,
    "maker_fee_c": 0.35
   },
   "Climate and Weather": {
@@ -150,21 +150,21 @@
    "maker_fee_c": 0.26
   },
   "Mentions": {
-   "fills": 110,
+   "fills": 112,
    "market_hours": 3.7,
-   "fills_per_market_hour": 29.92,
-   "edge_at_fill_c": -1.6,
-   "markout_5m_c": -1.75,
-   "markout_30m_c": -1.1,
+   "fills_per_market_hour": 30.46,
+   "edge_at_fill_c": -1.63,
+   "markout_5m_c": -1.79,
+   "markout_30m_c": -1.16,
    "maker_fee_c": 0.41
   },
   "Entertainment": {
-   "fills": 62,
+   "fills": 63,
    "market_hours": 0.5,
-   "fills_per_market_hour": 118.19,
-   "edge_at_fill_c": -1.86,
-   "markout_5m_c": -1.35,
-   "markout_30m_c": -1.59,
+   "fills_per_market_hour": 120.09,
+   "edge_at_fill_c": -1.8,
+   "markout_5m_c": -1.3,
+   "markout_30m_c": -1.46,
    "maker_fee_c": 0.34
   },
   "Economics": {
@@ -213,16 +213,16 @@
    "maker_fee_c": 0.35
   },
   "20to50|yes": {
-   "fills": 39,
+   "fills": 40,
    "settled": 18,
-   "markout_30m_c": -1.22,
+   "markout_30m_c": -1.15,
    "settled_c": -6.67,
    "maker_fee_c": 0.34
   },
   "50plus|no": {
-   "fills": 61,
+   "fills": 62,
    "settled": 33,
-   "markout_30m_c": -0.11,
+   "markout_30m_c": -0.18,
    "settled_c": 6.82,
    "maker_fee_c": 0.33
   },
@@ -234,9 +234,9 @@
    "maker_fee_c": 0.31
   },
   "under20|no": {
-   "fills": 108,
+   "fills": 109,
    "settled": 30,
-   "markout_30m_c": -3.51,
+   "markout_30m_c": -3.41,
    "settled_c": -1.2,
    "maker_fee_c": 0.35
   },
@@ -248,9 +248,9 @@
    "maker_fee_c": 0.35
   },
   "unknown|no": {
-   "fills": 39,
+   "fills": 40,
    "settled": 13,
-   "markout_30m_c": 0.0,
+   "markout_30m_c": -0.15,
    "settled_c": 31.69,
    "maker_fee_c": 0.37
   },
@@ -270,8 +270,8 @@
   "done": true,
   "candidates": 1102
  },
- "pending": 8,
- "held": 259,
+ "pending": 5,
+ "held": 260,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -406,7 +406,8 @@
   "KXRT-VIO-60": -1,
   "KXTRUMPAPPROVE-26NOV17-E38.4": 1,
   "KXAAAGASD-26NOV18-3.7500": 1,
-  "KXAPRPOTUS-26NOV20-38.3": -1
+  "KXAPRPOTUS-26NOV20-38.3": -1,
+  "KXINXU-26NOV17H1600-T7399.9999": 1
  },
- "at": "2026-11-17T18:58:04+00:00"
+ "at": "2026-11-17T20:08:55+00:00"
 }
