@@ -637,9 +637,9 @@ function sumData(){
   const C = S.cc || {}, L = C.live || {};
   if (S.cc){ const done = (L.settled || []).filter(x => x.settled), tot = num(L.total_pnl);
     out.cc = {pnl:tot, today:done.filter(x => etDay(new Date(x.settled * 1000)) === today).reduce((a, x) => a + num(x.pnl), 0), risk:num(L.open_cost), live:C.mode === "live",
-      note:(() => { const TI = ccTiers(); return `${TI.on.length} traders live (${TI.full.length} full, ${TI.trial.length} trial)`; })(), pts:done.map(x => ({x:x.settled * 1000, y:num(x.pnl)})), base:tot - done.reduce((a, x) => a + num(x.pnl), 0)};
+      note:C.mode !== "live" ? "paper only" : (() => { const TI = ccTiers(); return `${TI.on.length} traders live (${TI.full.length} full, ${TI.trial.length} trial)`; })(), pts:done.map(x => ({x:x.settled * 1000, y:num(x.pnl)})), base:tot - done.reduce((a, x) => a + num(x.pnl), 0)};
     (C.accounts || []).filter(a => a.verdict === "passes" || (a.real || {}).copies).forEach(a => { const R = a.real || {}, pl = (L.pnl || {})[a.nick] != null ? num(L.pnl[a.nick]) : num(R.pnl);
-      strat.push({eng:"cc", key:a.nick, name:"Copycat · " + a.nick, live:a.verdict === "passes", size:a.verdict === "passes" ? num(a.size) + " ct" : "", pnl:pl,
+      strat.push({eng:"cc", key:a.nick, name:"Copycat · " + a.nick, live:a.verdict === "passes" && C.mode === "live", size:a.verdict === "passes" ? num(a.size) + " ct" : "", pnl:pl,
         today:done.filter(x => x.nick === a.nick && etDay(new Date(x.settled * 1000)) === today).reduce((s2, x) => s2 + num(x.pnl), 0), ct:num(R.contracts), c:R.c, n:num(R.settled), won:num(R.won),
         open:num(R.open_cost), bt:a.settle_c, btLbl:"paper", col:"#c4b5fd", grade:a.grade}); }); }
   // REWARDS TEST: Kalshi's payouts for our resting bids
@@ -650,8 +650,31 @@ function sumData(){
     strat.push({eng:"tx", key:"lip", name:"Liquidity rewards", live:T.mode === "live", size:"$" + num(T.budget).toFixed(0) + " budget", pnl:paid, today:out.tx.today, ct:0, c:null, n:cr.length, won:null, open:num(T.filled_cost), col:"#67e8f9"}); }
   if (M) strat.push({eng:"m15", key:"m15", name:"15-minute markets", live:out.m15.live, size:out.m15.live ? "1 ct" : "", pnl:out.m15.pnl, today:out.m15.today, ct:out.m15.ct, c:out.m15.ct ? 100 * out.m15.pnl / out.m15.ct : null,
     n:out.m15.n, won:out.m15.won, open:out.m15.risk, col:"#f5b335"});
+  freshen(out, strat, today);
   const tot = ["main", "m15", "cc", "tx"].reduce((a, k) => ({pnl:a.pnl + num(out[k].pnl), today:a.today + num(out[k].today), risk:a.risk + num(out[k].risk)}), {pnl:0, today:0, risk:0});
   return {out, strat, tot};
+}
+// Fresh start across the board (Alex, Nov 17: "fresh start across the board"): every bot's real-money
+// numbers on SUMMARY count only results after live_since. Main is already filtered (modeRows); the 15-min
+// bot, Copycat and the rewards test keep only post-fresh-start settled points, and their old totals live in
+// the Testing fees archive on MAIN. Raw history stays in the data files for the reviews.
+function freshen(out, strat, today){
+  const ls = liveSince(); if (!ls) return;
+  const cut = +ls, after = p => num(p.x) >= cut;
+  for (const k of ["m15", "cc", "tx"]){
+    const o = out[k]; if (!o || !o.pts) continue;
+    const pts = o.pts.filter(after), pnl = pts.reduce((a, p) => a + num(p.y), 0);
+    o.pts = pts; o.base = 0; o.pnl = pnl; o.today = pts.filter(p => etDay(new Date(p.x)) === today).reduce((a, p) => a + num(p.y), 0);
+    if (k === "m15"){ o.n = pts.length; o.won = pts.filter(p => num(p.y) > 0).length; o.ct = o.n ? o.ct : 0; }
+  }
+  const C = S.cc || {}, done = (((C.live || {}).settled) || []).filter(x => x.settled && x.settled * 1000 >= cut);
+  for (const x of strat){
+    if (x.eng === "main") continue;
+    if (x.eng === "cc"){ const d = done.filter(p => p.nick === x.key); x.pnl = d.reduce((a, p) => a + num(p.pnl), 0); x.n = d.length;
+      x.won = d.filter(p => num(p.pnl) > 0).length; x.ct = d.reduce((a, p) => a + num(p.n), 0); x.c = x.ct ? 100 * x.pnl / x.ct : null; continue; }
+    const o = out[x.eng] || {}; x.pnl = num(o.pnl); x.today = num(o.today); x.n = num(o.n);
+    if (x.eng === "m15"){ x.won = o.won; x.ct = o.ct; x.c = o.ct ? 100 * x.pnl / o.ct : null; }
+  }
 }
 function sumPage(){
   if (!S.data || !S.data.config) return `<div class="card"><div class="mute">Loading…</div></div>`;
@@ -660,15 +683,15 @@ function sumPage(){
   const ct = live.concat(off).reduce((a, x) => a + num(x.ct), 0), cpc = ct ? 100 * strat.reduce((a, x) => a + (x.ct ? x.pnl : 0), 0) / ct : null;
   let h = liveAcctHTML();
   h += `<h2>Summary <span class="sub">every bot · real money</span></h2><div class="card glow">
-    <div class="hero"><div><div class="lbl">Bots' real-money P&L · all time</div><div class="big ${cls(tot.pnl)}">${money(tot.pnl)}</div>
+    <div class="hero"><div><div class="lbl">Bots' real-money P&L · ${liveSince() ? "since the fresh start" : "all time"}</div><div class="big ${cls(tot.pnl)}">${money(tot.pnl)}</div>
       <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${live.length} money-makers live${cpc != null ? ` · <span class="${cls(cpc)}">${cents(cpc)}/ct</span> overall` : ""}</div></div>
       <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(tot.today)}">${money(tot.today)}</div>
       <div class="lbl" style="margin-top:8px">At risk now</div><div class="val" style="font-size:17px">$${tot.risk.toFixed(2)} <small class="mute">/ $${B.toFixed(2)}</small></div></div></div>
     <div class="eng">${Object.entries(ENG).map(([k, [nm, col]]) => { const o = out[k] || {};
       return `<div data-goto="${k}" style="border-left:3px solid ${col}"><div class="nm"><span>${nm}</span><span style="color:${o.live ? "var(--good)" : "var(--mute)"}">${o.live ? "● LIVE" : k === "tx" ? "ENDED" : "PAPER"}</span></div>
         <div class="pl ${cls(num(o.pnl))}">${o.pnl == null ? "—" : money(num(o.pnl))}</div><div class="td">today ${money(num(o.today))} · ${esc(o.note || "")}</div></div>`; }).join("")}</div>
-    <div class="mute" style="font-size:11px;margin-top:10px">Real money only, after fees. Your own manual trades are left out. Tap a box to open that bot's page.</div></div>`;
-  h += `<h2>Profit over time <span class="sub">real money · all bots</span></h2><div class="card"><div class="legend" id="sumLeg"></div>${smoothBtns()}<div class="chart" id="sumEq"></div>
+    <div class="mute" style="font-size:11px;margin-top:10px">Real money only, after fees${liveSince() ? `, since the fresh start (${esc(fdt(liveSince()))} ET). Everything earlier is under "Testing fees" on MAIN` : ""}. Your own manual trades are left out. Tap a box to open that bot's page.</div></div>`;
+  h += `<h2>Profit over time <span class="sub">real money · ${liveSince() ? "since the fresh start · " : ""}one line per strategy</span></h2><div class="card"><div class="legend" id="sumLeg"></div>${smoothBtns()}<div class="chart" id="sumEq"></div>
     <div class="mute" style="font-size:11px;margin-top:4px">Each step is a bet settling (or a rewards payout). White is the total.</div></div>`;
   const row = x => `<tr data-goto="${x.eng}"><td><i style="background:${x.col}"></i>${esc(x.name)}${x.grade ? ` <small style="color:${ccGcol(x.grade)}">${esc(x.grade)}</small>` : ""}<br><small class="mute">${esc(ENG[x.eng][0].toLowerCase())}${x.size ? " · " + esc(x.size) : ""}</small></td>
     <td class="${x.n ? cls(x.pnl) : "mute"}" style="font-weight:700">${x.n || x.pnl ? money(x.pnl) : "—"}</td><td class="${x.today ? cls(x.today) : "mute"}">${x.today ? money(x.today) : "—"}</td>
@@ -676,7 +699,7 @@ function sumPage(){
     <td>${x.open ? "$" + x.open.toFixed(2) : "—"}</td><td class="mute">${x.bt == null ? "—" : cents(x.bt)}${x.btLbl ? `<small> ${x.btLbl}</small>` : ""}</td></tr>`;
   const tt = live.concat(off).reduce((a, x) => ({pnl:a.pnl + x.pnl, today:a.today + num(x.today), n:a.n + num(x.n), open:a.open + num(x.open)}), {pnl:0, today:0, n:0, open:0});
   h += `<h2>Every money-maker <span class="sub">${live.length} live · tap a row</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>P&L</th><th>Today</th><th>¢/ct</th><th>Settled</th><th>Open</th><th>Expected</th></tr>`
-    + live.map(row).join("") + (off.length ? `<tr><td colspan="7" class="lbl" style="padding-top:12px">No longer on real money (results still count)</td></tr>` + off.map(row).join("") : "")
+    + live.map(row).join("") + (off.length ? `<tr><td colspan="7" class="lbl" style="padding-top:12px">No longer on real money</td></tr>` + off.map(row).join("") : "")
     + `<tr class="tot"><td>Total</td><td class="${cls(tt.pnl)}">${money(tt.pnl)}</td><td class="${cls(tt.today)}">${money(tt.today)}</td><td>${cpc == null ? "—" : cents(cpc)}</td><td>${tt.n}</td><td>$${tt.open.toFixed(2)}</td><td></td></tr></table></div>
     <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">¢/ct = real profit per contract after fees, the number that says whether an edge is real. Expected = what the backtest (or, for Copycat, the trader's paper record) says it should make.</div>
     <div class="lbl" style="margin:12px 0 2px">P&L by strategy</div><div class="chart" id="sumBars"></div></div>`;
@@ -686,7 +709,7 @@ function sumPage(){
     ${meter("Money at risk, all bots", tot.risk, B, {txt:`$${tot.risk.toFixed(2)} · ${pct(tot.risk / (B || 1), 1)}`, sub:"Held bets, resting orders and open copies across every bot, as a share of the whole account"})}
     ${Object.entries(ENG).filter(([k]) => num((out[k] || {}).risk) > 0).map(([k, [nm, col]]) => `<div style="display:flex;align-items:center;gap:8px;font-size:11.5px;margin-top:6px"><span style="width:96px;color:${col}">${nm.toLowerCase()}</span><div class="share" style="flex:1;margin:0"><i style="width:${Math.min(100, 100 * out[k].risk / (tot.risk || 1)).toFixed(1)}%;background:${col}"></i></div><span style="width:52px;text-align:right">$${out[k].risk.toFixed(2)}</span></div>`).join("")}
     <div style="margin-top:12px">${meter("Main bot today vs daily stop", -num(out.main.today), dayStop, {txt:`${money(num(out.main.today))} / −$${dayStop.toFixed(2)}`, sub:`Down ${pct(num(t.daily_loss_pct, .1))} in a day pauses new main-bot orders until tomorrow`})}</div>
-    ${meter("Main bot all time vs halt", -num(out.main.pnl), totStop, {txt:`${money(num(out.main.pnl))} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} halts the main bot and cancels its resting orders`})}</div>`;
+    ${meter(liveSince() ? "Main bot since fresh start vs halt" : "Main bot all time vs halt", -num(out.main.pnl), totStop, {txt:`${money(num(out.main.pnl))} / −$${totStop.toFixed(2)}`, sub:`Down ${pct(num(t.total_loss_pct, .25))} halts the main bot and cancels its resting orders`})}</div>`;
   h += aiTileHTML("aiDaysS");
   // what's coming and what was decided
   const up = ck.filter(x => x.date >= today).sort((a, b) => a.date.localeCompare(b.date));
@@ -701,7 +724,11 @@ function drawSum(){
   const line = (pts, base, name, col, w) => { const ps = pts.filter(p => p.x).sort((a, b) => a.x - b.x); let y = num(base);
     const q = ps.length ? [{x:ps[0].x - 60e3, y:+y.toFixed(2)}] : []; ps.forEach(p => { y += p.y; q.push({x:p.x, y:+y.toFixed(2)}); }); if (q.length) q.push({x:now, y:+y.toFixed(2)});
     return {name, c:col, w, pts:q, tot:y}; };
-  const per = Object.entries(ENG).map(([k, [nm, col]]) => line((out[k] || {}).pts || [], (out[k] || {}).base, nm, col, 1.8)).filter(x => x.pts.length);
+  // one line per main-bot strategy (Alex, Nov 17), plus any other bot that has real results since the fresh start
+  const mrows = modeRows("live").filter(r => r.strategy !== "manual" && r.status === "settled" && r.settled && r.pnl != null);
+  const per = [...new Set(mrows.map(r => r.strategy))].map((n, i) => line(mrows.filter(r => r.strategy === n).map(r => ({x:+r.settled, y:r.pnl})), 0, strategyName(n), colorOf(n, i), 1.8))
+    .concat(Object.entries(ENG).filter(([k]) => k !== "main").map(([k, [nm, col]]) => line((out[k] || {}).pts || [], (out[k] || {}).base, nm, col, 1.8)).filter(x => x.pts.length && Math.abs(x.tot) > 0.004))
+    .filter(x => x.pts.length);
   const all = Object.keys(ENG).flatMap(k => (out[k] || {}).pts || []), base = Object.keys(ENG).reduce((a, k) => a + num((out[k] || {}).base), 0);
   const ser = [line(all, base, "Total", "#e6ecff", 2.6)].concat(per);
   if ($("#sumLeg")) $("#sumLeg").innerHTML = ser.map(x => `<span><i style="background:${x.c}"></i>${esc(x.name === "Total" ? "Total" : x.name.toLowerCase())} <b class="${cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
@@ -1163,7 +1190,7 @@ function ccPage(){
   const mk = ccMarked();
   let h = `<h2>Copycat <span class="sub">${live ? "real money on" : "paper only"} · updated ${esc(c.generated || "")}</span></h2>`
     + `<div class="card glow">
-    <div class="hero"><div><div class="lbl">Real money made · all time</div><div class="big ${cls(num(L.total_pnl))}">${money(num(L.total_pnl))}</div>
+    <div class="hero"><div><div class="lbl">Real money made · ${liveSince() ? "before the fresh start (testing fees)" : "all time"}</div><div class="big ${cls(num(L.total_pnl))}">${money(num(L.total_pnl))}</div>
       <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${live ? `<span class="pos">● live</span>` : `switch ${esc(String(L.control || "off").toUpperCase())}`}${L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : ""}${mk.priced.length ? ` · open copies ${money(mk.tot)} now` : ""}</div></div>
       <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div></div></div>
     <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px;text-align:center">
@@ -1454,7 +1481,7 @@ function m15HTML(full){
   const st = M.status, at = pdate(st.at), stale = !at || Date.now() - at > 2 * 3600e3, mode = String(st.mode || "?").toUpperCase();
   const p = st.pnl || {}, live = num(p.live_total) + (M.kxAll || 0), today = num((p.live_days || {})[M.today]) + (M.kxToday || 0), B = bankroll(), pool = num(mc.pool_pct, .25) * B;
   const flags = [st.halted ? "HALTED (total loss stop)" : "", st.day_stop === M.today ? "paused for today (daily stop)" : ""].filter(Boolean);
-  h += `<div class="hero"><div><div class="lbl">Real-money P&L · all time</div><div class="big ${cls(live)}">${money(live)}</div>
+  h += `<div class="hero"><div><div class="lbl">Real-money P&L · ${liveSince() ? "before the fresh start (testing fees)" : "all time"}</div><div class="big ${cls(live)}">${money(live)}</div>
     <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">mode ${esc(mode)} · server ${esc(ago(at))}${liveOK() && S.live.sets ? ` · <span class="pos">● Kalshi results live</span>` : ""}${stale ? ` · <span class="neg">server quiet</span>` : ""}${flags.length ? ` · <span class="neg">${esc(flags.join(", "))}</span>` : ""}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(today)}">${money(today)}</div>
     <div class="lbl" style="margin-top:8px">At risk now</div><div class="val" style="font-size:17px">$${num(st.live_exposure).toFixed(2)} <small class="mute">/ $${pool.toFixed(2)}</small></div></div></div>`;
