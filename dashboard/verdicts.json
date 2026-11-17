@@ -1,10 +1,26 @@
 {
   "_about": "Research verdicts and checkpoints shown on the dashboard's Research tab. Edit by hand (or ask Claude) when a verdict lands. verdict: GO | NO-GO | WEAK | PENDING | LIVE | INFO.",
   "paper_since": "2026-11-07T17:30:00+00:00",
+  "live_since": "2026-11-17T04:30:00Z",
+  "_live_since_note": "FRESH START (Alex, Nov 16 11:22 PM ET: 'I just want a fresh start, call all of the rest of it testing fees'). Real-money totals only count live orders placed after this time; everything before is summed in testing_fees (archived, not deleted).",
+  "testing_fees": {
+    "through": "2026-11-16T23:30:00-05:00",
+    "deposited": 58.0,
+    "account_at_end": 33.93,
+    "items": [
+      ["Main bot (real, all strategies, Nov 5-16)", -1.04],
+      ["15-minute bot (real, Nov 8-12)", -11.13],
+      ["Copycat (real copies, Nov 15-16)", -4.79],
+      ["$500 swing (Nov 16, 3 bets)", -27.64],
+      ["Alex's own trades, open-position marks and rounding", 20.53]
+    ],
+    "note": "About $58 deposited and $33.93 left when the fresh start began, so about -$24 in testing fees. AI and server costs are billed outside Kalshi and are not in these numbers."
+  },
   "_paper_since_note": "Paper is a blank slate for testing new strategies (Alex, Nov 7): the dashboard only shows paper orders placed after this time. Move it forward to start a fresh test.",
   "bankroll_start": {
     "_about": "Start point for the dashboard's bankroll growth %. Deposits are not gains: add a deposit to amount. at = when this mode started trading.",
-    "live": {"amount": 59.71, "at": "2026-11-06T00:03:00Z", "deposits": [["2026-11-11", 10.0, "rewards test top-up"]]},
+    "live": {"amount": 50.93, "at": "2026-11-17T04:30:00Z", "deposits": [["2026-11-17", 17.0, "fresh-start deposit: 33.93 left + 17.00"]]},
+    "live_before_fresh_start": {"amount": 59.71, "at": "2026-11-06T00:03:00Z", "deposits": [["2026-11-11", 10.0, "rewards test top-up"]]},
     "paper": {"amount": 36.69, "at": "2026-11-05T08:00:00Z"}
   },
   "strategies": {

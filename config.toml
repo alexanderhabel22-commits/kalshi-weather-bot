@@ -562,7 +562,9 @@ m15_stop_guard = true
 # held to settlement. Honest odds: ~8-10% to reach $500; most likely result is ~$0-30 left.
 # While active, every other main-bot strategy trades on PAPER so the cash goes here.
 # Stops by itself at $500 or at `end`. Turn off: enabled = false (or TRADING_MODE=off).
-enabled = true
+# ENDED Nov 16 11:22 PM ET (Alex: "I just want a fresh start", call it "testing fees"):
+# 3 bets, -$27.64. Off for good; every other strategy is back on its normal live setting.
+enabled = false
 target = 500.0
 end = "2026-11-20T22:30:00Z"     # Fri Nov 20 5:30 PM ET
 pause_others = true
