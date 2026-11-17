@@ -421,7 +421,7 @@ function testingFeesHTML(){
   let h = `<h2>Testing fees <span class="sub">everything before the fresh start (Nov 16, 11:30 PM ET), archived</span></h2><div class="card"><div style="font-size:12.5px;line-height:1.55">${esc(tf.note || "")}</div><table style="width:100%;font-size:12px;margin-top:8px">`;
   for (const [k, v] of tf.items || []) h += `<tr><td>${esc(k)}</td><td align="right" class="${v < 0 ? "neg" : "pos"}">${usd(v)}</td></tr>`;
   h += `<tr><td><b>Deposited ~$${(+tf.deposited).toFixed(2)}, left $${(+tf.account_at_end).toFixed(2)}</b></td><td align="right"><b>${usd(tf.account_at_end - tf.deposited)}</b></td></tr></table></div>`;
-  return h;
+  return h + driftHTML(true);
 }
 function swingHTML(){
   const w = S.swing; if (!w) return "";
@@ -578,18 +578,36 @@ function foremanHTML(){
 // Daily live-vs-replay drift check (wxbot/drift.py): per live main-bot strategy, real ¢/ct vs what its replay said.
 // Judges only with 20+ settled events, pushes once per level; read-only (the milestone reviews decide what to do).
 const DRIFT_LVL = {ok:["ON TRACK", "go"], too_few:["TOO FEW", "off"], below_replay:["BELOW REPLAY", "pend"], losing:["LOSING", "nogo"]};
-function driftHTML(){
-  const D = (S.data.tstate || {}).drift; if (!D || !D.by) return "";
+// Fresh start (Alex, Nov 17): the MAIN table shows live results since live_since only (computed here from
+// the order rows); the bot's full-history check (used by the 100/300/500 reviews) moves to Testing fees.
+function freshDrift(){
+  const D = (S.data.tstate || {}).drift || {}, by = {}, ls = liveSince();
+  for (const t of settledTrades(modeRows("live"))){
+    const k = t.strategy; if (!k || k === "manual") continue;
+    const r = by[k] = by[k] || {pnl:0, contracts:0, ev:new Set()};
+    r.pnl += t.pnl; r.contracts += t.contracts; r.ev.add(t.r.event || t.r.ticker);
+  }
+  const names = new Set([...Object.keys(by), ...Object.keys(D.by || {}).filter(k => liveNow(k))]), out = {};
+  for (const k of names){
+    const r = by[k], rep = ((D.by || {})[k] || {}).replay_c, ev = r ? r.ev.size : 0, live_c = r && r.contracts ? 100 * r.pnl / r.contracts : null;
+    const level = ev < 20 ? "too_few" : live_c < 0 ? "losing" : rep != null && live_c < rep ? "below_replay" : "ok";
+    out[k] = {live_c, replay_c:rep == null ? null : rep, low_c:null, high_c:null, events:ev, contracts:r ? r.contracts : 0, level};
+  }
+  return {at:ls, by:out, fresh:true};
+}
+function driftHTML(full){
+  const D = full ? (S.data.tstate || {}).drift : freshDrift(); if (!D || !D.by || !Object.keys(D.by).length) return "";
   const at = pdate(D.at), ks = Object.keys(D.by).sort((a, b) => num(D.by[b].events) - num(D.by[a].events));
   const rows = ks.map(k => { const r = D.by[k], [l, c] = DRIFT_LVL[r.level] || [String(r.level || "?").toUpperCase(), "off"];
     return `<tr><td><i style="background:${colorOf(k, 0)}"></i>${esc(strategyName(k))}</td><td class="${r.live_c == null ? "mute" : cls(r.live_c)}" style="font-weight:700">${r.live_c == null ? "—" : cents(r.live_c)}</td><td class="mute">${r.replay_c == null ? "none" : cents(r.replay_c)}</td>
       <td>${r.low_c == null ? "—" : `<small>${cents(r.low_c)} to ${cents(r.high_c)}</small>`}</td><td>${num(r.events)}<small class="mute">/20</small></td><td>${num(r.contracts)}</td><td><span class="chip ${c}" style="font-size:9.5px;padding:1px 6px">${l}</span></td></tr>`; }).join("");
-  return `<h2>Live vs replay <span class="sub">daily drift check${at ? " · ran " + esc(fdt(at)) + " ET" : ""}</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>Live ¢/ct</th><th>Replay</th><th>90% range</th><th>Events</th><th>Ct</th><th>Status</th></tr>${rows}</table></div>
+  if (full) return `<h2>Live vs replay, full history <span class="sub">all real money since Nov 5 · what the 100/300/500-contract reviews use${at ? " · ran " + esc(fdt(at)) + " ET" : ""}</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>Live ¢/ct</th><th>Replay</th><th>90% range</th><th>Events</th><th>Ct</th><th>Status</th></tr>${rows}</table></div></div>`;
+  return `<h2>Live vs replay <span class="sub">since the fresh start${at ? " (" + esc(fdt(at)) + " ET)" : ""} · full history under Testing fees</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>Live ¢/ct</th><th>Replay</th><th>90% range</th><th>Events</th><th>Ct</th><th>Status</th></tr>${rows}</table></div>
     <div class="lbl" style="margin:12px 0 2px">Live vs replay ¢/ct <span class="mute" style="text-transform:none;letter-spacing:0">· colored = live · gray = replay</span></div><div class="chart" id="driftC"></div>
     <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">Once a day the bot compares each live strategy's real profit per contract (settled events only) with its replay. It needs 20+ settled events before it judges; then it pushes you once if even the hopeful end of the 90% range is below the replay ("below replay") or below zero ("losing"). It never changes anything by itself: the 500-contract reviews decide.</div></div>`;
 }
 function drawDrift(){
-  const el = $("#driftC"), D = (S.data.tstate || {}).drift; if (!el || !D || !D.by) return; const bars = [];
+  const el = $("#driftC"), D = freshDrift(); if (!el || !D || !D.by) return; const bars = [];
   Object.keys(D.by).filter(k => D.by[k].live_c != null || D.by[k].replay_c != null).sort((a, b) => num(D.by[b].events) - num(D.by[a].events)).forEach(k => { const r = D.by[k], sh = strategyName(k).slice(0, 6);
     if (r.live_c != null) bars.push({label:strategyName(k) + " · live", short:sh, v:r.live_c, c:colorOf(k, 0), extra:`${r.events} settled events, ${r.contracts} contracts`});
     if (r.replay_c != null) bars.push({label:strategyName(k) + " · replay", short:"", v:r.replay_c, c:"#64748b", extra:"what the replay said"}); });
