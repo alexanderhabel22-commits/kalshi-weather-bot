@@ -152,16 +152,16 @@ max_market_contracts = 1000      # per-market ceiling (scale study)
 enabled = true
 live = true                      # REAL money (Alex, Nov 5 7 PM ET)
 series = ["KXFED", "KXFEDDECISION", "KXCPI", "KXCPIYOY", "KXCPICORE", "KXPCECORE"]
-contracts = 3                    # 1 -> 3 Nov 12 (Alex OK; audit +8.7c/fill after fees)
-max_contracts = 3
+contracts = 6                    # 1 -> 3 Nov 12 (Alex OK; audit +8.7c/fill after fees)  (was 3; x2 Nov 17)
+max_contracts = 6  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_markets_per_event = 3
 min_price = 0.71                 # NO price band
 max_price = 0.95
 min_hours = 1                    # market closes 1 hour to 21 days from now
 max_hours = 504
 min_volume = 500
-max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
-max_event_pct = 0.10             # at most 10% on one release / one Fed meeting
+max_open_pct = 0.6               # at most 30% of the bankroll in this strategy  (was 0.3; x2 Nov 17)
+max_event_pct = 0.2              # at most 10% on one release / one Fed meeting  (was 0.1; x2 Nov 17)
 
 [trading.ai_fade]
 # The Fed/CPI fade rule on Kalshi's weekly "Best AI" market (KXLLM1): resting NO at 71-95c.
@@ -169,41 +169,41 @@ max_event_pct = 0.10             # at most 10% on one release / one Fed meeting
 # wxbot/strats/ai_fade.py and analysis/fade-events/RESULTS.md). ~4 fills a month, often none.
 # REAL money from Nov 14 (Alex: "+5c is +5c let's add it"). 3 contracts: one upset ~ -$2.80.
 # Median ~590 contracts traded at our price per order, so size is bankroll-limited, not market-limited.
-max_week_contracts = 200
-max_market_contracts = 50
+max_week_contracts = 400  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_market_contracts = 100  # x2 Nov 17 (Alex card: "Double every live strategy")
 enabled = true
 live = true
 series = ["KXLLM1"]
-contracts = 3
-max_contracts = 3
+contracts = 6  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_contracts = 6  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_markets_per_event = 2
 min_price = 0.71
 max_price = 0.95
 min_hours = 2                    # replay used 2 h - 21 days before close (closes 10 AM ET)
 max_hours = 504
 min_volume = 500
-max_open_pct = 0.15
-max_event_pct = 0.10
+max_open_pct = 0.3  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_event_pct = 0.2  # x2 Nov 17 (Alex card: "Double every live strategy")
 
 [trading.macro_wide]
 # 1-CONTRACT REAL-MONEY TEST since Nov 12 (was paper): the macro_fade rule on weekly gas prices and weekly jobless
 # claims (replay Nov 2025-Nov 2026: +6.6c +- 2.7 per fill, ~8 events a month; see
 # wxbot/strats/macro_wide.py). Never live without Alex's OK.
-max_week_contracts = 1000
-max_market_contracts = 100
+max_week_contracts = 2000  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_market_contracts = 200  # x2 Nov 17 (Alex card: "Double every live strategy")
 enabled = true
 live = true                      # REAL money, 1 contract test (Alex Nov 12 2:38 PM ET: "ok testing with real money")
 series = ["KXAAAGASW", "KXJOBLESSCLAIMS"]
-contracts = 1
-max_contracts = 1
+contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_markets_per_event = 3
 min_price = 0.71
 max_price = 0.95
 min_hours = 1
 max_hours = 504
 min_volume = 500
-max_open_pct = 0.20
-max_event_pct = 0.05
+max_open_pct = 0.4  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_event_pct = 0.1  # x2 Nov 17 (Alex card: "Double every live strategy")
 
 [trading.favorites]
 # Resting bids on the 85-96c favorite in BIG Elections / Politics / Entertainment
@@ -216,7 +216,7 @@ live = true                      # REAL money (Alex, Nov 5 7 PM ET)
 categories = ["Elections", "Politics", "Entertainment"]
 min_event_volume = 1000000       # contracts traded so far across the event's markets
 min_series_volume = 1000000      # only look at series that have traded 1M+ contracts in total
-contracts = 4                    # doubled Nov 7 (Alex: "up to you"); was 2
+contracts = 8                    # doubled Nov 7 (Alex: "up to you"); was 2  (was 4; x2 Nov 17)
 max_markets_per_event = 2
 min_price = 0.85                 # favorite-side price band
 max_price = 0.96
@@ -224,28 +224,28 @@ min_hours = 1                    # market closes 1 hour - 24 hours from now
 max_hours = 24                   # 168 -> 24 Nov 13 (Alex: "implement if you think it is smart"). Entry-timing
                                  # replay: last-24h bids +4.6c/fill vs +2.0c for the 7-day window (reachable
                                  # markets, ~20% fewer fills). Orders already resting stay until they fill or close.
-max_open_pct = 0.30              # at most 30% of the bankroll in this strategy
-max_event_pct = 0.15             # at most 15% on one event (was 10%; room for 2 markets at 4 contracts)
+max_open_pct = 0.6               # at most 30% of the bankroll in this strategy  (was 0.3; x2 Nov 17)
+max_event_pct = 0.2              # at most 15% on one event (was 10%; room for 2 markets at 4 contracts)  (was 0.15; x2 Nov 17)
 
 [trading.favorites_wide]
 # 1-CONTRACT REAL-MONEY TEST since Nov 12 (main-bot audit): the favorites bet on markets the live rule skips
 # because their listed close is far out, though Kalshi expects the result within 7 days (most election
 # markets). Same band, categories and event-volume floor; 1 contract. Never live without Alex's OK.
-max_week_contracts = 2000
-max_market_contracts = 200
+max_week_contracts = 4000  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_market_contracts = 400  # x2 Nov 17 (Alex card: "Double every live strategy")
 enabled = true
 live = true                      # REAL money, 1 contract test (Alex Nov 12 2:38 PM ET: "ok testing with real money")
 categories = ["Elections", "Politics", "Entertainment"]
 min_event_volume = 1000000
-contracts = 1
-max_contracts = 1
+contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_markets_per_event = 2
 min_price = 0.85
 max_price = 0.96
 min_hours = 1                    # expected decision 1 hour - 7 days from now
 max_hours = 168
-max_open_pct = 0.20
-max_event_pct = 0.05
+max_open_pct = 0.4  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_event_pct = 0.1  # x2 Nov 17 (Alex card: "Double every live strategy")
 
 [trading.favorites_late]
 # PAPER SHADOW ONLY (Nov 13, 2026, thread "Check entry timing in main-bot strategies"): the live
@@ -311,8 +311,8 @@ exit_margin = 0.08
 # Reviews at 100/300/500 contracts like every live market; freeze applies until 500.
 enabled = true
 live = true
-contracts = 1                    # per order; raise only at a review
-contracts_by = { "low/need" = 2 }  # late-day LOWS 1 -> 2 (Alex Nov 12 10:41 PM ET "sure do it"); highs/holds stay 1
+contracts = 2                    # per order; raise only at a review  (was 1; x2 Nov 17)
+contracts_by = { "low/need" = 4 }  # late-day LOWS 1 -> 2 (Alex Nov 12 10:41 PM ET "sure do it"); highs/holds stay 1
 metrics = ["low", "high"]        # highs added Nov 12 as a 1-contract real test (backtest: cool season only)
 kinds = ["need", "holds"]        # "holds" (YES on the bracket holding the extreme) added Nov 12, 1-contract test
 # Nov 13 (thread "Expand late-day weather to more markets", Alex: "start em up with real money"):
@@ -322,13 +322,13 @@ kinds = ["need", "holds"]        # "holds" (YES on the bracket holding the extre
 # crowding the 15% cap, so it goes back to paper; the 3 new HIGH series stay paper too.
 skip = ["high/need", "KXHIGHTEWR", "KXHIGHTTTN", "KXHIGHTSAN"]
 sub_loss_stop = { "high/holds" = 3.0 }  # Nov 14: late-day HIGH holds goes paper once its real result hits -$3 (one push); lows untouched
-series_contracts = { KXLOWTATL = 1, KXLOWTBOS = 1, KXLOWTDAL = 1, KXLOWTDC = 1, KXLOWTHOU = 1, KXLOWTLV = 1, KXLOWTMIN = 1, KXLOWTNOLA = 1, KXLOWTOKC = 1, KXLOWTPHX = 1, KXLOWTSAN = 1, KXLOWTSATX = 1, KXLOWTSEA = 1, KXLOWTSFO = 1, KXLOWTEWR = 1, KXLOWTTTN = 1 }
-max_open_pct = 0.40              # 15% -> 40% (Alex Nov 13 12:31 AM ET, decision card): room for 23 cities' late-day orders
-max_event_pct = 0.08             # one city-day
+series_contracts = { KXLOWTATL = 2, KXLOWTBOS = 2, KXLOWTDAL = 2, KXLOWTDC = 2, KXLOWTHOU = 2, KXLOWTLV = 2, KXLOWTMIN = 2, KXLOWTNOLA = 2, KXLOWTOKC = 2, KXLOWTPHX = 2, KXLOWTSAN = 2, KXLOWTSATX = 2, KXLOWTSEA = 2, KXLOWTSFO = 2, KXLOWTEWR = 2, KXLOWTTTN = 2 }
+max_open_pct = 0.6               # 15% -> 40% (Alex Nov 13 12:31 AM ET, decision card): room for 23 cities' late-day orders  (was 0.4; x2 Nov 17)
+max_event_pct = 0.16             # one city-day  (was 0.08; x2 Nov 17)
 max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
 exit = "hold"                    # the tested rule holds to settlement
 max_week_contracts = 4000
-max_market_contracts = 50
+max_market_contracts = 100  # x2 Nov 17 (Alex card: "Double every live strategy")
 
 [trading.rain_evening]
 # Evening "no rain yet" fade on daily rain markets (wxbot/strats/rain_evening.py,
@@ -341,19 +341,19 @@ max_market_contracts = 50
 enabled = true
 live = true
 taker = true                     # the tested rule takes the ask (fee ~1c)
-contracts = 1
-max_contracts = 1
+contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 min_price = 0.75
 max_price = 0.95
 start_hour = 20                  # local time window for entries
 end_hour = 22
 max_markets_per_day = 8
-max_open_pct = 0.15              # at most 15% of the bankroll (~$7.50)
-max_event_pct = 0.15             # one KXRAIN event = all cities for one day
+max_open_pct = 0.3               # at most 15% of the bankroll (~$7.50)  (was 0.15; x2 Nov 17)
+max_event_pct = 0.2              # one KXRAIN event = all cities for one day  (was 0.15; x2 Nov 17)
 max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
 exit = "hold"
-max_week_contracts = 100
-max_market_contracts = 1
+max_week_contracts = 200  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_market_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 
 [trading.spx_range]
 # Sell overpriced S&P 500 daily-close ranges before the open (wxbot/strats/spx_range.py,
@@ -368,18 +368,18 @@ max_market_contracts = 1
 enabled = true
 live = true
 taker = true                     # a YES bid already at 35c+ is taken (buy NO at its ask)
-contracts = 1
-max_contracts = 1
+contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 sell_yes = 0.35
 n_markets = 6
 min_price = 0.40                 # NO price band (taker NO when YES bid is 35-60c)
 max_price = 0.65
-max_open_pct = 0.10              # 6 resting NO bids at 65c = $3.90
-max_event_pct = 0.10
+max_open_pct = 0.2               # 6 resting NO bids at 65c = $3.90  (was 0.1; x2 Nov 17)
+max_event_pct = 0.2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
 exit = "hold"
-max_week_contracts = 100             # ~6 resting a night count as placed, even when cancelled unfilled
-max_market_contracts = 1
+max_week_contracts = 200         # ~6 resting a night count as placed, even when cancelled unfilled  (was 100; x2 Nov 17)
+max_market_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 
 [trading.ndx_range]
 # Same rule as spx_range on the Nasdaq-100 daily close (wxbot/strats/ndx_range.py,
@@ -394,19 +394,19 @@ max_market_contracts = 1
 enabled = true
 live = true
 taker = true
-contracts = 1
-max_contracts = 1
+contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 sell_yes = 0.35
 n_markets = 6
 min_price = 0.40
 max_price = 0.65
-max_open_pct = 0.10              # 6 resting NO bids at 65c = $3.90
-max_event_pct = 0.10
+max_open_pct = 0.2               # 6 resting NO bids at 65c = $3.90  (was 0.1; x2 Nov 17)
+max_event_pct = 0.2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_loss_pct = 0.10
 max_loss_usd = 5.0               # own stop: down $5 settled real money (or 10% of bankroll if smaller) -> no new orders + one push
 exit = "hold"
-max_week_contracts = 100
-max_market_contracts = 1
+max_week_contracts = 200  # x2 Nov 17 (Alex card: "Double every live strategy")
+max_market_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 
 [allocator]
 # Grades every strategy on profit per $1 risked (settled REAL-money results only,

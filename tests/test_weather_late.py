@@ -72,7 +72,7 @@ def test_runs_through_the_trader_on_paper(monkeypatch, tmp_path):
     out = trader.run(c, now=now, http=tt.Http([]))
     mine = [r for r in trader.load() if r["strategy"] == "weather_late"]
     assert len(mine) == 1, out
-    assert (mine[0]["mode"], mine[0]["side"], mine[0]["price"], mine[0]["count"]) == ("paper", "no", "0.81", "2")
+    assert (mine[0]["mode"], mine[0]["side"], mine[0]["price"], mine[0]["count"]) == ("paper", "no", "0.81", "4")   # x2 Nov 17
     assert trader.strategy_settings(c, "weather_late", trader.settings(c))["exit"] == "hold"
 
 
