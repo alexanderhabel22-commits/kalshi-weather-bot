@@ -67,7 +67,7 @@ def test_config_is_one_contract_live():
     from wxbot.util import load_config
     c = load_config()
     nd = c.raw["trading"]["ndx_range"]
-    assert nd["live"] is True and nd["contracts"] == nd["max_contracts"] == 1
+    assert nd["live"] is True and nd["contracts"] == nd["max_contracts"] == 2   # x2 Nov 17
     assert nd["max_price"] == 0.65 and nd["sell_yes"] == 0.35 and nd["max_loss_usd"] == 5.0
     # both range rules together stay small: 12 resting bids at 65c
     sp = c.raw["trading"]["spx_range"]

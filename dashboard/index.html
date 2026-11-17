@@ -261,9 +261,10 @@ details.dd.in>summary{font-size:12.5px;padding:9px 12px}
     <div class="seg" id="botSeg">
       <button data-b="sum">★ SUMMARY</button>
       <button data-b="main">● MAIN</button>
-      <button data-b="m15">⚡ 15-MIN</button>
-      <button data-b="cc">🐈 COPYCAT</button>
-      <button data-b="tx">🧪 TESTS</button>
+      <button data-b="m15" class="more-tab" style="display:none">⚡ 15-MIN</button>
+      <button data-b="cc" class="more-tab" style="display:none">🐈 COPYCAT</button>
+      <button data-b="tx" class="more-tab" style="display:none">🧪 TESTS</button>
+      <button id="moreTabs" type="button" title="15-min bot, Copycat and tests (paper / stopped)">More ▾</button>
     </div>
   </header>
 
@@ -2781,10 +2782,14 @@ function renderAll(){
   $("#modeSeg").style.display = "none";  // real money is the main view; paper tests sit in their own section
   if (S.view === "overview") S.mode = "live";
   // Summary page (Alex, Nov 14): shown once to everyone as the new front page, then remembered like the others
+  // Fresh start (Alex, Nov 17): MAIN is the only bot trading real money, so it opens first once; the
+  // paper/stopped bots sit behind "More"
+  if (!S.bot && !ls.get("freshMain")){ ls.set("freshMain", "1"); ls.set("sumIntro", "1"); ls.set("bot", "main"); }
   if (!S.bot){ if (!ls.get("sumIntro")){ ls.set("sumIntro", "1"); ls.set("bot", "sum"); }
     S.bot = ["sum", "main", "m15", "cc", "tx"].includes(ls.get("bot")) ? ls.get("bot") : "sum"; }
   $("#botSeg").style.display = S.view === "overview" ? "" : "none";
   document.querySelectorAll("#botSeg button").forEach(b => b.classList.toggle("on", b.dataset.b === S.bot));
+  if (["m15", "cc", "tx"].includes(S.bot) && !S.moreTabs){ S.moreTabs = true; showMore(true); }
   renderBanner(); if (!["overview","orders"].includes(S.view)) $("#banner").innerHTML = "";
   ({overview:renderOverview, orders:renderOrders, weather:renderWeather, research:renderResearch, health:renderHealth})[S.view]();
   renderStamp();
@@ -2803,7 +2808,9 @@ async function refresh(force){
 }
 document.addEventListener("click", e => { const g = e.target.closest("[data-goto]"); if (!g || e.target.closest("[data-ccn]")) return;
   S.bot = g.dataset.goto; ls.set("bot", S.bot); renderAll(); window.scrollTo({top:0}); });
-$("#botSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.bot = b.dataset.b; ls.set("bot", S.bot); renderAll(); window.scrollTo({top:0}); };
+function showMore(on){ document.querySelectorAll("#botSeg .more-tab").forEach(b => b.style.display = on ? "" : "none"); $("#moreTabs").textContent = on ? "Less ▴" : "More ▾"; }
+$("#botSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "moreTabs"){ S.moreTabs = !S.moreTabs; showMore(S.moreTabs); return; } S.bot = b.dataset.b; ls.set("bot", S.bot); renderAll(); window.scrollTo({top:0}); };
 $("#modeSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.mode = b.dataset.m; ls.set("mode", S.mode); S.filter = "all"; renderAll(); window.scrollTo({top:0}); };
 document.querySelector("nav.tabs").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.v; ls.set("view", S.view);
   document.querySelectorAll("nav.tabs button").forEach(x => x.classList.toggle("on", x === b));

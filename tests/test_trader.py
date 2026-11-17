@@ -511,14 +511,14 @@ def test_only_approved_strategies_trade_real_money():
     # Alex, Nov 14 ("+5c is +5c let's add it"): Best-AI fade (KXLLM1), 3 contracts.
     # Alex, Nov 14 4:19 PM ET ("Ok sure get it going"): Nasdaq range fade, 1 contract.
     assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range"}
-    assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 3
-    assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 1
-    assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 1
-    assert c.raw["trading"]["macro_fade"]["contracts"] == 3
+    assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 6   # x2 Nov 17
+    assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 2   # x2 Nov 17
+    assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 2   # x2 Nov 17
+    assert c.raw["trading"]["macro_fade"]["contracts"] == 6   # x2 Nov 17
     wl = c.raw["trading"]["weather_late"]
-    assert wl["contracts"] == 1 and wl["contracts_by"] == {"low/need": 2} and wl["max_open_pct"] <= 0.40 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
+    assert wl["contracts"] == 2 and wl["contracts_by"] == {"low/need": 4} and wl["max_open_pct"] <= 0.60 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
     # Nov 13: highs "need" back to paper (replay ~0); new low cities start at 1 contract
-    assert "high/need" in wl["skip"] and set(wl["series_contracts"].values()) == {1}
+    assert "high/need" in wl["skip"] and set(wl["series_contracts"].values()) == {2}   # x2 Nov 17
     assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
 
 
@@ -866,7 +866,7 @@ def test_favorites_wide_logs_decision_date_markets_on_paper():
     out = favorites_wide.extra(events, NOW, wide, live, None, None)
     assert {i.ticker for i in out} == {"KXGOV-A-X", "KXGOV-A-Y"}
     assert not ({i.ticker for i in out} & live_pick)
-    assert all(i.strategy == "favorites_wide" and i.count == 1 and i.close == far for i in out)
+    assert all(i.strategy == "favorites_wide" and i.count == 2 and i.close == far for i in out)   # x2 Nov 17
     sides = {i.ticker: (i.side, i.price) for i in out}
     assert sides["KXGOV-A-X"] == ("yes", 0.91) and sides["KXGOV-A-Y"] == ("no", 0.95)
 
@@ -882,7 +882,7 @@ def test_macro_wide_is_paper_and_relabels_macro_fade_picks():
     base = macro_fade.candidates(ms, p, NOW)
     out = macro_wide.candidates(ms, p, NOW)
     assert [i.ticker for i in out] == [i.ticker for i in base] == ["KXJOBLESSCLAIMS-26NOV19-A"]
-    assert out[0].strategy == "macro_wide" and out[0].price == 0.87 and out[0].count == 1
+    assert out[0].strategy == "macro_wide" and out[0].price == 0.87 and out[0].count == 2   # x2 Nov 17
 
 
 def test_ai_fade_relabels_macro_fade_picks_on_kxllm1():
@@ -896,7 +896,7 @@ def test_ai_fade_relabels_macro_fade_picks_on_kxllm1():
     assert p["series"] == ["KXLLM1"] and p["live"] is True
     out = ai_fade.candidates(ms, p, NOW)
     assert [i.ticker for i in out] == ["KXLLM1-26NOV30-A"]
-    assert out[0].strategy == "ai_fade" and out[0].price == 0.87 and out[0].count == 3   # 1c spread: joins the 87c NO bid
+    assert out[0].strategy == "ai_fade" and out[0].price == 0.87 and out[0].count == 6   # x2 Nov 17; 1c spread: joins the 87c NO bid
 
 
 def test_favorites_late_logs_last_24h_markets_on_paper():
