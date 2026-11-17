@@ -86,7 +86,8 @@ def test_report_section_renders():
     cfg = load_config()
     a = allocator.update(cfg, [row("favorites", "F1", .9, 1, True)], [], ["favorites"], NOW, {})
     text = "\n".join(allocator.report_section(a))
-    assert "shadow" in text and "favorites" in text
+    mode = "APPLIED" if cfg.raw.get("allocator", {}).get("apply") else "shadow"
+    assert mode in text and "favorites" in text
 
 
 def m15_row(series, ticker, cost, won, mode="live", filled=1, close="2026-11-08T04:00:00+00:00"):
