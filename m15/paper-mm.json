@@ -4,13 +4,13 @@
    "cat": "Mentions",
    "event": "KXEARNINGSMENTIONNVDA-26NOV18",
    "vol24": 6951.35,
-   "casual": 1.0
+   "casual": 0.185
   },
   "KXEARNINGSMENTIONNVDA-26NOV18-RENT": {
    "cat": "Mentions",
    "event": "KXEARNINGSMENTIONNVDA-26NOV18",
    "vol24": 4015.26,
-   "casual": 0.539
+   "casual": 0.607
   },
   "KXLUCKEYMENTION-26NOV18-IPO": {
    "cat": "Mentions",
@@ -40,7 +40,7 @@
    "cat": "Elections",
    "event": "KXHOUSETURNOUT-26NOV03",
    "vol24": 17861.27,
-   "casual": 0.187
+   "casual": 0.143
   },
   "KXHOUSETURNOUT-26NOV03-120": {
    "cat": "Elections",
@@ -76,7 +76,7 @@
    "cat": "Climate and Weather",
    "event": "KXHIGHNY-26NOV17",
    "vol24": 11097.54,
-   "casual": 0.16
+   "casual": 0.178
   },
   "KXCPI-26DEC-T0.0": {
    "cat": "Economics",
@@ -94,7 +94,7 @@
    "cat": "Economics",
    "event": "KXAAAGASD-26NOV18",
    "vol24": 9026.51,
-   "casual": 0.192
+   "casual": 0.198
   },
   "KXAPRPOTUS-26NOV20-38.3": {
    "cat": "Politics",
@@ -106,7 +106,7 @@
    "cat": "Climate and Weather",
    "event": "KXHIGHMIA-26NOV17",
    "vol24": 7867.59,
-   "casual": 0.923
+   "casual": 0.924
   },
   "KXLEADERSALL-27JAN15": {
    "cat": "Elections",
@@ -118,16 +118,16 @@
    "cat": "Entertainment",
    "event": "KXRT-IPL",
    "vol24": 7619.54,
-   "casual": 0.122
+   "casual": 0.168
   }
  },
  "by_category": {
   "Elections": {
-   "fills": 81,
+   "fills": 82,
    "market_hours": 1.0,
-   "fills_per_market_hour": 83.44,
-   "edge_at_fill_c": -2.46,
-   "markout_5m_c": -2.77,
+   "fills_per_market_hour": 84.48,
+   "edge_at_fill_c": -2.41,
+   "markout_5m_c": -2.72,
    "markout_30m_c": -2.6,
    "maker_fee_c": 0.35
   },
@@ -159,11 +159,11 @@
    "maker_fee_c": 0.41
   },
   "Entertainment": {
-   "fills": 63,
+   "fills": 64,
    "market_hours": 0.5,
-   "fills_per_market_hour": 120.09,
-   "edge_at_fill_c": -1.8,
-   "markout_5m_c": -1.3,
+   "fills_per_market_hour": 122.0,
+   "edge_at_fill_c": -1.84,
+   "markout_5m_c": -1.34,
    "markout_30m_c": -1.46,
    "maker_fee_c": 0.34
   },
@@ -195,10 +195,10 @@
    "maker_fee_c": 0.33
   },
   "Companies": {
-   "fills": 5,
+   "fills": 6,
    "market_hours": 0.0,
-   "fills_per_market_hour": 267.38,
-   "edge_at_fill_c": 0.4,
+   "fills_per_market_hour": 320.86,
+   "edge_at_fill_c": -0.17,
    "markout_5m_c": 0.3,
    "markout_30m_c": 0.5,
    "maker_fee_c": 0.16
@@ -241,7 +241,7 @@
    "maker_fee_c": 0.35
   },
   "under20|yes": {
-   "fills": 74,
+   "fills": 76,
    "settled": 26,
    "markout_30m_c": -0.41,
    "settled_c": -5.35,
@@ -255,7 +255,7 @@
    "maker_fee_c": 0.37
   },
   "unknown|yes": {
-   "fills": 32,
+   "fills": 33,
    "settled": 9,
    "markout_30m_c": -2.61,
    "settled_c": -23.22,
@@ -270,8 +270,8 @@
   "done": true,
   "candidates": 1102
  },
- "pending": 5,
- "held": 260,
+ "pending": 7,
+ "held": 265,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -280,7 +280,7 @@
   "KXNASDAQ100U-26NOV11H1000-T28189.99": 2,
   "KXINXU-26NOV11H1000-T7579.9999": -1,
   "KXLLM1-26NOV16-ANTH": -1,
-  "KXHOUSETURNOUT-26NOV03-115": -6,
+  "KXHOUSETURNOUT-26NOV03-115": -7,
   "KXEARNINGSMENTIONKR-26DEC03-SHRI": -1,
   "KXTRUMPSAY-26NOV16-CEAS": -3,
   "KXDWTSTOP3-26DEC31-CWOO": 1,
@@ -368,7 +368,7 @@
   "KXTRUTHSOCIAL-26NOV14-T60": 0,
   "KXHIGHDEN-26NOV14-B52.5": -1,
   "KXTSAW-26NOV15-A2.25": -1,
-  "KXRT-IPL-87": -2,
+  "KXRT-IPL-87": -3,
   "KXBOND-30-CAL": 1,
   "KXFTNMENTION-26NOV15-AI": 1,
   "KXMIDTERMMOV-AKSENMPEL-P5": 1,
@@ -400,14 +400,15 @@
   "KXEARNINGSMENTIONKLAR-26NOV17-AI": -1,
   "KXRT-HUN-60": 1,
   "KXRT-FUR-85": -1,
-  "KXEARNINGSMENTIONNVDA-26NOV18-GAMI": -2,
+  "KXEARNINGSMENTIONNVDA-26NOV18-GAMI": -1,
   "KXEARNINGSMENTIONNVDA-26NOV18-RENT": -2,
-  "KXMAMDANIMENTION-26NOV18-NYPD": -1,
+  "KXMAMDANIMENTION-26NOV18-NYPD": -2,
   "KXRT-VIO-60": -1,
   "KXTRUMPAPPROVE-26NOV17-E38.4": 1,
   "KXAAAGASD-26NOV18-3.7500": 1,
   "KXAPRPOTUS-26NOV20-38.3": -1,
-  "KXINXU-26NOV17H1600-T7399.9999": 1
+  "KXINXU-26NOV17H1600-T7399.9999": 1,
+  "KXHIGHNY-26NOV17-B55.5": 1
  },
- "at": "2026-11-17T20:08:55+00:00"
+ "at": "2026-11-17T21:24:08+00:00"
 }
