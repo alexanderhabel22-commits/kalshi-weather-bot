@@ -65,10 +65,14 @@ def candidates(markets: list[dict], p: dict, now, held: dict | None = None,
     out = []
     for ev, ms in sorted(by_event.items()):
         mine = held.get(ev, set())
-        for m in sorted(ms, key=_mid, reverse=True)[:int(p["n_markets"])]:
+        room = int(p["n_markets"]) - len(mine)   # n_markets per event in total, across scans (Nov 17 fix:
+        for m in sorted(ms, key=_mid, reverse=True)[:int(p["n_markets"])]:   # the top 6 drifts as prices move)
             tk = m["ticker"]
             if tk in mine:
                 continue
+            if room <= 0:
+                break
+            room -= 1
             yb = kalshi.price(m, "yes_bid")
             yb = yb if yb is not None and 0 < yb < 1 else 0.0
             title = (m.get("title") or label) + f" {m.get('yes_sub_title') or tk.rsplit('-', 1)[-1]}"
