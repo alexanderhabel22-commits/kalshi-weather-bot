@@ -13,13 +13,17 @@ his call once paper results earn it. It is a small real-money test (~$37 bankrol
 started Nov 3, 2026; topped up to $49.71 on Nov 5) in place of paper trading; Alex adds money only if the
 record earns it. Be candid about odds and risk; no hype.
 
-## $500 swing (Nov 16-20, 2026)
-Alex (Nov 16 3:09 PM ET): "Your main goal is $500 in the account by EOW." `wxbot/swing.py` + `[swing]`
-in config.toml (PRs #314, #315). Bold play: buys YES on the "above" strike nearest 30c, sized so a win
-reaches $500 (or all of that balance's cash). Main balance: S&P KXINXU 4 PM close, weekdays. Crypto balance:
-BTC KXBTCD next hourly close, 24/7, one bet at a time. While it runs, every other main-bot strategy is on
-PAPER. Ends by itself at $500 or Fri Nov 20 5:30 PM ET, then the others return to normal. Ledger:
-data/orders/swing.json and the "$500 swing" card on the dashboard. Honest odds ~8-10%.
+## Fresh start (Nov 17, 2026)
+- The $500 swing (wxbot/swing.py, PRs #314-#315) ran Nov 16 for 3 bets (-$27.64) and is OFF for good
+  (`[swing] enabled = false`). Alex: "I just want a fresh start, call all of the rest of it testing fees."
+- Dashboard: `live_since` in dashboard/verdicts.json (Nov 16 11:30 PM ET) = real-money totals count only orders
+  placed after it; bankroll start $50.93 ($33.93 left + $17 deposit Nov 17). Everything earlier is the
+  "Testing fees" card (archived numbers in verdicts.json testing_fees; old start kept as live_before_fresh_start).
+  The dashboard opens on MAIN; 15-MIN, COPYCAT and TESTS are behind "More".
+- Nov 17 (Alex card "Double every live strategy", PR #318): every live strategy's contracts x2 (favorites 8,
+  Fed/CPI fade 6, ai_fade 6, weather_late 2 / lows-need 4, the 1-contract tests 2). Global stops unchanged
+  (10%/day, 25% halt). Scale-up kit stays OFF (Alex chose "leave it off" Nov 17).
+- 15-min bot paper; Copycat real off. Main bot is the only real-money bot.
 
 ## Where everything lives
 - Repo (public): **github.com/alexanderhabel22-commits/kalshi-weather-bot**,
