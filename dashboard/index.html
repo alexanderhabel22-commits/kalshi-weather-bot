@@ -414,8 +414,17 @@ async function loadCopycat(){
   try { S.swing = await raw("data/orders/swing.json", "json"); } catch(e){ S.swing = null; }
 }
 // $500-by-Friday swing (wxbot/swing.py, Alex Nov 16): plain ledger of every bet
+function testingFeesHTML(){
+  const tf = (S.data.verdicts || {}).testing_fees; if (!tf) return "";
+  const usd = x => (x < 0 ? "-$" : "+$") + Math.abs(+x || 0).toFixed(2);
+  let h = `<h2>Testing fees <span class="sub">everything before the fresh start (Nov 16, 11:30 PM ET), archived</span></h2><div class="card"><div style="font-size:12.5px;line-height:1.55">${esc(tf.note || "")}</div><table style="width:100%;font-size:12px;margin-top:8px">`;
+  for (const [k, v] of tf.items || []) h += `<tr><td>${esc(k)}</td><td align="right" class="${v < 0 ? "neg" : "pos"}">${usd(v)}</td></tr>`;
+  h += `<tr><td><b>Deposited ~$${(+tf.deposited).toFixed(2)}, left $${(+tf.account_at_end).toFixed(2)}</b></td><td align="right"><b>${usd(tf.account_at_end - tf.deposited)}</b></td></tr></table></div>`;
+  return h;
+}
 function swingHTML(){
   const w = S.swing; if (!w) return "";
+  if (!((S.data.config || {}).swing || {}).enabled) w.done = w.done || "stopped for good Nov 16 11:22 PM ET (fresh start); counted in testing fees";
   const bets = w.bets || [], usd = x => (x < 0 ? "-$" : "$") + Math.abs(+x || 0).toFixed(2);
   const pnl = bets.reduce((a, b) => a + (b.pnl == null ? 0 : +b.pnl), 0);
   const risk = bets.filter(b => b.status === "open").reduce((a, b) => a + (+b.cost || 0) + (+b.fee || 0), 0);
@@ -2239,7 +2248,9 @@ function drawSettled(sx, rows, strats, st, dayStop, totStop){
 /* ---------------------------------------------------------------- views */
 const SIGNAL = new Set(["edge-shadow","near-shadow"]);
 function paperSince(){ const v = (S.data.verdicts || {}).paper_since; return v ? pdate(v) : null; }
-function modeRows(mode){ const m = model(); if (mode === "live") return m.rows.filter(r => r.mode === "live");
+function liveSince(){ const v = (S.data.verdicts || {}).live_since; return v ? pdate(v) : null; }
+// fresh start (Nov 17): real-money totals count only orders placed after live_since; older ones are "testing fees"
+function modeRows(mode){ const m = model(); if (mode === "live"){ const ls = liveSince(); return m.rows.filter(r => r.mode === "live" && (!ls || !r.placed || r.placed >= ls)); }
   const since = paperSince(); return m.rows.filter(r => r.mode !== "live" && !SIGNAL.has(r.strategy) && (!since || !r.placed || r.placed >= since)); }
 function signalRows(){ return model().rows.filter(r => SIGNAL.has(r.strategy)); }
 function liveNow(name){ return stratMode(name) === "live"; }
@@ -2440,7 +2451,7 @@ function renderOverview(){
   }
   h += `<h2>More</h2>` + dd("mWins", "Biggest wins", "all time", winsHTML(sx.tr, strats))
     + foldSections(bigH + moneyH + testsHTML(), "m_", 0);
-  $("#v-overview").innerHTML = swingHTML() + h + liveFillsHTML(false);
+  $("#v-overview").innerHTML = h + liveFillsHTML(false) + testingFeesHTML() + swingHTML();
   $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
 
   if ($("#setAll")) $("#setAll").onclick = () => { S.setAll = !S.setAll; renderOverview(); };
