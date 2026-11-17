@@ -2290,6 +2290,7 @@ function renderBanner(){
   if (S.mode === "live") {
     const live = modeRows("live").length + model().manual.length;
     h += live ? `<div class="banner live">Real money. Global mode <b>${esc(String(t.mode || "off").toUpperCase())}</b>.</div>`
+              : liveSince() ? `<div class="banner live"><b>Fresh start</b> since ${esc(fdt(liveSince()))}: real money, global mode <b>${esc(String(t.mode || "off").toUpperCase())}</b>. No new real-money orders yet; this view counts only orders placed after the fresh start (earlier results are under "Testing fees" at the bottom).</div>`
               : `<div class="banner live">No real-money orders yet. Global mode is <b>${esc(String(t.mode || "off").toUpperCase())}</b>, so every strategy is on paper. This view fills in automatically once a strategy goes live; paper tests are in their own section at the bottom.</div>`;
   } else h += `<div class="banner paper">Testing new strategies on paper: recorded as if placed, no money moves.</div>`;
   $("#banner").innerHTML = h;
