@@ -159,6 +159,7 @@ DEFAULTS = {
     "fv_coins": {"KXBTC15M": "BTC", "KXETH15M": "ETH", "KXSOL15M": "SOL"},
     "fv_every_s": 5,
     "lag_probe": True,
+    "fresh_book_guard": True,   # skip a bid priced above the REAL best bid (stale cache)
     "place_check_paper": ["KXBTC15M", "KXSILVER15M", "KXETH15M", "KXSOL15M"],   # also log paper bids          # PAPER: real order book at each fair-value jump (m15_fv.LagProbe)
     # fair-value FILTER (changes trading when on): skip/pull the favourite bid when our side's
     # fair value < bid - margin, with >= min_left seconds left. OFF until the market's 500 review.
@@ -600,11 +601,23 @@ class Bot(FillQuality):
     def _place(self, m: dict, side: str, q: float, n: int, now: float) -> bool:
         o = {"side": side, "q": q, "n": n, "filled": 0, "t0": now, "id": None}
         lag = getattr(self.fv, "lag", None) if self.fv is not None else None
+        real = None
         if lag is not None and (m["mode"] == "live" or m["series"] in (self.s.get("place_check_paper") or [])):
-            try:                                 # shadow: is the cached quote stale vs the real book?
-                lag.place_check(self, m, side, q, n, now, stage="place" if m["mode"] == "live" else "place_paper")
+            try:                                 # is the cached quote stale vs the real book?
+                real = lag.place_check(self, m, side, q, n, now,
+                                       stage="place" if m["mode"] == "live" else "place_paper")
             except Exception as exc:
                 log.warning("place check %s: %s", m["ticker"], exc)
+        if real and self.s.get("fresh_book_guard", True):
+            # Stale-quote guard (Nov 17): 9% of bids were priced ABOVE the real best bid off a
+            # stale cached quote (6% at/over the ask); those windows lost -5.2c/ct on paper vs
+            # +1.4c. Refresh the cache from the real book and let the next step re-price.
+            self.rest_quotes[m["ticker"]] = {"yes_bid": real["yes_bid"], "yes_ask": real["yes_ask"],
+                                             "at": self.clock()}
+            if real["side_bid"] is None or q > real["side_bid"] + 1e-9:
+                m["why"] = "stale quote: real bid lower"
+                m["stale_skips"] = int(m.get("stale_skips", 0)) + 1
+                return False
         if m["mode"] == "live":
             cid = f"m15-{m['ticker']}-{int(now)}"[:60]
             try:
