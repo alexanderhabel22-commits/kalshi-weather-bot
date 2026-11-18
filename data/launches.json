@@ -14645,6 +14645,7 @@
   "KXLEAVEPOWELLGOV",
   "KXLEAVEPULTE",
   "KXLEAVESEANCOOK",
+  "KXLEAVESHEINBAUM",
   "KXLEAVESOCOMCOMMANDER",
   "KXLEAVESTARMER",
   "KXLEAVESUPREMELEADER",
@@ -15446,14 +15447,20 @@
   "KXMETXCOMBO",
   "KXMEWIND",
   "KXMEXAMB",
+  "KXMEXCHINACARTARIFF",
+  "KXMEXCOALITION",
   "KXMEXCOALSEATS",
   "KXMEXCUBOIL",
+  "KXMEXELECTREFORM",
+  "KXMEXGOVCOUNT",
   "KXMEXICOCITY",
   "KXMEXICODEPUTIES",
+  "KXMEXICODEPUTIES2ND",
   "KXMEXICOPRES",
   "KXMEXICOPRESPARTY",
   "KXMEXMINWAGE",
   "KXMEXMINWAGEFRONT",
+  "KXMEXTURNOUT",
   "KXMFT",
   "KXMFTD",
   "KXMI11D",
@@ -19769,6 +19776,7 @@
   "KXSHCOMPL",
   "KXSHCOMPM",
   "KXSHCOMPW",
+  "KXSHEINBAUMAPPROVAL",
   "KXSHEINBAUMOUT",
   "KXSHEINCC",
   "KXSHEINCCD",
@@ -22120,6 +22128,7 @@
   "KXUSMCA",
   "KXUSMCAOUTCOMES",
   "KXUSMDLFRDM",
+  "KXUSMEXTARIFFUP",
   "KXUSMICHCSP",
   "KXUSMINE",
   "KXUSNFP",
@@ -22415,6 +22424,7 @@
   "KXVOTEMCMAHON",
   "KXVOTEMEANS",
   "KXVOTEMECHBAN",
+  "KXVOTEMEX",
   "KXVOTEMILLSEXPEL",
   "KXVOTEMIRAN",
   "KXVOTEMULLIN",
@@ -23837,7 +23847,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-18T06:00:31+00:00",
+ "last_check": "2026-11-18T06:30:25+00:00",
  "pending": {
   "KX20YRRATED": {
    "category": "Financials",
@@ -25986,6 +25996,15 @@
    "series": "KXLCATTLED",
    "title": "Live cattle Daily"
   },
+  "KXLEAVESHEINBAUM": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXLEAVESHEINBAUM",
+   "title": "Sheinbaum cabinet departures"
+  },
   "KXLIDOMCHAMPION": {
    "category": "Sports",
    "checked": "2026-11-12T15:00:31+00:00",
@@ -26111,6 +26130,24 @@
    "series": "KXMAJLEAD120",
    "title": "House Majority Leader (120th Congress)"
   },
+  "KXMEXCHINACARTARIFF": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXCHINACARTARIFF",
+   "title": "Mexico tariff cut on Chinese cars"
+  },
+  "KXMEXCOALITION": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXCOALITION",
+   "title": "Will Morena, PT and PVEM register a federal coalition in Mexico?"
+  },
   "KXMEXCOALSEATS": {
    "category": "Elections",
    "fee_multiplier": 1,
@@ -26119,6 +26156,33 @@
    "new_category": false,
    "series": "KXMEXCOALSEATS",
    "title": "Mexico Chamber of Deputies: Morena, PT and PVEM seats"
+  },
+  "KXMEXELECTREFORM": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXELECTREFORM",
+   "title": "Sheinbaum electoral reform"
+  },
+  "KXMEXGOVCOUNT": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXGOVCOUNT",
+   "title": "How many governorships will Morena-led coalitions win in Mexico?"
+  },
+  "KXMEXICODEPUTIES2ND": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXICODEPUTIES2ND",
+   "title": "Who will win the 2nd-most seats in Mexico's Chamber of Deputies?"
   },
   "KXMEXMINWAGE": {
    "category": "Politics",
@@ -26137,6 +26201,15 @@
    "new_category": false,
    "series": "KXMEXMINWAGEFRONT",
    "title": "Mexico northern border minimum wage increase"
+  },
+  "KXMEXTURNOUT": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXMEXTURNOUT",
+   "title": "Mexico Chamber of Deputies Election Voter Turnout"
   },
   "KXMFTD": {
    "category": "Financials",
@@ -26868,7 +26941,7 @@
   },
   "KXRAINCOACHELLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-18T00:00:27+00:00",
    "frequency": "custom",
@@ -26878,7 +26951,7 @@
   },
   "KXRAINDCOACHELLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-11T22:00:46+00:00",
    "frequency": "daily",
@@ -26995,6 +27068,15 @@
    "series": "KXSFINANCECHAIR",
    "title": "Senate Finance chair"
   },
+  "KXSHEINBAUMAPPROVAL": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "annual",
+   "new_category": false,
+   "series": "KXSHEINBAUMAPPROVAL",
+   "title": "Sheinbaum's El Financiero approval rating"
+  },
   "KXSHEINCCD": {
    "category": "Financials",
    "fee_multiplier": 1,
@@ -27034,7 +27116,7 @@
   },
   "KXSNOWDAYSAUS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27044,7 +27126,7 @@
   },
   "KXSNOWDAYSBAL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27054,7 +27136,7 @@
   },
   "KXSNOWDAYSBOS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27064,7 +27146,7 @@
   },
   "KXSNOWDAYSCHI": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27074,7 +27156,7 @@
   },
   "KXSNOWDAYSCLE": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27084,7 +27166,7 @@
   },
   "KXSNOWDAYSCLT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27094,7 +27176,7 @@
   },
   "KXSNOWDAYSCVG": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27104,7 +27186,7 @@
   },
   "KXSNOWDAYSDC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27114,7 +27196,7 @@
   },
   "KXSNOWDAYSDEN": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27124,7 +27206,7 @@
   },
   "KXSNOWDAYSDFW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27134,7 +27216,7 @@
   },
   "KXSNOWDAYSDTW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27144,7 +27226,7 @@
   },
   "KXSNOWDAYSHOU": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27154,7 +27236,7 @@
   },
   "KXSNOWDAYSIND": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27164,7 +27246,7 @@
   },
   "KXSNOWDAYSKC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27174,7 +27256,7 @@
   },
   "KXSNOWDAYSMSP": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27184,7 +27266,7 @@
   },
   "KXSNOWDAYSNASH": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27194,7 +27276,7 @@
   },
   "KXSNOWDAYSNOLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27204,7 +27286,7 @@
   },
   "KXSNOWDAYSNYC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27214,7 +27296,7 @@
   },
   "KXSNOWDAYSPDX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27224,7 +27306,7 @@
   },
   "KXSNOWDAYSPHL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27234,7 +27316,7 @@
   },
   "KXSNOWDAYSPHX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27244,7 +27326,7 @@
   },
   "KXSNOWDAYSPIT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27254,7 +27336,7 @@
   },
   "KXSNOWDAYSSEA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-18T06:00:31+00:00",
+   "checked": "2026-11-18T06:30:25+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27773,6 +27855,15 @@
    "series": "KXUSLSLWADVANCE",
    "title": "To Advance"
   },
+  "KXUSMEXTARIFFUP": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "monthly",
+   "new_category": false,
+   "series": "KXUSMEXTARIFFUP",
+   "title": "US tariff increases on Mexico"
+  },
   "KXVA": {
    "category": "Financials",
    "fee_multiplier": 1,
@@ -27811,6 +27902,15 @@
    "new_category": false,
    "series": "KXVETO120",
    "title": "Trump veto of a 120th Congress bill"
+  },
+  "KXVOTEMEX": {
+   "category": "Elections",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-18T06:30:25+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXVOTEMEX",
+   "title": "Mexican Chamber of Deputies election vote share"
   },
   "KXWASHUAPPS": {
    "category": "Entertainment",
