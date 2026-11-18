@@ -529,10 +529,11 @@ class LagProbe:
 
     def place_check(self, bot, m: dict, side: str, q: float, n: int, now: float,
                     stage: str = "place") -> None:
-        """Right before a LIVE bid goes in: the real REST book next to the cached quote the
+        """Right before a bid goes in: the real REST book next to the cached quote the
         bot priced from. stage=place; ws_ask = the cached best bid for our side (what we're
         joining), book_bid / book_ask = the real ones, depth_ask = contracts already bid at
-        our price q, depth_edge = our price q, fair = our side's fair value."""
+        our price q, depth_edge = our price q, fair = our side's fair value. Returns the real
+        best bid/ask ({side_bid, side_ask, yes_bid, yes_ask}) or None."""
         y = self._fair(m, now) if self.sh.coin.get(m.get("series")) else None
         cq = bot.quote(m["ticker"], now) if hasattr(bot, "quote") else None
         cached = None
@@ -544,6 +545,12 @@ class LagProbe:
         at_q = sum(c for p, c in (book or {}).get(side, []) if abs(p - q) < 1e-9) if book else ""
         ev = {"jid": f"{m['ticker']}@{int(now)}", "m": m, "side": side, "y0": None}
         self._write([self._row(now, ev, stage, y, cached, ask, at_q, q, bid, ms, n, "")], now)
+        if not book:
+            return None
+        ybid = max((p for p, _ in book.get("yes") or []), default=None)
+        nbid = max((p for p, _ in book.get("no") or []), default=None)
+        return {"side_bid": bid, "side_ask": ask, "yes_bid": ybid,
+                "yes_ask": None if nbid is None else round(1.0 - nbid, 4)}
 
     def _row(self, now, ev, stage, y, ws_ask, ask, depth, edge, bid, ms, at, anyc):
         m, side = ev["m"], ev["side"]

@@ -1191,3 +1191,37 @@ def test_e2_session_cap_counts_from_zero_per_tag(monkeypatch):
     b.e2_check(m, -0.20)                             # session -2.55 -> paper
     assert b.state["cut"]["KXBTC15M"]["why"] == "E2 session cap" and alerts[0][1] == 4
     assert b.state["e2_session"]["n"] == 5 and b.state["e2_session"]["won"] == 1
+
+
+class FakeLag:
+    def __init__(self, real):
+        self.real = real
+        self.calls = 0
+
+    def place_check(self, bot, m, side, q, n, now, stage="place"):
+        self.calls += 1
+        return self.real
+
+
+def test_stale_quote_guard_skips_bid_above_real_book(monkeypatch):
+    b, clk = fv_bot(monkeypatch, 0.90, place_check_paper=["KXBTC15M"])
+    b.fv.lag = FakeLag({"side_bid": 0.77, "side_ask": 0.79, "yes_bid": 0.77, "yes_ask": 0.79})
+    b.step()
+    m = b.state["markets"][TK]
+    assert b.fv.lag.calls == 1
+    assert m["order"] is None and m["why"] == "stale quote: real bid lower" and m["stale_skips"] == 1
+    assert b.rest_quotes[TK]["yes_bid"] == 0.77
+
+
+def test_stale_quote_guard_lets_fresh_bid_through(monkeypatch):
+    b, _ = fv_bot(monkeypatch, 0.90, place_check_paper=["KXBTC15M"])
+    b.fv.lag = FakeLag({"side_bid": 0.80, "side_ask": 0.81, "yes_bid": 0.80, "yes_ask": 0.81})
+    b.step()
+    assert b.state["markets"][TK]["order"]["q"] == 0.80
+
+
+def test_stale_quote_guard_can_be_switched_off(monkeypatch):
+    b, _ = fv_bot(monkeypatch, 0.90, place_check_paper=["KXBTC15M"], fresh_book_guard=False)
+    b.fv.lag = FakeLag({"side_bid": 0.70, "side_ask": 0.72, "yes_bid": 0.70, "yes_ask": 0.72})
+    b.step()
+    assert b.state["markets"][TK]["order"]
