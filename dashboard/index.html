@@ -169,7 +169,9 @@ details.dd.in>summary{font-size:12.5px;padding:9px 12px}
 .gbig{font-weight:800;font-size:22px;line-height:1}
 .ccn{cursor:pointer;text-decoration:underline dotted rgba(148,163,200,.7);text-underline-offset:3px}
 .rng[data-smt]{display:inline-flex;margin-left:auto}.rng[data-smt] button{flex:none;padding:4px 10px;font-size:10.5px}
-.smrow{display:flex;justify-content:flex-end;margin:0 0 6px}
+.smrow{display:flex;justify-content:flex-end;align-items:center;flex-wrap:wrap;gap:6px;margin:0 0 6px}
+.rng[data-mrt]{display:inline-flex;margin:0}.rng[data-mrt] button{flex:none;padding:4px 9px;font-size:10.5px}
+.rngnote{font-size:10.5px;color:var(--mute);margin-right:auto}
 .share{height:4px;border-radius:2px;background:#18213b;margin:5px 0 3px;overflow:hidden}.share i{display:block;height:100%;border-radius:2px;opacity:.85}
 .legend b{font-family:var(--mono);font-weight:600;font-size:11.5px}
 .chead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:0 0 8px}.chead b{font-family:var(--mono);font-size:24px;font-weight:700}.chead span{font-size:12px;color:var(--ink2)}
@@ -691,7 +693,7 @@ function sumPage(){
       return `<div data-goto="${k}" style="border-left:3px solid ${col}"><div class="nm"><span>${nm}</span><span style="color:${o.live ? "var(--good)" : "var(--mute)"}">${o.live ? "● LIVE" : k === "tx" ? "ENDED" : "PAPER"}</span></div>
         <div class="pl ${cls(num(o.pnl))}">${o.pnl == null ? "—" : money(num(o.pnl))}</div><div class="td">today ${money(num(o.today))} · ${esc(o.note || "")}</div></div>`; }).join("")}</div>
     <div class="mute" style="font-size:11px;margin-top:10px">Real money only, after fees${liveSince() ? `, since the fresh start (${esc(fdt(liveSince()))} ET). Everything earlier is under "Testing fees" on MAIN` : ""}. Your own manual trades are left out. Tap a box to open that bot's page.</div></div>`;
-  h += `<h2>Profit over time <span class="sub">real money · ${liveSince() ? "since the fresh start · " : ""}one line per strategy</span></h2><div class="card"><div class="legend" id="sumLeg"></div>${smoothBtns()}<div class="chart" id="sumEq"></div>
+  h += `<h2>Profit over time <span class="sub">real money · ${liveSince() ? "since the fresh start · " : ""}one line per strategy</span></h2><div class="card"><div class="legend" id="sumLeg"></div>${smoothBtns(1)}<div class="chart" id="sumEq"></div>
     <div class="mute" style="font-size:11px;margin-top:4px">Each step is a bet settling (or a rewards payout). White is the total.</div></div>`;
   const row = x => `<tr data-goto="${x.eng}"><td><i style="background:${x.col}"></i>${esc(x.name)}${x.grade ? ` <small style="color:${ccGcol(x.grade)}">${esc(x.grade)}</small>` : ""}<br><small class="mute">${esc(ENG[x.eng][0].toLowerCase())}${x.size ? " · " + esc(x.size) : ""}</small></td>
     <td class="${x.n ? cls(x.pnl) : "mute"}" style="font-weight:700">${x.n || x.pnl ? money(x.pnl) : "—"}</td><td class="${x.today ? cls(x.today) : "mute"}">${x.today ? money(x.today) : "—"}</td>
@@ -732,7 +734,7 @@ function drawSum(){
   const all = Object.keys(ENG).flatMap(k => (out[k] || {}).pts || []), base = Object.keys(ENG).reduce((a, k) => a + num((out[k] || {}).base), 0);
   const ser = [line(all, base, "Total", "#e6ecff", 2.6)].concat(per);
   if ($("#sumLeg")) $("#sumLeg").innerHTML = ser.map(x => `<span><i style="background:${x.c}"></i>${esc(x.name === "Total" ? "Total" : x.name.toLowerCase())} <b class="${cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
-  if ($("#sumEq")) lineChart($("#sumEq"), ...smoothOpts(ser, {step:true, h:200, empty:"No settled real-money bets yet."}));
+  if ($("#sumEq")) lineChart($("#sumEq"), ...smoothOpts(ser, {rng:1, step:true, h:200, empty:"No settled real-money bets yet."}));
   drawAI("aiDaysS");
   if ($("#sumBars")) barChart($("#sumBars"), strat.filter(x => x.n || x.pnl).sort((a, b) => b.pnl - a.pnl).map(x => ({label:x.name, short:x.name.replace("Copycat · ", "").slice(0, 7), v:x.pnl, c:x.col, extra:`${x.n} settled${x.c != null ? " · " + cents(x.c) + "/ct" : ""}`})), {h:150, fy:v => "$" + v.toFixed(Math.abs(v) < 10 ? 1 : 0)});
 }
@@ -810,7 +812,7 @@ function ccEarnedHTML(){
   const pc = (pl, ct) => ct ? cents(100 * pl / ct) : "—", wr = r => r.won + r.lost ? pct(r.won / (r.won + r.lost)) : "—";
   let h = `<h2>Real money earned <span class="sub">settled copies · after fees</span></h2><div class="card">
     <div class="chead"><b class="${cls(tot)}">${money(tot)}</b><span>${T.won + T.lost} settled cop${T.won + T.lost === 1 ? "y" : "ies"} · ${T.open} open</span></div>
-    <div class="legend" id="ccEqLeg"></div>${smoothBtns()}<div class="chart" id="ccEq"></div>
+    <div class="legend" id="ccEqLeg"></div>${smoothBtns(1)}<div class="chart" id="ccEq"></div>
     <div class="mute" style="font-size:11px;margin-top:4px">${T.won + T.lost ? "Each step is a real copy settling. One line per account, white is the total." : "Starts with the first real copy that settles."}</div></div>`;
   h += `<h2>By account <span class="sub">${rows.length} on real money · real vs paper</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Account</th><th>¢/ct</th><th>P&L</th><th>Open</th><th>Ct</th><th>W-L</th><th>Win</th><th>Staked</th><th>Paper ¢/ct</th></tr>`
     + rows.map(r => `<tr><td><i style="background:${CC_COLORS[r.i % CC_COLORS.length]}"></i>${ccN(r.n)}</td><td class="${r.ct ? cls(r.pl) : "mute"}" style="font-weight:700">${pc(r.pl, r.ct)}</td><td class="${r.ct ? cls(r.pl) : "mute"}">${r.ct ? money(r.pl) : "—"}</td>
@@ -829,7 +831,7 @@ function drawCCEarned(){
     ps.forEach(p => { y += num(p.pnl); pts.push({x:p.settled * 1000, y:+y.toFixed(2)}); }); if (pts.length) pts.push({x:now, y:+y.toFixed(2)}); return {name, c:col, w:name === "Total" ? 2.6 : 1.8, pts, tot:y}; };
   const ser = [line(done, base, "Total", "#e6ecff")].concat(names.map((n, i) => line(done.filter(p => p.nick === n), 0, n, CC_COLORS[i % CC_COLORS.length])).filter(s => s.pts.length));
   $("#ccEqLeg").innerHTML = ser.length > 1 ? ser.map(x => `<span><i style="background:${x.c}"></i>${x.name === "Total" ? "Total" : ccN(x.name)} <b class="${cls(x.tot)}">${money(x.tot)}</b></span>`).join("") : "";
-  lineChart(el, ...smoothOpts(ser, {step:true, h:180, empty:"No real copy has settled yet. The curve starts with the first one."}));
+  lineChart(el, ...smoothOpts(ser, {rng:1, step:true, h:180, empty:"No real copy has settled yet. The curve starts with the first one."}));
   const vs = $("#ccVs"); if (vs){ const acc = n => (c.accounts || []).find(a => a.nick === n) || {};
     const bars = []; names.forEach((n, i) => { const d = done.filter(p => p.nick === n), ct = d.reduce((a, p) => a + num(p.n), 0); if (!ct) return;
       bars.push({label:n + " · real", short:n.slice(0, 6) + " R", v:100 * d.reduce((a, p) => a + num(p.pnl), 0) / ct, c:CC_COLORS[i % CC_COLORS.length], extra:`${d.length} settled real copies`});
@@ -1975,6 +1977,7 @@ function upPoints(mode){
 
 /* ---------------------------------------------------------------- charts */
 function lineChart(el, series, o={}){
+  if (o.rngNote != null){ const nt = el.parentElement && el.parentElement.querySelector(".rngnote"); if (nt) nt.textContent = o.rngNote; }
   const W = el.clientWidth || 340, H = o.h || 190, P = {l:44, r:12, t:12, b:24};
   // o.step: hold each value flat until the next one (balances, totals); o.stack: layers share x and add up
   let draw = series;
@@ -2032,8 +2035,26 @@ function lineChart(el, series, o={}){
 // MAIN tab "Smooth / Raw" switch (Alex, Nov 13): one setting for every MAIN line chart, default Smooth.
 // Smooth = curved lines, and dense lines are averaged into ~24 slices (first and last points stay exact).
 const mainSmooth = () => (ls.get("mainS") || "s") === "s";
-function smoothBtns(){ const on = mainSmooth(); return `<div class="smrow"><div class="rng" data-smt style="--rc:#94a3c8;margin:0">${[["s","Smooth"],["r","Raw"]].map(([k, l]) => `<button data-s="${k}" class="${(k === "s") === on ? "on" : ""}">${l}</button>`).join("")}</div></div>`; }
-function smoothOpts(series, o){ if (!mainSmooth() || series.every(x => x.pts.length <= 12)) return [series, o]; return [o.stack ? thinStack(series, 24) : series.map(x => ({...x, pts:thinPts(x.pts, 24)})), {...o, step:false, smooth:true}]; }
+// Time range buttons 1D / 1W / 1M / 1Y / All (Alex, Nov 19) for the profit, balance and money-at-risk charts.
+// One shared setting (like Smooth/Raw). A range longer than the data shows everything there is, and says so.
+const MRANGE = {"1D":864e5, "1W":7 * 864e5, "1M":30 * 864e5, "1Y":365 * 864e5, "All":0};
+const mainRange = () => MRANGE[ls.get("mainR")] != null ? ls.get("mainR") : "All";
+function rangeBtns(){ const r = mainRange(); return `<span class="rngnote"></span><div class="rng" data-mrt style="--rc:#22d3ee">${Object.keys(MRANGE).map(k => `<button data-r="${k}" class="${k === r ? "on" : ""}">${k}</button>`).join("")}</div>`; }
+// cut every line to the chosen window; each line starts at its value at the window's left edge
+function rangeOpts(series, o){
+  const k = mainRange(), span = MRANGE[k], xs = series.flatMap(s => s.pts.map(p => p.x)); if (!xs.length) return [series, {...o, rngNote:""}];
+  const first = Math.min(...xs), last = Math.max(...xs, Date.now()), days = (last - first) / 864e5, dtxt = days < 1.5 ? Math.max(1, Math.round(days * 24)) + " hours" : Math.round(days) + " days";
+  if (!span) return [series, {...o, rngNote:`All data · ${dtxt}`}];
+  const from = last - span;
+  if (from <= first) return [series, {...o, rngNote:`Only ${dtxt} of data so far · showing all`}];
+  const cut = series.map(s => { const pre = s.pts.filter(p => p.x < from), in_ = s.pts.filter(p => p.x >= from);
+    return {...s, pts:pre.length ? [{...pre.at(-1), x:from}, ...in_] : in_}; });
+  const t = cut[0] && cut[0].pts, chg = !o.stack && t && t.length > 1 ? t.at(-1).y - t[0].y : null;
+  return [cut, {...o, rngNote:`Past ${({"1D":"day","1W":"week","1M":"month","1Y":"year"})[k]}` + (chg == null ? "" : ` · ${cut[0].name === "Total" ? "total " : ""}${(o.fv || money)(chg)}`)}];
+}
+document.addEventListener("click", e => { const b = e.target.closest("[data-mrt] button"); if (!b) return; ls.set("mainR", b.dataset.r); renderOverview(); });
+function smoothBtns(rng){ const on = mainSmooth(); return `<div class="smrow">${rng ? rangeBtns() : ""}<div class="rng" data-smt style="--rc:#94a3c8;margin:0">${[["s","Smooth"],["r","Raw"]].map(([k, l]) => `<button data-s="${k}" class="${(k === "s") === on ? "on" : ""}">${l}</button>`).join("")}</div></div>`; }
+function smoothOpts(series, o){ if (o.rng){ [series, o] = rangeOpts(series, o); } if (!mainSmooth() || series.every(x => x.pts.length <= 12)) return [series, o]; return [o.stack ? thinStack(series, 24) : series.map(x => ({...x, pts:thinPts(x.pts, 24)})), {...o, step:false, smooth:true}]; }
 // stacked layers share x: average every layer over the same x slices so they still line up
 function thinStack(series, n){
   const xs = (series[0] || {pts:[]}).pts.map(p => p.x); if (xs.length <= n) return series;
@@ -2234,7 +2255,7 @@ function settledHTML(mode, rows, strats, B, unrTot){
         : days ? `<div class="mute" style="margin-top:6px">At this pace: about ${sp(growth / days * 30)} a month (simple, not compounded). Past pace is not a promise.</div>` : ""}
       ${start.set ? "" : `<div class="mute" style="margin-top:6px">Start bankroll estimated as today's balance minus trading P&L.</div>`}</div>
   </div>`;
-  h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card">${smoothBtns()}<div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="chead" id="eqHead"></div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div><div class="mute" style="font-size:11px;margin-top:4px">Each step up or down is a bet settling. Flat stretches mean nothing settled.</div></div>`;
+  h += `<h2>Realized P&L <span class="sub">cumulative · tap a name to hide</span></h2><div class="card">${smoothBtns(1)}<div class="rng" id="eqUnit" style="--rc:#22d3ee;margin:0 0 10px">${["$","%"].map(u => `<button data-u="${u}" class="${(ls.get("eqUnit") || "$") === u ? "on" : ""}">${u === "$" ? "Dollars" : "% of bankroll"}</button>`).join("")}</div><div class="chead" id="eqHead"></div><div class="legend" id="eqLeg"></div><div class="chart" id="eq"></div><div class="mute" style="font-size:11px;margin-top:4px">Each step up or down is a bet settling. Flat stretches mean nothing settled.</div></div>`;
   if (tr.length) h += `<h2>Profit per trade <span class="sub">oldest → newest · tap a bar</span></h2><div class="card"><div class="chart" id="perTrade"></div></div>`;
   // one row per live strategy, even before its first bet settles (Alex, Nov 14); paper ones stay off MAIN (Nov 13)
   const openOf = n => rows.filter(r => r.strategy === n && (r.status === "open" || r.status === "filled"));
@@ -2276,7 +2297,7 @@ function drawSettled(sx, rows, strats, st, dayStop, totStop){
   $("#eqHead").innerHTML = ser[0].pts.length ? `<b class="${cls(ser[0].tot)}">${fmtV(ser[0].tot)}</b><span>${pctU ? money(ser[0].tot) : fp(ser[0].tot / start.amt) + " of bankroll"} · ${tr.length} settled since ${esc(fday(new Date(t0)))}</span>` : "";
   const hidden = new Set(JSON.parse(ls.get("eqHidden") || "[]"));
   const refs = [{y:-dayStop, c:"#f5b335", label:"daily stop"}, {y:-totStop, c:"#fb6b7b", label:"halt"}].filter(r => st.pnl < -dayStop * .3 || r.label === "daily stop" && st.pnl < 0).map(r => ({...r, y:r.y * k}));
-  const drawEq = () => lineChart($("#eq"), ...smoothOpts(ser.filter(s => !hidden.has(s.name)).map(scale), {step:true, empty:"Nothing settled yet. The curve starts with the first settled order.", refs,
+  const drawEq = () => lineChart($("#eq"), ...smoothOpts(ser.filter(s => !hidden.has(s.name)).map(scale), {rng:1, step:true, empty:"Nothing settled yet. The curve starts with the first settled order.", refs,
     ...(pctU ? {fy:v => (v * 100).toFixed(Math.abs(v) < .05 ? 1 : 0) + "%", fv:fp, minSpan:.004} : {})}));
   $("#eqLeg").innerHTML = ser.length > 1 ? ser.map(s => `<span data-n="${esc(s.name)}" class="${hidden.has(s.name) ? "off" : ""}"><i style="background:${s.c}"></i>${esc(s.name)} <b class="${cls(s.tot)}">${fmtV(s.tot)}</b></span>`).join("") : "";
   $("#eqLeg").onclick = e => { const sp = e.target.closest("span"); if (!sp) return; const n = sp.dataset.n; hidden.has(n) ? hidden.delete(n) : hidden.add(n); ls.set("eqHidden", JSON.stringify([...hidden])); sp.classList.toggle("off"); drawEq(); };
@@ -2492,7 +2513,7 @@ function renderOverview(){
   </div>`;
 
   const eqRows = equityRows(mode);
-  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">stacked by strategy</span></h2><div class="card">${smoothBtns()}<div class="chead" id="expHead"></div><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div><div class="mute" style="font-size:11px;margin-top:4px">The top edge is the total in open bets (what they cost). The dashed line is the ${pct(capPct)} cap.</div></div>`;
+  if (nowOpen && eqRows.length) h += `<h2>Money at risk over time <span class="sub">stacked by strategy</span></h2><div class="card">${smoothBtns(1)}<div class="chead" id="expHead"></div><div class="legend" id="expLeg"></div><div class="chart" id="exp"></div><div class="mute" style="font-size:11px;margin-top:4px">The top edge is the total in open bets (what they cost). The dashed line is the ${pct(capPct)} cap.</div></div>`;
   if (manual.length){
     h += `<h2>Your manual trades</h2><div class="card list">` + manual.map(r => `<div class="item"><span class="side ${r.side}">${r.side.toUpperCase()}</span><div class="main"><div class="t">${esc(r.ticker)}</div><div class="s">${esc(r.title)}</div></div><div class="r">${r.count} @ ${Math.round(r.price * 100)}¢</div></div>`).join("") + `</div>`;
   }
@@ -2524,7 +2545,7 @@ function renderOverview(){
     const now = num(eqRows.at(-1).exposure);
     $("#expHead").innerHTML = `<b>$${now.toFixed(2)}</b><span>in open bets · ${pct(now / B, 0)} of bankroll · cap $${openCap.toFixed(2)}</span>`;
     $("#expLeg").innerHTML = ex.map((s, i) => `<span><i style="background:${s.c}"></i>${esc(s.name)} <b>$${s.pts.at(-1).y.toFixed(2)}</b></span>`).join("");
-    lineChart($("#exp"), ...smoothOpts(ex, {h:190, stack:true, step:true, total:"Total", fv:v => "$" + v.toFixed(2), refs:[{y:openCap, c:"#f5b335", label:"cap $" + openCap.toFixed(0)}], y1:openCap * 1.02}));
+    lineChart($("#exp"), ...smoothOpts(ex, {rng:1, h:190, stack:true, step:true, total:"Total", fv:v => "$" + v.toFixed(2), refs:[{y:openCap, c:"#f5b335", label:"cap $" + openCap.toFixed(0)}], y1:openCap * 1.02}));
   }
   if ($("#eq")) drawSettled(sx, rows, strats, st, dayStop, totStop);
   drawDrift();
