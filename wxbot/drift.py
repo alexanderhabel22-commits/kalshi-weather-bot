@@ -31,6 +31,7 @@ REPLAY_C = {
     "rain_evening": 6.1,     # evening rain fade replay +6.1c
     "spx_range": 12.8,       # S&P range fade, per fill
     "ndx_range": 22.0,       # Nasdaq-100 range fade, per fill
+    "favorites_mid": 4.3,    # Entertainment 300k-1M events, last-24h replay (Nov 19)
     "favorites_wide": None,  # no clean replay number: only the "losing" check applies
 }
 MIN_EVENTS = 20

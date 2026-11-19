@@ -1,4 +1,4 @@
-"""PAPER test: favorites in MID-SIZE Entertainment events (300k - 1M contracts traded).
+"""2-CONTRACT REAL-MONEY TEST (Alex, Nov 19 5:53 PM ET; own $5 stop): favorites in MID-SIZE Entertainment events (300k - 1M contracts traded).
 
 Why (thread "Widen big-event favorites coverage", Nov 19, 2026): the live favorites
 rule only trades events with 1M+ contracts traded. The old studies (7-day window)
@@ -16,7 +16,8 @@ their listed schedule) changes the answer for Entertainment:
 It is the live favorites rule with a different event-size band and category, so it
 never overlaps the live rule's events (those are 1M+). It makes no Kalshi calls of
 its own: it reuses the event list the live favorites scan read in the same run.
-PAPER only. Never set [trading.favorites_mid] live = true without Alex's OK.
+Started on paper Nov 19; Alex chose a 2-contract real test the same evening. Raise size only
+after its own reviews (freeze until 500 contracts).
 """
 from __future__ import annotations
 
@@ -55,5 +56,5 @@ def propose(ctx) -> list[Intent]:
         return []                                  # live scan didn't run this pass (it scans every 30 min)
     live = (ctx.cfg.raw.get("trading", {}) or {}).get("favorites", {}) or {}
     out = extra(scan["events"], ctx.now, ctx.params, live, held_by_event(ctx.orders, NAME, ctx.mode))
-    log.info("favorites_mid (paper): %d mid-size Entertainment picks", len(out))
+    log.info("favorites_mid: %d mid-size Entertainment picks", len(out))
     return out

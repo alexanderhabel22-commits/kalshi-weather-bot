@@ -511,7 +511,8 @@ def test_only_approved_strategies_trade_real_money():
     # Alex, Nov 14 ("+5c is +5c let's add it"): Best-AI fade (KXLLM1), 3 contracts.
     # Alex, Nov 14 4:19 PM ET ("Ok sure get it going"): Nasdaq range fade, 1 contract.
     # Alex, Nov 19 1:21 AM ET ("Yeah put it back"): Mentions NO real again, 1 contract per word.
-    assert live == {"mentions", "favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range"}
+    # Alex, Nov 19 5:53 PM ET (decision card "Real, 2 contracts"): mid-size Entertainment favorites.
+    assert live == {"mentions", "favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range", "favorites_mid"}
     assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 6   # x2 Nov 17
     assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 2   # x2 Nov 17
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 2   # x2 Nov 17
@@ -928,13 +929,14 @@ def test_favorites_late_logs_last_24h_markets_on_paper():
     assert favorites_late.extra(events, NOW, late, live, held) == []
 
 
-def test_favorites_mid_paper_only_mid_size_entertainment():
+def test_favorites_mid_real_test_mid_size_entertainment():
     from wxbot.strats import favorites, favorites_mid
     c = cfg()
     live, mid = c.raw["trading"]["favorites"], c.raw["trading"]["favorites_mid"]
     sp = trader.strategy_settings(c, "favorites_mid", trader.settings(c))
-    assert mid["live"] is False and mid["enabled"] is True and mid["contracts"] == 1
-    assert trader.strategy_mode("live", sp) == "paper"
+    assert mid["live"] is True and mid["enabled"] is True and mid["contracts"] == 2   # real test, Alex Nov 19
+    assert mid["max_contracts"] == 2 and mid["max_loss_usd"] == 5.0
+    assert trader.strategy_mode("live", sp) == "live"
 
     def m(tk, close, vol, yb=0.90, ya=0.93):
         return {"ticker": tk, "event_ticker": tk.rsplit("-", 1)[0], "close_time": close,
@@ -955,6 +957,6 @@ def test_favorites_mid_paper_only_mid_size_entertainment():
     ]
     out = favorites_mid.extra(events, NOW, mid, live, None)
     assert {i.event for i in out} == {"KXRT-MID"}
-    assert all(i.strategy == "favorites_mid" and i.count == 1 for i in out)
+    assert all(i.strategy == "favorites_mid" and i.count == 2 for i in out)
     assert {i.event for i in favorites.candidates(events, NOW, live, None)} == {"KXRT-BIG"}   # no overlap
     assert favorites_mid.extra(events, NOW, mid, live, {"KXRT-MID": {"KXRT-MID-X", "KXRT-MID-Y"}}) == []
