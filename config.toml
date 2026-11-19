@@ -108,8 +108,9 @@ reset_halt = false               # set true (once) to clear a halt after checkin
 max_week_contracts = 5000        # fair share of the flow (scale study)
 max_market_contracts = 200       # per-market ceiling (scale study)
 enabled = true
-live = false                     # PAPER since Nov 12 (Alex: "whatever you recommend"; audit: ~0c edge last 90 days)
-contracts = 4                    # max contracts per word (6 -> 4 Nov 9, Alex OK: one topical word, Paramount
+live = true                      # REAL again Nov 19 as a 1-contract test (Alex, Nov 19 1:21 AM ET: "Yeah put it back").
+                                 # Paper Nov 12-19 (audit: ~0c edge, +0.9c +-0.9 replay). Caps/stops unchanged.
+contracts = 1                    # 1-contract real test (Nov 19; was 4 on paper). Before: 6 -> 4 Nov 9, Alex OK: one topical word, Paramount
                                  # "Netflix", put ~9% of the bankroll at risk; Kelly turns negative ~11%/word)
 word_pct = 0.07                  # size each word at 7% of the bankroll (~4 contracts at $55; was 10%);
                                  # raise `contracts` as the bankroll grows

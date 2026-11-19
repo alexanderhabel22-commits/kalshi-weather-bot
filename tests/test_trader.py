@@ -510,11 +510,13 @@ def test_only_approved_strategies_trade_real_money():
     # Alex, Nov 13 10:13 AM ET (decision card "Yes, 1 contract real"): S&P range fade, 1 contract.
     # Alex, Nov 14 ("+5c is +5c let's add it"): Best-AI fade (KXLLM1), 3 contracts.
     # Alex, Nov 14 4:19 PM ET ("Ok sure get it going"): Nasdaq range fade, 1 contract.
-    assert live == {"favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range"}
+    # Alex, Nov 19 1:21 AM ET ("Yeah put it back"): Mentions NO real again, 1 contract per word.
+    assert live == {"mentions", "favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range"}
     assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 6   # x2 Nov 17
     assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 2   # x2 Nov 17
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 2   # x2 Nov 17
     assert c.raw["trading"]["macro_fade"]["contracts"] == 6   # x2 Nov 17
+    assert c.raw["trading"]["mentions"]["contracts"] == 1     # 1-contract real test, Nov 19
     wl = c.raw["trading"]["weather_late"]
     assert wl["contracts"] == 2 and wl["contracts_by"] == {"low/need": 4} and wl["max_open_pct"] <= 0.60 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
     # Nov 13: highs "need" back to paper (replay ~0); new low cities start at 1 contract

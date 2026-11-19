@@ -169,7 +169,8 @@ record earns it. Be candid about odds and risk; no hype.
   `reports/daily|weekly|monthly/` at 9 AM ET and pushes a link.
 - **REAL MONEY since Nov 5 7 PM ET (Alex's OK):** `[trading] mode = "live"` with
   live = true for favorites, macro_fade (3 contracts since Nov 12) and weather_late (late-day lows, Nov 11;
-  Mentions moved to paper Nov 12 after the audit;
+  Mentions moved to paper Nov 12 after the audit, then back to REAL Nov 19 as a 1-contract-per-word test
+  (Alex: "Yeah put it back"; audit edge ~0c, so this is a small real test, judged at the Dec 3 Mentions verdict);
   weather day-before was a small test until Nov 11, now paper). LOCKs stay
   paper (weather had 0 settled paper orders). Rails: 100% live cap (75% until Nov 12, Alex OK), 20% per event,
   -10%/day pause, -25% total halt + cancel, cash check, ntfy on fills/stops/rejected
