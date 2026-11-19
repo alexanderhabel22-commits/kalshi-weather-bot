@@ -926,3 +926,35 @@ def test_favorites_late_logs_last_24h_markets_on_paper():
     assert all(i.strategy == "favorites_late" and i.count == 1 for i in out)
     held = {"KXRT-A": {"KXRT-A-X", "KXRT-A-Y"}}
     assert favorites_late.extra(events, NOW, late, live, held) == []
+
+
+def test_favorites_mid_paper_only_mid_size_entertainment():
+    from wxbot.strats import favorites, favorites_mid
+    c = cfg()
+    live, mid = c.raw["trading"]["favorites"], c.raw["trading"]["favorites_mid"]
+    sp = trader.strategy_settings(c, "favorites_mid", trader.settings(c))
+    assert mid["live"] is False and mid["enabled"] is True and mid["contracts"] == 1
+    assert trader.strategy_mode("live", sp) == "paper"
+
+    def m(tk, close, vol, yb=0.90, ya=0.93):
+        return {"ticker": tk, "event_ticker": tk.rsplit("-", 1)[0], "close_time": close,
+                "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}", "volume": vol,
+                "title": tk}
+    iso = lambda h: (NOW + timedelta(hours=h)).isoformat().replace("+00:00", "Z")  # noqa: E731
+    events = [
+        {"event_ticker": "KXRT-MID", "category": "Entertainment",          # 500k: mid-size
+         "markets": [m("KXRT-MID-X", iso(10), 250_000), m("KXRT-MID-Y", iso(10), 250_000, 0.05, 0.07)]},
+        {"event_ticker": "KXRT-BIG", "category": "Entertainment",          # 1.6M: the live rule's
+         "markets": [m("KXRT-BIG-X", iso(10), 800_000), m("KXRT-BIG-Y", iso(10), 800_000, 0.05, 0.07)]},
+        {"event_ticker": "KXRT-TINY", "category": "Entertainment",         # 200k: too small
+         "markets": [m("KXRT-TINY-X", iso(10), 100_000), m("KXRT-TINY-Y", iso(10), 100_000, 0.05, 0.07)]},
+        {"event_ticker": "KXPOL-MID", "category": "Politics",              # mid-size Politics: excluded
+         "markets": [m("KXPOL-MID-X", iso(10), 250_000), m("KXPOL-MID-Y", iso(10), 250_000, 0.05, 0.07)]},
+        {"event_ticker": "KXRT-LATE", "category": "Entertainment",         # 72 h out: too early
+         "markets": [m("KXRT-LATE-X", iso(72), 250_000), m("KXRT-LATE-Y", iso(72), 250_000, 0.05, 0.07)]},
+    ]
+    out = favorites_mid.extra(events, NOW, mid, live, None)
+    assert {i.event for i in out} == {"KXRT-MID"}
+    assert all(i.strategy == "favorites_mid" and i.count == 1 for i in out)
+    assert {i.event for i in favorites.candidates(events, NOW, live, None)} == {"KXRT-BIG"}   # no overlap
+    assert favorites_mid.extra(events, NOW, mid, live, {"KXRT-MID": {"KXRT-MID-X", "KXRT-MID-Y"}}) == []
