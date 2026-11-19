@@ -74,6 +74,11 @@
       "backtest_c": 4.6,
       "backtest_note": "Paper shadow Nov 13 only, switched off the same day when the live favorites rule moved to the 24-hour window. Was: PAPER shadow since Nov 13: the favorites rule but bidding only in the last 24 hours before close. Replay Jan 2025-Nov 2026 on reachable markets: +4.6c per fill vs +2.0c for the live rule, ~20% fewer fills. Decide at the favorites 500-contract review."
     },
+    "favorites_mid": {
+      "label": "Mid-size Entertainment favorites (paper)",
+      "backtest_c": 4.3,
+      "backtest_note": "PAPER test since Nov 19: the live favorites rule (85-96c, last 24 h, 2 markets per event) on Entertainment events with 300k-1M contracts traded (live favorites needs 1M+). Replay Jan 2025-Nov 2026 on markets that close on schedule: +4.3c per fill, about 8.5 fills a month, 108 events. Politics/Elections at that size lose, so they are left out. Real money only with Alex's OK."
+    },
     "ai_fade": {
       "label": "Best-AI fade",
       "backtest_c": 5.1,
