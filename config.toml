@@ -269,7 +269,7 @@ max_open_pct = 0.20
 max_event_pct = 0.05
 
 [trading.favorites_mid]
-# PAPER TEST (Nov 19, 2026, thread "Widen big-event favorites coverage"): the live favorites rule
+# 2-CONTRACT REAL-MONEY TEST since Nov 19 (Alex card Nov 19 5:53 PM ET: "Real, 2 contracts"). Was paper (Nov 19, thread "Widen big-event favorites coverage"): the live favorites rule
 # (85-96c favorite, best bid + 1c, last 24 h, 2 markets per event) on MID-SIZE Entertainment events,
 # 300k - 1M contracts traded (live favorites needs 1M+, so no overlap). wxbot/strats/favorites_mid.py.
 # Replay Jan 2025-Nov 2026, markets that close on schedule: about +4.3c +- 1.5 per fill, ~8.5 fills/month.
@@ -277,19 +277,21 @@ max_event_pct = 0.05
 max_week_contracts = 2000
 max_market_contracts = 200
 enabled = true
-live = false                     # PAPER only
+live = true                      # REAL money, 2 contracts, own $5 stop (Alex Nov 19)
 categories = ["Entertainment"]
 min_event_volume = 300000
 max_event_volume = 1000000
-contracts = 1
-max_contracts = 1
+contracts = 2
+max_contracts = 2
 max_markets_per_event = 2
 min_price = 0.85
 max_price = 0.96
 min_hours = 1
 max_hours = 24
 max_open_pct = 0.20
-max_event_pct = 0.05
+max_event_pct = 0.10               # room for 2 markets x 2 contracts at ~92c on a ~$50 bankroll
+max_loss_pct = 0.10
+max_loss_usd = 5.0               # own stop: down $5 settled real money (or 10% of bankroll if smaller) -> no new orders + one push
 
 [trading.locks]
 # Weather LOCKs, PAPER for now. Alex OK'd real money on Nov 5, then paused it the
