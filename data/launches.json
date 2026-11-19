@@ -14021,6 +14021,7 @@
   "KXISRAELRESIGN",
   "KXISRAELTHRESH",
   "KXISRAELTURNOUT",
+  "KXISRALTPM",
   "KXISRCOALSEATS",
   "KXISRDEFMIN",
   "KXISRDEMCOUNT",
@@ -22362,6 +22363,7 @@
   "KXVALPLPHIL",
   "KXVAMIKIBART",
   "KXVANCE",
+  "KXVANCECOUNTRIES",
   "KXVANCEINGRAHAM",
   "KXVANCEMENTION",
   "KXVANCEMIDDLEEAST",
@@ -22370,6 +22372,7 @@
   "KXVANCEPAKISTAN",
   "KXVANCERUBIORUN",
   "KXVANCERUN",
+  "KXVANCESTATES",
   "KXVANCONDO",
   "KXVANCOUVEREAST",
   "KXVANCOUVERMAYOR",
@@ -22882,6 +22885,7 @@
   "KXWHPRESSMOVE",
   "KXWHPRESSSPEAKER",
   "KXWHR",
+  "KXWHRTOP5",
   "KXWHUNDREDMATCH",
   "KXWHVISIT",
   "KXWIACT10REPEAL",
@@ -23962,7 +23966,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-19T18:00:31+00:00",
+ "last_check": "2026-11-19T18:30:26+00:00",
  "pending": {
   "KX20YRRATED": {
    "category": "Financials",
@@ -23986,6 +23990,7 @@
   },
   "KX20YRRATEW": {
    "category": "Financials",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-17T19:30:29+00:00",
    "frequency": "weekly",
@@ -26256,6 +26261,15 @@
    "series": "KXISR2NDMANDATE",
    "title": "Israel's second mandate to form a government"
   },
+  "KXISRALTPM": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-19T18:30:26+00:00",
+   "frequency": "one_off",
+   "new_category": false,
+   "series": "KXISRALTPM",
+   "title": "Israeli Alternate Prime Minister after the election"
+  },
   "KXJ3LEAGUEADVANCE": {
    "category": "Sports",
    "checked": "2026-11-12T16:30:29+00:00",
@@ -27619,7 +27633,7 @@
   },
   "KXRAINDCOACHELLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-11T22:00:46+00:00",
    "frequency": "daily",
@@ -27838,7 +27852,7 @@
   },
   "KXSNOWDAYSAUS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27848,7 +27862,7 @@
   },
   "KXSNOWDAYSBAL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27858,7 +27872,7 @@
   },
   "KXSNOWDAYSBOS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27868,7 +27882,7 @@
   },
   "KXSNOWDAYSCHI": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27878,7 +27892,7 @@
   },
   "KXSNOWDAYSCLE": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27888,7 +27902,7 @@
   },
   "KXSNOWDAYSCLT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27898,7 +27912,7 @@
   },
   "KXSNOWDAYSCVG": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27908,7 +27922,7 @@
   },
   "KXSNOWDAYSDC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27918,7 +27932,7 @@
   },
   "KXSNOWDAYSDEN": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27928,7 +27942,7 @@
   },
   "KXSNOWDAYSDFW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27938,7 +27952,7 @@
   },
   "KXSNOWDAYSDTW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27948,7 +27962,7 @@
   },
   "KXSNOWDAYSHOU": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27958,7 +27972,7 @@
   },
   "KXSNOWDAYSIND": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27968,7 +27982,7 @@
   },
   "KXSNOWDAYSKC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27978,7 +27992,7 @@
   },
   "KXSNOWDAYSMSP": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27988,7 +28002,7 @@
   },
   "KXSNOWDAYSNASH": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27998,7 +28012,7 @@
   },
   "KXSNOWDAYSNOLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -28008,7 +28022,7 @@
   },
   "KXSNOWDAYSNYC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -28018,7 +28032,7 @@
   },
   "KXSNOWDAYSPDX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -28028,7 +28042,7 @@
   },
   "KXSNOWDAYSPHL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -28038,7 +28052,7 @@
   },
   "KXSNOWDAYSPHX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -28048,7 +28062,7 @@
   },
   "KXSNOWDAYSPIT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -28058,7 +28072,7 @@
   },
   "KXSNOWDAYSSEA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-19T18:00:31+00:00",
+   "checked": "2026-11-19T18:30:26+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -28667,6 +28681,15 @@
    "series": "KXVA",
    "title": "Visa annual KPI"
   },
+  "KXVANCECOUNTRIES": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-19T18:30:26+00:00",
+   "frequency": "annual",
+   "new_category": false,
+   "series": "KXVANCECOUNTRIES",
+   "title": "What countries will JD Vance visit this year?"
+  },
   "KXVANCENUMSTATES": {
    "category": "Politics",
    "fee_multiplier": 1,
@@ -28675,6 +28698,15 @@
    "new_category": false,
    "series": "KXVANCENUMSTATES",
    "title": "How many states will Trump visit?"
+  },
+  "KXVANCESTATES": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-19T18:30:26+00:00",
+   "frequency": "annual",
+   "new_category": false,
+   "series": "KXVANCESTATES",
+   "title": "Which states will JD Vance visit this year?"
   },
   "KXVANDYAPPS": {
    "category": "Entertainment",
@@ -28780,6 +28812,15 @@
    "new_category": false,
    "series": "KXWHR",
    "title": "World Happiness Report No. 1 Country"
+  },
+  "KXWHRTOP5": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-19T18:30:26+00:00",
+   "frequency": "weekly",
+   "new_category": false,
+   "series": "KXWHRTOP5",
+   "title": "World Happiness Report Top 5"
   },
   "KXWT10MATCH": {
    "category": "Sports",
