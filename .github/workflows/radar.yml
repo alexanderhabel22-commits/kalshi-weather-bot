@@ -2,12 +2,15 @@ name: radar
 
 # New-listing radar + edge-fade monitor (wxbot/radar.py). PAPER ONLY: reads public Kalshi
 # data and the bot's own order log, never places or cancels orders, needs no Kalshi keys.
-# Hourly, ~2-3 min. Saves data/radar.json to main (the 9 AM daily report reads it) and may
+# Twice an hour (:17 and :47), ~2-3 min. Saves data/radar.json to main (the 9 AM daily report reads it) and may
 # send a phone push (max 4/day) when a watched series first lists, a paper rule on a new
 # listing clears the real-test bar, or a real-money strategy hits its kill rule.
 on:
   schedule:
     - cron: "17 * * * *"
+    # Second slot (Nov 20): GitHub silently skipped the 1:17 and 2:17 PM ET runs on Nov 20.
+    # Twice an hour means one dropped run no longer leaves a 2-hour gap. A pass is idempotent.
+    - cron: "47 * * * *"
   workflow_dispatch:
 
 permissions:
