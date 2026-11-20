@@ -904,6 +904,21 @@ def test_ai_fade_relabels_macro_fade_picks_on_kxllm1():
     assert out[0].strategy == "ai_fade" and out[0].price == 0.87 and out[0].count == 6   # x2 Nov 17; 1c spread: joins the 87c NO bid
 
 
+def test_fade_leads_paper_is_paper_only_and_relabels_macro_fade_picks():
+    from wxbot.strats import fade_leads_paper
+    c = cfg(mode="live")
+    p = c.raw["trading"]["fade_leads_paper"]
+    assert p["live"] is False and p["series"] == ["KXU3", "KXGDP", "KXSPACEXSTARSHIP"]
+    assert trader.strategy_mode("live", p) == "paper"
+    close = (NOW + timedelta(days=10)).isoformat().replace("+00:00", "Z")
+    ms = [{"ticker": f"KXU3-26NOV-{k}", "event_ticker": "KXU3-26NOV",
+           "close_time": close, "yes_bid_dollars": f"{yb:.2f}", "yes_ask_dollars": f"{ya:.2f}",
+           "volume": 5000} for k, yb, ya in (("T4.2", 0.12, 0.15), ("T4.0", 0.80, 0.81), ("T4.8", 0.00, 0.02))]
+    out = fade_leads_paper.candidates(ms, p, NOW)
+    assert [i.ticker for i in out] == ["KXU3-26NOV-T4.2"]
+    assert out[0].strategy == "fade_leads_paper" and out[0].price == 0.86 and out[0].count == 1
+
+
 def test_favorites_late_logs_last_24h_markets_on_paper():
     from wxbot.strats import favorites, favorites_late
     c = cfg()

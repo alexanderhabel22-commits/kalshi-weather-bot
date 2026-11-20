@@ -263,6 +263,15 @@ record earns it. Be candid about odds and risk; no hype.
   orders (`data/quake_no_state.json`). Paper twin `quake_no_paper` runs the same rule uncapped.
   Reviews at 20 and 50 fills (real + twin). One big-quake day costs ~$1.80 per 2-contract bet.
   Dashboard: TESTS tab "Real-money tests" table + earthquake card (cap meter, twin).
+- **Jobs/GDP/Starship fade paper test (PAPER ONLY, Nov 20, 1 ct):** `wxbot/strats/fade_leads_paper.py`,
+  `[trading.fade_leads_paper]` (live = false). The macro_fade rule unchanged on KXU3, KXGDP,
+  KXSPACEXSTARSHIP. Replay Dec 2024-Nov 2026 +13.0c on 126 fills, 39/39 events up, zero losing fills;
+  walk-forward (top series picked on pre-Sep-2025 data) +12.6c on 68 fills after it vs -2.9c for the other
+  ~40 series. ~5 fills/month. Reviews at 10 / 30 settled fills; adding them to the real fade waits for the
+  Fed/CPI fade's 500-ct review (freeze) and Alex's OK. Research: `analysis/fade-leads/RESULTS.md` (project files).
+  NOTE: older replays (fade-events, fade-events-2, edge-hunt-3 fetch.py) read candle `close` only; the live
+  candlestick endpoint (markets closing after Sep 13 2026) returns `close_dollars`, so those replays silently
+  had NO data after Sep 13. Fixed in analysis/fade-leads/scripts/fetch.py.
 - **Shipping counts paper test (PAPER ONLY, Nov 20, 1 ct):** `wxbot/strats/ship_paper.py`,
   `[trading.ship_paper]` (live = false; Alex "Whatever you think", Nov 20 11:41 AM ET). Weekly
   KXHORMUZWEEKLY / KXSUEZWEEKLY / KXPANAMAWEEKLY / KXBABELMANDEBWEEKLY "transits > K" markets, settled on
