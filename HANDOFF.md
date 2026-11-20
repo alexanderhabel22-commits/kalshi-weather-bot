@@ -273,7 +273,7 @@ record earns it. Be candid about odds and risk; no hype.
   +-8.3 (216 trades) / +7.0c +-7.5 on the full candle window (243); the bot code reproduces the replay
   exactly (`analysis/ship-paper/check_bot_vs_replay.py`). Not significant; Suez carries it, Panama loses.
   ~20-25 paper fills a week. PortWatch cached 3 h in trader_state; no orders if it is >16 days stale.
-  Reviews: first look at 20 settled fills (~Dec 1), verdict at 100 (~Dec 22) + free replay re-run
+  Reviews: first look at 20 settled fills (Tue Nov 24, when the first week settles), verdict at 100 (~Dec 15) + free replay re-run
   mid-Jan. Real money only with Alex's OK. Dashboard: TESTS tab "Shipping counts test" card (c/ct with
   95% range clustered by chokepoint-week, per-chokepoint and YES/NO table).
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
