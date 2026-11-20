@@ -202,6 +202,11 @@ def build(kind: str, start: date, end: date, results: list[Result], cfg, ai: dic
               f"total {_money(t['total_loss_stop'])}" + (f" · **HALTED: {', '.join(st['halted'])}**" if st.get("halted") else "") + ".", ""]
     if kind in ("weekly", "monthly"):
         lines += _detail(period, start, end, kind)
+    try:                                   # new-listing radar + edge-fade monitor (Nov 20)
+        from . import radar
+        lines += [""] + radar.digest_lines()
+    except Exception:                      # the report must still go out
+        pass
     lines += ["", "_Generated automatically by the bot._", ""]
     phone = phone_text(groups, alltime, tot, rows, bank)
     if net:

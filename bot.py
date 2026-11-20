@@ -17,6 +17,7 @@
   python bot.py watch           AI ops watcher, one pass (server timer every 15 min; needs ANTHROPIC_API_KEY)
   python bot.py mentions-ai     Mentions AI shadow test: would skipping high "will be said" scores have helped?
   python bot.py checkpoint      real-money scorecard + pass/fail verdicts (rules in CHECKPOINT.md)
+  python bot.py radar           new-listing radar + edge-fade monitor, one pass (hourly workflow; paper only)
   python bot.py tax             tax-ready ledger of every real fill, fee and settlement (read-only)
 """
 from __future__ import annotations
@@ -35,7 +36,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("command", choices=["scan", "loop", "report", "settle", "test-notify",
                                             "backtest-fetch", "trade", "m15", "checkpoint", "watch", "mentions-ai",
-                                            "tax", "srclog", "copycat", "lip", "paperlab"])
+                                            "tax", "srclog", "copycat", "lip", "paperlab", "radar"])
     ap.add_argument("--dry-run", action="store_true", help="don't send or save anything")
     ap.add_argument("--every", type=int, default=300, help="loop interval in seconds")
     ap.add_argument("--now", help="pretend it's this UTC time (ISO), for testing")
@@ -59,6 +60,14 @@ def main(argv=None) -> int:
     if args.command == "mentions-ai":
         from wxbot import mentions_ai
         return mentions_ai.main()
+
+    if args.command == "radar":         # paper only: never places orders
+        from wxbot import radar, trader
+        now = parse_iso(args.now) if args.now else utcnow()
+        db = radar.run(Http(cfg.user_agent), cfg, now, trader.load_all(), dry_run=args.dry_run)
+        print(f"radar: {db.get('open_events')} open events, new {db.get('last_new')}, "
+              f"{len(db.get('paper') or [])} paper orders")
+        return 0
 
     if args.command == "watch":
         from wxbot import watch

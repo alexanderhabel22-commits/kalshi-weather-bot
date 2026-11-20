@@ -90,6 +90,19 @@ record earns it. Be candid about odds and risk; no hype.
   rain since) and *official* (CLI total), with the ask then, cheapest ask
   later, and depth. Never alerts. Goal: are rain locks ever cheap (≤95¢) or
   priced in like temperature locks? Turn off with `rain_census = false`.
+- **NEW-LISTING RADAR + EDGE-FADE MONITOR** (added Nov 20): `wxbot/radar.py`, own hourly
+  workflow `.github/workflows/radar.yml` (`python bot.py radar`), state `data/radar.json`,
+  block at the end of every daily/weekly report. PAPER ONLY, never orders. Lists every open
+  Kalshi event (~110 pages), flags each series with an open event for the first time (incl.
+  old empty series like the farm dailies), and for 14 days (always for `[radar].watch`)
+  paper-tests longshot NO, favorites last-24h and the frozen-hours bracket (windows in
+  `DEFAULT_FROZEN`) at 1 contract; resting paper bids fill only on a trade THROUGH the price;
+  unfilled ones are settled too (adverse selection). Fade monitor per live strategy: fill
+  rate, c/ct all + last 20, what missed orders would have made, spread trend, and the
+  pre-written kill rule in `[radar.kill_rules]` (default: below -5c after 20 fills). Pushes
+  max 4/day, each once: watched/Commodities series first lists, a paper rule clears +3c over
+  10+ fills (push proposes 1 ct, $3 cap; needs Alex's OK), a kill/fade flag. `push = "shadow"`
+  to silence. Every NEW real-money test must get a kill-rule line there before it starts.
 - **LAUNCH WATCHER** (added Nov 5): `wxbot/launches.py`, every 30 min. Pulls
   Kalshi's full series list, notices new series and new categories, waits for
   their first open markets, and logs spread/volume plus a recommended test to
