@@ -146,6 +146,11 @@
       "label": "Earthquake NO (paper twin)",
       "backtest_c": 6.6,
       "backtest_note": "Same rule as the real earthquake test, logged on paper with no cap so the 20/50-fill reviews have data even if the real test stops."
+    },
+    "ship_paper": {
+      "label": "Shipping counts (paper)",
+      "backtest_c": 4.7,
+      "backtest_note": "Weekly ship-transit counts (Hormuz, Suez, Panama, Bab el-Mandeb) vs an IMF PortWatch forecast (14-day average x 7, negative binomial): buy the side worth 5c+ more than its price after the taker fee, until the week ends. Replay Sep-Nov 2026 +4.7c +-8.3 on 216 trades (+7.0c +-7.5 on 243 with the full candle window): not significant. PAPER ONLY from Nov 20. First look at 20 settled fills (~Dec 1), verdict at 100 (~Dec 22)."
     }
   },
   "events": [

@@ -300,7 +300,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", ship_paper:"#38bdf8", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -512,6 +512,43 @@ function realTestsHTML(){
       ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
     </div>`;
   }
+  return h + shipPaperHTML(rowsP);
+}
+/* Shipping counts paper test (Nov 20): cents per contract with a 95% range that treats each week of
+   one chokepoint as one unit (the markets of a week move together), like the replay did. */
+const SHIP_SERIES = [["KXSUEZWEEKLY","Suez","+17.5¢"],["KXBABELMANDEBWEEKLY","Bab el-Mandeb","+9.3¢"],["KXHORMUZWEEKLY","Hormuz","+1.0¢"],["KXPANAMAWEEKLY","Panama","−9.2¢"]];
+function clusterCI(rows){
+  const by = {}; let n = 0, pnl = 0;
+  for (const r of rows){ const k = r.event || r.ticker, c = Math.max(1, r.filled || r.count); by[k] = (by[k] || 0) + r.pnl; n += c; pnl += r.pnl; }
+  const tot = Object.values(by), m = tot.length;
+  if (!n) return {n:0, weeks:0, c:null, pm:null};
+  let pm = null;
+  if (m > 1){ const mu = tot.reduce((a, v) => a + v, 0) / m, sd = Math.sqrt(tot.reduce((a, v) => a + (v - mu) ** 2, 0) / (m - 1)); pm = 196 * sd * Math.sqrt(m) / n; }
+  return {n, weeks:m, c:100 * pnl / n, pm};
+}
+function shipPaperHTML(rowsP){
+  const sp = tradingCfg().ship_paper;
+  if (!sp || !sp.enabled) return "";
+  const r = (rowsP || []).filter(x => x.strategy === "ship_paper"), s = stats(r), ci = clusterCI(s.settled);
+  const n0 = filledN(r, "settled"), nx = [20, 100].find(m => n0 < m) || nextReview(n0);
+  const ciTxt = x => x.c == null ? "—" : cents(x.c) + (x.pm == null ? "" : ` ±${x.pm.toFixed(1)}`);
+  const line = (label, rr, rep) => { const ss = stats(rr), cc = clusterCI(ss.settled);
+    return `<tr><td>${esc(label)}</td><td class="${cls(cc.c || 0)}" style="font-weight:700">${ciTxt(cc)}</td><td>${cc.n}</td><td>${cc.weeks}</td><td>${ss.wins}-${ss.settled.length - ss.wins}</td><td>${ss.open.length}</td><td class="mute">${rep}</td></tr>`; };
+  const recent = r.filter(x => ["settled", "filled", "open"].includes(x.status)).sort((a, b) => (b.placed || 0) - (a.placed || 0)).slice(0, 8);
+  let h = `<h2>Shipping counts test <span class="sub">PAPER ONLY · ${num(sp.contracts, 1)} ct · since Nov 20</span></h2><div class="card">
+    <div class="sgrid">
+      <div><div class="lbl">Paper ¢/ct</div><div class="val ${cls(ci.c || 0)}">${ciTxt(ci)}<small>95% range · replay +4.7¢ ±8.3</small></div></div>
+      <div><div class="lbl">Paper P&L</div><div class="val ${cls(s.pnl)}">${s.settled.length ? money(s.pnl) : "—"}<small>${n0} ct settled · ${s.wins}-${s.settled.length - s.wins}</small></div></div>
+      <div><div class="lbl">Open</div><div class="val">${s.open.length}<small>$${s.exposure.toFixed(2)} on paper</small></div></div>
+      <div><div class="lbl">Next review</div><div class="val">${n0} / ${nx}<small>settled fills</small></div></div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:10px"><table class="tbl"><tr><th>Slice</th><th>¢/ct ±95%</th><th>Ct</th><th>Weeks</th><th>W-L</th><th>Open</th><th>Replay</th></tr>`;
+  for (const [pre, label, rep] of SHIP_SERIES) h += line(label, r.filter(x => String(x.ticker || "").startsWith(pre + "-")), rep);
+  h += line("Bought YES", r.filter(x => x.side === "yes"), "+9.2¢") + line("Bought NO", r.filter(x => x.side === "no"), "+4.9¢");
+  h += `</table></div>
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Kalshi's weekly ship-count markets (Mon-Sun week, settled on IMF PortWatch, which posts each Tuesday). The bot forecasts the week from the last 14 published days (x7, negative binomial) and buys whichever side is worth 5¢+ more than its price after the taker fee, once per market, held to settlement. Paper fills at the live ask with the real fee; no money moves. Honest odds: the replay (+4.7¢ ±8.3 on 216 trades, Sep-Nov) is not significant; Suez carries it and Panama loses. The ± range counts each chokepoint-week as one unit. First look at 20 settled fills (~Dec 1), verdict at 100 (~Dec 22), plus a free replay re-run mid-January. Real money only with Alex's OK.</div>
+    ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">@ ${Math.round(x.price * 100)}¢</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No paper fills yet. Next week's markets are already open, so the first ones should come within a few runs.</div>`}
+  </div>`;
   return h;
 }
 function txPage(){

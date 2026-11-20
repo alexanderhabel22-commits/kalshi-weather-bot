@@ -263,6 +263,19 @@ record earns it. Be candid about odds and risk; no hype.
   orders (`data/quake_no_state.json`). Paper twin `quake_no_paper` runs the same rule uncapped.
   Reviews at 20 and 50 fills (real + twin). One big-quake day costs ~$1.80 per 2-contract bet.
   Dashboard: TESTS tab "Real-money tests" table + earthquake card (cap meter, twin).
+- **Shipping counts paper test (PAPER ONLY, Nov 20, 1 ct):** `wxbot/strats/ship_paper.py`,
+  `[trading.ship_paper]` (live = false; Alex "Whatever you think", Nov 20 11:41 AM ET). Weekly
+  KXHORMUZWEEKLY / KXSUEZWEEKLY / KXPANAMAWEEKLY / KXBABELMANDEBWEEKLY "transits > K" markets, settled on
+  IMF PortWatch (ArcGIS API, posts through Sunday each Tuesday). Same rule as the Nov 20 replay
+  (`analysis/untested-edges-nov20/scripts2/an_ship.py`): forecast = 7 x mean of last 14 published days,
+  negative binomial with frozen per-series r, buy YES at ask / NO at 1-bid in 3-97c when model edge after
+  the 1-ct taker fee >= 5c, until the week's Sunday ends (ET), one entry per market, hold. Replay +4.7c
+  +-8.3 (216 trades) / +7.0c +-7.5 on the full candle window (243); the bot code reproduces the replay
+  exactly (`analysis/ship-paper/check_bot_vs_replay.py`). Not significant; Suez carries it, Panama loses.
+  ~20-25 paper fills a week. PortWatch cached 3 h in trader_state; no orders if it is >16 days stale.
+  Reviews: first look at 20 settled fills (~Dec 1), verdict at 100 (~Dec 22) + free replay re-run
+  mid-Jan. Real money only with Alex's OK. Dashboard: TESTS tab "Shipping counts test" card (c/ct with
+  95% range clustered by chokepoint-week, per-chokepoint and YES/NO table).
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES
