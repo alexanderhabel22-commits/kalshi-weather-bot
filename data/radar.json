@@ -2,15 +2,15 @@
  "baseline_at": "2026-11-20T07:21:05+00:00",
  "fade": {
   "ai_fade": {
-   "contracts": 6,
-   "cpc": 6.833333333333333,
-   "cpc_last20": 6.833333333333333,
+   "contracts": 9,
+   "cpc": 8.75,
+   "cpc_last20": 8.75,
    "fill_rate": 1.0,
-   "fills": 1,
+   "fills": 2,
    "flags": [],
    "missed": 0,
    "missed_cpc": null,
-   "pnl": 0.41,
+   "pnl": 0.73,
    "rule": {
     "max_cpc": -5.0,
     "min_fills": 20
@@ -139,8 +139,8 @@
    "fill_rate": 0.0,
    "fills": 0,
    "flags": [],
-   "missed": 26,
-   "missed_cpc": 30.153846153846153,
+   "missed": 27,
+   "missed_cpc": 30.296296296296298,
    "pnl": 0,
    "rule": {
     "max_cpc": -5.0,
@@ -151,15 +151,17 @@
    ]
   },
   "weather_late": {
-   "contracts": 213,
-   "cpc": -0.4050632911392405,
-   "cpc_last20": 2.15,
-   "fill_rate": 0.8542713567839196,
-   "fills": 158,
-   "flags": [],
-   "missed": 0,
-   "missed_cpc": null,
-   "pnl": 1.84,
+   "contracts": 233,
+   "cpc": 0.3869047619047619,
+   "cpc_last20": 8.6,
+   "fill_rate": 0.85,
+   "fills": 168,
+   "flags": [
+    "ADVERSE SELECTION: orders we missed would have made +14.9c, fills made +0.4c"
+   ],
+   "missed": 29,
+   "missed_cpc": 14.931034482758621,
+   "pnl": 4.42,
    "rule": {
     "max_cpc": -3.0,
     "min_fills": 50
@@ -173,19 +175,1372 @@
    ]
   }
  },
- "last_new": [],
- "last_run": "2026-11-20T07:21:05+00:00",
+ "last_new": [
+  "KX10YRRATE15M",
+  "KX10YRRATEH",
+  "KX2YRRATE15M",
+  "KX2YRRATEH",
+  "KX30YRRATE15M",
+  "KX30YRRATEH",
+  "KX5YRRATE15M",
+  "KX5YRRATEH",
+  "KX7YRRATEH",
+  "KXAAAGASD",
+  "KXABASPREAD",
+  "KXABATOTAL",
+  "KXALLSVENSKANBTTS",
+  "KXALLSVENSKANSPREAD",
+  "KXALLSVENSKANTOTAL",
+  "KXAUTBUNDESBTTS",
+  "KXAUTBUNDESSPREAD",
+  "KXAUTBUNDESTOTAL",
+  "KXBBLSPREAD",
+  "KXBBLTOTAL",
+  "KXBRENTD",
+  "KXCOPPERD",
+  "KXCZEFLBTTS",
+  "KXCZEFLSPREAD",
+  "KXCZEFLTOTAL",
+  "KXDIESELD",
+  "KXEFLCHAMPIONSHIP1H",
+  "KXEFLCHAMPIONSHIP1HBTTS",
+  "KXEFLCHAMPIONSHIP1HSPREAD",
+  "KXEFLCHAMPIONSHIP1HTOTAL",
+  "KXEFLL2BTTS",
+  "KXEFLL2SPREAD",
+  "KXEFLL2TOTAL",
+  "KXEREDIVISIE1H",
+  "KXEREDIVISIE1HBTTS",
+  "KXEREDIVISIE1HSPREAD",
+  "KXEREDIVISIE1HTOTAL",
+  "KXEUROLEAGUESPREAD",
+  "KXEUROLEAGUETOTAL",
+  "KXFUTU",
+  "KXGOLDD",
+  "KXHNLBTTS",
+  "KXHNLSPREAD",
+  "KXHNLTOTAL",
+  "KXHUNNB1BTTS",
+  "KXHUNNB1SPREAD",
+  "KXHUNNB1TOTAL",
+  "KXINX15M",
+  "KXLIGAFBTTS",
+  "KXLIGAFSPREAD",
+  "KXLIGAFTOTAL",
+  "KXLMPGAME",
+  "KXLNBELITESPREAD",
+  "KXLNBELITETOTAL",
+  "KXLOB",
+  "KXNATGASD",
+  "KXNBABLK",
+  "KXNBABLKPROT",
+  "KXNBAESCALATOR3PT",
+  "KXNBAESCALATORPTS",
+  "KXNBAPTSLEADER",
+  "KXNBASTL",
+  "KXNBASTLPROT",
+  "KXNBASTOCK",
+  "KXNBASTOCKPROT",
+  "KXNBBSPREAD",
+  "KXNBBTOTAL",
+  "KXNHLGAMELOCATION",
+  "KXSCOTTISHPREM1H",
+  "KXSCOTTISHPREM1HBTTS",
+  "KXSCOTTISHPREM1HSPREAD",
+  "KXSCOTTISHPREM1HTOTAL",
+  "KXSILVERD",
+  "KXSLBSPREAD",
+  "KXSLBTOTAL",
+  "KXSRBSLBTTS",
+  "KXSRBSLSPREAD",
+  "KXSRBSLTOTAL",
+  "KXSUPERETTANBTTS",
+  "KXSUPERETTANSPREAD",
+  "KXSUPERETTANTOTAL",
+  "KXSUPERLIGBTTS",
+  "KXSUPERLIGSPREAD",
+  "KXSUPERLIGTOTAL",
+  "KXSVK1LBTTS",
+  "KXSVK1LSPREAD",
+  "KXSVK1LTOTAL",
+  "KXSVNPLBTTS",
+  "KXSVNPLSPREAD",
+  "KXSVNPLTOTAL",
+  "KXTHAIL1BTTS",
+  "KXTHAIL1SPREAD",
+  "KXTHAIL1TOTAL",
+  "KXTTFD",
+  "KXTWEEDEDIVBTTS",
+  "KXTWEEDEDIVSPREAD",
+  "KXTWEEDEDIVTOTAL",
+  "KXUKRETAIL",
+  "KXUSDMXNAH",
+  "KXWMT",
+  "KXWSM"
+ ],
+ "last_run": "2026-11-20T16:58:25+00:00",
+ "listings": {
+  "KX10YRRATE15M": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX10YRRATE15M-26NOV201200-00",
+   "example_event": "KX10YRRATE15M-26NOV201200",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 1,
+   "series": "KX10YRRATE15M",
+   "title": "10-year U.S. Treasury yield 15 min \u00b7 4.94497% target"
+  },
+  "KX10YRRATEH": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX10YRRATEH-20NOV2612-T482",
+   "example_event": "KX10YRRATEH-20NOV2612",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 35,
+   "series": "KX10YRRATEH",
+   "title": "US 10Y Treasury yield at 12:00pm ET?"
+  },
+  "KX2YRRATE15M": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX2YRRATE15M-26NOV201200-00",
+   "example_event": "KX2YRRATE15M-26NOV201200",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 1,
+   "series": "KX2YRRATE15M",
+   "title": "2-year U.S. Treasury yield 15 min \u00b7 4.64446% target"
+  },
+  "KX2YRRATEH": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX2YRRATEH-20NOV2612-T455",
+   "example_event": "KX2YRRATEH-20NOV2612",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 35,
+   "series": "KX2YRRATEH",
+   "title": "US 2Y Treasury yield at 12:00pm ET?"
+  },
+  "KX30YRRATE15M": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX30YRRATE15M-26NOV201200-00",
+   "example_event": "KX30YRRATE15M-26NOV201200",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 1,
+   "series": "KX30YRRATE15M",
+   "title": "30-year U.S. Treasury yield 15 min \u00b7 5.33131% target"
+  },
+  "KX30YRRATEH": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX30YRRATEH-20NOV2612-T516",
+   "example_event": "KX30YRRATEH-20NOV2612",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 35,
+   "series": "KX30YRRATEH",
+   "title": "US 30Y Treasury yield at 12:00pm ET?"
+  },
+  "KX5YRRATE15M": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX5YRRATE15M-26NOV201200-00",
+   "example_event": "KX5YRRATE15M-26NOV201200",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 1,
+   "series": "KX5YRRATE15M",
+   "title": "5-year U.S. Treasury yield 15 min \u00b7 4.73605% target"
+  },
+  "KX5YRRATEH": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX5YRRATEH-20NOV2612-T463",
+   "example_event": "KX5YRRATEH-20NOV2612",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 35,
+   "series": "KX5YRRATEH",
+   "title": "US 5Y Treasury yield at 12:00pm ET?"
+  },
+  "KX7YRRATEH": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KX7YRRATEH-20NOV2612-T471",
+   "example_event": "KX7YRRATEH-20NOV2612",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 35,
+   "series": "KX7YRRATEH",
+   "title": "US 7Y Treasury yield at 12:00pm ET?"
+  },
+  "KXAAAGASD": {
+   "category": "Economics",
+   "events": 1,
+   "example": "KXAAAGASD-26NOV21-3.7300",
+   "example_event": "KXAAAGASD-26NOV21",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 17,
+   "series": "KXAAAGASD",
+   "title": "US gas prices tomorrow"
+  },
+  "KXABASPREAD": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXABASPREAD-26NOV201400ILIBOS",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXABASPREAD",
+   "title": "KD Ilirija vs KK Bosna Royal Sarajevo: Spread"
+  },
+  "KXABATOTAL": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXABATOTAL-26NOV201400ILIBOS",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXABATOTAL",
+   "title": "KD Ilirija vs KK Bosna Royal Sarajevo: Total Points"
+  },
+  "KXALLSVENSKANBTTS": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXALLSVENSKANBTTS-26NOV21MJAMAL",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXALLSVENSKANBTTS",
+   "title": "Mjallby vs Malmo: BTTS"
+  },
+  "KXALLSVENSKANSPREAD": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXALLSVENSKANSPREAD-26NOV21MJAMAL",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXALLSVENSKANSPREAD",
+   "title": "Mjallby vs Malmo: Spread"
+  },
+  "KXALLSVENSKANTOTAL": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXALLSVENSKANTOTAL-26NOV21MJAMAL",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXALLSVENSKANTOTAL",
+   "title": "Mjallby vs Malmo: Total Goals"
+  },
+  "KXAUTBUNDESBTTS": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXAUTBUNDESBTTS-26NOV21WSGALU",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXAUTBUNDESBTTS",
+   "title": "Tirol vs Lustenau: BTTS"
+  },
+  "KXAUTBUNDESSPREAD": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXAUTBUNDESSPREAD-26NOV21WSGALU",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXAUTBUNDESSPREAD",
+   "title": "Tirol vs Lustenau: Spread"
+  },
+  "KXAUTBUNDESTOTAL": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXAUTBUNDESTOTAL-26NOV21WSGALU",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXAUTBUNDESTOTAL",
+   "title": "Tirol vs Lustenau: Total Goals"
+  },
+  "KXBBLSPREAD": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXBBLSPREAD-26NOV201400RASWUR",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXBBLSPREAD",
+   "title": "Rasta Vechta vs Wurzburg Baskets: Spread"
+  },
+  "KXBBLTOTAL": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXBBLTOTAL-26NOV201400RASWUR",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXBBLTOTAL",
+   "title": "Rasta Vechta vs Wurzburg Baskets: Total Points"
+  },
+  "KXBRENTD": {
+   "category": "Commodities",
+   "events": 1,
+   "example": "KXBRENTD-26NOV2317-T92.50",
+   "example_event": "KXBRENTD-26NOV2317",
+   "exchange_index": 2,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 20,
+   "series": "KXBRENTD",
+   "title": "Brent crude oil price on Nov 23, 2026 at 5:00 PM EST?"
+  },
+  "KXCOPPERD": {
+   "category": "Commodities",
+   "events": 1,
+   "example": "KXCOPPERD-26NOV2317-T5.40",
+   "example_event": "KXCOPPERD-26NOV2317",
+   "exchange_index": 2,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 50,
+   "series": "KXCOPPERD",
+   "title": "Copper price on Nov 23, 2026 at 5:00 PM EST?"
+  },
+  "KXCZEFLBTTS": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXCZEFLBTTS-26NOV21SIGSLA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXCZEFLBTTS",
+   "title": "Olomouc vs Slavia Prague: BTTS"
+  },
+  "KXCZEFLSPREAD": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXCZEFLSPREAD-26NOV21SIGSLA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXCZEFLSPREAD",
+   "title": "Olomouc vs Slavia Prague: Spread"
+  },
+  "KXCZEFLTOTAL": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXCZEFLTOTAL-26NOV21SIGSLA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXCZEFLTOTAL",
+   "title": "Olomouc vs Slavia Prague: Total Goals"
+  },
+  "KXDIESELD": {
+   "category": "Economics",
+   "events": 1,
+   "example": "KXDIESELD-26NOV21-T5.950",
+   "example_event": "KXDIESELD-26NOV21",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 21,
+   "series": "KXDIESELD",
+   "title": "Diesel prices tomorrow"
+  },
+  "KXEFLCHAMPIONSHIP1H": {
+   "category": "Sports",
+   "events": 11,
+   "example_event": "KXEFLCHAMPIONSHIP1H-26NOV21WOLCHA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEFLCHAMPIONSHIP1H",
+   "title": "Wolverhampton vs Charlton: First Half Winner"
+  },
+  "KXEFLCHAMPIONSHIP1HBTTS": {
+   "category": "Sports",
+   "events": 11,
+   "example_event": "KXEFLCHAMPIONSHIP1HBTTS-26NOV21WOLCHA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEFLCHAMPIONSHIP1HBTTS",
+   "title": "Wolverhampton vs Charlton: First Half BTTS"
+  },
+  "KXEFLCHAMPIONSHIP1HSPREAD": {
+   "category": "Sports",
+   "events": 11,
+   "example_event": "KXEFLCHAMPIONSHIP1HSPREAD-26NOV21WOLCHA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEFLCHAMPIONSHIP1HSPREAD",
+   "title": "Wolverhampton vs Charlton: First Half Spread"
+  },
+  "KXEFLCHAMPIONSHIP1HTOTAL": {
+   "category": "Sports",
+   "events": 11,
+   "example_event": "KXEFLCHAMPIONSHIP1HTOTAL-26NOV21WOLCHA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEFLCHAMPIONSHIP1HTOTAL",
+   "title": "Wolverhampton vs Charlton: First Half Total"
+  },
+  "KXEFLL2BTTS": {
+   "category": "Sports",
+   "events": 12,
+   "example_event": "KXEFLL2BTTS-26NOV21YORWAL",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEFLL2BTTS",
+   "title": "York vs Walsall: BTTS"
+  },
+  "KXEFLL2SPREAD": {
+   "category": "Sports",
+   "events": 12,
+   "example_event": "KXEFLL2SPREAD-26NOV21YORWAL",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEFLL2SPREAD",
+   "title": "York vs Walsall: Spread"
+  },
+  "KXEFLL2TOTAL": {
+   "category": "Sports",
+   "events": 12,
+   "example_event": "KXEFLL2TOTAL-26NOV21YORWAL",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEFLL2TOTAL",
+   "title": "York vs Walsall: Total Goals"
+  },
+  "KXEREDIVISIE1H": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXEREDIVISIE1H-26NOV21NIJPSV",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEREDIVISIE1H",
+   "title": "Nijmegen vs Eindhoven: First Half Winner"
+  },
+  "KXEREDIVISIE1HBTTS": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXEREDIVISIE1HBTTS-26NOV21NIJPSV",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEREDIVISIE1HBTTS",
+   "title": "Nijmegen vs Eindhoven: First Half BTTS"
+  },
+  "KXEREDIVISIE1HSPREAD": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXEREDIVISIE1HSPREAD-26NOV21NIJPSV",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEREDIVISIE1HSPREAD",
+   "title": "Nijmegen vs Eindhoven: First Half Spread"
+  },
+  "KXEREDIVISIE1HTOTAL": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXEREDIVISIE1HTOTAL-26NOV21NIJPSV",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEREDIVISIE1HTOTAL",
+   "title": "Nijmegen vs Eindhoven: First Half Total"
+  },
+  "KXEUROLEAGUESPREAD": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXEUROLEAGUESPREAD-26NOV201445BJKKPB",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEUROLEAGUESPREAD",
+   "title": "Besiktas JK vs KK Partizan Belgrade: Spread"
+  },
+  "KXEUROLEAGUETOTAL": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXEUROLEAGUETOTAL-26NOV201445BJKKPB",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXEUROLEAGUETOTAL",
+   "title": "Besiktas JK vs KK Partizan Belgrade: Total Points"
+  },
+  "KXFUTU": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KXFUTU-27MAYFUNDED-4900000",
+   "example_event": "KXFUTU-27MAYFUNDED",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 8,
+   "series": "KXFUTU",
+   "title": "Futu total funded accounts in Q1"
+  },
+  "KXGOLDD": {
+   "category": "Commodities",
+   "events": 1,
+   "example": "KXGOLDD-26NOV2317-T3763",
+   "example_event": "KXGOLDD-26NOV2317",
+   "exchange_index": 2,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 40,
+   "series": "KXGOLDD",
+   "title": "Gold price on Nov 23, 2026 at 5:00 PM EST?"
+  },
+  "KXHNLBTTS": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXHNLBTTS-26NOV21LOKHAJ",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXHNLBTTS",
+   "title": "Lokomotiva vs Hajduk: BTTS"
+  },
+  "KXHNLSPREAD": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXHNLSPREAD-26NOV21LOKHAJ",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXHNLSPREAD",
+   "title": "Lokomotiva vs Hajduk: Spread"
+  },
+  "KXHNLTOTAL": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXHNLTOTAL-26NOV21LOKHAJ",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXHNLTOTAL",
+   "title": "Lokomotiva vs Hajduk: Total Goals"
+  },
+  "KXHUNNB1BTTS": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXHUNNB1BTTS-26NOV21UJPKIS",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXHUNNB1BTTS",
+   "title": "Ujpest Budapest vs Kisvarda FC: BTTS"
+  },
+  "KXHUNNB1SPREAD": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXHUNNB1SPREAD-26NOV21UJPKIS",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXHUNNB1SPREAD",
+   "title": "Ujpest Budapest vs Kisvarda FC: Spread"
+  },
+  "KXHUNNB1TOTAL": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXHUNNB1TOTAL-26NOV21UJPKIS",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXHUNNB1TOTAL",
+   "title": "Ujpest Budapest vs Kisvarda FC: Total Goals"
+  },
+  "KXINX15M": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KXINX15M-26NOV201200-00",
+   "example_event": "KXINX15M-26NOV201200",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 1,
+   "series": "KXINX15M",
+   "title": "S&P 500 Up or Down - 15 minutes"
+  },
+  "KXLIGAFBTTS": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXLIGAFBTTS-26NOV21EIBATM",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXLIGAFBTTS",
+   "title": "Eibar vs Atletico: BTTS"
+  },
+  "KXLIGAFSPREAD": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXLIGAFSPREAD-26NOV21EIBATM",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXLIGAFSPREAD",
+   "title": "Eibar vs Atletico: Spread"
+  },
+  "KXLIGAFTOTAL": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXLIGAFTOTAL-26NOV21EIBATM",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXLIGAFTOTAL",
+   "title": "Eibar vs Atletico: Total Goals"
+  },
+  "KXLMPGAME": {
+   "category": "Sports",
+   "events": 5,
+   "example_event": "KXLMPGAME-26NOV202130NAVHMO",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXLMPGAME",
+   "title": "Mayos de Navojoa vs Naranjeros de Hermosillo"
+  },
+  "KXLNBELITESPREAD": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXLNBELITESPREAD-26NOV201430LMSDIJ",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXLNBELITESPREAD",
+   "title": "Le Mans Sarthe Basket vs JDA Dijon Basket: Spread"
+  },
+  "KXLNBELITETOTAL": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXLNBELITETOTAL-26NOV201430LMSDIJ",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXLNBELITETOTAL",
+   "title": "Le Mans Sarthe Basket vs JDA Dijon Basket: Total Points"
+  },
+  "KXLOB": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KXLOB-27MAYSSSG-N2.5",
+   "example_event": "KXLOB-27MAYSSSG",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 13,
+   "series": "KXLOB",
+   "title": "Loblaw food same-store sales growth in Q1 2027"
+  },
+  "KXNATGASD": {
+   "category": "Commodities",
+   "events": 1,
+   "example": "KXNATGASD-26NOV2317-T3.800",
+   "example_event": "KXNATGASD-26NOV2317",
+   "exchange_index": 2,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 70,
+   "series": "KXNATGASD",
+   "title": "Natural gas price on Nov 23, 2026 at 5:00 PM EST?"
+  },
+  "KXNBABLK": {
+   "category": "Sports",
+   "events": 7,
+   "example_event": "KXNBABLK-26NOV20SACLAL",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBABLK",
+   "title": "Sacramento vs Los Angeles L: Blocks"
+  },
+  "KXNBABLKPROT": {
+   "category": "Sports",
+   "events": 7,
+   "example_event": "KXNBABLKPROT-26NOV20SACLAL",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBABLKPROT",
+   "title": "Sacramento vs Los Angeles L: Blocks"
+  },
+  "KXNBAESCALATOR3PT": {
+   "category": "Sports",
+   "events": 9,
+   "example_event": "KXNBAESCALATOR3PT-26NOV20SACLAL",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBAESCALATOR3PT",
+   "title": "Sacramento vs Los Angeles L: Threes Escalator"
+  },
+  "KXNBAESCALATORPTS": {
+   "category": "Sports",
+   "events": 9,
+   "example_event": "KXNBAESCALATORPTS-26NOV20SACLAL",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBAESCALATORPTS",
+   "title": "Sacramento vs Los Angeles L: Points Escalator"
+  },
+  "KXNBAPTSLEADER": {
+   "category": "Sports",
+   "events": 9,
+   "example_event": "KXNBAPTSLEADER-26NOV20SACLAL",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBAPTSLEADER",
+   "title": "Sacramento vs Los Angeles L: Points Leader"
+  },
+  "KXNBASTL": {
+   "category": "Sports",
+   "events": 7,
+   "example_event": "KXNBASTL-26NOV20SACLAL",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBASTL",
+   "title": "Sacramento vs Los Angeles L: Steals"
+  },
+  "KXNBASTLPROT": {
+   "category": "Sports",
+   "events": 7,
+   "example_event": "KXNBASTLPROT-26NOV20SACLAL",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBASTLPROT",
+   "title": "Sacramento vs Los Angeles L: Steals"
+  },
+  "KXNBASTOCK": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXNBASTOCK-26NOV20WASCHI",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBASTOCK",
+   "title": "Washington vs Chicago: Steals + Blocks"
+  },
+  "KXNBASTOCKPROT": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXNBASTOCKPROT-26NOV20WASCHI",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBASTOCKPROT",
+   "title": "Washington vs Chicago: Steals + Blocks"
+  },
+  "KXNBBSPREAD": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXNBBSPREAD-26NOV201730UNICFRA",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBBSPREAD",
+   "title": "EC Uniao Corinthians vs Franca BC: Spread"
+  },
+  "KXNBBTOTAL": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXNBBTOTAL-26NOV201730UNICFRA",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNBBTOTAL",
+   "title": "EC Uniao Corinthians vs Franca BC: Total Points"
+  },
+  "KXNHLGAMELOCATION": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXNHLGAMELOCATION-3132DALAAC",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXNHLGAMELOCATION",
+   "title": "Will the Dallas Stars play a 2031\u201332 home game at American Airlines Center?"
+  },
+  "KXSCOTTISHPREM1H": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSCOTTISHPREM1H-26NOV21KILABE",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSCOTTISHPREM1H",
+   "title": "Kilmarnock vs Aberdeen: First Half Winner"
+  },
+  "KXSCOTTISHPREM1HBTTS": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSCOTTISHPREM1HBTTS-26NOV21KILABE",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSCOTTISHPREM1HBTTS",
+   "title": "Kilmarnock vs Aberdeen: First Half BTTS"
+  },
+  "KXSCOTTISHPREM1HSPREAD": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSCOTTISHPREM1HSPREAD-26NOV21KILABE",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSCOTTISHPREM1HSPREAD",
+   "title": "Kilmarnock vs Aberdeen: First Half Spread"
+  },
+  "KXSCOTTISHPREM1HTOTAL": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSCOTTISHPREM1HTOTAL-26NOV21KILABE",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSCOTTISHPREM1HTOTAL",
+   "title": "Kilmarnock vs Aberdeen: First Half Total"
+  },
+  "KXSILVERD": {
+   "category": "Commodities",
+   "events": 1,
+   "example": "KXSILVERD-26NOV2317-T46.75",
+   "example_event": "KXSILVERD-26NOV2317",
+   "exchange_index": 2,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 40,
+   "series": "KXSILVERD",
+   "title": "Silver price on Nov 23, 2026 at 5:00 PM EST?"
+  },
+  "KXSLBSPREAD": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXSLBSPREAD-26NOV201430LIOSHE",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSLBSPREAD",
+   "title": "London Lions vs Sheffield Sharks: Spread"
+  },
+  "KXSLBTOTAL": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXSLBTOTAL-26NOV201430LIOSHE",
+   "exchange_index": 3,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSLBTOTAL",
+   "title": "London Lions vs Sheffield Sharks: Total Points"
+  },
+  "KXSRBSLBTTS": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSRBSLBTTS-26NOV21OBENPA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSRBSLBTTS",
+   "title": "Beograd vs Novi Pazar: BTTS"
+  },
+  "KXSRBSLSPREAD": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSRBSLSPREAD-26NOV21OBENPA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSRBSLSPREAD",
+   "title": "Beograd vs Novi Pazar: Spread"
+  },
+  "KXSRBSLTOTAL": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSRBSLTOTAL-26NOV21OBENPA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSRBSLTOTAL",
+   "title": "Beograd vs Novi Pazar: Total Goals"
+  },
+  "KXSUPERETTANBTTS": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXSUPERETTANBTTS-26NOV21OSTVBG",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSUPERETTANBTTS",
+   "title": "Ostersund vs Varbergs: BTTS"
+  },
+  "KXSUPERETTANSPREAD": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXSUPERETTANSPREAD-26NOV21OSTVBG",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSUPERETTANSPREAD",
+   "title": "Ostersund vs Varbergs: Spread"
+  },
+  "KXSUPERETTANTOTAL": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXSUPERETTANTOTAL-26NOV21OSTVBG",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSUPERETTANTOTAL",
+   "title": "Ostersund vs Varbergs: Total Goals"
+  },
+  "KXSUPERLIGBTTS": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSUPERLIGBTTS-26NOV21KOCFEN",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSUPERLIGBTTS",
+   "title": "Kocaeli vs Fenerbahce: BTTS"
+  },
+  "KXSUPERLIGSPREAD": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSUPERLIGSPREAD-26NOV21KOCFEN",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSUPERLIGSPREAD",
+   "title": "Kocaeli vs Fenerbahce: Spread"
+  },
+  "KXSUPERLIGTOTAL": {
+   "category": "Sports",
+   "events": 4,
+   "example_event": "KXSUPERLIGTOTAL-26NOV21KOCFEN",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSUPERLIGTOTAL",
+   "title": "Kocaeli vs Fenerbahce: Total Goals"
+  },
+  "KXSVK1LBTTS": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXSVK1LBTTS-26NOV21ZILDBB",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSVK1LBTTS",
+   "title": "Zilina vs Banska Bystrica: BTTS"
+  },
+  "KXSVK1LSPREAD": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXSVK1LSPREAD-26NOV21ZILDBB",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSVK1LSPREAD",
+   "title": "Zilina vs Banska Bystrica: Spread"
+  },
+  "KXSVK1LTOTAL": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXSVK1LTOTAL-26NOV21ZILDBB",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSVK1LTOTAL",
+   "title": "Zilina vs Banska Bystrica: Total Goals"
+  },
+  "KXSVNPLBTTS": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXSVNPLBTTS-26NOV21OLIRAD",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSVNPLBTTS",
+   "title": "Olimpija Ljubljana vs Radomlje: BTTS"
+  },
+  "KXSVNPLSPREAD": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXSVNPLSPREAD-26NOV21OLIRAD",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSVNPLSPREAD",
+   "title": "Olimpija Ljubljana vs Radomlje: Spread"
+  },
+  "KXSVNPLTOTAL": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXSVNPLTOTAL-26NOV21OLIRAD",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXSVNPLTOTAL",
+   "title": "Olimpija Ljubljana vs Radomlje: Total Goals"
+  },
+  "KXTHAIL1BTTS": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXTHAIL1BTTS-26NOV21RATPRA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXTHAIL1BTTS",
+   "title": "Ratchaburi vs Prachuap FC: BTTS"
+  },
+  "KXTHAIL1SPREAD": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXTHAIL1SPREAD-26NOV21RATPRA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXTHAIL1SPREAD",
+   "title": "Ratchaburi vs Prachuap FC: Spread"
+  },
+  "KXTHAIL1TOTAL": {
+   "category": "Sports",
+   "events": 3,
+   "example_event": "KXTHAIL1TOTAL-26NOV21RATPRA",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXTHAIL1TOTAL",
+   "title": "Ratchaburi vs Prachuap FC: Total Goals"
+  },
+  "KXTTFD": {
+   "category": "Commodities",
+   "events": 1,
+   "example": "KXTTFD-23NOV261659-T99P000",
+   "example_event": "KXTTFD-23NOV261659",
+   "exchange_index": 2,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 40,
+   "series": "KXTTFD",
+   "title": "Dutch TTF gas price on November 23, 2026 at 4:59:59 PM EST"
+  },
+  "KXTWEEDEDIVBTTS": {
+   "category": "Sports",
+   "events": 8,
+   "example_event": "KXTWEEDEDIVBTTS-26NOV21SPJQB",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXTWEEDEDIVBTTS",
+   "title": "Jong Sparta vs Quick Boys: BTTS"
+  },
+  "KXTWEEDEDIVSPREAD": {
+   "category": "Sports",
+   "events": 8,
+   "example_event": "KXTWEEDEDIVSPREAD-26NOV21SPJQB",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXTWEEDEDIVSPREAD",
+   "title": "Jong Sparta vs Quick Boys: Spread"
+  },
+  "KXTWEEDEDIVTOTAL": {
+   "category": "Sports",
+   "events": 8,
+   "example_event": "KXTWEEDEDIVTOTAL-26NOV21SPJQB",
+   "exchange_index": 0,
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "series": "KXTWEEDEDIVTOTAL",
+   "title": "Jong Sparta vs Quick Boys: Total Goals"
+  },
+  "KXUKRETAIL": {
+   "category": "Economics",
+   "events": 1,
+   "example": "KXUKRETAIL-26DEC18-T2.0",
+   "example_event": "KXUKRETAIL-26DEC18",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 8,
+   "series": "KXUKRETAIL",
+   "title": "UK retail sales in November"
+  },
+  "KXUSDMXNAH": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KXUSDMXNAH-20NOV2612-T190360",
+   "example_event": "KXUSDMXNAH-20NOV2612",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 20,
+   "series": "KXUSDMXNAH",
+   "title": "USD/MXN exchange rate on Nov 20 at 12 PM ET"
+  },
+  "KXWMT": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KXWMT-27MAYUSCOMP-6.4",
+   "example_event": "KXWMT-27MAYUSCOMP",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 13,
+   "series": "KXWMT",
+   "title": "Walmart US comparable sales growth (ex-fuel) in Q1"
+  },
+  "KXWSM": {
+   "category": "Financials",
+   "events": 1,
+   "example": "KXWSM-27MAYCOMP-N5.0",
+   "example_event": "KXWSM-27MAYCOMP",
+   "exchange_index": 0,
+   "first_markets": "2026-11-20T16:58:25+00:00",
+   "first_seen": "2026-11-20T16:58:25+00:00",
+   "n_markets": 11,
+   "series": "KXWSM",
+   "title": "Williams-Sonoma brand growth in Q1"
+  }
+ },
  "log": [
   {
    "events": 22504,
    "new": 0,
    "placed": 0,
    "t": "2026-11-20T07:21:05+00:00"
+  },
+  {
+   "events": 22975,
+   "new": 101,
+   "placed": 18,
+   "t": "2026-11-20T16:58:25+00:00"
   }
  ],
- "open_events": 22504,
- "open_series": 5165,
- "paper": [],
+ "open_events": 22975,
+ "open_series": 5241,
+ "paper": [
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-21T04:59:00Z",
+   "event": "KXAAAGASD-26NOV21",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.96,
+   "rule": "fav_24h",
+   "series": "KXAAAGASD",
+   "side": "yes",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXAAAGASD-26NOV21-3.6550",
+   "title": "Will average **gas prices** be above $3.6550? Above 3.6550"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXBRENTD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.88,
+   "rule": "longshot_no",
+   "series": "KXBRENTD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXBRENTD-26NOV2317-T92.50",
+   "title": "Will the brent crude oil close price be above 92.50 USD/Bbl on November 23, 2026 at 5:00 PM EST? Abo"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXBRENTD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.86,
+   "rule": "longshot_no",
+   "series": "KXBRENTD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXBRENTD-26NOV2317-T92",
+   "title": "Will the brent crude oil close price be above 92 USD/Bbl on November 23, 2026 at 5:00 PM EST? Above "
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXCOPPERD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.97,
+   "rule": "longshot_no",
+   "series": "KXCOPPERD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXCOPPERD-26NOV2317-T5.86",
+   "title": "Will the copper close price be above 5.86 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.86"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXCOPPERD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.97,
+   "rule": "longshot_no",
+   "series": "KXCOPPERD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXCOPPERD-26NOV2317-T5.84",
+   "title": "Will the copper close price be above 5.84 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.84"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXCOPPERD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.96,
+   "rule": "longshot_no",
+   "series": "KXCOPPERD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXCOPPERD-26NOV2317-T5.82",
+   "title": "Will the copper close price be above 5.82 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.82"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-21T04:59:00Z",
+   "event": "KXDIESELD-26NOV21",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.93,
+   "rule": "longshot_no",
+   "series": "KXDIESELD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXDIESELD-26NOV21-T5.870",
+   "title": "Will Diesel Price on November 21, 2026 be above $5.870? Above $5.870"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-21T04:59:00Z",
+   "event": "KXDIESELD-26NOV21",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.93,
+   "rule": "fav_24h",
+   "series": "KXDIESELD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXDIESELD-26NOV21-T5.870",
+   "title": "Will Diesel Price on November 21, 2026 be above $5.870? Above $5.870"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-21T04:59:00Z",
+   "event": "KXDIESELD-26NOV21",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.91,
+   "rule": "fav_24h",
+   "series": "KXDIESELD",
+   "side": "yes",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXDIESELD-26NOV21-T5.860",
+   "title": "Will Diesel Price on November 21, 2026 be above $5.860? Above $5.860"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXGOLDD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.96,
+   "rule": "longshot_no",
+   "series": "KXGOLDD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXGOLDD-26NOV2317-T3693",
+   "title": "Will the gold close price be above 3693 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3693"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXGOLDD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.95,
+   "rule": "longshot_no",
+   "series": "KXGOLDD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXGOLDD-26NOV2317-T3683",
+   "title": "Will the gold close price be above 3683 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3683"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXGOLDD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.94,
+   "rule": "longshot_no",
+   "series": "KXGOLDD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXGOLDD-26NOV2317-T3673",
+   "title": "Will the gold close price be above 3673 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3673"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXSILVERD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.97,
+   "rule": "longshot_no",
+   "series": "KXSILVERD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXSILVERD-26NOV2317-T45.25",
+   "title": "Will the silver close price be above 45.25 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $45.2"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXSILVERD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.97,
+   "rule": "longshot_no",
+   "series": "KXSILVERD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXSILVERD-26NOV2317-T45",
+   "title": "Will the silver close price be above 45 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $45"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T22:00:00Z",
+   "event": "KXSILVERD-26NOV2317",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.96,
+   "rule": "longshot_no",
+   "series": "KXSILVERD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXSILVERD-26NOV2317-T44.75",
+   "title": "Will the silver close price be above 44.75 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $44.7"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T21:59:59Z",
+   "event": "KXTTFD-23NOV261659",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.94,
+   "rule": "longshot_no",
+   "series": "KXTTFD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXTTFD-23NOV261659-T112P000",
+   "title": "Dutch TTF gas above $112.000 on Nov 23 at 4:59:59 PM EST? Above $112.000"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T21:59:59Z",
+   "event": "KXTTFD-23NOV261659",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.93,
+   "rule": "longshot_no",
+   "series": "KXTTFD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXTTFD-23NOV261659-T111P000",
+   "title": "Dutch TTF gas above $111.000 on Nov 23 at 4:59:59 PM EST? Above $111.000"
+  },
+  {
+   "checked_at": "2026-11-20T16:58:25+00:00",
+   "close": "2026-11-23T21:59:59Z",
+   "event": "KXTTFD-23NOV261659",
+   "placed_at": "2026-11-20T16:58:25+00:00",
+   "price": 0.92,
+   "rule": "longshot_no",
+   "series": "KXTTFD",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXTTFD-23NOV261659-T110P000",
+   "title": "Dutch TTF gas above $110.000 on Nov 23 at 4:59:59 PM EST? Above $110.000"
+  }
+ ],
+ "pushed": {
+  "listed:KXBRENTD": "2026-11-20T16:58:25+00:00",
+  "listed:KXCOPPERD": "2026-11-20T16:58:25+00:00",
+  "listed:KXGOLDD": "2026-11-20T16:58:25+00:00",
+  "listed:KXNATGASD": "2026-11-20T16:58:25+00:00"
+ },
+ "pushes": {
+  "2026-11-20": 4
+ },
  "series_seen": [
   "CONTROLH",
   "CONTROLS",
@@ -210,7 +1565,9 @@
   "KX10YRDIRHW",
   "KX10YRDIRLM",
   "KX10YRDIRLW",
+  "KX10YRRATE15M",
   "KX10YRRATEEVENT",
+  "KX10YRRATEH",
   "KX1ALBUM",
   "KX1DREUNION",
   "KX1SONG",
@@ -222,18 +1579,25 @@
   "KX250DOLLARBILL",
   "KX2YRDIRHM",
   "KX2YRDIRLM",
+  "KX2YRRATE15M",
   "KX2YRRATEEVENT",
+  "KX2YRRATEH",
   "KX30YMORTW",
   "KX30YRDIRHM",
   "KX30YRDIRLM",
+  "KX30YRRATE15M",
   "KX30YRRATEEVENT",
+  "KX30YRRATEH",
   "KX48ETAXCREDIT",
   "KX5YRDIRHM",
   "KX5YRDIRLM",
+  "KX5YRRATE15M",
   "KX5YRRATEEVENT",
+  "KX5YRRATEH",
   "KX60MINUTES",
   "KX7YRDIRHM",
   "KX7YRDIRLM",
+  "KX7YRRATEH",
   "KXA100MAX",
   "KXA100MS",
   "KXAAAGASCDAK",
@@ -286,6 +1650,7 @@
   "KXAAAGASCDWI",
   "KXAAAGASCDWV",
   "KXAAAGASCDWY",
+  "KXAAAGASD",
   "KXAAAGASEOYNJ",
   "KXAAAGASM",
   "KXAAAGASMAX",
@@ -311,6 +1676,8 @@
   "KXABA",
   "KXABAACCRED",
   "KXABAGAME",
+  "KXABASPREAD",
+  "KXABATOTAL",
   "KXABLGAME",
   "KXABNBA",
   "KXABRAHAMQ",
@@ -429,7 +1796,10 @@
   "KXALITOOUT",
   "KXALK",
   "KXALKA",
+  "KXALLSVENSKANBTTS",
   "KXALLSVENSKANGAME",
+  "KXALLSVENSKANSPREAD",
+  "KXALLSVENSKANTOTAL",
   "KXALMWP",
   "KXALSTATELEG",
   "KXALTAOPEN",
@@ -539,7 +1909,10 @@
   "KXAUSTRALIAHOUSE",
   "KXAUSTRALIASENATE",
   "KXAUTBSLGAME",
+  "KXAUTBUNDESBTTS",
   "KXAUTBUNDESGAME",
+  "KXAUTBUNDESSPREAD",
+  "KXAUTBUNDESTOTAL",
   "KXAUTODELQ",
   "KXAVGMEASLESDJT",
   "KXAXP",
@@ -574,6 +1947,8 @@
   "KXBBCHARTTOP3",
   "KXBBL",
   "KXBBLGAME",
+  "KXBBLSPREAD",
+  "KXBBLTOTAL",
   "KXBBP418",
   "KXBBSERIEA2GAME",
   "KXBBSERIEAGAME",
@@ -694,6 +2069,7 @@
   "KXBRDEFMIN",
   "KXBREMEN",
   "KXBRENT15M",
+  "KXBRENTD",
   "KXBRENTMON",
   "KXBRENTW",
   "KXBRFINMIN",
@@ -1058,6 +2434,7 @@
   "KXCOPPAITALIAGAME",
   "KXCOPPER15M",
   "KXCOPPERCABLE",
+  "KXCOPPERD",
   "KXCOPPEREVENT",
   "KXCOPPERMON",
   "KXCOPPERW",
@@ -1154,7 +2531,10 @@
   "KXCVXCC",
   "KXCYBERMONSPEND",
   "KXCYCLOCOUNT",
+  "KXCZEFLBTTS",
   "KXCZEFLGAME",
+  "KXCZEFLSPREAD",
+  "KXCZEFLTOTAL",
   "KXCZEFNLBTTS",
   "KXCZEFNLGAME",
   "KXCZEFNLSPREAD",
@@ -1250,6 +2630,7 @@
   "KXDHOUSEWON",
   "KXDHS100KOPT",
   "KXDIAZOUT",
+  "KXDIESELD",
   "KXDIESELMAXY",
   "KXDIESELMINY",
   "KXDIESELMON",
@@ -1509,6 +2890,10 @@
   "KXEERSTEDIVTOTAL",
   "KXEFFR",
   "KXEFLCHAMPIONSHIP",
+  "KXEFLCHAMPIONSHIP1H",
+  "KXEFLCHAMPIONSHIP1HBTTS",
+  "KXEFLCHAMPIONSHIP1HSPREAD",
+  "KXEFLCHAMPIONSHIP1HTOTAL",
   "KXEFLCHAMPIONSHIPBTTS",
   "KXEFLCHAMPIONSHIPGAME",
   "KXEFLCHAMPIONSHIPSPREAD",
@@ -1522,7 +2907,10 @@
   "KXEFLL1GAME",
   "KXEFLL1SPREAD",
   "KXEFLL1TOTAL",
+  "KXEFLL2BTTS",
   "KXEFLL2GAME",
+  "KXEFLL2SPREAD",
+  "KXEFLL2TOTAL",
   "KXEFLPROMO",
   "KXEFTA2HOUSE",
   "KXEFTA2HOUSEVOTES",
@@ -1622,6 +3010,10 @@
   "KXERCOTWESTM",
   "KXERCOTWESTW",
   "KXEREDIVISIE",
+  "KXEREDIVISIE1H",
+  "KXEREDIVISIE1HBTTS",
+  "KXEREDIVISIE1HSPREAD",
+  "KXEREDIVISIE1HTOTAL",
   "KXEREDIVISIEBTTS",
   "KXEREDIVISIEGAME",
   "KXEREDIVISIESPREAD",
@@ -1661,6 +3053,8 @@
   "KXEUPARLIAMENT",
   "KXEUREF",
   "KXEUROLEAGUEGAME",
+  "KXEUROLEAGUESPREAD",
+  "KXEUROLEAGUETOTAL",
   "KXEUROVISIONPARTICIPANTS",
   "KXEURUSD",
   "KXEURUSD15M",
@@ -1827,6 +3221,7 @@
   "KXFULLTERMSKPRES",
   "KXFURYJOSHUA",
   "KXFUSION",
+  "KXFUTU",
   "KXFUTUA",
   "KXFYREFESTPRICE",
   "KXG7LEADEROUT",
@@ -1881,6 +3276,7 @@
   "KXGLASGOWCOUNCIL",
   "KXGOAASSEMBLY",
   "KXGOLD15M",
+  "KXGOLDD",
   "KXGOLDDIRY",
   "KXGOLDEVENT",
   "KXGOLDH",
@@ -2046,7 +3442,10 @@
   "KXHLT",
   "KXHMONTH",
   "KXHMONTHRANGE",
+  "KXHNLBTTS",
   "KXHNLGAME",
+  "KXHNLSPREAD",
+  "KXHNLTOTAL",
   "KXHOBEYBAKER",
   "KXHOBHOME",
   "KXHODGE",
@@ -2087,7 +3486,10 @@
   "KXHUANGTESTIFY",
   "KXHUANGWHVISIT",
   "KXHULUAPP",
+  "KXHUNNB1BTTS",
   "KXHUNNB1GAME",
+  "KXHUNNB1SPREAD",
+  "KXHUNNB1TOTAL",
   "KXHUNTCONF",
   "KXHURCAT",
   "KXHURCITYTPA",
@@ -2163,6 +3565,7 @@
   "KXINTERSTELLAR",
   "KXINTRANSEMP",
   "KXINX",
+  "KXINX15M",
   "KXINXDIRY",
   "KXINXDUD",
   "KXINXEVENT",
@@ -2465,7 +3868,10 @@
   "KXLIGAEXPGAME",
   "KXLIGAEXPSPREAD",
   "KXLIGAEXPTOTAL",
+  "KXLIGAFBTTS",
   "KXLIGAFGAME",
+  "KXLIGAFSPREAD",
+  "KXLIGAFTOTAL",
   "KXLIGAMX",
   "KXLIGAMX1H",
   "KXLIGAMX1HBTTS",
@@ -2534,12 +3940,16 @@
   "KXLMND",
   "KXLMNDA",
   "KXLMP",
+  "KXLMPGAME",
   "KXLMT",
   "KXLMTA",
   "KXLNBELITE2GAME",
   "KXLNBELITEGAME",
+  "KXLNBELITESPREAD",
+  "KXLNBELITETOTAL",
   "KXLNBP",
   "KXLNBPGAME",
+  "KXLOB",
   "KXLOBA",
   "KXLOCALLAW",
   "KXLOMBARDOJACKSON",
@@ -2874,6 +4284,7 @@
   "KXNASDAQDUD",
   "KXNASHVILLEMAYOR",
   "KXNATGAS15M",
+  "KXNATGASD",
   "KXNATGASMON",
   "KXNATGASW",
   "KXNATIONALIZESPACEX",
@@ -2918,6 +4329,8 @@
   "KXNBAASTPROT",
   "KXNBAATLANTIC",
   "KXNBAAWARDFIN",
+  "KXNBABLK",
+  "KXNBABLKPROT",
   "KXNBACENTRAL",
   "KXNBACITYEXPAND",
   "KXNBACLUTCH",
@@ -2937,6 +4350,8 @@
   "KXNBAEAST1SEED",
   "KXNBAECFQUAL",
   "KXNBAEFINMVP",
+  "KXNBAESCALATOR3PT",
+  "KXNBAESCALATORPTS",
   "KXNBAEUROPEANNOUNCE",
   "KXNBAEXEC",
   "KXNBAFINALSOUTCOME",
@@ -2973,6 +4388,7 @@
   "KXNBAPRA",
   "KXNBAPRAPROT",
   "KXNBAPTS",
+  "KXNBAPTSLEADER",
   "KXNBAPTSPROT",
   "KXNBARACE",
   "KXNBAREB",
@@ -2999,6 +4415,10 @@
   "KXNBASTAKESALE",
   "KXNBASTATAVG",
   "KXNBASTATLEADER",
+  "KXNBASTL",
+  "KXNBASTLPROT",
+  "KXNBASTOCK",
+  "KXNBASTOCKPROT",
   "KXNBATEAM",
   "KXNBATEAMMATE",
   "KXNBATEAMSALE",
@@ -3017,6 +4437,8 @@
   "KXNBAWINS",
   "KXNBAWINSTREAK",
   "KXNBBGAME",
+  "KXNBBSPREAD",
+  "KXNBBTOTAL",
   "KXNBERRECESSQ",
   "KXNBIGAME",
   "KXNBL",
@@ -3512,6 +4934,7 @@
   "KXNHLEXPANSION",
   "KXNHLF10G",
   "KXNHLGAME",
+  "KXNHLGAMELOCATION",
   "KXNHLHART",
   "KXNHLLINDSAY",
   "KXNHLMETROPOLITAN",
@@ -4201,6 +5624,10 @@
   "KXSCOTREF",
   "KXSCOTSNAP",
   "KXSCOTTIESLAM",
+  "KXSCOTTISHPREM1H",
+  "KXSCOTTISHPREM1HBTTS",
+  "KXSCOTTISHPREM1HSPREAD",
+  "KXSCOTTISHPREM1HTOTAL",
   "KXSCOTTISHPREMBTTS",
   "KXSCOTTISHPREMGAME",
   "KXSCOTTISHPREMSPREAD",
@@ -4327,6 +5754,7 @@
   "KXSIENNAMSRP",
   "KXSIERRAOPEN",
   "KXSILVER15M",
+  "KXSILVERD",
   "KXSILVEREVENT",
   "KXSILVERH",
   "KXSILVERMON",
@@ -4342,6 +5770,8 @@
   "KXSKYLINEDELAY",
   "KXSLATECOUNT",
   "KXSLBGAME",
+  "KXSLBSPREAD",
+  "KXSLBTOTAL",
   "KXSLGREECEGAME",
   "KXSLOVAKIAPARLI",
   "KXSLPGOV",
@@ -4450,7 +5880,10 @@
   "KXSPRITEPOS",
   "KXSPRLVL",
   "KXSPRLVLDATE",
+  "KXSRBSLBTTS",
   "KXSRBSLGAME",
+  "KXSRBSLSPREAD",
+  "KXSRBSLTOTAL",
   "KXSSCAPHOUSE",
   "KXSSCOLA",
   "KXSSHIELDMATCH",
@@ -4551,15 +5984,24 @@
   "KXSUPERBALLONDOR",
   "KXSUPERBOWLAD",
   "KXSUPERBOWLWHITEHOUSE",
+  "KXSUPERETTANBTTS",
   "KXSUPERETTANGAME",
+  "KXSUPERETTANSPREAD",
+  "KXSUPERETTANTOTAL",
   "KXSUPERLIG",
+  "KXSUPERLIGBTTS",
   "KXSUPERLIGGAME",
+  "KXSUPERLIGSPREAD",
+  "KXSUPERLIGTOTAL",
   "KXSUPERSONIC",
   "KXSUPERVOTEALTMAN",
   "KXSUPERVOTEDARIO",
   "KXSUPREMECOURTCHARGE",
   "KXSUSPENDGASTAX",
+  "KXSVK1LBTTS",
   "KXSVK1LGAME",
+  "KXSVK1LSPREAD",
+  "KXSVK1LTOTAL",
   "KXSVKCUPADVANCE",
   "KXSVKCUPGAME",
   "KXSVNCUPADVANCE",
@@ -4567,7 +6009,10 @@
   "KXSVNCUPGAME",
   "KXSVNCUPSPREAD",
   "KXSVNCUPTOTAL",
+  "KXSVNPLBTTS",
   "KXSVNPLGAME",
+  "KXSVNPLSPREAD",
+  "KXSVNPLTOTAL",
   "KXSVOTECLARITY",
   "KXSWEDENGOVT",
   "KXSWEDENPM",
@@ -4651,7 +6096,10 @@
   "KXTGTCC",
   "KXTGTFT",
   "KXTHAIL1",
+  "KXTHAIL1BTTS",
   "KXTHAIL1GAME",
+  "KXTHAIL1SPREAD",
+  "KXTHAIL1TOTAL",
   "KXTHC3MG",
   "KXTHCLEGALSALE3MG",
   "KXTHEGAMBIAPRES",
@@ -4823,6 +6271,7 @@
   "KXTSX",
   "KXTTAN",
   "KXTTANA",
+  "KXTTFD",
   "KXTTFMON",
   "KXTTNSNOWM",
   "KXTUCKERTHIRDPARTY",
@@ -4837,7 +6286,10 @@
   "KXTVSEASONRELEASEACOURTOFTHORNSANDROSES",
   "KXTVSEASONRELEASETHELASTOFUS",
   "KXTVSHOWSCANCELLED",
+  "KXTWEEDEDIVBTTS",
   "KXTWEEDEDIVGAME",
+  "KXTWEEDEDIVSPREAD",
+  "KXTWEEDEDIVTOTAL",
   "KXTWITCHSUBSKAICENAT",
   "KXTWITCHSUBSNINJA",
   "KXTWIXPOS",
@@ -4939,6 +6391,7 @@
   "KXUKPOLLFIRST",
   "KXUKRAINEEU",
   "KXUKRENEWOB",
+  "KXUKRETAIL",
   "KXUKRPLBTTS",
   "KXUKRPLGAME",
   "KXUKRPLSPREAD",
@@ -4996,6 +6449,7 @@
   "KXUSDJPY15M",
   "KXUSDJPYAW",
   "KXUSDJPYEVENT",
+  "KXUSDMXNAH",
   "KXUSDMXNAW",
   "KXUSDMXNEVENT",
   "KXUSDMXNMAX",
@@ -5219,6 +6673,7 @@
   "KXWMARMAD",
   "KXWMARMAD1SEED",
   "KXWMARMADROUND",
+  "KXWMT",
   "KXWMTA",
   "KXWMTCC",
   "KXWMTCCD",
@@ -5238,6 +6693,7 @@
   "KXWOODCABINET50",
   "KXWORDOFTHEYEAR",
   "KXWRECSS",
+  "KXWSM",
   "KXWSMA",
   "KXWT20MATCH",
   "KXWTA",
@@ -5354,6 +6810,123 @@
   "SENATEWI"
  ],
  "snaps": {
+  "KX10YRRATE15M": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.01,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 3950.7
+   }
+  ],
+  "KX10YRRATEH": [
+   {
+    "n": 35,
+    "quoted": 11,
+    "spread": 0.34,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 4.0
+   }
+  ],
+  "KX2YRRATE15M": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 7672.4
+   }
+  ],
+  "KX2YRRATEH": [
+   {
+    "n": 35,
+    "quoted": 9,
+    "spread": 0.59,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 3.0
+   }
+  ],
+  "KX30YRRATE15M": [
+   {
+    "n": 1,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 3586.3
+   }
+  ],
+  "KX30YRRATEH": [
+   {
+    "n": 35,
+    "quoted": 14,
+    "spread": 0.07,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 3.0
+   }
+  ],
+  "KX5YRRATE15M": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 6357.5
+   }
+  ],
+  "KX5YRRATEH": [
+   {
+    "n": 35,
+    "quoted": 8,
+    "spread": 0.63,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 3.0
+   }
+  ],
+  "KX7YRRATEH": [
+   {
+    "n": 35,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 1.0
+   }
+  ],
+  "KXAAAGASD": [
+   {
+    "n": 17,
+    "quoted": 2,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 69704.7
+   }
+  ],
+  "KXBRENTD": [
+   {
+    "n": 20,
+    "quoted": 20,
+    "spread": 0.04,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 646.0
+   }
+  ],
+  "KXCOPPERD": [
+   {
+    "n": 50,
+    "quoted": 24,
+    "spread": 0.04,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 547.8
+   }
+  ],
+  "KXDIESELD": [
+   {
+    "n": 21,
+    "quoted": 4,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 22095.4
+   }
+  ],
   "KXFAAGROUNDSTOPLIFT": [
    {
     "n": 0,
@@ -5361,6 +6934,31 @@
     "spread": null,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXFUTU": [
+   {
+    "n": 8,
+    "quoted": 8,
+    "spread": 0.1,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXGOLDD": [
+   {
+    "n": 40,
+    "quoted": 31,
+    "spread": 0.01,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 3571.4
    }
   ],
   "KXHIGHMIA": [
@@ -5370,6 +6968,13 @@
     "spread": 0.01,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 12814.2
+   },
+   {
+    "n": 12,
+    "quoted": 9,
+    "spread": 0.01,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 34680.7
    }
   ],
   "KXHIGHTATL": [
@@ -5379,6 +6984,13 @@
     "spread": 0.01,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 2792.1
+   },
+   {
+    "n": 12,
+    "quoted": 10,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 7426.3
    }
   ],
   "KXHIGHTBOS": [
@@ -5388,6 +7000,13 @@
     "spread": 0.01,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 2696.5
+   },
+   {
+    "n": 12,
+    "quoted": 8,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 10320.4
    }
   ],
   "KXHIGHTDC": [
@@ -5397,6 +7016,13 @@
     "spread": 0.01,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 2296.7
+   },
+   {
+    "n": 12,
+    "quoted": 8,
+    "spread": 0.04,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 8314.6
    }
   ],
   "KXHIGHTSATX": [
@@ -5406,6 +7032,31 @@
     "spread": 0.01,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 2593.9
+   },
+   {
+    "n": 12,
+    "quoted": 9,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 5557.7
+   }
+  ],
+  "KXINX15M": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.02,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 31735.9
+   }
+  ],
+  "KXLOB": [
+   {
+    "n": 13,
+    "quoted": 13,
+    "spread": 0.1,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 0.0
    }
   ],
   "KXLOWTATL": [
@@ -5415,6 +7066,13 @@
     "spread": 0.15,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 846.0
+   },
+   {
+    "n": 12,
+    "quoted": 8,
+    "spread": 0.03,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 2608.4
    }
   ],
   "KXLOWTBOS": [
@@ -5424,6 +7082,13 @@
     "spread": 0.01,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 332.6
+   },
+   {
+    "n": 12,
+    "quoted": 8,
+    "spread": 0.05,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 942.2
    }
   ],
   "KXLOWTDC": [
@@ -5433,6 +7098,13 @@
     "spread": 0.21,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 457.3
+   },
+   {
+    "n": 12,
+    "quoted": 9,
+    "spread": 0.06,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 19835.2
    }
   ],
   "KXLOWTEWR": [
@@ -5442,6 +7114,13 @@
     "spread": 0.42,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 132.6
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.06,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 6471.1
    }
   ],
   "KXLOWTMIA": [
@@ -5451,6 +7130,13 @@
     "spread": 0.19,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 422.5
+   },
+   {
+    "n": 12,
+    "quoted": 7,
+    "spread": 0.04,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 2329.8
    }
   ],
   "KXLOWTNYC": [
@@ -5460,6 +7146,13 @@
     "spread": 0.07,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 1770.1
+   },
+   {
+    "n": 12,
+    "quoted": 10,
+    "spread": 0.07,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 7523.2
    }
   ],
   "KXLOWTPHIL": [
@@ -5469,6 +7162,13 @@
     "spread": 0.17,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 702.0
+   },
+   {
+    "n": 12,
+    "quoted": 8,
+    "spread": 0.03,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 2971.9
    }
   ],
   "KXLOWTPHX": [
@@ -5478,6 +7178,13 @@
     "spread": 0.04,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 1081.2
+   },
+   {
+    "n": 12,
+    "quoted": 9,
+    "spread": 0.04,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 2577.4
    }
   ],
   "KXLOWTTTN": [
@@ -5487,10 +7194,91 @@
     "spread": 0.18,
     "t": "2026-11-20T07:21:05+00:00",
     "vol": 389.0
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.1,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 2754.5
+   }
+  ],
+  "KXNATGASD": [
+   {
+    "n": 70,
+    "quoted": 66,
+    "spread": 0.25,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 11.4
+   }
+  ],
+  "KXSILVERD": [
+   {
+    "n": 40,
+    "quoted": 36,
+    "spread": 0.03,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 458.5
+   }
+  ],
+  "KXTTFD": [
+   {
+    "n": 40,
+    "quoted": 29,
+    "spread": 0.09,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 91.4
+   }
+  ],
+  "KXUKRETAIL": [
+   {
+    "n": 8,
+    "quoted": 8,
+    "spread": 0.1,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXUSDMXNAH": [
+   {
+    "n": 20,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXWMT": [
+   {
+    "n": 13,
+    "quoted": 13,
+    "spread": 0.1,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXWSM": [
+   {
+    "n": 11,
+    "quoted": 11,
+    "spread": 0.09,
+    "t": "2026-11-20T16:58:25+00:00",
+    "vol": 0.0
    }
   ]
  },
  "unfilled_results": {
+  "KXHIGHCHI-26NOV14-B46.5": "yes",
+  "KXHIGHDEN-26NOV17-T62": "no",
+  "KXHIGHMIA-26NOV17-B80.5": "yes",
+  "KXHIGHPHIL-26NOV15-B51.5": "yes",
+  "KXHIGHPHIL-26NOV19-B67.5": "yes",
+  "KXHIGHTATL-26NOV14-B54.5": "yes",
+  "KXHIGHTDC-26NOV13-B51.5": "yes",
+  "KXHIGHTDC-26NOV19-B66.5": "yes",
+  "KXHIGHTOKC-26NOV19-B68.5": "yes",
+  "KXHIGHTSATX-26NOV13-B78.5": "yes",
+  "KXHIGHTSEA-26NOV15-B56.5": "yes",
   "KXINX-26NOV16H1600-B7437": "no",
   "KXINX-26NOV16H1600-B7462": "no",
   "KXINX-26NOV16H1600-B7487": "no",
@@ -5517,8 +7305,28 @@
   "KXINX-26NOV19H1600-B7412": "no",
   "KXINX-26NOV19H1600-B7437": "no",
   "KXINX-26NOV19H1600-B7462": "no",
+  "KXINX-26NOV19H1600-B7487": "no",
   "KXJOBLESSCLAIMS-26NOV19-210000": "no",
   "KXJOBLESSCLAIMS-26NOV19-215000": "no",
+  "KXLOWTATL-26NOV13-B36.5": "no",
+  "KXLOWTAUS-26NOV11-B52.5": "no",
+  "KXLOWTAUS-26NOV16-B44.5": "yes",
+  "KXLOWTBOS-26NOV16-T37": "yes",
+  "KXLOWTDAL-26NOV16-B42.5": "no",
+  "KXLOWTDC-26NOV17-B39.5": "yes",
+  "KXLOWTEWR-26NOV13-B36.5": "no",
+  "KXLOWTEWR-26NOV13-B38.5": "yes",
+  "KXLOWTEWR-26NOV19-T41": "yes",
+  "KXLOWTMIA-26NOV13-B63.5": "no",
+  "KXLOWTMIA-26NOV18-B68.5": "no",
+  "KXLOWTMIA-26NOV18-B70.5": "yes",
+  "KXLOWTNOLA-26NOV15-B47.5": "no",
+  "KXLOWTNOLA-26NOV16-B52.5": "yes",
+  "KXLOWTOKC-26NOV15-B37.5": "no",
+  "KXLOWTOKC-26NOV15-B39.5": "yes",
+  "KXLOWTSAN-26NOV17-B58.5": "",
+  "KXLOWTSFO-26NOV19-B50.5": "yes",
+  "KXLOWTTTN-26NOV16-B29.5": "no",
   "KXNASDAQ100-26NOV16H1600-B27450": "no",
   "KXNASDAQ100-26NOV16H1600-B27550": "no",
   "KXNASDAQ100-26NOV16H1600-B27650": "no",
