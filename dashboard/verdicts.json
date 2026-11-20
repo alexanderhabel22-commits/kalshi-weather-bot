@@ -8,36 +8,74 @@
     "deposited": 58.0,
     "account_at_end": 33.93,
     "items": [
-      ["Main bot (real, all strategies, Nov 5-16)", -1.04],
-      ["15-minute bot (real, Nov 8-12)", -11.13],
-      ["Copycat (real copies, Nov 15-16)", -4.79],
-      ["$500 swing (Nov 16, 3 bets)", -27.64],
-      ["Alex's own trades, open-position marks and rounding", 20.53]
+      [
+        "Main bot (real, all strategies, Nov 5-16)",
+        -1.04
+      ],
+      [
+        "15-minute bot (real, Nov 8-12)",
+        -11.13
+      ],
+      [
+        "Copycat (real copies, Nov 15-16)",
+        -4.79
+      ],
+      [
+        "$500 swing (Nov 16, 3 bets)",
+        -27.64
+      ],
+      [
+        "Alex's own trades, open-position marks and rounding",
+        20.53
+      ]
     ],
     "note": "About $58 deposited and $33.93 left when the fresh start began, so about -$24 in testing fees. AI and server costs are billed outside Kalshi and are not in these numbers."
   },
   "_paper_since_note": "Paper is a blank slate for testing new strategies (Alex, Nov 7): the dashboard only shows paper orders placed after this time. Move it forward to start a fresh test.",
   "bankroll_start": {
     "_about": "Start point for the dashboard's bankroll growth %. Deposits are not gains: add a deposit to amount. at = when this mode started trading.",
-    "live": {"amount": 50.93, "at": "2026-11-17T04:30:00Z", "deposits": [["2026-11-17", 17.0, "fresh-start deposit: 33.93 left + 17.00"]]},
-    "live_before_fresh_start": {"amount": 59.71, "at": "2026-11-06T00:03:00Z", "deposits": [["2026-11-11", 10.0, "rewards test top-up"]]},
-    "paper": {"amount": 36.69, "at": "2026-11-05T08:00:00Z"}
+    "live": {
+      "amount": 50.93,
+      "at": "2026-11-17T04:30:00Z",
+      "deposits": [
+        [
+          "2026-11-17",
+          17.0,
+          "fresh-start deposit: 33.93 left + 17.00"
+        ]
+      ]
+    },
+    "live_before_fresh_start": {
+      "amount": 59.71,
+      "at": "2026-11-06T00:03:00Z",
+      "deposits": [
+        [
+          "2026-11-11",
+          10.0,
+          "rewards test top-up"
+        ]
+      ]
+    },
+    "paper": {
+      "amount": 36.69,
+      "at": "2026-11-05T08:00:00Z"
+    }
   },
   "strategies": {
     "mentions": {
       "label": "Mentions NO fade",
       "backtest_c": 4.2,
-      "backtest_note": "Resting NO 75-90c on 'Will X say Y?' words, Feb 2025-Oct 2026, 18/21 months up"
+      "backtest_note": "Resting NO 75-90c on 'Will X say Y?' words. Old replay Feb 2025-Oct 2026 +4.2c, but the Nov 12 audit found about 0c (+0.9c +-0.9). Paper Nov 12-19; back on REAL money Nov 19 at 1 contract per word (Alex: 'put it back'). Verdict ~Dec 3."
     },
     "favorites": {
       "label": "Big-event favorites",
       "backtest_c": 2.0,
-      "backtest_note": "Resting bids on 85-96c favorites in Elections/Politics/Entertainment events with 1M+ contracts traded. Nov 12 exact replay: +3.2c per fill overall, about +2.0c on the markets the 7-day rule actually reaches (Entertainment ~0)."
+      "backtest_note": "Resting bids on 85-96c favorites in Elections/Politics/Entertainment events with 1M+ contracts traded. Nov 12 exact replay: +3.2c per fill overall, about +2.0c on the markets the 7-day rule actually reaches (Entertainment ~0). Last 24 hours only since Nov 13; 8 contracts since Nov 17 (doubled)."
     },
     "weather_late": {
       "label": "Late-day weather",
       "backtest_c": 3.7,
-      "backtest_note": "From midday on, sell brackets that need a new low (or high) beyond what is already recorded, 1c inside the offer, spread 4c+; also buy the bracket holding the extreme. Lows backtest +5.7c per contract Oct 2025-Aug 2026, +3.7c Sep-Nov 2026; highs and holds are untested 1-contract real tests since Nov 12. Lows 2 contracts since Nov 12."
+      "backtest_note": "From midday on, sell brackets that need a new low (or high) beyond what is already recorded, 1c inside the offer, spread 4c+; also buy the bracket holding the extreme. Lows backtest +5.7c per contract Oct 2025-Aug 2026, +3.7c Sep-Nov 2026; highs and holds are untested 1-contract real tests since Nov 12. Lows 2 contracts since Nov 12. Sizes doubled Nov 17 (lows 4, highs/holds and the 16 newer cities 2)."
     },
     "weather": {
       "label": "Weather day-before",
@@ -57,17 +95,17 @@
     "macro_fade": {
       "label": "Fed/CPI fade",
       "backtest_c": 8.7,
-      "backtest_note": "Resting NO at 71-95c on Fed and CPI/PCE longshots. Nov 12 exact replay: +8.7c per fill after maker fees (52 release days), about 8 fills a month. 3 contracts since Nov 12."
+      "backtest_note": "Resting NO at 71-95c on Fed and CPI/PCE longshots. Nov 12 exact replay: +8.7c per fill after maker fees (52 release days), about 8 fills a month. 6 contracts since Nov 17 (doubled)."
     },
     "macro_wide": {
       "label": "Gas + jobless claims fade",
       "backtest_c": 6.6,
-      "backtest_note": "The Fed/CPI fade rule on weekly gas prices and weekly jobless claims. Replay Nov 2025-Nov 2026: +6.6c per fill, about 8 events a month. 1-contract real test since Nov 12."
+      "backtest_note": "The Fed/CPI fade rule on weekly gas prices and weekly jobless claims. Replay Nov 2025-Nov 2026: +6.6c per fill, about 8 events a month. Real-money test since Nov 12; 2 contracts since Nov 17 (doubled)."
     },
     "favorites_wide": {
       "label": "Election favorites",
       "backtest_c": null,
-      "backtest_note": "Favorites on markets whose listed close is far out but Kalshi expects the result within 7 days (most election markets). Replay: Elections +6.5c per fill, small sample. 1-contract real test since Nov 12."
+      "backtest_note": "Favorites on markets whose listed close is far out but Kalshi expects the result within 7 days (most election markets). Replay: Elections +6.5c per fill, small sample. Real-money test since Nov 12; 2 contracts since Nov 17 (doubled)."
     },
     "favorites_late": {
       "label": "Favorites, last 24h (paper)",
@@ -82,98 +120,350 @@
     "ai_fade": {
       "label": "Best-AI fade",
       "backtest_c": 5.1,
-      "backtest_note": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1): resting NO at 71-95c. Replay Feb 2025-Nov 2026: +5.1c per fill, 85 fills, 40 of 43 events up. About 4 fills a month. Real money, 3 contracts, since Nov 14."
+      "backtest_note": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1): resting NO at 71-95c. Replay Feb 2025-Nov 2026: +5.1c per fill, 85 fills, 40 of 43 events up. About 4 fills a month. Real money since Nov 14; 6 contracts since Nov 17 (doubled)."
     },
     "rain_evening": {
       "label": "Evening rain fade",
       "backtest_c": 6.1,
-      "backtest_note": "After 8 PM local with no rain recorded yet, buy NO at the ask in the 75-95c band and hold. Replay Jul-Nov 2026: +6.1c per contract after fees, 109 trades. About 1 a day. 1-contract real test since Nov 13."
+      "backtest_note": "After 8 PM local with no rain recorded yet, buy NO at the ask in the 75-95c band and hold. Replay Jul-Nov 2026: +6.1c per contract after fees, 109 trades. About 1 a day. Real-money test since Nov 13; 2 contracts since Nov 17 (doubled)."
     },
     "spx_range": {
       "label": "S&P range fade",
       "backtest_c": 12.8,
-      "backtest_note": "Sell S&P 500 daily-close ranges priced 30c+ overnight (NO bid at 65c on the 6 likeliest ranges, cancelled at 8:45 AM ET). Replay Feb 2025-Nov 2026: +12.8c per fill, 293 fills, 21% lose. About 14 fills a month. 1-contract real test, first orders Sun Nov 15 4 PM ET."
+      "backtest_note": "Sell S&P 500 daily-close ranges priced 30c+ overnight (NO bid at 65c on the 6 likeliest ranges, cancelled at 8:45 AM ET). Replay Feb 2025-Nov 2026: +12.8c per fill, 293 fills, 21% lose. About 14 fills a month. Real-money test, 2 contracts since Nov 17 (doubled), first orders Sun Nov 15 4 PM ET."
     },
     "ndx_range": {
       "label": "Nasdaq range fade",
       "backtest_c": 22.4,
-      "backtest_note": "Sell Nasdaq-100 daily-close ranges priced 30c+ overnight (NO bid at 65c on the 6 likeliest ranges, cancelled at 8:45 AM ET). Replay Jan 2025-Nov 2026: +22.4c per fill, 138 fills, 12% lose. About 7 fills a month. 1-contract real test, first orders Sun Nov 15 ~4 PM ET."
+      "backtest_note": "Sell Nasdaq-100 daily-close ranges priced 30c+ overnight (NO bid at 65c on the 6 likeliest ranges, cancelled at 8:45 AM ET). Replay Jan 2025-Nov 2026: +22.4c per fill, 138 fills, 12% lose. About 7 fills a month. Real-money test, 2 contracts since Nov 17 (doubled), first orders Sun Nov 15 ~4 PM ET. Own $5 stop."
+    },
+    "quake_no": {
+      "label": "Earthquake NO test",
+      "backtest_c": 6.6,
+      "backtest_note": "Daily 'biggest earthquake' markets: during the UTC day, with no quake near the strike yet, buy NO on the 6.6 and 7.0 strikes when USGS 2015-2024 history says NO is worth 5c+ more than its price after the taker fee (usually 86-93c). Replay Sep-Nov 2026: +6.6c +-5.9 on 38 trades over 25 days, but found by slicing after the fact; the pre-registered broad test lost -2.9c. 2-contract real test from Nov 20 with a hard $4 cap (settled losses + open bets). Reviews at 20 and 50 fills."
+    },
+    "quake_no_paper": {
+      "label": "Earthquake NO (paper twin)",
+      "backtest_c": 6.6,
+      "backtest_note": "Same rule as the real earthquake test, logged on paper with no cap so the 20/50-fill reviews have data even if the real test stops."
     }
   },
   "events": [
-    {"date": "2026-11-03", "title": "Bot goes live: LOCK alerts + $37 test bankroll", "verdict": "LIVE", "area": "Weather",
-     "summary": "Scanner watches every Kalshi daily high/low market and pushes LOCK alerts when readings already decide a bracket."},
-    {"date": "2026-11-04", "title": "Liquidity rewards", "verdict": "NO-GO", "area": "Platform",
-     "summary": "Not worth it at our size, and the program ends Jan 1, 2027."},
-    {"date": "2026-11-04", "title": "Bracket arb, gas, Polymarket arb, long-dated climate", "verdict": "NO-GO", "area": "Platform",
-     "summary": "No usable edge in any of the four after fees."},
-    {"date": "2026-11-04", "title": "Hourly temperature markets", "verdict": "WEAK", "area": "Weather",
-     "summary": "Market is well calibrated. Weak lead: fading 12-25c longshots 30-55 min out (+3c/contract, probably noise).", "next": "2026-11-18"},
-    {"date": "2026-11-04", "title": "LOCK speed race", "verdict": "PENDING", "area": "Weather",
-     "summary": "About 30+ locked brackets per day, all already at $1.00 when first seen. Looks like a race we lose.", "next": "2026-11-07"},
-    {"date": "2026-11-04", "title": "Monthly rain thresholds (census)", "verdict": "PENDING", "area": "Weather",
-     "summary": "Silent census every 15 min. Early: every passed threshold was already at $1.00.", "next": "2026-11-11"},
-    {"date": "2026-11-05", "title": "Weather model backtest (full year)", "verdict": "PENDING", "area": "Weather",
-     "summary": "Day-before edge was profitable Jan-Aug 2026, about break-even Sep-Oct as the market caught up. Paper maker orders running.", "next": "2026-11-08"},
-    {"date": "2026-11-05", "title": "NBM / MOS forecast inputs", "verdict": "NO-GO", "area": "Weather",
-     "summary": "Better forecasts (NBM best single source) but no extra trading edge. The market already prices it."},
-    {"date": "2026-11-05", "title": "Market-making bot on hourly temps", "verdict": "PENDING", "area": "Weather",
-     "summary": "Month replay about break-even; small plus in Miami/NYC, Chicago loses. Paper replay Nov 5-12.", "next": "2026-11-13"},
-    {"date": "2026-11-05", "title": "Mentions longshot fade", "verdict": "GO", "area": "Mentions",
-     "summary": "+4.2c per filled contract over 21 months (18 of 21 up). Running automatically on paper from Nov 5.", "next": "2026-12-03"},
-    {"date": "2026-11-05", "title": "Economic data releases (CPI, PCE, GDP)", "verdict": "NO-GO", "area": "Econ",
-     "summary": "Kalshi beats or matches the nowcasts; no lag edge. Three weak leads to re-test.", "next": "2027-02-01"},
-    {"date": "2026-11-05", "title": "Longshot fade in Financials / Econ / Crypto", "verdict": "PENDING", "area": "Financials",
-     "summary": "One month showed +4.5c (Econ) and +6.8c (Financials). Full-history check running."},
-    {"date": "2026-11-05", "title": "Longshots and favorites in every other category", "verdict": "GO", "area": "Politics/Entertainment",
-     "summary": "Only favorites at 85-96c in BIG events (1M+ contracts) pay, +3.7c per filled contract; small events lose. Running automatically on paper from Nov 5.", "next": "2026-12-03"},
-    {"date": "2026-11-05", "title": "Newly launched markets", "verdict": "PENDING", "area": "Platform",
-     "summary": "Launch backtest running; new-market watcher logging in shadow."},
-    {"date": "2026-11-05", "title": "Sportsbook odds vs Kalshi", "verdict": "PENDING", "area": "Sports",
-     "summary": "Research just started."},
-    {"date": "2026-11-11", "title": "Weather day-before back to paper", "verdict": "PAPER", "area": "Weather",
-     "summary": "Kalshi's prices now forecast tomorrow's temperature better than our models do (1.31F miss vs 1.60F), so the edge is gone. Real test lost $3.95 on 43 contracts. Re-check Jan-Feb."},
-    {"date": "2026-11-11", "title": "Late-day lows", "verdict": "LIVE", "area": "Weather",
-     "summary": "After midday the market overpays for brackets below the low already recorded. Selling them backtests at +5.7c per contract (Oct 2025-Aug 2026) and +3.7c (Sep-Nov 2026), about 7 fills a day. Real money at 1 contract since Nov 11 (Alex's OK); reviews at 100/300/500 contracts."}
-,
-    {"date": "2026-11-12", "title": "15-minute bot all paper", "verdict": "PAPER", "area": "15-min",
-     "summary": "Rule E2 went 0-4 on real money (-$3.22). Alex: no proven edge, so the whole 15-min bot is paper; it goes back to real money only with his explicit OK."},
-    {"date": "2026-11-12", "title": "Mentions NO fade to paper", "verdict": "PAPER", "area": "Mentions",
-     "summary": "Main-bot audit found no edge in Mentions after fees; it keeps running on paper (AI shadow judged ~Dec 3)."},
-    {"date": "2026-11-12", "title": "Gas + jobless claims fade and election favorites", "verdict": "LIVE", "area": "Econ",
-     "summary": "macro_wide (weekly gas + jobless claims fade, replay +6.6c) and favorites_wide (election favorites by expected decision date) start on real money at 1 contract."},
-    {"date": "2026-11-13", "title": "Evening rain fade", "verdict": "LIVE", "area": "Weather",
-     "summary": "After 8 PM local with no rain recorded, buy NO at 75-95c and hold. Replay +6.1c per contract; real money at 1 contract."},
-    {"date": "2026-11-13", "title": "S&P range fade", "verdict": "LIVE", "area": "Financials",
-     "summary": "Sell S&P 500 daily-close ranges priced 30c+ overnight (NO bids at 65c, cancelled 8:45 AM ET). Replay +12.8c per fill; real money at 1 contract."},
-    {"date": "2026-11-14", "title": "Best-AI fade at 3 contracts", "verdict": "LIVE", "area": "Platform",
-     "summary": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1), replay +5.1c per fill, real money at 3 contracts."},
-    {"date": "2026-11-15", "title": "Nasdaq range fade", "verdict": "LIVE", "area": "Financials",
-     "summary": "The S&P range rule on Nasdaq-100 ranges (replay +22c per fill), real money at 1 contract with a $5 stop. First orders Nov 15 ~4:05 PM ET."},
-    {"date": "2026-11-15", "title": "Rewards test ended", "verdict": "NO-GO", "area": "Platform",
-     "summary": "Five-day real-money test of Kalshi's liquidity rewards: $0 earned, $0 lost. Stopped for good; a last check for a late payout on Nov 22."},
-    {"date": "2026-11-15", "title": "Copycat two stages", "verdict": "LIVE", "area": "Copycat",
-     "summary": "Trial bar (20 counted copies, 15 events, score 77.5+, 4 slots) or full bar (50, 30, 80+). Once on real money only real P&L decides: back to paper when losses use up a $1-5 budget. Rails unchanged: $5 per trader, $8 halt, $10 cash floor."},
-    {"date": "2026-11-15", "title": "Foreman and boss changes", "verdict": "INFO", "area": "Platform",
-     "summary": "The Foreman calls the AI only when a rule flags (all AI under $1/day). New daily live-vs-replay drift check per strategy. The Copycat boss is a shadow judge with no power until it beats a plain rule over 200+ copies (scored ~Dec 1)."}
+    {
+      "date": "2026-11-03",
+      "title": "Bot goes live: LOCK alerts + $37 test bankroll",
+      "verdict": "LIVE",
+      "area": "Weather",
+      "summary": "Scanner watches every Kalshi daily high/low market and pushes LOCK alerts when readings already decide a bracket."
+    },
+    {
+      "date": "2026-11-04",
+      "title": "Liquidity rewards",
+      "verdict": "NO-GO",
+      "area": "Platform",
+      "summary": "Not worth it at our size, and the program ends Jan 1, 2027."
+    },
+    {
+      "date": "2026-11-04",
+      "title": "Bracket arb, gas, Polymarket arb, long-dated climate",
+      "verdict": "NO-GO",
+      "area": "Platform",
+      "summary": "No usable edge in any of the four after fees."
+    },
+    {
+      "date": "2026-11-04",
+      "title": "Hourly temperature markets",
+      "verdict": "WEAK",
+      "area": "Weather",
+      "summary": "Market is well calibrated. Weak lead: fading 12-25c longshots 30-55 min out (+3c/contract, probably noise).",
+      "next": "2026-11-18"
+    },
+    {
+      "date": "2026-11-04",
+      "title": "LOCK speed race",
+      "verdict": "PENDING",
+      "area": "Weather",
+      "summary": "About 30+ locked brackets per day, all already at $1.00 when first seen. Looks like a race we lose.",
+      "next": "2026-11-07"
+    },
+    {
+      "date": "2026-11-04",
+      "title": "Monthly rain thresholds (census)",
+      "verdict": "PENDING",
+      "area": "Weather",
+      "summary": "Silent census every 15 min. Early: every passed threshold was already at $1.00.",
+      "next": "2026-11-11"
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Weather model backtest (full year)",
+      "verdict": "PENDING",
+      "area": "Weather",
+      "summary": "Day-before edge was profitable Jan-Aug 2026, about break-even Sep-Oct as the market caught up. Paper maker orders running.",
+      "next": "2026-11-08"
+    },
+    {
+      "date": "2026-11-05",
+      "title": "NBM / MOS forecast inputs",
+      "verdict": "NO-GO",
+      "area": "Weather",
+      "summary": "Better forecasts (NBM best single source) but no extra trading edge. The market already prices it."
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Market-making bot on hourly temps",
+      "verdict": "PENDING",
+      "area": "Weather",
+      "summary": "Month replay about break-even; small plus in Miami/NYC, Chicago loses. Paper replay Nov 5-12.",
+      "next": "2026-11-13"
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Mentions longshot fade",
+      "verdict": "GO",
+      "area": "Mentions",
+      "summary": "+4.2c per filled contract over 21 months (18 of 21 up). Running automatically on paper from Nov 5.",
+      "next": "2026-12-03"
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Economic data releases (CPI, PCE, GDP)",
+      "verdict": "NO-GO",
+      "area": "Econ",
+      "summary": "Kalshi beats or matches the nowcasts; no lag edge. Three weak leads to re-test.",
+      "next": "2027-02-01"
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Longshot fade in Financials / Econ / Crypto",
+      "verdict": "PENDING",
+      "area": "Financials",
+      "summary": "One month showed +4.5c (Econ) and +6.8c (Financials). Full-history check running."
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Longshots and favorites in every other category",
+      "verdict": "GO",
+      "area": "Politics/Entertainment",
+      "summary": "Only favorites at 85-96c in BIG events (1M+ contracts) pay, +3.7c per filled contract; small events lose. Running automatically on paper from Nov 5.",
+      "next": "2026-12-03"
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Newly launched markets",
+      "verdict": "PENDING",
+      "area": "Platform",
+      "summary": "Launch backtest running; new-market watcher logging in shadow."
+    },
+    {
+      "date": "2026-11-05",
+      "title": "Sportsbook odds vs Kalshi",
+      "verdict": "PENDING",
+      "area": "Sports",
+      "summary": "Research just started."
+    },
+    {
+      "date": "2026-11-11",
+      "title": "Weather day-before back to paper",
+      "verdict": "PAPER",
+      "area": "Weather",
+      "summary": "Kalshi's prices now forecast tomorrow's temperature better than our models do (1.31F miss vs 1.60F), so the edge is gone. Real test lost $3.95 on 43 contracts. Re-check Jan-Feb."
+    },
+    {
+      "date": "2026-11-11",
+      "title": "Late-day lows",
+      "verdict": "LIVE",
+      "area": "Weather",
+      "summary": "After midday the market overpays for brackets below the low already recorded. Selling them backtests at +5.7c per contract (Oct 2025-Aug 2026) and +3.7c (Sep-Nov 2026), about 7 fills a day. Real money at 1 contract since Nov 11 (Alex's OK); reviews at 100/300/500 contracts."
+    },
+    {
+      "date": "2026-11-12",
+      "title": "15-minute bot all paper",
+      "verdict": "PAPER",
+      "area": "15-min",
+      "summary": "Rule E2 went 0-4 on real money (-$3.22). Alex: no proven edge, so the whole 15-min bot is paper; it goes back to real money only with his explicit OK."
+    },
+    {
+      "date": "2026-11-12",
+      "title": "Mentions NO fade to paper",
+      "verdict": "PAPER",
+      "area": "Mentions",
+      "summary": "Main-bot audit found no edge in Mentions after fees; it keeps running on paper (AI shadow judged ~Dec 3)."
+    },
+    {
+      "date": "2026-11-12",
+      "title": "Gas + jobless claims fade and election favorites",
+      "verdict": "LIVE",
+      "area": "Econ",
+      "summary": "macro_wide (weekly gas + jobless claims fade, replay +6.6c) and favorites_wide (election favorites by expected decision date) start on real money at 1 contract."
+    },
+    {
+      "date": "2026-11-13",
+      "title": "Evening rain fade",
+      "verdict": "LIVE",
+      "area": "Weather",
+      "summary": "After 8 PM local with no rain recorded, buy NO at 75-95c and hold. Replay +6.1c per contract; real money at 1 contract."
+    },
+    {
+      "date": "2026-11-13",
+      "title": "S&P range fade",
+      "verdict": "LIVE",
+      "area": "Financials",
+      "summary": "Sell S&P 500 daily-close ranges priced 30c+ overnight (NO bids at 65c, cancelled 8:45 AM ET). Replay +12.8c per fill; real money at 1 contract."
+    },
+    {
+      "date": "2026-11-14",
+      "title": "Best-AI fade at 3 contracts",
+      "verdict": "LIVE",
+      "area": "Platform",
+      "summary": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1), replay +5.1c per fill, real money at 3 contracts."
+    },
+    {
+      "date": "2026-11-15",
+      "title": "Nasdaq range fade",
+      "verdict": "LIVE",
+      "area": "Financials",
+      "summary": "The S&P range rule on Nasdaq-100 ranges (replay +22c per fill), real money at 1 contract with a $5 stop. First orders Nov 15 ~4:05 PM ET."
+    },
+    {
+      "date": "2026-11-15",
+      "title": "Rewards test ended",
+      "verdict": "NO-GO",
+      "area": "Platform",
+      "summary": "Five-day real-money test of Kalshi's liquidity rewards: $0 earned, $0 lost. Stopped for good; a last check for a late payout on Nov 22."
+    },
+    {
+      "date": "2026-11-15",
+      "title": "Copycat two stages",
+      "verdict": "LIVE",
+      "area": "Copycat",
+      "summary": "Trial bar (20 counted copies, 15 events, score 77.5+, 4 slots) or full bar (50, 30, 80+). Once on real money only real P&L decides: back to paper when losses use up a $1-5 budget. Rails unchanged: $5 per trader, $8 halt, $10 cash floor."
+    },
+    {
+      "date": "2026-11-15",
+      "title": "Foreman and boss changes",
+      "verdict": "INFO",
+      "area": "Platform",
+      "summary": "The Foreman calls the AI only when a rule flags (all AI under $1/day). New daily live-vs-replay drift check per strategy. The Copycat boss is a shadow judge with no power until it beats a plain rule over 200+ copies (scored ~Dec 1)."
+    },
+    {
+      "date": "2026-11-16",
+      "title": "$500 swing ended, fresh start",
+      "verdict": "INFO",
+      "area": "Main bot",
+      "summary": "The $500-by-Friday swing ran 3 bets (-$27.64) and was switched off. Alex: 'fresh start, call it testing fees'. Dashboard totals count from Nov 16 11:30 PM ET."
+    },
+    {
+      "date": "2026-11-17",
+      "title": "Every live strategy doubled",
+      "verdict": "LIVE",
+      "area": "Main bot",
+      "summary": "Alex's checkpoint card: double every live strategy's contracts (favorites 8, Fed/CPI fade 6, Best-AI fade 6, late-day lows 4, the 1-contract tests 2). Scale-up kit stays off."
+    },
+    {
+      "date": "2026-11-19",
+      "title": "Mentions NO back on real money",
+      "verdict": "LIVE",
+      "area": "Main bot",
+      "summary": "Alex: 'put it back'. 1 contract per word. The audit found about 0c of edge, so it is judged at the Dec 3 verdict."
+    },
+    {
+      "date": "2026-11-19",
+      "title": "Mid-size Entertainment favorites",
+      "verdict": "LIVE",
+      "area": "Main bot",
+      "summary": "The live favorites rule on Entertainment events with 300k-1M contracts traded. Replay +4.3c per fill, ~8.5 fills a month. 2-contract real test with its own $5 stop."
+    },
+    {
+      "date": "2026-11-19",
+      "title": "Fade round 2 (politics, elections, long-dated)",
+      "verdict": "NO-GO",
+      "area": "Research",
+      "summary": "Politics -6.6c, elections -1.0c, long-dated Fed/macro no edge. Two Fed ideas kept for the fade's 500-contract review only."
+    },
+    {
+      "date": "2026-11-20",
+      "title": "Untested-edges hunt",
+      "verdict": "NO-GO",
+      "area": "Research",
+      "summary": "S&P above-vs-range (-10.2c), Truth Social post counts (-4.9c) and the daily biggest quake (-2.9c) all fail their pre-registered tests. One weak quake lead (see next)."
+    },
+    {
+      "date": "2026-11-20",
+      "title": "Earthquake NO test",
+      "verdict": "LIVE",
+      "area": "Main bot",
+      "summary": "Alex: 'we should do the earthquake one'. NO on the 6.6/7.0 'biggest quake' strikes late in quiet UTC days. Weak, sliced lead (+6.6c on 38 trades). 2 contracts real, hard $4 cap; paper twin logs the same rule. Reviews at 20 and 50 fills."
+    }
   ],
   "checkpoints": [
-    {"date": "2026-11-07", "title": "LOCK verdict"},
-    {"date": "2026-11-08", "title": "Weather paper verdict (go live with $37?)"},
-    {"date": "2026-11-11", "title": "Rain census verdict"},
-    {"date": "2026-11-13", "title": "Market-making paper replay graded"},
-    {"date": "2026-11-17", "title": "Project checkpoint: sizing and next steps"},
-    {"date": "2026-11-18", "title": "Hourly longshot re-test"},
-    {"date": "2026-12-03", "title": "Mentions paper judged"},
-    {"date": "2026-11-26", "title": "Late-day lows 100-contract review"},
-    {"date": "2027-01-25", "title": "Renew the scan timer token (expires Feb 2)"},
-    {"date": "2027-02-01", "title": "Econ weak leads re-test"},
-    {"date": "2026-11-18", "title": "Parlay selling + market making paper verdicts"},
-    {"date": "2026-11-21", "title": "Miami hourly-temp market making report"},
-    {"date": "2026-11-22", "title": "Rewards test: last payout check (9 AM ET)"},
-    {"date": "2026-11-24", "title": "Source-lag + casual-flow paper verdicts"},
-    {"date": "2026-11-28", "title": "Copycat re-test (ingredients, categories, bar)"},
-    {"date": "2026-12-01", "title": "Copycat boss scored vs plain rule"},
-    {"date": "2026-12-09", "title": "Fed decision (Dec 9-10): Fed fade fills"}
+    {
+      "date": "2026-11-07",
+      "title": "LOCK verdict"
+    },
+    {
+      "date": "2026-11-08",
+      "title": "Weather paper verdict (go live with $37?)"
+    },
+    {
+      "date": "2026-11-11",
+      "title": "Rain census verdict"
+    },
+    {
+      "date": "2026-11-13",
+      "title": "Market-making paper replay graded"
+    },
+    {
+      "date": "2026-11-17",
+      "title": "Project checkpoint: sizing and next steps"
+    },
+    {
+      "date": "2026-11-18",
+      "title": "Hourly longshot re-test"
+    },
+    {
+      "date": "2026-12-03",
+      "title": "Mentions paper judged"
+    },
+    {
+      "date": "2026-11-26",
+      "title": "Late-day lows 100-contract review"
+    },
+    {
+      "date": "2027-01-25",
+      "title": "Renew the scan timer token (expires Feb 2)"
+    },
+    {
+      "date": "2027-02-01",
+      "title": "Econ weak leads re-test"
+    },
+    {
+      "date": "2026-11-18",
+      "title": "Parlay selling + market making paper verdicts"
+    },
+    {
+      "date": "2026-11-21",
+      "title": "Miami hourly-temp market making report"
+    },
+    {
+      "date": "2026-11-22",
+      "title": "Rewards test: last payout check (9 AM ET)"
+    },
+    {
+      "date": "2026-11-24",
+      "title": "Source-lag + casual-flow paper verdicts"
+    },
+    {
+      "date": "2026-11-28",
+      "title": "Copycat re-test (ingredients, categories, bar)"
+    },
+    {
+      "date": "2026-12-01",
+      "title": "Copycat boss scored vs plain rule"
+    },
+    {
+      "date": "2026-12-09",
+      "title": "Fed decision (Dec 9-10): Fed fade fills"
+    }
   ]
 }
