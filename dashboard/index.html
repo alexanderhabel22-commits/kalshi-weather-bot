@@ -300,7 +300,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", ship_paper:"#38bdf8", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", ship_paper:"#38bdf8", fade_leads_paper:"#a78bfa", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -512,7 +512,7 @@ function realTestsHTML(){
       ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
     </div>`;
   }
-  return h + shipPaperHTML(rowsP);
+  return h + shipPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
 }
 /* Shipping counts paper test (Nov 20): cents per contract with a 95% range that treats each week of
    one chokepoint as one unit (the markets of a week move together), like the replay did. */
@@ -548,6 +548,34 @@ function shipPaperHTML(rowsP){
   h += `</table></div>
     <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Kalshi's weekly ship-count markets (Mon-Sun week, settled on IMF PortWatch, which posts each Tuesday). The bot forecasts the week from the last 14 published days (x7, negative binomial) and buys whichever side is worth 5¢+ more than its price after the taker fee, once per market, held to settlement. Paper fills at the live ask with the real fee; no money moves. Honest odds: the replay (+4.7¢ ±8.3 on 216 trades, Sep-Nov) is not significant; Suez carries it and Panama loses. The ± range counts each chokepoint-week as one unit. First look at 20 settled fills (Tue Nov 24, when the first week settles), verdict at 100 (~Dec 15), plus a free replay re-run mid-January. Real money only with Alex's OK.</div>
     ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">@ ${Math.round(x.price * 100)}¢</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No paper fills yet. Next week's markets are already open, so the first ones should come within a few runs.</div>`}
+  </div>`;
+  return h;
+}
+/* Jobs / GDP / Starship fade, PAPER ONLY (Nov 20): the Fed/CPI fade rule on three single series that
+   held up in a walk-forward replay. Review at 10 and 30 settled fills; real money waits for the Fed/CPI
+   fade's 500-contract review and Alex's OK. The ± range counts each release (event) as one unit. */
+const LEAD_SERIES = [["KXU3","Unemployment rate","+12.6¢ · 61 fills · 22/22 releases"],["KXGDP","GDP growth","+14.9¢ · 29 fills · 8/8"],["KXSPACEXSTARSHIP","Starship launch dates","+12.2¢ · 36 fills · 9/9"]];
+function fadeLeadsHTML(rowsP){
+  const fp = tradingCfg().fade_leads_paper;
+  if (!fp || !fp.enabled) return "";
+  const r = (rowsP || []).filter(x => x.strategy === "fade_leads_paper"), s = stats(r), ci = clusterCI(s.settled);
+  const n0 = filledN(r, "settled"), nx = [10, 30].find(m => n0 < m) || nextReview(n0);
+  const ciTxt = x => x.c == null ? "—" : cents(x.c) + (x.pm == null ? "" : ` ±${x.pm.toFixed(1)}`);
+  const line = (label, rr, rep) => { const ss = stats(rr), cc = clusterCI(ss.settled);
+    return `<tr><td>${esc(label)}</td><td class="${cls(cc.c || 0)}" style="font-weight:700">${ciTxt(cc)}</td><td>${cc.n}</td><td>${cc.weeks}</td><td>${ss.wins}-${ss.settled.length - ss.wins}</td><td>${ss.open.length}</td><td class="mute">${rep}</td></tr>`; };
+  const recent = r.filter(x => ["settled", "filled", "open", "resting"].includes(x.status)).sort((a, b) => (b.placed || 0) - (a.placed || 0)).slice(0, 8);
+  let h = `<h2>Jobs / GDP / Starship fade <span class="sub">PAPER ONLY · ${num(fp.contracts, 1)} ct · since Nov 20</span></h2><div class="card">
+    <div class="sgrid">
+      <div><div class="lbl">Paper ¢/ct</div><div class="val ${cls(ci.c || 0)}">${ciTxt(ci)}<small>95% range · replay +13.0¢</small></div></div>
+      <div><div class="lbl">Paper P&L</div><div class="val ${cls(s.pnl)}">${s.settled.length ? money(s.pnl) : "—"}<small>${n0} ct settled · ${s.wins}-${s.settled.length - s.wins}</small></div></div>
+      <div><div class="lbl">Open</div><div class="val">${s.open.length}<small>$${s.exposure.toFixed(2)} on paper</small></div></div>
+      <div><div class="lbl">Next review</div><div class="val">${n0} / ${nx}<small>settled fills</small></div></div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:10px"><table class="tbl"><tr><th>Series</th><th>¢/ct ±95%</th><th>Ct</th><th>Releases</th><th>W-L</th><th>Open</th><th>Replay</th></tr>`;
+  for (const [pre, label, rep] of LEAD_SERIES) h += line(label, r.filter(x => String(x.ticker || "").startsWith(pre + "-")), rep);
+  h += `</table></div>
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">The Fed/CPI fade rule, unchanged (resting NO at the best bid + 1¢ in the 71-95¢ band, 2 hours to 21 days before close, held to settlement), on Kalshi's unemployment-rate, GDP and Starship-launch markets. Replay Dec 2024-Nov 2026: +13.0¢ per contract on 126 fills, 39 of 39 releases up and not one losing fill. Walk-forward: picked on data before Sep 2025, they made +12.6¢ on 68 fills after it while the other ~40 economic and count series lost −2.9¢. Honest odds: with zero losses the real risk is one surprise release (2-3 fills losing ~85¢ each), so a fair long-run figure is about +7 to +12¢. About 5 fills a month in all, roughly $0.65 a month per contract. Reviews at 10 settled fills (~early Jan) and 30 (~Mar); adding these to the real Fed/CPI fade waits for that fade's 500-contract review and Alex's OK.</div>
+    ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">@ ${Math.round(x.price * 100)}¢</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No paper orders yet. The November jobs report (Dec 4) and the Dec 15 Starship market are already in the band, so the first ones should come within a few runs.</div>`}
   </div>`;
   return h;
 }

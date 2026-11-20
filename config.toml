@@ -331,6 +331,30 @@ exit = "hold"
 max_week_contracts = 40
 max_market_contracts = 2
 
+[trading.fade_leads_paper]
+# PAPER ONLY (Nov 20, 2026). Never live without Alex's OK. wxbot/strats/fade_leads_paper.py.
+# The macro_fade rule (resting NO at best bid + 1c, 71-95c, 2 h-21 days before close) on three single
+# series that stood out in edge hunt round 3: KXU3 (unemployment above X), KXGDP (GDP above X),
+# KXSPACEXSTARSHIP (Starship launch before date X). Replay Dec 2024-Nov 2026: +13.0c on 126 fills,
+# 39/39 events up, ZERO losing fills; walk-forward (picked on data before Sep 2025) +12.6c on 68 fills
+# after it while the other ~40 series lost -2.9c. ~5 fills a month in total. Freeze: adding them to
+# the real fade waits for the Fed/CPI fade's 500-contract review. Reviews at 10 and 30 settled fills.
+enabled = true
+live = false
+series = ["KXU3", "KXGDP", "KXSPACEXSTARSHIP"]
+contracts = 1
+max_contracts = 1
+max_markets_per_event = 3
+min_price = 0.71
+max_price = 0.95
+min_hours = 2
+max_hours = 504
+min_volume = 500
+max_open_pct = 0.30
+max_event_pct = 0.10
+max_week_contracts = 60
+max_market_contracts = 2
+
 [trading.ship_paper]
 # PAPER ONLY (Nov 20, 2026; Alex "Whatever you think"). Never live without Alex's OK.
 # wxbot/strats/ship_paper.py. Weekly shipping chokepoint counts (Hormuz, Suez, Panama, Bab el-Mandeb):
