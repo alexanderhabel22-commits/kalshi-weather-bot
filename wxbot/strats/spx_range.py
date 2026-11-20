@@ -21,6 +21,10 @@ the day before to 8:30 AM ET on the day):
 Every resting order is cancelled at `cancel_hours` before the close (8:45 AM ET), well
 before the open, because once the index moves the middle range can be worth far more.
 Own loss stop at -max_loss_pct of the bankroll. 1 contract until the 100-contract review.
+
+Nov 20, 2026: config sell_yes 35c -> 25c as a fill test (0 fills on the first 56 orders; Alex OK).
+Live-rule replay Sep 16-Nov 19 2026 (top 6 ranges, live window, back of queue, 1c fee):
+35c 16 fills +9c; 25c 59 fills +2.0c +-4.2; 20c +0.5c. DEFAULTS keep 35c (tests); config rules.
 """
 from __future__ import annotations
 

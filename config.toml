@@ -429,16 +429,21 @@ max_market_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 # all four periods positive. ~14 fills a month. 1-CONTRACT REAL test from Nov 13
 # (Alex, Nov 13 10:13 AM ET decision card: "Yes, 1 contract real").
 # Reviews at 100/300/500 contracts; freeze applies until 500.
+# Nov 20: sell price 35c -> 25c (NO bid 65c -> 75c) as a fill test (Alex: "I don't think it's a bad
+# thing to drop prices a bit to try and get some fills this is testing after all"). 0 fills on the
+# first 56 orders at 35c. Live-rule replay Sep 16-Nov 19 (top 6 ranges, 10:30 PM-8:45 AM ET,
+# back of queue, 1c fee): 35c 16 fills +9c +-11; 25c 59 fills +2.0c +-4.2 (~27/mo); 20c +0.5c.
+# Feb 2025-Nov 2026: 25c +5.1c. Thin edge: judge at the 100-contract review.
 enabled = true
 live = true
 taker = true                     # a YES bid already at 35c+ is taken (buy NO at its ask)
 contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
-sell_yes = 0.35
+sell_yes = 0.25                  # Nov 20 fill test (was 0.35)
 n_markets = 6
 min_price = 0.40                 # NO price band (taker NO when YES bid is 35-60c)
-max_price = 0.65
-max_open_pct = 0.2               # 6 resting NO bids at 65c = $3.90  (was 0.1; x2 Nov 17)
+max_price = 0.75                 # = 1 - sell_yes (was 0.65)
+max_open_pct = 0.2               # 6 resting NO bids at 75c x 2 ct = $9.00  (was 0.1; x2 Nov 17)
 max_event_pct = 0.2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
 exit = "hold"
@@ -453,18 +458,21 @@ max_market_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 # Replay Jan 2025-Nov 2026, back-of-queue: +22.4c per fill, 138 fills, 12% lose; recent
 # 25 fills +30c; every period positive. ~7 fills a month.
 # 1-CONTRACT REAL test from Nov 15 (Alex, Nov 14 4:19 PM ET: "Ok sure get it going").
-# With spx_range: 12 resting NO bids at 65c = $7.80 overnight at most (~13% of a ~$58 bankroll).
+# With spx_range: 12 resting NO bids x 2 ct at 70-75c = $17.40 overnight at most (Nov 20 prices).
 # Reviews at 100/300/500 contracts; freeze applies until 500.
+# Nov 20: sell price 35c -> 30c (NO bid 65c -> 70c) as a fill test (Alex, same message as spx_range).
+# Live-rule replay Sep 16-Nov 19: 35c 16 fills +27.7c +-8.3; 30c 19 fills +18.5c +-7.3 (~9/mo);
+# 25c 22 fills +10.4c; 20c +4.2c. Jan 2025-Sep 2026: 30c +16.3c. 30c keeps most of the edge.
 enabled = true
 live = true
 taker = true
 contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
-sell_yes = 0.35
+sell_yes = 0.30                  # Nov 20 fill test (was 0.35)
 n_markets = 6
 min_price = 0.40
-max_price = 0.65
-max_open_pct = 0.2               # 6 resting NO bids at 65c = $3.90  (was 0.1; x2 Nov 17)
+max_price = 0.70                 # = 1 - sell_yes (was 0.65)
+max_open_pct = 0.2               # 6 resting NO bids at 70c x 2 ct = $8.40  (was 0.1; x2 Nov 17)
 max_event_pct = 0.2  # x2 Nov 17 (Alex card: "Double every live strategy")
 max_loss_pct = 0.10
 max_loss_usd = 5.0               # own stop: down $5 settled real money (or 10% of bankroll if smaller) -> no new orders + one push
