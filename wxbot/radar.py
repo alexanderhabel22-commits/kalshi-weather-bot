@@ -49,7 +49,7 @@ MAX_SERIES_PER_RUN = 40
 MAX_TRADE_CHECKS = 60
 MAX_RESULT_CHECKS = 60
 MAX_PUSHES_PER_DAY = 4
-KEEP_SNAPS = 24 * 21          # hourly spread snapshots per series (3 weeks)
+KEEP_SNAPS = 48 * 21          # spread snapshots per series, twice an hour (3 weeks)
 KEEP_PAPER = 4000
 DEFAULT_WATCH = ["KXCORND", "KXSOYBEAND", "KXWHEATD", "KXLCATTLED", "KXCOCOAD", "KXCOFFEED",
                  "KXCORNW", "KXSOYBEANW", "KXWHEATW", "KXLCATTLEW", "KXCOCOAW", "KXCOFFEEW"]
