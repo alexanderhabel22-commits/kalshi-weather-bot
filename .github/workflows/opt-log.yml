@@ -1,0 +1,52 @@
+name: opt-log
+
+# Research logging only: CBOE's free delayed SPX/NDX option chains next to Kalshi's S&P and
+# Nasdaq bracket markets, to see whether options imply different odds (Alex, Nov 20 2026).
+# Read-only public data; never trades, never alerts, needs no secrets. Every 15 minutes
+# during US market hours (9:30 AM - 4 PM ET, Mon-Fri), ~1 min each. Output goes to the
+# opt-log-data branch, never main. Planned to run ~2 weeks, then be judged and switched off.
+on:
+  schedule:
+    - cron: "37,52 14 * * 1-5"
+    - cron: "7,22,37,52 15-20 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: ["claude/project-thread-qxk0wj"]
+    paths: ["research_opt/opt_log.py", ".github/workflows/opt-log.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: opt-log
+  cancel-in-progress: false
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Snapshot
+        run: python research_opt/opt_log.py /tmp/new
+      - name: Save to opt-log-data branch
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          for i in 1 2 3 4 5; do
+            if git fetch -q origin opt-log-data 2>/dev/null; then
+              git checkout -q -f -B data origin/opt-log-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            mkdir -p log && cp -r /tmp/new/* log/
+            git add log
+            git commit -qm "opt log $(date -u +%Y%m%d-%H%M) [skip ci]" || exit 0
+            git push -q origin HEAD:opt-log-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
