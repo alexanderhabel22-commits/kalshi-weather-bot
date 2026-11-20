@@ -656,3 +656,32 @@ close_hour_et = 17               # unused while hourly = true
 shard = 2
 last_entry_min = 40
 days = [0, 1, 2, 3, 4, 5, 6]
+
+[radar]
+# New-listing radar + edge-fade monitor (Nov 20, 2026; wxbot/radar.py, hourly workflow radar.yml).
+# PAPER ONLY: never places orders. Pushes (max 4/day): a watched series or a new Commodities
+# series gets its first open event; a paper rule on a new listing clears +3c/ct over 10+ fills;
+# a kill rule or fade flag on a real-money strategy. push = "shadow" logs them instead.
+push = "on"
+push_categories = ["Commodities"]
+watch = ["KXCORND", "KXSOYBEAND", "KXWHEATD", "KXLCATTLED", "KXCOCOAD", "KXCOFFEED",
+         "KXCORNW", "KXSOYBEANW", "KXWHEATW", "KXLCATTLEW", "KXCOCOAW", "KXCOFFEEW"]
+
+# Pre-written kill rules for every real-money strategy (Alex, Nov 20: "how will we know when
+# our edge has faded"). The radar FLAGS and pushes when one is hit; Claude then moves the
+# strategy to paper. Default for any strategy not listed: below -5c/ct after 20 fills.
+# max_loss_usd = the test's hard dollar cap (realized P&L).
+[radar.kill_rules]
+favorites = {min_fills = 50, max_cpc = -2.0}
+favorites_mid = {min_fills = 20, max_cpc = -5.0, max_loss_usd = 5.0}
+favorites_wide = {min_fills = 20, max_cpc = -5.0}
+macro_fade = {min_fills = 20, max_cpc = -5.0}
+macro_wide = {min_fills = 20, max_cpc = -5.0}
+ai_fade = {min_fills = 20, max_cpc = -5.0}
+weather_late = {min_fills = 50, max_cpc = -3.0}
+rain_evening = {min_fills = 20, max_cpc = -5.0}
+spx_range = {min_fills = 20, max_cpc = -5.0}
+ndx_range = {min_fills = 20, max_cpc = -5.0, max_loss_usd = 5.0}
+quake_no = {min_fills = 20, max_cpc = -5.0, max_loss_usd = 4.0}
+mentions = {min_fills = 30, max_cpc = -5.0}
+mentions_wide = {min_fills = 20, max_cpc = -5.0}

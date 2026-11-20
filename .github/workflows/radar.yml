@@ -1,0 +1,46 @@
+name: radar
+
+# New-listing radar + edge-fade monitor (wxbot/radar.py). PAPER ONLY: reads public Kalshi
+# data and the bot's own order log, never places or cancels orders, needs no Kalshi keys.
+# Hourly, ~2-3 min. Saves data/radar.json to main (the 9 AM daily report reads it) and may
+# send a phone push (max 4/day) when a watched series first lists, a paper rule on a new
+# listing clears the real-test bar, or a real-money strategy hits its kill rule.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Radar pass
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+        run: python bot.py radar -v
+      - name: Save radar data
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          git add data/radar.json
+          if ! git diff --cached --quiet; then
+            git commit -m "bot: update radar [skip ci]"
+            for i in 1 2 3 4 5; do git pull --rebase --autostash && git push && break; sleep $((i * 5)); done
+          fi
