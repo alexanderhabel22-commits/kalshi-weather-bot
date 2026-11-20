@@ -58,7 +58,7 @@
    "cat": "Entertainment",
    "event": "KXGTA6SONGS-30",
    "vol24": 43562.07,
-   "casual": null
+   "casual": 0.024
   },
   "KXRT-HUN-65": {
    "cat": "Entertainment",
@@ -70,7 +70,7 @@
    "cat": "Entertainment",
    "event": "KXRT-HUN",
    "vol24": 27859.71,
-   "casual": 0.133
+   "casual": 0.14
   },
   "KXRT-FUR-80": {
    "cat": "Entertainment",
@@ -82,13 +82,13 @@
    "cat": "Entertainment",
    "event": "KXGTA6UNITS-01JAN27",
    "vol24": 27304.41,
-   "casual": 0.042
+   "casual": 0.036
   },
   "KXGTA6UNITS-01JAN27-T50000000": {
    "cat": "Entertainment",
    "event": "KXGTA6UNITS-01JAN27",
    "vol24": 27037.54,
-   "casual": 0.649
+   "casual": 0.7
   },
   "KXANTHSHARE-26NOV23-6.0": {
    "cat": "Science and Technology",
@@ -100,7 +100,7 @@
    "cat": "Entertainment",
    "event": "KXRT-IPL",
    "vol24": 17459.48,
-   "casual": 0.181
+   "casual": 0.185
   },
   "KXAAAGASM-26NOV30-3.55": {
    "cat": "Economics",
@@ -118,7 +118,7 @@
    "cat": "Science and Technology",
    "event": "KXANTHSHARE-26NOV23",
    "vol24": 14959.44,
-   "casual": 0.128
+   "casual": 0.134
   }
  },
  "by_category": {
@@ -141,13 +141,13 @@
    "maker_fee_c": 0.36
   },
   "Science and Technology": {
-   "fills": 48,
+   "fills": 49,
    "market_hours": 0.4,
-   "fills_per_market_hour": 106.71,
-   "edge_at_fill_c": -0.06,
-   "markout_5m_c": -0.54,
-   "markout_30m_c": 0.18,
-   "maker_fee_c": 0.26
+   "fills_per_market_hour": 108.94,
+   "edge_at_fill_c": -0.29,
+   "markout_5m_c": -0.76,
+   "markout_30m_c": 0.1,
+   "maker_fee_c": 0.27
   },
   "Mentions": {
    "fills": 159,
@@ -159,11 +159,11 @@
    "maker_fee_c": 0.39
   },
   "Entertainment": {
-   "fills": 120,
+   "fills": 125,
    "market_hours": 0.5,
-   "fills_per_market_hour": 228.75,
-   "edge_at_fill_c": -2.48,
-   "markout_5m_c": -2.31,
+   "fills_per_market_hour": 238.28,
+   "edge_at_fill_c": -2.42,
+   "markout_5m_c": -2.24,
    "markout_30m_c": -1.85,
    "maker_fee_c": 0.34
   },
@@ -220,25 +220,25 @@
    "maker_fee_c": 0.33
   },
   "50plus|no": {
-   "fills": 79,
+   "fills": 80,
    "settled": 52,
-   "markout_30m_c": -0.41,
+   "markout_30m_c": -0.4,
    "settled_c": 6.21,
-   "maker_fee_c": 0.34
+   "maker_fee_c": 0.33
   },
   "50plus|yes": {
-   "fills": 36,
+   "fills": 37,
    "settled": 23,
-   "markout_30m_c": -0.54,
+   "markout_30m_c": -0.51,
    "settled_c": -9.7,
    "maker_fee_c": 0.31
   },
   "under20|no": {
-   "fills": 155,
+   "fills": 158,
    "settled": 52,
-   "markout_30m_c": -2.41,
+   "markout_30m_c": -2.47,
    "settled_c": -10.65,
-   "maker_fee_c": 0.35
+   "maker_fee_c": 0.36
   },
   "under20|yes": {
    "fills": 100,
@@ -248,9 +248,9 @@
    "maker_fee_c": 0.34
   },
   "unknown|no": {
-   "fills": 50,
+   "fills": 51,
    "settled": 29,
-   "markout_30m_c": -0.74,
+   "markout_30m_c": -0.69,
    "settled_c": 14.83,
    "maker_fee_c": 0.37
   },
@@ -270,8 +270,8 @@
   "done": true,
   "candidates": 1049
  },
- "pending": 7,
- "held": 301,
+ "pending": 6,
+ "held": 306,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -436,7 +436,7 @@
   "KXGTA6UNITS-01JAN27-T12000000": -1,
   "KXGTAONLINE-GTA6ONLINE-27B": -1,
   "KXEARNINGSMENTIONWMT-26NOV19-DRON": -1,
-  "KXGTA6UNITS-01JAN27-T9000000": -4,
+  "KXGTA6UNITS-01JAN27-T9000000": -5,
   "KXNYNJPORTTEU-27FEB28-T9.0": -1,
   "KXGTA6SONGS-30-BLI": 0,
   "KXEARNINGSMENTIONWMT-26NOV19-PRES": -3,
@@ -455,8 +455,9 @@
   "KXHIGHTSFO-26NOV19-B56.5": -1,
   "KXAAAGASW-26NOV23-3.6300": -1,
   "KXRT-HUN-65": -1,
-  "KXGTA6UNITS-01JAN27-T50000000": 0,
-  "KXRT-AVE-80": -1
+  "KXGTA6UNITS-01JAN27-T50000000": -1,
+  "KXRT-AVE-80": -1,
+  "KXGTA6SONGS-30-MOB": -1
  },
- "at": "2026-11-20T06:06:41+00:00"
+ "at": "2026-11-20T07:29:27+00:00"
 }
