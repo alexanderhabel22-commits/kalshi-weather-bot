@@ -235,6 +235,18 @@ record earns it. Be candid about odds and risk; no hype.
   one push, state in `data/ndx_range_state.json`. Both range rules together: at most 12 resting
   NO bids at 65c = $7.80. The same rule on FX daily ranges and BTC/ETH hourly ranges loses
   (`research_ndx/RESULTS.md`).
+- **Earthquake NO test (REAL 2 contracts, Nov 20, hard $4 cap):** `wxbot/strats/quake_no.py`,
+  `[trading.quake_no]` (Alex, Nov 20 12:23-12:24 AM ET: "we should do the earthquake one", "maybe 2
+  contracts?", "bump the cap up to 4 bucks"). KXBIGGESTQUAKE ("USGS max magnitude in the UTC day >= X"):
+  during the UTC day, 6.6 and 7.0 strikes only, no quake within 0.1 of X yet (USGS live query), buy NO
+  at 1 - yes_bid (taker, 3-97c) when (1 - p) - price - fee >= 5c, p = 1 - (1 - pday)^(hours_left/24),
+  pday from USGS 2015-2024 (309 and 130 of 3,653 days). Weak evidence: a slice found after the fact
+  (+6.6c +-5.9, 38 trades, 25 days); the pre-registered broad test lost -2.9c
+  (/mnt/project-files/analysis/untested-edges-nov20/). Cap: settled real P&L + cost of every open real
+  position + the new order stays within $4; once settled losses leave no room, one push and no more real
+  orders (`data/quake_no_state.json`). Paper twin `quake_no_paper` runs the same rule uncapped.
+  Reviews at 20 and 50 fills (real + twin). One big-quake day costs ~$1.80 per 2-contract bet.
+  Dashboard: TESTS tab "Real-money tests" table + earthquake card (cap meter, twin).
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES

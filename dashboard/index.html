@@ -300,7 +300,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -451,7 +451,9 @@ async function loadTests(){
   if (watch) S.watch = watch;
   let late = [];
   try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
-  S.tx = {lip, mm, rfq, late, field};
+  let qstate = null;
+  try { qstate = await raw("data/quake_no_state.json", "json"); } catch(e){ qstate = null; }
+  S.tx = {lip, mm, rfq, late, field, qstate};
 }
 // Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
 function lateCard(rows){
@@ -467,13 +469,58 @@ function lateCard(rows){
   }
   return h + `<div class="mute" style="font-size:11px;margin-top:6px">${rows.length} orders written · ${open} waiting for their market to settle.</div></div>`;
 }
+/* Small real-money tests (Nov 20): every live strategy still in its small test, with its own stop, the
+   review it is heading for and, for the earthquake test, the paper twin that runs the same rule uncapped. */
+const TEST_STRATS = [
+  ["quake_no", "Nov 20", "2 ct real, hard $4 cap (settled losses + open bets). Weak lead found by slicing after the fact: judged at 20 and 50 fills.", [20, 50]],
+  ["favorites_mid", "Nov 19", "2 ct real, own $5 stop. Mid-size Entertainment events (300k-1M contracts traded).", null],
+  ["mentions", "Nov 19", "Back on real money at 1 ct per word (Alex). Audit edge about 0c; verdict ~Dec 3.", null],
+  ["ndx_range", "Nov 15", "Nasdaq range fade before the open, own $5 stop.", null],
+  ["rain_evening", "Nov 13", "Evening no-rain fade.", null],
+  ["spx_range", "Nov 13", "S&P range fade before the open.", null],
+  ["macro_wide", "Nov 12", "Gas + jobless claims fade.", null],
+  ["favorites_wide", "Nov 12", "Election favorites by expected decision date.", null]];
+function realTestsHTML(){
+  let rowsL = [], rowsP = [];
+  try { rowsL = modeRows("live"); rowsP = modeRows("paper"); } catch(e){ return ""; }
+  const t = tradingCfg(), c = v => v == null ? "—" : cents(v);
+  const live = TEST_STRATS.filter(([k]) => liveNow(k));
+  let h = "";
+  if (live.length){
+    h += `<h2>Real-money tests <span class="sub">${live.length} small tests on real money · settled + open</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Test</th><th>Size</th><th>¢/ct</th><th>P&L</th><th>Ct</th><th>W-L</th><th>Open</th><th>Review</th></tr>`;
+    for (const [k, since, , marks] of live){
+      const r = rowsL.filter(x => x.strategy === k), s = stats(r), n0 = filledN(r, "settled");
+      const nx = (marks && marks.find(m => n0 < m)) || nextReview(n0);
+      h += `<tr><td><i style="background:${colorOf(k, 0)}"></i>${esc(strategyName(k))}<small class="mute"> · ${esc(since)}</small></td><td>${esc(sizeText(k))}</td><td class="${cls(s.edgeC || 0)}" style="font-weight:700">${s.contracts ? c(s.edgeC) : "—"}</td><td class="${s.settled.length ? cls(s.pnl) : "mute"}">${s.settled.length ? money(s.pnl) : "—"}</td><td>${n0}</td><td>${s.wins}-${s.settled.length - s.wins}</td><td>${s.open.length}${s.open.length ? `<small class="mute"> $${s.exposure.toFixed(2)}</small>` : ""}</td><td>${n0} / ${nx}</td></tr>`;
+    }
+    h += `</table></div><div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">${live.map(([k, , note]) => `<b>${esc(strategyName(k))}:</b> ${esc(note)}`).join("<br>")}<br>Ct = settled contracts. Under ~100 contracts a test's ¢/ct is mostly luck.</div></div>`;
+  }
+  const Q = t.quake_no;
+  if (Q && Q.enabled){
+    const r = rowsL.filter(x => x.strategy === "quake_no"), s = stats(r), cap = num(Q.max_loss_usd, 4);
+    const used = Math.max(0, -s.pnl) + s.exposure, rp = rowsP.filter(x => x.strategy === "quake_no_paper"), sp = stats(rp);
+    const n0 = filledN(r, "settled"), p0 = filledN(rp, "settled"), stopped = ((S.tx || {}).qstate || {}).stopped;
+    const recent = r.concat(rp).filter(x => x.status === "settled" || x.status === "filled" || x.status === "open").sort((a, b) => (b.placed || 0) - (a.placed || 0)).slice(0, 8);
+    h += `<h2>Earthquake NO test <span class="sub">${liveNow("quake_no") ? (stopped ? "STOPPED · $" + cap.toFixed(0) + " cap used" : "REAL MONEY · " + num(Q.contracts, 2) + " contracts") : "PAPER"}</span></h2><div class="card">
+      ${meter("Loss cap used (settled losses + open bets)", used, cap, {txt:`$${used.toFixed(2)} / $${cap.toFixed(2)}`, sub:`settled ${s.settled.length ? money(s.pnl) : "$0.00"} · open $${s.exposure.toFixed(2)} · one big-quake day costs about $1.80 per 2-contract bet`})}
+      <div class="sgrid" style="margin-top:10px">
+        <div><div class="lbl">Real</div><div class="val ${cls(s.pnl)}">${s.settled.length ? money(s.pnl) : "—"}<small>${n0} ct · ${s.wins}-${s.settled.length - s.wins}</small></div></div>
+        <div><div class="lbl">Real ¢/ct</div><div class="val ${cls(s.edgeC || 0)}">${s.contracts ? c(s.edgeC) : "—"}<small>replay +6.6¢</small></div></div>
+        <div><div class="lbl">Paper twin</div><div class="val ${cls(sp.pnl)}">${sp.settled.length ? money(sp.pnl) : "—"}<small>${p0} ct${sp.contracts ? " · " + c(sp.edgeC) + "/ct" : ""}</small></div></div>
+      </div>
+      <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Kalshi's daily "biggest earthquake" markets (the UTC day runs 7 PM to 7 PM ET). With no quake near the strike yet, buy NO on the 6.6 and 7.0 strikes when USGS history says the NO is worth 5¢+ more than its price after the fee: usually in the ET afternoon or evening, at 86-93¢. Honest odds: this rule was found by slicing the data after the fact (+6.6¢ on 38 trades over 25 days) and the planned broad test lost (−2.9¢), so expect noise. The paper twin runs the same rule with no cap. Reviews at 20 and 50 fills, then 100/300/500.</div>
+      ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
+    </div>`;
+  }
+  return h;
+}
 function txPage(){
   const T = S.tx || {}, L = T.lip;
   const ago = a => { const t = Date.parse(a || ""); if (!t) return ""; const m = Math.round((Date.now() - t) / 6e4); return m < 90 ? m + " min ago" : Math.round(m / 60) + " h ago"; };
   const day = a => { const t = Date.parse(a || ""); return t ? new Date(t).toLocaleString("en-US", {timeZone:TZ, month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + " ET" : ""; };
   const c1 = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "¢";
   const over = L && L.mode !== "live";
-  let h = `<h2>Rewards test <span class="sub">${over ? "ENDED Nov 15 · stopped for good" : "REAL MONEY · Kalshi pays for resting bids"}</span></h2>`;
+  let h = realTestsHTML() + `<h2>Rewards test <span class="sub">${over ? "ENDED Nov 15 · stopped for good" : "REAL MONEY · Kalshi pays for resting bids"}</span></h2>`;
   if (over) h += `<div class="card"><div style="font-size:12.5px;line-height:1.55">The rewards test ran Nov 11-15 on real money and is <b>stopped for good</b>. Result: <b>$0 earned and $0 lost</b> (no payouts, no bids filled). A last check for a late payout is on Nov 22 at 9 AM ET. The details below are kept for the record.</div></div>`;
   if (!L) h += `<div class="card"><div class="mute" style="font-size:12px;line-height:1.5">Starting up. The server installs it at its next hourly update; the first status appears ~15 min after that.</div></div>`;
   else {
@@ -618,7 +665,7 @@ function drawDrift(){
 /* ---------------------------------------------------------------- Summary (Alex, Nov 14)
    One page for the whole operation: every engine and every strategy, real money only, with the
    detail behind dropdowns. Alex's manual trades are left out (they are his, not the bots'). */
-const ENG = {main:["MAIN BOT", "#34d399"], m15:["15-MIN BOT", "#f5b335"], cc:["COPYCAT", "#c4b5fd"], tx:["REWARDS TEST", "#67e8f9"]};
+const ENG = {main:["MAIN BOT", "#34d399"], m15:["15-MIN BOT", "#f5b335"], cc:["COPYCAT", "#c4b5fd"], tx:["TESTS", "#67e8f9"]};
 function sumData(){
   const today = etDay(new Date()), out = {main:{}, m15:{}, cc:{}, tx:{}};
   // MAIN: the bot's real-money orders, one row per strategy
@@ -2342,7 +2389,7 @@ function lastReview(n){ let b = 0; for (const m of REVIEWS) if (n >= m) b = m; i
 function sizeText(name){
   const sp = tradingCfg()[name] || {}, base = num(sp.contracts, 1), by = sp.contracts_by || {};
   if (name === "weather_late"){ const lo = num(by["low/need"], base); return lo === base ? `${base} ct` : `lows ${lo} ct · highs/holds ${base} ct`; }
-  return `${base} ct`;
+  return `${base} ct` + (sp.max_loss_usd != null ? ` · $${num(sp.max_loss_usd).toFixed(0)} cap` : "");
 }
 // late-day weather splits into lows / highs / holds (title has the metric, note has the kind)
 function lateKind(r){ const hi = / high /.test(r.title || ""), holds = /late-day holds/.test(r.note || ""); return holds ? "holds" : hi ? "high" : "low"; }
