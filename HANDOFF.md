@@ -19,7 +19,7 @@ record earns it. Be candid about odds and risk; no hype.
 - Dashboard: `live_since` in dashboard/verdicts.json (Nov 16 11:30 PM ET) = real-money totals count only orders
   placed after it; bankroll start $50.93 ($33.93 left + $17 deposit Nov 17). Everything earlier is the
   "Testing fees" card (archived numbers in verdicts.json testing_fees; old start kept as live_before_fresh_start).
-  The dashboard opens on MAIN; 15-MIN, COPYCAT and TESTS are behind "More".
+  The dashboard opens on SUMMARY (then the last tab used); 15-MIN, COPYCAT and TESTS are behind "More".
 - Nov 17 (Alex card "Double every live strategy", PR #318): every live strategy's contracts x2 (favorites 8,
   Fed/CPI fade 6, ai_fade 6, weather_late 2 / lows-need 4, the 1-contract tests 2). Global stops unchanged
   (10%/day, 25% halt). Scale-up kit stays OFF (Alex chose "leave it off" Nov 17).
@@ -90,8 +90,8 @@ record earns it. Be candid about odds and risk; no hype.
   rain since) and *official* (CLI total), with the ask then, cheapest ask
   later, and depth. Never alerts. Goal: are rain locks ever cheap (≤95¢) or
   priced in like temperature locks? Turn off with `rain_census = false`.
-- **NEW-LISTING RADAR + EDGE-FADE MONITOR** (added Nov 20): `wxbot/radar.py`, own hourly
-  workflow `.github/workflows/radar.yml` (`python bot.py radar`), state `data/radar.json`,
+- **NEW-LISTING RADAR + EDGE-FADE MONITOR** (added Nov 20): `wxbot/radar.py`, own workflow
+  `.github/workflows/radar.yml` (twice an hour since PR #336; GitHub skips some scheduled runs) (`python bot.py radar`), state `data/radar.json`,
   block at the end of every daily/weekly report. PAPER ONLY, never orders. Lists every open
   Kalshi event (~110 pages), flags each series with an open event for the first time (incl.
   old empty series like the farm dailies), and for 14 days (always for `[radar].watch`)
@@ -404,6 +404,18 @@ IP without a token). It never places, changes or cancels anything and needs no s
   Silent EDGE / near-lock calls (`data/alerts.csv`) are shown separately as signals, not trades.
 - Research tab reads `dashboard/verdicts.json` (verdicts, checkpoints, backtest edge per
   strategy). Update it when a research verdict lands or a strategy is added.
+- Tab map (Nov 20, 2026): SUMMARY (every bot, real money since the fresh start, "Every money-maker"
+  table with Expected = verdicts.json backtest_c, Coming up = verdicts.json checkpoints, Recent
+  decisions = events) | MAIN (live strategies with review progress: tests in `TEST_STRATS` use their
+  own early review marks, e.g. fade_leads 10/30, quake_no 20/50; Live vs replay from
+  trader_state.json drift, whose replay numbers are `wxbot/drift.py` REPLAY_C; Edge-fade watch from
+  data/radar.json "fade" + kill rules) | 15-MIN (real-money hero; while the bot is paper a "Paper
+  results" table by market) | COPYCAT (labels say "Pass the bar / Would be on real money" while
+  copycat_control.json mode is off) | TESTS (real-money tests table, quake / shipping / fade-leads
+  cards, New-listing radar: paper bets by rule and market, newest listings, farm watch from the
+  farm-watch-data branch, then the older paper tests).
+- New live strategy checklist for the page: verdicts.json label + backtest_c (+ event), COLORS
+  entry, `TEST_STRATS` row if it is a small test, REPLAY_C in drift.py, kill rule in config.
 - The repo is public, so everything the page shows is already public. Never put NTFY_TOPIC or
   API keys in `dashboard/`.
 

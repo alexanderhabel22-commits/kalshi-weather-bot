@@ -454,7 +454,10 @@ async function loadTests(){
   let qstate = null, fstate = null;
   try { qstate = await raw("data/quake_no_state.json", "json"); } catch(e){ qstate = null; }
   try { fstate = await raw("data/fade_leads_state.json", "json"); } catch(e){ fstate = null; }
-  S.tx = {lip, mm, rfq, late, field, qstate, fstate};
+  let radar = null, farm = null;
+  try { radar = await raw("data/radar.json", "json"); } catch(e){ radar = null; }
+  try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/farm-watch-data/state/farm_watch.json?t=${Date.now()}`, {cache:"no-store"}); farm = r.ok ? await r.json() : null; } catch(e){ farm = null; }
+  S.tx = {lip, mm, rfq, late, field, qstate, fstate, radar, farm};
 }
 // Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
 function lateCard(rows){
@@ -588,13 +591,106 @@ function fadeLeadsHTML(rowsP){
   </div>`;
   return h;
 }
+/* New-listing radar (Nov 20, PR #330; wxbot/radar.py, radar.yml twice an hour): PAPER ONLY. Every new
+   Kalshi listing (and the watched farm series) gets three known rules as 1-contract paper bets for 14
+   days; a series/rule that clears +3¢/ct over 10 settled fills pushes Alex (real money needs his OK).
+   The same file holds the edge-fade monitor for every real-money strategy (shown on MAIN). */
+const RADAR_RULES = {longshot_no:["Long-shot NO", "NO bid 1¢ above the best NO when YES is 3-15¢"], fav_24h:["Favorite, last 24 h", "bid 1¢ above the best on the 85-96¢ favorite closing in 1-24 h"], frozen_bracket:["Frozen-futures ranges", "sell the top range YES at 35¢ while the futures are closed"]};
+const FARM_NAMES = {CORN:"Corn", SOYBEAN:"Soybeans", WHEAT:"Wheat", LCATTLE:"Live cattle", COCOA:"Cocoa", COFFEE:"Coffee", SUGAR:"Sugar"};
+function radarStats(rows){
+  const fills = rows.filter(r => r.status === "settled"), miss = rows.filter(r => r.status === "settled-unfilled");
+  const c = fills.map(r => num(r.cents)), mean = c.length ? c.reduce((a, b) => a + b, 0) / c.length : null;
+  const se = c.length > 1 ? Math.sqrt(c.reduce((a, x) => a + (x - mean) ** 2, 0) / (c.length - 1)) / Math.sqrt(c.length) : null;
+  return {orders:rows.length, resting:rows.filter(r => r.status === "resting").length, filled:rows.filter(r => r.status === "filled").length,
+    fills:fills.length, wins:fills.filter(r => num(r.cents) > 0).length, cpc:mean, se, missed:miss.length,
+    missed_cpc:miss.length ? miss.reduce((a, r) => a + num(r.cents), 0) / miss.length : null,
+    unfilled:rows.filter(r => r.status === "unfilled").length, cost:rows.filter(r => r.status === "resting" || r.status === "filled").reduce((a, r) => a + num(r.price), 0)};
+}
+function radarHTML(){
+  const R = (S.tx || {}).radar, rc = (S.data.config || {}).radar || {};
+  if (!R) return `<h2>New-listing radar <span class="sub">PAPER ONLY</span></h2><div class="card"><div class="mute" style="font-size:12px">No radar data yet (data/radar.json).</div></div>`;
+  const last = pdate(R.last_run), late = !last || Date.now() - last > 75 * 60e3, c1 = v => v == null ? "—" : cents(v);
+  const P = R.paper || [], all = radarStats(P), today = new Date().toISOString().slice(0, 10), pushes = num((R.pushes || {})[today]);
+  const L = Object.values(R.listings || {}).filter(x => pdate(x.first_seen) && Date.now() - pdate(x.first_seen) < 14 * 864e5);
+  const testing = L.filter(x => x.category !== "Sports");
+  let h = `<h2>New-listing radar <span class="sub">PAPER ONLY · new Kalshi markets tested from day one · last run ${last ? esc(ago(last)) : "—"}</span></h2><div class="card">`;
+  if (late) h += `<div class="neg" style="font-size:12px;margin-bottom:8px">⚠ Last run ${last ? esc(fdt(last)) + " ET" : "unknown"}: more than 75 min ago. GitHub sometimes skips scheduled runs; the next one usually catches up.</div>`;
+  h += `<div class="sgrid">
+    <div><div class="lbl">Paper ¢/ct</div><div class="val ${cls(all.cpc || 0)}">${c1(all.cpc)}<small>${all.fills} settled${all.se != null ? " · ±" + (1.96 * all.se).toFixed(1) + "¢" : ""}</small></div></div>
+    <div><div class="lbl">Paper bets</div><div class="val">${all.orders}<small>${all.resting} resting · ${all.filled} filled · ${all.fills} settled</small></div></div>
+    <div><div class="lbl">New listings</div><div class="val">${L.length}<small>last 14 days · ${testing.length} non-sports</small></div></div>
+    <div><div class="lbl">Open on Kalshi</div><div class="val">${num(R.open_events).toLocaleString()}<small>events · ${num(R.open_series).toLocaleString()} series</small></div></div>
+    <div><div class="lbl">Pushes today</div><div class="val">${pushes} / 4<small>${esc(rc.push || "on")}</small></div></div>
+    <div><div class="lbl">Missed bets</div><div class="val ${cls(all.missed_cpc || 0)}">${c1(all.missed_cpc)}<small>${all.missed} settled unfilled</small></div></div></div>`;
+  // by rule
+  h += `<div class="lbl" style="margin:12px 0 4px">By rule</div><div class="tbl-wrap"><table class="tbl"><tr><th>Rule</th><th>Bets</th><th>Open</th><th>Settled</th><th>W-L</th><th>¢/ct</th><th>Missed ¢/ct</th></tr>`;
+  for (const [k, [nm, how]] of Object.entries(RADAR_RULES)){ const s = radarStats(P.filter(r => r.rule === k));
+    h += `<tr><td>${esc(nm)}<small class="mute"><br>${esc(how)}</small></td><td>${s.orders}</td><td>${s.resting + s.filled}</td><td>${s.fills}</td><td>${s.wins}-${s.fills - s.wins}</td><td class="${cls(s.cpc || 0)}" style="font-weight:700">${c1(s.cpc)}</td><td class="mute">${c1(s.missed_cpc)}</td></tr>`; }
+  h += `</table></div>`;
+  // by series x rule, with progress to the "worth a real test" bar (10 settled fills at +3c/ct)
+  const by = {}; for (const o of P){ const k = o.series + "|" + o.rule; (by[k] = by[k] || []).push(o); }
+  const ks = Object.keys(by).sort((a, b) => radarStats(by[b]).fills - radarStats(by[a]).fills || by[b].length - by[a].length);
+  if (ks.length){
+    h += `<div class="lbl" style="margin:12px 0 4px">By market <span class="mute" style="text-transform:none;letter-spacing:0">· bar for a real-test push: 10 settled fills at +3¢/ct or better</span></div><div class="tbl-wrap"><table class="tbl"><tr><th>Series · rule</th><th>Bets</th><th>Settled</th><th>W-L</th><th>¢/ct</th><th>To bar</th></tr>`;
+    for (const k of ks.slice(0, 25)){ const [ser, rule] = k.split("|"), s = radarStats(by[k]), li = (R.listings || {})[ser] || {}, ok = s.fills >= 10 && s.cpc != null && s.cpc >= 3;
+      h += `<tr><td><b>${esc(ser)}</b> <small class="mute">${esc((RADAR_RULES[rule] || [rule])[0])}</small>${li.title ? `<small class="mute"><br>${esc(String(li.title).replace(/\*\*/g, "").slice(0, 60))}</small>` : ""}</td><td>${s.orders}</td><td>${s.fills}</td><td>${s.wins}-${s.fills - s.wins}</td><td class="${cls(s.cpc || 0)}" style="font-weight:700">${c1(s.cpc)}</td><td>${ok ? `<span class="pos">✓ pushed</span>` : `${Math.min(s.fills, 10)}/10`}</td></tr>`; }
+    h += `</table></div>`;
+  }
+  // newest listings
+  const nl = L.slice().sort((a, b) => (a.category === "Sports") - (b.category === "Sports") || String(b.first_seen).localeCompare(String(a.first_seen)) || num(b.n_markets) - num(a.n_markets));
+  if (nl.length){
+    const shown = isOpen("radarL") ? nl.slice(0, 120) : nl.slice(0, 12);
+    h += `<div class="lbl" style="margin:12px 0 4px">Newest listings <span class="mute" style="text-transform:none;letter-spacing:0">· non-sports first · sports are logged but never tested</span></div><div class="list">` + shown.map(x => {
+      const n = P.filter(o => o.series === x.series).length, sp = x.category === "Sports";
+      return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12.5px">${esc(String(x.title || x.series).replace(/\*\*/g, ""))}</div>
+        <div class="s">${esc(x.series)} · ${esc(x.category || "?")} · ${num(x.n_markets)} markets · first seen ${esc(fdt(pdate(x.first_seen)))} ET${num(x.exchange_index) ? ` · <span class="mute">separate balance (index ${num(x.exchange_index)})</span>` : ""}</div></div>
+        <div class="r"><small class="${sp ? "mute" : n ? "pos" : "mute"}">${sp ? "sports · skip" : n ? n + " paper bets" : "no fit yet"}</small></div></div>`; }).join("") + `</div>`;
+    if (nl.length > 12) h += moreBtn("radarL", `Show all ${nl.length}`);
+  }
+  // farm watch: Kalshi's announced farm series (corn, soybeans, wheat, cattle, cocoa, coffee)
+  const F = (S.tx || {}).farm, watch = Array.isArray(rc.watch) ? rc.watch : ["KXCORND", "KXSOYBEAND", "KXWHEATD", "KXLCATTLED", "KXCOCOAD", "KXCOFFEED", "KXCORNW", "KXSOYBEANW", "KXWHEATW", "KXLCATTLEW", "KXCOCOAW", "KXCOFFEEW"];   // config parser skips multi-line arrays
+  if (watch.length){
+    const fl = (F && F.listed) || {}, fc = (F && F.open_counts) || {}, fat = F ? pdate(F.last_check) : null;
+    h += `<div class="lbl" style="margin:12px 0 4px">Farm watch <span class="mute" style="text-transform:none;letter-spacing:0">· ${watch.length} series Kalshi announced${fat ? " · farm watcher checked " + esc(ago(fat)) : ""}</span></div><div class="chips" style="flex-wrap:wrap;gap:4px">`
+      + watch.map(s => { const on = (R.listings || {})[s] || fl[s] || num(fc[s]) > 0, base = s.replace(/^KX/, "").replace(/[DW]$/, ""), per = /D$/.test(s) ? "daily" : "weekly";
+        return `<span class="chip ${on ? "live" : "off"}" style="font-size:10px">${esc(FARM_NAMES[base] || base)} ${per} · ${on ? "LISTED" : "not yet"}</span>`; }).join("") + `</div>`;
+    h += `<div class="mute" style="font-size:11px;margin-top:4px;line-height:1.5">When one lists, you get one phone push and the radar starts paper bets on it right away (including the frozen-futures range test). Farm markets sit on a separate Kalshi balance like crypto, so real trading there would need money moved.</div>`;
+  }
+  // recent paper bets
+  const rec = P.slice().sort((a, b) => String(b.placed_at).localeCompare(String(a.placed_at))).slice(0, isOpen("radarP") ? 60 : 8);
+  if (rec.length){
+    h += `<div class="lbl" style="margin:12px 0 4px">Latest paper bets</div><div class="list">` + rec.map(o => {
+      const st = o.status === "settled" ? `<span class="${cls(num(o.cents))}">${cents(num(o.cents))}</span>` : o.status === "settled-unfilled" ? `<span class="mute">missed · would ${cents(num(o.cents))}</span>` : `<span class="mute">${esc(o.status)}</span>`;
+      return `<div class="item" style="padding:6px 0"><span class="side ${esc(o.side)}">${esc(String(o.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(String(o.title || o.ticker).replace(/\*\*/g, ""))}</div>
+        <div class="s">${esc((RADAR_RULES[o.rule] || [o.rule])[0])} · @ ${Math.round(num(o.price) * 100)}¢ · placed ${esc(fdt(pdate(o.placed_at)))} ET · closes ${esc(fdt(pdate(o.close)))} ET</div></div><div class="r">${st}</div></div>`; }).join("") + `</div>`;
+    if (P.length > 8) h += moreBtn("radarP", "Show more bets");
+  }
+  h += `<div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Runs twice an hour on GitHub. A new listing gets three of our known rules as 1-contract paper bets for 14 days. A resting paper bet counts as filled only when a later trade went through its price (back of the line, like our replays); bets that never fill are still scored ("missed") to catch adverse selection. Never places real orders. If a market clears the bar it pushes your phone with what we'd trade and a small cap; real money starts only after your OK.</div></div>`;
+  return h;
+}
+/* Edge-fade monitor (radar, Nov 20): per real-money strategy, all real fills since Nov 5, against its
+   pre-written kill rule ([radar.kill_rules]). The radar flags and pushes; Claude then moves it to paper. */
+function fadeMonitorHTML(){
+  const R = (S.tx || {}).radar, F = (R || {}).fade; if (!F) return "";
+  const kr = ((S.data.config || {}).radar || {}).kill_rules || {}, t = tradingCfg();
+  const live = Object.keys(t).filter(k => liveNow(k)), c1 = v => v == null ? "—" : cents(v);
+  const ks = live.sort((a, b) => num((F[b] || {}).fills) - num((F[a] || {}).fills));
+  let flags = 0;
+  const rows = ks.map(k => { const f = F[k] || {}, rule = f.rule || (typeof kr[k] === "object" ? kr[k] : null) || {min_fills:20, max_cpc:-5}, fl = f.flags || [];
+    flags += fl.length;
+    const kill = `below ${cents(num(rule.max_cpc, -5))} after ${num(rule.min_fills, 20)}${rule.max_loss_usd ? ` or −$${num(rule.max_loss_usd).toFixed(0)}` : ""}`;
+    const st = fl.some(x => /^KILL/.test(x)) ? `<span class="chip nogo" style="font-size:9.5px;padding:1px 6px">KILL</span>` : fl.length ? `<span class="chip pend" style="font-size:9.5px;padding:1px 6px">FLAG</span>` : !F[k] ? `<span class="chip off" style="font-size:9.5px;padding:1px 6px">NO FILLS</span>` : num(f.fills) < num(rule.min_fills, 20) ? `<span class="chip off" style="font-size:9.5px;padding:1px 6px">${num(f.fills)}/${num(rule.min_fills, 20)}</span>` : `<span class="chip live" style="font-size:9.5px;padding:1px 6px">OK</span>`;
+    return `<tr><td><i style="background:${colorOf(k, 0)}"></i>${esc(strategyName(k))}${fl.length ? `<small class="neg"><br>${fl.map(esc).join("<br>")}</small>` : ""}</td><td>${num(f.fills)}</td><td class="${cls(f.cpc || 0)}" style="font-weight:700">${c1(f.cpc)}</td><td class="${cls(f.cpc_last20 || 0)}">${c1(f.cpc_last20)}</td><td>${f.fill_rate == null ? "—" : pct(f.fill_rate)}</td><td class="mute">${c1(f.missed_cpc)}${num(f.missed) ? `<small> · ${num(f.missed)}</small>` : ""}</td><td><small>${esc(kill)}</small></td><td>${st}</td></tr>`; });
+  return `<h2>Edge-fade watch <span class="sub">${flags ? flags + " flag" + (flags > 1 ? "s" : "") : "no flags"} · kill rule per strategy · all real fills since Nov 5 · radar ${R.last_run ? esc(ago(pdate(R.last_run))) : ""}</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Strategy</th><th>Fills</th><th>¢/ct</th><th>Last 20</th><th>Fill rate</th><th>Missed ¢/ct</th><th>Back to paper if</th><th></th></tr>${rows.join("")}</table></div>
+    <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">Every real-money strategy has a kill rule written before it started (Alex, Nov 20: "how will we know when our edge has faded"). The radar checks them twice an hour and pushes your phone once when one is hit; Claude then moves that strategy to paper. "Missed" = what our orders that never filled would have made: if it is far above what the fills made, the market is only filling us when we're wrong (adverse selection). It never changes trading by itself.</div></div>`;
+}
 function txPage(){
   const T = S.tx || {}, L = T.lip;
   const ago = a => { const t = Date.parse(a || ""); if (!t) return ""; const m = Math.round((Date.now() - t) / 6e4); return m < 90 ? m + " min ago" : Math.round(m / 60) + " h ago"; };
   const day = a => { const t = Date.parse(a || ""); return t ? new Date(t).toLocaleString("en-US", {timeZone:TZ, month:"short", day:"numeric", hour:"numeric", minute:"2-digit"}) + " ET" : ""; };
   const c1 = v => v == null ? "—" : (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toFixed(2) + "¢";
   const over = L && L.mode !== "live";
-  let h = realTestsHTML() + `<h2>Rewards test <span class="sub">${over ? "ENDED Nov 15 · stopped for good" : "REAL MONEY · Kalshi pays for resting bids"}</span></h2>`;
+  let h = realTestsHTML() + radarHTML() + `<h2>Rewards test <span class="sub">${over ? "ENDED Nov 15 · stopped for good" : "REAL MONEY · Kalshi pays for resting bids"}</span></h2>`;
   if (over) h += `<div class="card"><div style="font-size:12.5px;line-height:1.55">The rewards test ran Nov 11-15 on real money and is <b>stopped for good</b>. Result: <b>$0 earned and $0 lost</b> (no payouts, no bids filled). A last check for a late payout is on Nov 22 at 9 AM ET. The details below are kept for the record.</div></div>`;
   if (!L) h += `<div class="card"><div class="mute" style="font-size:12px;line-height:1.5">Starting up. The server installs it at its next hourly update; the first status appears ~15 min after that.</div></div>`;
   else {
@@ -1114,7 +1210,8 @@ function ccWhoLive(){
   const off = acc.filter(a => a.verdict !== "passes" && ((a.real || {}).copies || (L.benched || {})[a.nick]));
   S.ccTC = live.concat(off);
   const tr = live.filter(a => (a.on_real || {}).tier === "trial").length;
-  return `<h2>On real money <span class="sub">${live.length} live · ${live.length - tr} full · ${tr} trial${off.length ? ` · ${off.length} taken off` : ""}</span></h2><div class="card">`
+  const on = (S.cc || {}).mode === "live";
+  return `<h2>${on ? "On real money" : "Would be on real money"} <span class="sub">${on ? "" : "switch OFF since Nov 16: paper only · "}${live.length} ${on ? "live" : "pass"} · ${live.length - tr} full · ${tr} trial${off.length ? ` · ${off.length} taken off` : ""}</span></h2><div class="card">`
     + (S.ccTC.length ? S.ccTC.map(ccTraderCard).join("") : `<div class="mute" style="font-size:12.5px">Nobody is live right now. A trader goes live when it clears the trial or full bar (see Two stages and Next in line).</div>`) + `</div>`;
 }
 function drawCCTraders(){ (S.ccTC || []).forEach((a, i) => { const el = document.getElementById("ccTc" + i), cv = (a.detail || {}).curve || []; if (!el) return;
@@ -1317,7 +1414,7 @@ function ccPage(){
       <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${live ? `<span class="pos">● live</span>` : `switch ${esc(String(L.control || "off").toUpperCase())}`}${L.halted ? ` · <span class="neg">${esc(L.halted)}</span>` : ""}${mk.priced.length ? ` · open copies ${money(mk.tot)} now` : ""}</div></div>
       <div style="text-align:right"><div class="lbl">At risk now</div><div class="val">$${num(L.open_cost).toFixed(2)} <small class="mute">/ $${num(L.pool).toFixed(2)}</small></div></div></div>
     <div class="grid g4" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-top:14px;text-align:center">
-      <div><div class="val pos" style="font-size:20px">${n("passes")}</div><div class="lbl">Live</div><div class="mute" style="font-size:10px">${TI.full.length} full · ${TI.trial.length} trial</div></div>
+      <div><div class="val pos" style="font-size:20px">${n("passes")}</div><div class="lbl">${live ? "Live" : "Pass the bar"}</div><div class="mute" style="font-size:10px">${TI.full.length} full · ${TI.trial.length} trial</div></div>
       <div><div class="val" style="font-size:20px;color:#f5b335">${TI.wait.length + near}</div><div class="lbl">Next in line</div><div class="mute" style="font-size:10px">${TI.wait.length} waiting for a slot</div></div>
       <div><div class="val" style="font-size:20px">${n("watching")}</div><div class="lbl">Testing</div></div>
       <div><div class="val mute" style="font-size:20px">${n("fails") + n("slump") + n("benched") + n("real-lag")}</div><div class="lbl">Out</div></div></div>
@@ -1619,7 +1716,7 @@ function m15HTML(full){
       return `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:13px">${esc(k)}</div><div class="s">${b.f}/${b.q} markets filled · ${+b.n.toFixed(2)} contracts</div></div>
         <div class="r"><span class="${cls(c)}">${b.n ? cents(c) + "/ct" : "—"}</span><small class="${cls(b.pnl)}">${money(b.pnl)}</small></div></div>`; }).join("") + `</div>` : `<div class="mute" style="font-size:12px">No graded markets yet.</div>`; };
   const lr = M.rows.filter(r => r.mode === "live" && m15Keep(r));   // real money only (Alex, Nov 8)
-  h += `<div class="lbl" style="margin-top:12px">By market · last 7 days</div>` + tbl(lr)
+  h += `<div class="lbl" style="margin-top:12px">Real money by market · last 7 days</div>` + (lr.length || String(st.mode) === "live" ? tbl(lr) : `<div class="mute" style="font-size:12px">No real-money bets: the bot is all paper (see Paper results below).</div>`)
     + `<div class="mute" style="font-size:11px;margin-top:6px">Backtest: BTC +7¢, silver/copper +5¢ per contract; expect less live. A market is cut if it's below −5¢/ct after 100 fills.</div>`;
   return h + `</div>`;
 }
@@ -1670,7 +1767,7 @@ function m15OnlyHTML(){ const L = m15LiveSeries(); if (!L) return "";
   const names = [...L].map(x => x.replace(/^KX|15M$/g, "")).map(n => n.length <= 3 ? n : n.charAt(0) + n.slice(1).toLowerCase());
   return `<label id="m15Only" style="display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font-size:13px;cursor:pointer">
     <input type="checkbox" ${m15OnlyLive() ? "checked" : ""} style="width:18px;height:18px;accent-color:#f5b335;margin:0">
-    <span><b>Live markets only</b> <span class="mute">· ${esc(names.join(", ") || "none")} on real money now${m15OnlyLive() && m15AllRealPnl() != null ? ` · all 15-min real money incl. cut markets: <b>${m15AllRealPnl() >= 0 ? "+" : "-"}$${Math.abs(m15AllRealPnl()).toFixed(2)}</b>` : ""}</span></span></label>`; }
+    <span><b>Live markets only</b> <span class="mute">· ${String(((S.m15 || {}).status || {}).mode || "") === "live" ? esc(names.join(", ") || "none") + " on real money now" : "ALL PAPER since Nov 13 (no real money without Alex's OK) · last real market: " + esc(names.join(", ") || "none")}${m15OnlyLive() && m15AllRealPnl() != null ? ` · all 15-min real money incl. cut markets: <b>${m15AllRealPnl() >= 0 ? "+" : "-"}$${Math.abs(m15AllRealPnl()).toFixed(2)}</b>` : ""}</span></span></label>`; }
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
 function m15Fills(){
   const M = S.m15; if (!M) return [];
@@ -1810,11 +1907,30 @@ function drawM15(){
   const hk = f => { const x = hr(f); return String(Math.floor(x / 3) * 3).padStart(2, "0"); };
   bars($("#m15Hr"), m15Group(fs, hk, ["00","03","06","09","12","15","18","21"]), k => { const a = +k, f = x => x === 0 ? "12a" : x < 12 ? x + "a" : x === 12 ? "12p" : (x - 12) + "p"; return f(a); });
 }
+/* 15-min bot is ALL PAPER since Nov 13 (Alex: "that bot has no actual edge"). Show what the paper bot is
+   doing so the tab isn't empty: per market ¢/ct over the loaded days, plus the latest graded fills. */
+function m15PaperHTML(){
+  const M = S.m15; if (!M) return "";
+  const g = M.rows.filter(r => r.mode === "paper" && num(r.filled) > 0 && (r.won === "1" || r.won === "0"));
+  const days = [...new Set(M.rows.map(r => String(r.close || "").slice(0, 10)).filter(Boolean))].sort();
+  const by = {}; for (const r of g){ const k = String(r.series || "").replace(/^KX|15M$/g, ""), b = by[k] = by[k] || {n:0, f:0, w:0, pnl:0}; b.f++; b.n += num(r.filled); b.pnl += num(r.pnl); if (r.won === "1") b.w++; }
+  const ks = Object.keys(by).sort((a, b) => (by[b].pnl / by[b].n) - (by[a].pnl / by[a].n));
+  const tot = g.reduce((a, r) => a + num(r.pnl), 0), ct = g.reduce((a, r) => a + num(r.filled), 0);
+  let h = `<h2>Paper results <span class="sub">all markets · ${days.length ? esc(days[0]) + " to " + esc(days[days.length - 1]) : "loaded days"} · no money</span></h2><div class="card">
+    <div class="sgrid"><div><div class="lbl">Paper ¢/ct</div><div class="val ${cls(ct ? tot / ct : 0)}">${ct ? cents(100 * tot / ct) : "—"}<small>${ct} contracts</small></div></div>
+    <div><div class="lbl">Paper P&L</div><div class="val ${cls(tot)}">${money(tot)}<small>${g.length} graded fills</small></div></div>
+    <div><div class="lbl">Won</div><div class="val">${g.length ? pct(g.filter(r => r.won === "1").length / g.length) : "—"}<small>of graded fills</small></div></div></div>`;
+  h += ks.length ? `<div class="tbl-wrap" style="margin-top:10px"><table class="tbl"><tr><th>Market</th><th>Fills</th><th>Won</th><th>¢/ct</th><th>P&L</th></tr>` + ks.map(k => { const b = by[k], c = 100 * b.pnl / b.n;
+    return `<tr><td><i style="background:${M15C[k] || "#64748b"}"></i>${esc(k)}</td><td>${b.f}</td><td>${pct(b.w / b.f)}</td><td class="${cls(c)}" style="font-weight:700">${cents(c)}</td><td class="${cls(b.pnl)}">${money(b.pnl)}</td></tr>`; }).join("") + `</table></div>`
+    : `<div class="mute" style="font-size:12px;margin-top:8px">No graded paper fills in the loaded days.</div>`;
+  h += `<div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">Real money went 0-4 under rule E2 (−$3.22) and the whole bot moved to paper on Nov 13. It keeps logging every market so a real edge would show up here first. Paper fills are optimistic (front of the line), so a market needs to look clearly positive over hundreds of fills before it's worth a real test, and that needs Alex's explicit OK. Natural gas was the closest (+5.5¢ since Nov 13); re-check ~Nov 27.</div></div>`;
+  return h;
+}
 function m15Page(){
   let h = liveAcctHTML() + m15OnlyHTML() + m15HTML(true);
   const M = S.m15;
   const live = M ? M.rows.filter(r => r.mode === "live" && m15Keep(r)) : [];
-  if (!live.length) return h;
+  if (!live.length) return h + m15PaperHTML();
   h += m15ChartsHTML(m15Fills());
   const rows = live.slice().sort((a, b) => String(b.close).localeCompare(String(a.close)) || (a.mode === "live" ? -1 : 1));
   const shown = isOpen("m15all") ? rows.slice(0, 200) : rows.slice(0, 25);
@@ -2514,12 +2630,12 @@ function lateSplitHTML(r){
 // always-visible list of what trades real money now (paper strategies are not shown; Alex, Nov 13)
 function liveStratsHTML(rows, strats, hist, bench){
   let h = `<h2>Live strategies <span class="sub">${strats.length} on real money</span></h2><div class="card"><div class="list">`;
-  h += strats.map((n, i) => { const r = rows.filter(x => x.strategy === n), s = stats(r), n0 = filledN(r, "settled"), nx = nextReview(n0), b = bench[n] || {};
+  h += strats.map((n, i) => { const r = rows.filter(x => x.strategy === n), s = stats(r), n0 = filledN(r, "settled"), mk0 = (TEST_STRATS.find(x => x[0] === n) || [])[3], nx = (mk0 && mk0.find(m => n0 < m)) || nextReview(n0), b = bench[n] || {};
     const first = r.reduce((a, x) => x.placed && (!a || x.placed < a) ? x.placed : a, null);
     return `<div class="item" style="padding:9px 0;align-items:flex-start"><span class="dot" style="background:${colorOf(n, i)};box-shadow:0 0 6px ${colorOf(n, i)};width:9px;height:9px;border-radius:3px;flex:none;margin-top:5px"></span>
       <div class="main"><div class="t" style="font-size:13.5px">${esc(strategyName(n))} <span class="chip" style="font-size:9.5px;padding:1px 6px;margin-left:4px">${esc(sizeText(n))}</span></div>
       <div class="s" style="white-space:normal">${s.settled.length} settled (${s.wins}-${s.settled.length - s.wins}) · ${s.open.length} open${s.open.length ? " $" + s.exposure.toFixed(2) : ""}${first ? " · since " + esc(fday(first)) : " · no orders yet"}</div>
-      <div class="s" style="white-space:normal">Review ${n0} / ${nx} contracts${b.backtest_c != null ? ` · backtest ${cents(b.backtest_c)}/ct` : ""}</div>
+      <div class="s" style="white-space:normal">Review ${n0} / ${nx} ${mk0 && mk0.includes(nx) ? "fills (early test review)" : "contracts"}${b.backtest_c != null ? ` · backtest ${cents(b.backtest_c)}/ct` : ""}</div>
       <div class="share" style="margin-top:4px"><i style="width:${Math.min(100, 100 * n0 / nx).toFixed(1)}%;background:${colorOf(n, i)}"></i></div></div>
       <div class="r"><span class="${cls(s.pnl)}">${s.settled.length ? money(s.pnl) : "—"}</span><small>${s.contracts ? cents(s.edgeC) + "/ct" : ""}</small></div></div>`; }).join("") || `<div class="empty">Nothing on real money right now</div>`;
   h += `</div>`;
@@ -2557,6 +2673,7 @@ function renderOverview(){
   const bench = (S.data.verdicts || {}).strategies || {};
   h += liveStratsHTML(rows, strats, hist, bench);
   h += driftHTML();
+  h += fadeMonitorHTML();
   if (!isOpen("strat")) h += moreBtn("strat", `Details for each strategy`);
   else { h += `<div class="grid cols2">`;
   strats.forEach((name, i) => {

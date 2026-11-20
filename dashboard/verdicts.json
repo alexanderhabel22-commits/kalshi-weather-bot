@@ -64,8 +64,8 @@
   "strategies": {
     "mentions": {
       "label": "Mentions NO fade",
-      "backtest_c": 4.2,
-      "backtest_note": "Resting NO 75-90c on 'Will X say Y?' words. Old replay Feb 2025-Oct 2026 +4.2c, but the Nov 12 audit found about 0c (+0.9c +-0.9). Paper Nov 12-19; back on REAL money Nov 19 at 1 contract per word (Alex: 'put it back'). Verdict ~Dec 3."
+      "backtest_c": 0.9,
+      "backtest_note": "Resting NO 75-90c on 'Will X say Y?' words. The Nov 12 audit found about 0c of edge (+0.9c +-0.9; the old Feb 2025-Oct 2026 replay said +4.2c). Paper Nov 12-19; back on REAL money Nov 19 at 1 contract per word (Alex: 'put it back'). Verdict ~Dec 3."
     },
     "favorites": {
       "label": "Big-event favorites",
@@ -119,8 +119,8 @@
     },
     "ai_fade": {
       "label": "Best-AI fade",
-      "backtest_c": 5.1,
-      "backtest_note": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1): resting NO at 71-95c. Replay Feb 2025-Nov 2026: +5.1c per fill, 85 fills, 40 of 43 events up. About 4 fills a month. Real money since Nov 14; 6 contracts since Nov 17 (doubled)."
+      "backtest_c": 4.6,
+      "backtest_note": "The Fed/CPI fade rule on Kalshi's weekly Best AI market (KXLLM1): resting NO at 71-95c. Replay Feb 2025-Nov 2026: about +4.6c per fill on ~98 fills (was +5.1c on 85 before a Nov 20 data fix added 13 Sep-Nov fills: 12 wins and one Google upset, -94c on Oct 5). About 4 fills a month. Real money since Nov 14; 6 contracts since Nov 17 (doubled). Rule unchanged (freeze)."
     },
     "rain_evening": {
       "label": "Evening rain fade",
@@ -129,13 +129,13 @@
     },
     "spx_range": {
       "label": "S&P range fade",
-      "backtest_c": 12.8,
-      "backtest_note": "Sell S&P 500 daily-close ranges priced 30c+ overnight (NO bid at 65c on the 6 likeliest ranges, cancelled at 8:45 AM ET). Replay Feb 2025-Nov 2026: +12.8c per fill, 293 fills, 21% lose. About 14 fills a month. Real-money test, 2 contracts since Nov 17 (doubled), first orders Sun Nov 15 4 PM ET."
+      "backtest_c": 5.1,
+      "backtest_note": "Sell S&P 500 daily-close ranges overnight on the 6 likeliest ranges, cancelled at 8:45 AM ET. Since Nov 20 it sells YES at 25c (NO bid 75c; was 35c / 65c with 0 fills on the first 56 orders). Replay at 25c: +5.1c per fill Feb 2025-Nov 2026, +2.0c +-4.2 on 59 fills Sep 16-Nov 19 (~27 fills a month). The old 35c price replayed +12.8c but rarely filled. Thin edge: judged at the 100-contract review; never below 20c. Real money, 2 contracts since Nov 17."
     },
     "ndx_range": {
       "label": "Nasdaq range fade",
-      "backtest_c": 22.4,
-      "backtest_note": "Sell Nasdaq-100 daily-close ranges priced 30c+ overnight (NO bid at 65c on the 6 likeliest ranges, cancelled at 8:45 AM ET). Replay Jan 2025-Nov 2026: +22.4c per fill, 138 fills, 12% lose. About 7 fills a month. Real-money test, 2 contracts since Nov 17 (doubled), first orders Sun Nov 15 ~4 PM ET. Own $5 stop."
+      "backtest_c": 16.3,
+      "backtest_note": "Sell Nasdaq-100 daily-close ranges overnight on the 6 likeliest ranges, cancelled at 8:45 AM ET. Since Nov 20 it sells YES at 30c (NO bid 70c; was 35c / 65c with 0 fills on the first 30 orders). Replay at 30c: +16.3c per fill Jan 2025-Sep 2026, +18.5c +-7.3 on 19 fills Sep 16-Nov 19 (~9 fills a month). The old 35c price replayed +22.4c but rarely filled. Real money, 2 contracts since Nov 17, own $5 stop."
     },
     "quake_no": {
       "label": "Earthquake NO test",
@@ -409,6 +409,41 @@
       "verdict": "LIVE",
       "area": "Main bot",
       "summary": "Alex: 'we should do the earthquake one'. NO on the 6.6/7.0 'biggest quake' strikes late in quiet UTC days. Weak, sliced lead (+6.6c on 38 trades). 2 contracts real, hard $4 cap; paper twin logs the same rule. Reviews at 20 and 50 fills."
+    },
+    {
+      "date": "2026-11-20",
+      "title": "S&P and Nasdaq range sell price lowered",
+      "verdict": "LIVE",
+      "area": "Main bot",
+      "summary": "0 fills on the first 56 orders at 35c. Alex: 'drop prices a bit to try and get some fills'. S&P now sells YES at 25c (replay +2 to +5c, thin), Nasdaq at 30c (replay +16 to +18c). Same 2 contracts, caps and stops. Judged at the 100-contract review."
+    },
+    {
+      "date": "2026-11-20",
+      "title": "New-listing radar + edge-fade watch",
+      "verdict": "PAPER",
+      "area": "Platform",
+      "summary": "Twice an hour: every new Kalshi listing gets 3 known rules as 1-contract paper bets for 14 days (first: daily gold, silver, copper, Brent, TTF gas, diesel). Push when one clears +3c over 10 fills; real money only with Alex's OK. Every real strategy now has a pre-written kill rule. Farm series (corn, wheat, cattle...) watched; not listed yet."
+    },
+    {
+      "date": "2026-11-20",
+      "title": "Shipping counts paper test",
+      "verdict": "PAPER",
+      "area": "Main bot",
+      "summary": "Weekly ship-transit counts (Hormuz, Suez, Panama, Bab el-Mandeb) vs an IMF PortWatch forecast. Replay +4.7c +-8.3, not significant. 1 contract on paper; first look Nov 24, verdict at 100 settled fills (~Dec 15)."
+    },
+    {
+      "date": "2026-11-20",
+      "title": "Jobs/GDP/Starship fade on real money",
+      "verdict": "LIVE",
+      "area": "Main bot",
+      "summary": "The Fed/CPI fade rule on unemployment, GDP and Starship markets: +13.0c on 126 replay fills, zero losing fills, walk-forward +12.6c. Alex: 'run em live again, this is test money'. 2 contracts, hard $6 cap incl. open bets, paper twin at 1 contract. Reviews at 10 and 30 fills."
+    },
+    {
+      "date": "2026-11-20",
+      "title": "Best-AI fade replay re-checked",
+      "verdict": "INFO",
+      "area": "Main bot",
+      "summary": "A price-data bug hid Sep 14-Nov 9 from the old replay. With it fixed the rule would have filled 13 more times (12 wins, one -94c upset), so the replay drops from +5.1c to about +4.6c. Still positive; no rule change. Live logging was not affected."
     }
   ],
   "checkpoints": [
@@ -437,22 +472,6 @@
       "title": "Hourly longshot re-test"
     },
     {
-      "date": "2026-12-03",
-      "title": "Mentions paper judged"
-    },
-    {
-      "date": "2026-11-26",
-      "title": "Late-day lows 100-contract review"
-    },
-    {
-      "date": "2027-01-25",
-      "title": "Renew the scan timer token (expires Feb 2)"
-    },
-    {
-      "date": "2027-02-01",
-      "title": "Econ weak leads re-test"
-    },
-    {
       "date": "2026-11-18",
       "title": "Parlay selling + market making paper verdicts"
     },
@@ -465,8 +484,28 @@
       "title": "Rewards test: last payout check (9 AM ET)"
     },
     {
+      "date": "2026-11-23",
+      "title": "Radar: first new commodity dailies settle (5 PM ET)"
+    },
+    {
       "date": "2026-11-24",
       "title": "Source-lag + casual-flow paper verdicts"
+    },
+    {
+      "date": "2026-11-24",
+      "title": "Shipping counts paper: first look (first week settles)"
+    },
+    {
+      "date": "2026-11-26",
+      "title": "Late-day lows 100-contract review"
+    },
+    {
+      "date": "2026-11-26",
+      "title": "Main-bot check-in (10 AM ET)"
+    },
+    {
+      "date": "2026-11-27",
+      "title": "15-min natural gas paper re-check"
     },
     {
       "date": "2026-11-28",
@@ -477,8 +516,32 @@
       "title": "Copycat boss scored vs plain rule"
     },
     {
+      "date": "2026-12-03",
+      "title": "Mentions verdict (real 1 ct since Nov 19)"
+    },
+    {
       "date": "2026-12-09",
       "title": "Fed decision (Dec 9-10): Fed fade fills"
+    },
+    {
+      "date": "2026-12-15",
+      "title": "Shipping counts verdict (100 settled fills)"
+    },
+    {
+      "date": "2026-12-15",
+      "title": "Gas/claims fade + election favorites verdicts (mid-Dec)"
+    },
+    {
+      "date": "2027-01-15",
+      "title": "Shipping weekly replay re-run (mid-Jan)"
+    },
+    {
+      "date": "2027-01-25",
+      "title": "Renew the scan timer token (expires Feb 2)"
+    },
+    {
+      "date": "2027-02-01",
+      "title": "Econ weak leads re-test"
     }
   ]
 }

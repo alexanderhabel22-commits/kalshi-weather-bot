@@ -21,19 +21,20 @@ from .util import Config, read_json, write_json
 
 log = logging.getLogger("wxbot")
 
-# Replay profit per contract after fees, in cents (sources: project analysis files, Nov 12-14).
+# Replay profit per contract after fees, in cents (sources: project analysis files, Nov 12-20).
 REPLAY_C = {
     "favorites": 2.0,        # main-bot audit: ~+2.0c on reachable markets (last-24h entry replay +4.6c)
     "macro_fade": 8.7,       # main-bot audit: Fed/CPI fade +8.7c after fees
     "macro_wide": 6.6,       # gas + jobless-claims fade replay
-    "ai_fade": 5.0,          # KXLLM1 fade lead
+    "ai_fade": 4.6,          # KXLLM1 fade: +5.1c -> ~+4.6c after the Nov 20 price-data fix (13 more fills)
     "weather_late": 3.9,     # late-day lows replay "need" (+4-6c)
     "rain_evening": 6.1,     # evening rain fade replay +6.1c
-    "spx_range": 12.8,       # S&P range fade, per fill
-    "ndx_range": 22.0,       # Nasdaq-100 range fade, per fill
+    "spx_range": 5.1,        # S&P range fade at the Nov 20 25c sell price (was 12.8 at 35c, which rarely filled)
+    "ndx_range": 16.3,       # Nasdaq range fade at the Nov 20 30c sell price (was 22.0 at 35c)
     "favorites_mid": 4.3,    # Entertainment 300k-1M events, last-24h replay (Nov 19)
     "quake_no": 6.6,         # biggest-quake NO on 6.6/7.0, sliced replay (Nov 20), weak
     "fade_leads": 13.0,      # U3/GDP/Starship fade replay +13.0c, 0 losses (Nov 20); fair ~+7 to +12c
+    "mentions": 0.9,         # Mentions NO: Nov 12 audit +0.9c +-0.9 (real again Nov 19, verdict ~Dec 3)
     "favorites_wide": None,  # no clean replay number: only the "losing" check applies
 }
 MIN_EVENTS = 20
