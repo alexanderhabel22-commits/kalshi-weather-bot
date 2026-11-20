@@ -16,7 +16,7 @@
    "cat": "Mentions",
    "event": "KXEARNINGSMENTIONINTU-26NOV19",
    "vol24": 1424.01,
-   "casual": null
+   "casual": 0.675
   },
   "KXEARNINGSMENTIONROST-26NOV19-NORT": {
    "cat": "Mentions",
@@ -28,7 +28,7 @@
    "cat": "Mentions",
    "event": "KXEARNINGSMENTIONINTU-26NOV19",
    "vol24": 814.44,
-   "casual": 0.635
+   "casual": 0.371
   },
   "KXEARNINGSMENTIONARITZIA-27JAN14-RUNW": {
    "cat": "Mentions",
@@ -40,7 +40,7 @@
    "cat": "Climate and Weather",
    "event": "KXRAIN-26NOV19",
    "vol24": 99426.29,
-   "casual": 0.052
+   "casual": 0.057
   },
   "KXNASDAQ100U-26NOV19H1600-T26589.99": {
    "cat": "Financials",
@@ -52,7 +52,7 @@
    "cat": "Entertainment",
    "event": "KXMC-GTA6",
    "vol24": 43844.55,
-   "casual": 0.276
+   "casual": 0.252
   },
   "KXAAAGASW-26NOV23-3.6300": {
    "cat": "Economics",
@@ -76,37 +76,37 @@
    "cat": "Entertainment",
    "event": "KXRT-HUN",
    "vol24": 24108.85,
-   "casual": null
+   "casual": 1.0
   },
   "KXAAAGASD-26NOV20-3.6900": {
    "cat": "Economics",
    "event": "KXAAAGASD-26NOV20",
    "vol24": 23285.31,
-   "casual": null
+   "casual": 0.023
   },
   "KXRT-IPL-87": {
    "cat": "Entertainment",
    "event": "KXRT-IPL",
    "vol24": 19587.02,
-   "casual": 0.168
+   "casual": 0.178
   },
   "KXHIGHTSFO-26NOV19-B56.5": {
    "cat": "Climate and Weather",
    "event": "KXHIGHTSFO-26NOV19",
    "vol24": 17110.93,
-   "casual": 0.478
+   "casual": 0.537
   },
   "KXHIGHLAX-26NOV19-B68.5": {
    "cat": "Climate and Weather",
    "event": "KXHIGHLAX-26NOV19",
    "vol24": 16695.24,
-   "casual": 0.196
+   "casual": 0.836
   },
   "KXANTHSHARE-26NOV23-6.0": {
    "cat": "Science and Technology",
    "event": "KXANTHSHARE-26NOV23",
    "vol24": 15728.05,
-   "casual": null
+   "casual": 0.147
   },
   "KXINXU-26NOV19H1600-T7184.9999": {
    "cat": "Financials",
@@ -118,7 +118,7 @@
    "cat": "Science and Technology",
    "event": "KXANTHSHARE-26NOV23",
    "vol24": 13961.08,
-   "casual": null
+   "casual": 1.0
   }
  },
  "by_category": {
@@ -150,10 +150,10 @@
    "maker_fee_c": 0.26
   },
   "Mentions": {
-   "fills": 153,
+   "fills": 155,
    "market_hours": 3.7,
-   "fills_per_market_hour": 41.61,
-   "edge_at_fill_c": -1.4,
+   "fills_per_market_hour": 42.16,
+   "edge_at_fill_c": -1.38,
    "markout_5m_c": -1.7,
    "markout_30m_c": -1.09,
    "maker_fee_c": 0.4
@@ -186,10 +186,10 @@
    "maker_fee_c": 0.35
   },
   "Financials": {
-   "fills": 87,
+   "fills": 88,
    "market_hours": 1.4,
-   "fills_per_market_hour": 63.42,
-   "edge_at_fill_c": -1.68,
+   "fills_per_market_hour": 64.15,
+   "edge_at_fill_c": -1.66,
    "markout_5m_c": -2.71,
    "markout_30m_c": -2.05,
    "maker_fee_c": 0.32
@@ -227,21 +227,21 @@
    "maker_fee_c": 0.33
   },
   "50plus|yes": {
-   "fills": 33,
+   "fills": 34,
    "settled": 22,
    "markout_30m_c": -1.41,
    "settled_c": -8.5,
    "maker_fee_c": 0.31
   },
   "under20|no": {
-   "fills": 152,
+   "fills": 153,
    "settled": 48,
    "markout_30m_c": -2.44,
    "settled_c": -12.48,
    "maker_fee_c": 0.36
   },
   "under20|yes": {
-   "fills": 98,
+   "fills": 99,
    "settled": 35,
    "markout_30m_c": -0.2,
    "settled_c": -4.71,
@@ -270,8 +270,8 @@
   "done": true,
   "candidates": 1165
  },
- "pending": 4,
- "held": 300,
+ "pending": 10,
+ "held": 309,
  "inventory": {
   "KXNEWZEALANDPARLI-26DEC31-NAT": -2,
   "KXRAIN-26NOV11-CMH": 0,
@@ -368,7 +368,7 @@
   "KXTRUTHSOCIAL-26NOV14-T60": 0,
   "KXHIGHDEN-26NOV14-B52.5": -1,
   "KXTSAW-26NOV15-A2.25": -1,
-  "KXRT-IPL-87": -3,
+  "KXRT-IPL-87": -4,
   "KXBOND-30-CAL": 1,
   "KXFTNMENTION-26NOV15-AI": 1,
   "KXMIDTERMMOV-AKSENMPEL-P5": 1,
@@ -447,7 +447,11 @@
   "KXEARNINGSMENTIONWMT-26NOV19-SNAP": 1,
   "KXEARNINGSMENTIONKLAR-27FEB19-DELI": -1,
   "KXBARRMENTION-26NOV19-LIQU": -1,
-  "KXINXU-26NOV19H1000-T7364.9999": -1
+  "KXINXU-26NOV19H1000-T7364.9999": -1,
+  "KXEARNINGSMENTIONINTU-26NOV19-QUIC2": -1,
+  "KXDANCINGWITHTHESTARS-26DEC31-CWOO": -1,
+  "KXRT-HUN-62": 1,
+  "KXANTHSHARE-26NOV23-5.9": -1
  },
- "at": "2026-11-19T22:31:30+00:00"
+ "at": "2026-11-20T00:01:44+00:00"
 }
