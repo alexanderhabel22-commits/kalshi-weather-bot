@@ -80,4 +80,5 @@ def test_config_is_one_contract_live():
     c = load_config()
     sp = c.raw["trading"]["spx_range"]
     assert sp["live"] is True and sp["contracts"] == sp["max_contracts"] == 2   # x2 Nov 17
-    assert sp["max_price"] == 0.65 and sp["sell_yes"] == 0.35
+    assert sp["max_price"] == 0.75 and sp["sell_yes"] == 0.25      # Nov 20 fill test (was 35c)
+    assert abs(sp["max_price"] - (1 - sp["sell_yes"])) < 1e-9     # the resting NO bid must fit the band

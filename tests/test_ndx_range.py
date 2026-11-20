@@ -68,7 +68,9 @@ def test_config_is_one_contract_live():
     c = load_config()
     nd = c.raw["trading"]["ndx_range"]
     assert nd["live"] is True and nd["contracts"] == nd["max_contracts"] == 2   # x2 Nov 17
-    assert nd["max_price"] == 0.65 and nd["sell_yes"] == 0.35 and nd["max_loss_usd"] == 5.0
-    # both range rules together stay small: 12 resting bids at 65c
+    assert nd["max_price"] == 0.70 and nd["sell_yes"] == 0.30 and nd["max_loss_usd"] == 5.0   # Nov 20 (was 35c)
+    assert abs(nd["max_price"] - (1 - nd["sell_yes"])) < 1e-9
+    # both range rules together stay small: 12 resting bids x 2 ct at 70-75c = $17.40
     sp = c.raw["trading"]["spx_range"]
-    assert (sp["n_markets"] + nd["n_markets"]) * 0.65 <= 8.0
+    cost = sum(x["n_markets"] * x["contracts"] * x["max_price"] for x in (sp, nd))
+    assert cost <= 17.5

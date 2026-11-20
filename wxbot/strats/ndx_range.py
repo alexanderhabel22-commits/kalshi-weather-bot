@@ -9,7 +9,8 @@ when a later trade printed above our price), 1c fee:
     Jan 2025 - Sep 2026: sell YES at 35c -> 138 fills, +22.4c per fill (+-3.2), 12% lose
     Sep 8 - Nov 13 2026:  25 fills, +30.0c; every period positive.
     The same rule after the open loses (-3 to -6c): orders are cancelled at 8:45 AM ET.
-About 7 fills a month. 1-CONTRACT REAL test (Alex, Nov 14 4:19 PM ET: "Ok sure get it going").
+About 7 fills a month. Nov 20, 2026: config sell_yes 35c -> 30c as a fill test (Alex OK);
+live-rule replay Sep 16-Nov 19: 30c 19 fills +18.5c +-7.3 vs 35c 16 fills +27.7c. 1-CONTRACT REAL test (Alex, Nov 14 4:19 PM ET: "Ok sure get it going").
 
 Own loss stop: settled real P&L at or below -$max_loss_usd (or -max_loss_pct of the
 bankroll, whichever is smaller) -> no new real orders, one push.

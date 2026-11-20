@@ -239,14 +239,17 @@ record earns it. Be candid about odds and risk; no hype.
   order is cancelled at 8:45 AM ET (before the open) by the trader's generic `cancel_due` hook
   (`trader.expire_resting`; live rows stay resting until `sync_live` reads the cancel back).
   Replay Feb 2025-Nov 2026, back-of-queue: +12.8c per fill, 293 fills, 21% lose; ~14 fills/month.
+  **Nov 20: sell price 35c -> 25c** (NO bid 75c) as a fill test, Alex OK; live-rule replay Sep 16-Nov 19:
+  25c 59 fills +2.0c +-4.2 (~27 fills/mo), 35c only 16 fills. Thin: judge at the 100-contract review.
   Kalshi stock perps (leverage) were checked the same day: NO edge. Research: `research_spx/RESULTS.md`.
 - **Nasdaq range fade (REAL 1 contract, Nov 15):** `wxbot/strats/ndx_range.py`,
   `[trading.ndx_range]` (Alex OK Nov 14 4:19 PM ET "Ok sure get it going"). The spx_range rule on
   KXNASDAQ100 (100-point ranges); reuses `spx_range.candidates`/`cancel_due`. Replay Jan 2025-Nov 2026,
   back-of-queue: +22.4c per fill, 138 fills, 12% lose, every period positive; ~7 fills/month. After
   the open the same rule loses. Own stop: -$5 settled real money (or -10% of bankroll if smaller),
-  one push, state in `data/ndx_range_state.json`. Both range rules together: at most 12 resting
-  NO bids at 65c = $7.80. The same rule on FX daily ranges and BTC/ETH hourly ranges loses
+  one push, state in `data/ndx_range_state.json`. **Nov 20: sell price 35c -> 30c** (NO bid 70c), fill
+  test, Alex OK; replay Sep 16-Nov 19: 30c 19 fills +18.5c +-7.3 (~9/mo). Both range rules together: at
+  most 12 resting NO bids x 2 ct at 70-75c = $17.40. The same rule on FX daily ranges and BTC/ETH hourly ranges loses
   (`research_ndx/RESULTS.md`).
 - **Earthquake NO test (REAL 2 contracts, Nov 20, hard $4 cap):** `wxbot/strats/quake_no.py`,
   `[trading.quake_no]` (Alex, Nov 20 12:23-12:24 AM ET: "we should do the earthquake one", "maybe 2
