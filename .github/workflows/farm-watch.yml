@@ -1,0 +1,58 @@
+name: farm-watch
+
+# Watches for Kalshi's new farm series (corn, soybeans, wheat, live cattle, cocoa, coffee:
+# daily + weekly) to list their first markets. Read-only public Kalshi data; never trades,
+# never loads the Kalshi key. Twice a day (~30 s each). ONE phone push the first time a
+# series lists, otherwise silent. State goes to the farm-watch-data branch, never main.
+on:
+  schedule:
+    - cron: "47 14 * * *"   # 9:47 AM ET (EST)
+    - cron: "47 22 * * *"   # 5:47 PM ET (EST)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: farm-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Load previous state
+        run: |
+          if git fetch -q origin farm-watch-data 2>/dev/null; then
+            git worktree add -q -f /tmp/data origin/farm-watch-data
+          else
+            mkdir -p /tmp/data
+          fi
+      - name: Check listings
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python research_farm/farm_watch.py /tmp/data/state
+      - name: Save to farm-watch-data branch
+        run: |
+          git config user.name "weather-bot"
+          git config user.email "weather-bot@users.noreply.github.com"
+          mkdir -p /tmp/keep && cp -r /tmp/data/state /tmp/keep/
+          for i in 1 2 3 4 5; do
+            if git fetch -q origin farm-watch-data 2>/dev/null; then
+              git checkout -q -f -B data origin/farm-watch-data
+            else
+              git checkout -q -f --orphan data && git rm -rq --cached . || true
+            fi
+            git clean -fdxq
+            rm -rf state && cp -r /tmp/keep/state state
+            git add state
+            git commit -qm "farm watch $(date -u +%Y%m%d-%H%M) [skip ci]" || exit 0
+            git push -q origin HEAD:farm-watch-data && exit 0
+            sleep $((i * 7))
+          done
+          exit 1
