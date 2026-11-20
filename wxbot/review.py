@@ -36,7 +36,7 @@ NAMES = {"KXBTC15M": "BTC", "KXSILVER15M": "Silver", "KXCOPPER15M": "Copper",
          "mentions": "Mentions", "favorites": "Favorites", "macro_fade": "Fed/CPI",
          "macro_wide": "Gas/claims fade", "ai_fade": "Best-AI fade", "favorites_wide": "Election favorites", "favorites_late": "Favorites, last 24h (paper)", "favorites_mid": "Mid-size Entertainment favorites",
          "weather": "Weather", "weather_late": "Late-day weather", "locks": "LOCKs",
-         "rain_evening": "Evening rain fade", "spx_range": "S&P range fade", "ndx_range": "Nasdaq range fade", "quake_no": "Earthquake NO test", "quake_no_paper": "Earthquake NO (paper twin)", "ship_paper": "Shipping counts (paper)", "fade_leads_paper": "Jobs/GDP/Starship fade (paper)"}
+         "rain_evening": "Evening rain fade", "spx_range": "S&P range fade", "ndx_range": "Nasdaq range fade", "quake_no": "Earthquake NO test", "quake_no_paper": "Earthquake NO (paper twin)", "ship_paper": "Shipping counts (paper)", "fade_leads": "Jobs/GDP/Starship fade", "fade_leads_paper": "Jobs/GDP/Starship fade (paper)"}
 KELLY = 0.25          # quarter Kelly
 MAX_MULT = 3          # never recommend more than 3x the current size in one step
 CUT_BELOW = -0.05     # under -5c per contract -> back to paper

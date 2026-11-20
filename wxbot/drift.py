@@ -33,6 +33,7 @@ REPLAY_C = {
     "ndx_range": 22.0,       # Nasdaq-100 range fade, per fill
     "favorites_mid": 4.3,    # Entertainment 300k-1M events, last-24h replay (Nov 19)
     "quake_no": 6.6,         # biggest-quake NO on 6.6/7.0, sliced replay (Nov 20), weak
+    "fade_leads": 13.0,      # U3/GDP/Starship fade replay +13.0c, 0 losses (Nov 20); fair ~+7 to +12c
     "favorites_wide": None,  # no clean replay number: only the "losing" check applies
 }
 MIN_EVENTS = 20
