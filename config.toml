@@ -331,6 +331,27 @@ exit = "hold"
 max_week_contracts = 40
 max_market_contracts = 2
 
+[trading.ship_paper]
+# PAPER ONLY (Nov 20, 2026; Alex "Whatever you think"). Never live without Alex's OK.
+# wxbot/strats/ship_paper.py. Weekly shipping chokepoint counts (Hormuz, Suez, Panama, Bab el-Mandeb):
+# IMF PortWatch 14-day average x 7 + negative binomial; buy the side worth 5c+ more than its price
+# after the taker fee, until the week's Sunday ends; one entry per market; hold to settlement.
+# Replay Sep-Nov 2026: +4.7c +- 8.3 (216 trades), +7.0c +- 7.5 on the full candle window (243): not
+# significant, Suez carries it, Panama loses. ~20-25 paper fills a week.
+# Reviews: first look at 20 settled fills (~Dec 1), verdict at 100 (~Dec 22), plus the free re-run mid-Jan.
+enabled = true
+live = false
+taker = true
+contracts = 1
+max_contracts = 1
+min_price = 0.03
+max_price = 0.97
+max_open_pct = 0.40
+max_event_pct = 0.20
+exit = "hold"
+max_week_contracts = 60
+max_market_contracts = 1
+
 [trading.locks]
 # Weather LOCKs, PAPER for now. Alex OK'd real money on Nov 5, then paused it the
 # same evening after a bad 6-hour METAR group made a false Philadelphia LOCK.
