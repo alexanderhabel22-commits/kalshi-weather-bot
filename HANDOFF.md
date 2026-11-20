@@ -263,12 +263,18 @@ record earns it. Be candid about odds and risk; no hype.
   orders (`data/quake_no_state.json`). Paper twin `quake_no_paper` runs the same rule uncapped.
   Reviews at 20 and 50 fills (real + twin). One big-quake day costs ~$1.80 per 2-contract bet.
   Dashboard: TESTS tab "Real-money tests" table + earthquake card (cap meter, twin).
-- **Jobs/GDP/Starship fade paper test (PAPER ONLY, Nov 20, 1 ct):** `wxbot/strats/fade_leads_paper.py`,
-  `[trading.fade_leads_paper]` (live = false). The macro_fade rule unchanged on KXU3, KXGDP,
-  KXSPACEXSTARSHIP. Replay Dec 2024-Nov 2026 +13.0c on 126 fills, 39/39 events up, zero losing fills;
-  walk-forward (top series picked on pre-Sep-2025 data) +12.6c on 68 fills after it vs -2.9c for the other
-  ~40 series. ~5 fills/month. Reviews at 10 / 30 settled fills; adding them to the real fade waits for the
-  Fed/CPI fade's 500-ct review (freeze) and Alex's OK. Research: `analysis/fade-leads/RESULTS.md` (project files).
+- **Jobs/GDP/Starship fade (REAL 2 contracts, Nov 20, hard $6 cap):** `wxbot/strats/fade_leads.py`,
+  `[trading.fade_leads]` (Alex, Nov 20 2:13 PM ET: "Run em live again, this is test money"). The macro_fade
+  rule unchanged (resting NO at best bid + 1c, 71-95c, 2 h-21 days out, up to 3 markets/event) on KXU3,
+  KXGDP, KXSPACEXSTARSHIP. Replay Dec 2024-Nov 2026 +13.0c on 126 fills, 39/39 events up, zero losing
+  fills; walk-forward (top series picked on pre-Sep-2025 data) +12.6c on 68 fills after it vs -2.9c for the
+  other ~40 series. ~5 fills/month. Real risk: one surprise release (~86c x 2 on up to 3 markets at once).
+  Cap: settled real P&L + cost of every open/resting real order + the new order stays within $6; once
+  settled losses leave no room, one push and no more real orders (`data/fade_leads_state.json`). Radar
+  kill rule `fade_leads`. Paper twin `fade_leads_paper` (`wxbot/strats/fade_leads_paper.py`, 1 ct, no cap,
+  live = false; started as the paper-only test in PR #334) shares the same Kalshi read. Reviews at 10 / 30
+  settled fills (real + twin). Research: `analysis/fade-leads/RESULTS.md` (project files). Dashboard: TESTS
+  tab "Real-money tests" row + "Jobs / GDP / Starship fade" card (cap meter, real vs paper per series).
   NOTE: older replays (fade-events, fade-events-2, edge-hunt-3 fetch.py) read candle `close` only; the live
   candlestick endpoint (markets closing after Sep 13 2026) returns `close_dollars`, so those replays silently
   had NO data after Sep 13. Fixed in analysis/fade-leads/scripts/fetch.py.

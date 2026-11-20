@@ -331,14 +331,35 @@ exit = "hold"
 max_week_contracts = 40
 max_market_contracts = 2
 
+[trading.fade_leads]
+# 2-CONTRACT REAL-MONEY TEST from Nov 20, 2026 (Alex, Nov 20 2:13 PM ET: "Run em live again, this is
+# test money"). wxbot/strats/fade_leads.py. The macro_fade rule (resting NO at best bid + 1c, 71-95c,
+# 2 h-21 days before close) on KXU3 (unemployment above X), KXGDP (GDP above X), KXSPACEXSTARSHIP
+# (Starship launches before date X). Replay Dec 2024-Nov 2026: +13.0c on 126 fills, 39/39 events up,
+# ZERO losing fills; walk-forward +12.6c on 68 fills. Real risk: one surprise release (~86c x 2 per
+# market). ~5 fills a month.
+# HARD CAP $6: settled real P&L + every open order/position's cost must stay within $6 (one push, then off).
+# Reviews at 10 and 30 fills (with the paper twin below), then the usual 100/300/500.
+enabled = true
+live = true
+series = ["KXU3", "KXGDP", "KXSPACEXSTARSHIP"]
+contracts = 2
+max_contracts = 2
+max_markets_per_event = 3
+min_price = 0.71
+max_price = 0.95
+min_hours = 2
+max_hours = 504
+min_volume = 500
+max_loss_usd = 6.0               # hard total loss cap incl. open bets
+max_open_pct = 0.15
+max_event_pct = 0.12             # 3 markets x 2 contracts at ~90c = ~$5.40
+max_week_contracts = 30
+max_market_contracts = 2
+
 [trading.fade_leads_paper]
-# PAPER ONLY (Nov 20, 2026). Never live without Alex's OK. wxbot/strats/fade_leads_paper.py.
-# The macro_fade rule (resting NO at best bid + 1c, 71-95c, 2 h-21 days before close) on three single
-# series that stood out in edge hunt round 3: KXU3 (unemployment above X), KXGDP (GDP above X),
-# KXSPACEXSTARSHIP (Starship launch before date X). Replay Dec 2024-Nov 2026: +13.0c on 126 fills,
-# 39/39 events up, ZERO losing fills; walk-forward (picked on data before Sep 2025) +12.6c on 68 fills
-# after it while the other ~40 series lost -2.9c. ~5 fills a month in total. Freeze: adding them to
-# the real fade waits for the Fed/CPI fade's 500-contract review. Reviews at 10 and 30 settled fills.
+# PAPER twin of fade_leads: same rule, 1 contract, no dollar cap, never live. wxbot/strats/fade_leads_paper.py.
+# Started Nov 20 as the paper-only test (PR #334); keeps logging for the 10/30-fill reviews.
 enabled = true
 live = false
 series = ["KXU3", "KXGDP", "KXSPACEXSTARSHIP"]
@@ -736,5 +757,6 @@ rain_evening = {min_fills = 20, max_cpc = -5.0}
 spx_range = {min_fills = 20, max_cpc = -5.0}
 ndx_range = {min_fills = 20, max_cpc = -5.0, max_loss_usd = 5.0}
 quake_no = {min_fills = 20, max_cpc = -5.0, max_loss_usd = 4.0}
+fade_leads = {min_fills = 10, max_cpc = -5.0, max_loss_usd = 6.0}
 mentions = {min_fills = 30, max_cpc = -5.0}
 mentions_wide = {min_fills = 20, max_cpc = -5.0}

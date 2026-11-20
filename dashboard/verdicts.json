@@ -147,10 +147,15 @@
       "backtest_c": 6.6,
       "backtest_note": "Same rule as the real earthquake test, logged on paper with no cap so the 20/50-fill reviews have data even if the real test stops."
     },
+    "fade_leads": {
+      "label": "Jobs/GDP/Starship fade",
+      "backtest_c": 13.0,
+      "backtest_note": "The Fed/CPI fade rule (resting NO 71-95c, 2 h-21 days out) on KXU3 unemployment, KXGDP and KXSPACEXSTARSHIP. Replay Dec 2024-Nov 2026 +13.0c on 126 fills, 39/39 releases up, zero losing fills; walk-forward +12.6c on 68 fills. Fair long-run ~+7 to +12c: the real risk is one surprise release. REAL money 2 contracts from Nov 20 (Alex: 'this is test money'), hard $6 cap incl. open bets, one push when hit. Reviews at 10 and 30 settled fills."
+    },
     "fade_leads_paper": {
       "label": "Jobs/GDP/Starship fade (paper)",
       "backtest_c": 13.0,
-      "backtest_note": "The Fed/CPI fade rule (resting NO 71-95c, 2 h-21 days out) on KXU3 unemployment, KXGDP and KXSPACEXSTARSHIP. Replay Dec 2024-Nov 2026 +13.0c on 126 fills, 39/39 releases up, zero losing fills; walk-forward (picked before Sep 2025) +12.6c on 68 fills after, other ~40 series -2.9c. Fair long-run figure ~+7 to +12c (one surprise release would cost 2-3 fills). ~5 fills/month. PAPER ONLY from Nov 20; reviews at 10 and 30 settled fills; real money waits for the Fed/CPI fade 500-contract review and Alex OK."
+      "backtest_note": "The Fed/CPI fade rule (resting NO 71-95c, 2 h-21 days out) on KXU3 unemployment, KXGDP and KXSPACEXSTARSHIP. Replay Dec 2024-Nov 2026 +13.0c on 126 fills, 39/39 releases up, zero losing fills; walk-forward (picked before Sep 2025) +12.6c on 68 fills after, other ~40 series -2.9c. Fair long-run figure ~+7 to +12c (one surprise release would cost 2-3 fills). ~5 fills/month. Paper twin (1 ct, no cap) of the real 2-ct test from Nov 20; reviews at 10 and 30 settled fills."
     },
     "ship_paper": {
       "label": "Shipping counts (paper)",
