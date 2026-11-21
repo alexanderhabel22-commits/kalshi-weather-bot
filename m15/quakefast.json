@@ -1,5 +1,5 @@
 {
- "at": "2026-11-21 02:20:08",
+ "at": "2026-11-21 02:25:08",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -79,69 +79,69 @@
  "latency_m6": {},
  "feeds": {
   "bmkg": {
-   "ok": 571,
+   "ok": 586,
    "err": 0,
-   "last_ok": "2026-11-21 02:19:52",
+   "last_ok": "2026-11-21 02:24:52",
    "last_err": null
   },
   "emsc": {
    "ok": 478,
-   "err": 284,
+   "err": 304,
    "last_ok": "2026-11-21 01:09:07",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 105,
+   "ok": 108,
    "err": 0,
-   "last_ok": "2026-11-21 02:19:27",
+   "last_ok": "2026-11-21 02:24:11",
    "last_err": null
   },
   "geonet": {
-   "ok": 381,
+   "ok": 391,
    "err": 0,
-   "last_ok": "2026-11-21 02:19:52",
+   "last_ok": "2026-11-21 02:24:52",
    "last_err": null
   },
   "gfz": {
-   "ok": 1142,
+   "ok": 1172,
    "err": 0,
-   "last_ok": "2026-11-21 02:20:02",
+   "last_ok": "2026-11-21 02:25:02",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 374,
-   "err": 7,
-   "last_ok": "2026-11-21 02:19:52",
-   "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
+   "ok": 378,
+   "err": 13,
+   "last_ok": "2026-11-21 02:24:52",
+   "last_err": "502 Server Error: Bad Gateway for url: https://geofon.gfz.de/fdsnws/event/1/query?format=text&minmag=5.5&starttime=2026-"
   },
   "jma": {
-   "ok": 381,
+   "ok": 391,
    "err": 0,
-   "last_ok": "2026-11-21 02:19:52",
+   "last_ok": "2026-11-21 02:24:52",
    "last_err": null
   },
   "kalshi": {
-   "ok": 1506,
+   "ok": 1546,
    "err": 4,
-   "last_ok": "2026-11-21 02:19:54",
+   "last_ok": "2026-11-21 02:24:57",
    "last_err": null
   },
   "ntwc": {
-   "ok": 762,
+   "ok": 782,
    "err": 0,
-   "last_ok": "2026-11-21 02:20:07",
+   "last_ok": "2026-11-21 02:25:07",
    "last_err": null
   },
   "ptwc": {
-   "ok": 762,
+   "ok": 782,
    "err": 0,
-   "last_ok": "2026-11-21 02:20:07",
+   "last_ok": "2026-11-21 02:25:07",
    "last_err": null
   },
   "usgs": {
-   "ok": 1142,
+   "ok": 1172,
    "err": 0,
-   "last_ok": "2026-11-21 02:20:02",
+   "last_ok": "2026-11-21 02:25:02",
    "last_err": null
   }
  }
