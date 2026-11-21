@@ -63,6 +63,15 @@ DEFAULT_FROZEN = {
     "coffee": {"series": ["KXCOFFEE"], "close": "13:30", "open": "04:15", "sunday_open": None},
 }
 DEFAULT_KILL = {"min_fills": 20, "max_cpc": -5.0}
+# Series groups that were listed before, went quiet, and matter if they come BACK (a plain
+# new-listing check never fires again for a series it has already seen). Nov 20, 2026: the weekly
+# FX series behind the fx_paper lead stopped listing after ~Oct 30.
+DEFAULT_RELIST = {"fx_weekly": ["KXUSDMXNAW", "KXUSDJPYAW", "KXGBPUSDAW", "KXEURUSDAW", "KXUSDCADAW",
+                                "KXAUDUSDAW"]}
+RELIST_TEXT = {"fx_weekly": "Kalshi's weekly FX markets (\"USD/MXN above K at 5 PM Friday\" and 5 other "
+                            "pairs) are listing again. The fx_paper test is logging them on paper "
+                            "now (replay +10c/ct over 17 weeks). Nothing to do; real money only "
+                            "after 8 settled weeks and your OK."}
 # "worth a real test" bar for a paper rule on one new series
 PROMISE_FILLS, PROMISE_CPC = 10, 3.0
 RULES = ("longshot_no", "fav_24h", "frozen_bracket")
@@ -131,6 +140,26 @@ def diff_listings(db: dict, events: list[dict], now: datetime) -> list[dict]:
     db["open_events"] = len(events)
     db["open_series"] = len(by_series)
     return new
+
+
+def relist_check(db: dict, cfg: Config, events: list[dict], now: datetime) -> list[dict]:
+    """Groups of watched series that have open events again after having none. Returns the
+    groups that just came back (not on the first look, which only records the state)."""
+    groups = cfg.get("radar", "relist_watch", DEFAULT_RELIST) or {}
+    open_s = {e.get("series_ticker") or series_of(e.get("event_ticker", "")) for e in events}
+    st = db.setdefault("relist", {})
+    back = []
+    stamp = now.isoformat(timespec="seconds")
+    for g, series in groups.items():
+        live = sorted(set(series) & open_s)
+        prev = st.get(g)
+        if prev is not None and not prev.get("open") and live:
+            back.append({"group": g, "series": live, "at": stamp})
+        if prev is None or bool(prev.get("open")) != bool(live):
+            st[g] = {"open": bool(live), "since": stamp, "series": live}
+        else:
+            prev["series"] = live
+    return back
 
 
 def active_series(db: dict, cfg: Config, now: datetime) -> list[str]:
@@ -530,6 +559,7 @@ def run(http: Http, cfg: Config, now: datetime, orders: list[dict] | None = None
         log.warning("radar: events list failed: %s", exc)
         events = None
     new = diff_listings(db, events, now) if events else []
+    back = relist_check(db, cfg, events, now) if events else []
     watch = set(cfg.get("radar", "watch", DEFAULT_WATCH) or [])
     for it in new:
         if it["series"] in watch:
@@ -581,6 +611,13 @@ def run(http: Http, cfg: Config, now: datetime, orders: list[dict] | None = None
                      "balance), so real trading there would need money moved at "
                      "kalshi.com/account/exchange-indexes." if it.get("exchange_index") else ""),
                   now, kalshi.market_url(it.get("example_event") or it["series"]), dry_run)
+    for b in back:
+        _push(http, cfg, db, f"relist:{b['group']}:{now.astimezone(ET):%Y-%m-%d}",
+              f"Back on Kalshi: {b['group'].replace('_', ' ')} markets",
+              RELIST_TEXT.get(b["group"], f"{', '.join(b['series'])} have open markets again.")
+              + f" ({', '.join(b['series'])})", now, None, dry_run)
+    db["relist_back"] = (db.get("relist_back") or []) + back
+    db["relist_back"] = db["relist_back"][-20:]
     for s, rule, st in promising(db):
         _push(http, cfg, db, f"promise:{s}:{rule}", f"Radar: {s} looks worth a real test",
               f"Paper {RULE_TEXT.get(rule, rule)} on {s}: {st['cpc']:+.1f}c/ct "
@@ -623,6 +660,9 @@ def digest_lines(db: dict | None = None, now: datetime | None = None) -> list[st
         tag = " **WATCHED**" if i.get("watched") else ""
         lines.append(f"- {i['series']}{tag} ({i['category']}): {i.get('title') or ''} · "
                      f"{i.get('events')} events")
+    for g, r in sorted((db.get("relist") or {}).items()):
+        lines.append(f"- Relist watch **{g}**: {'OPEN (' + ', '.join(r.get('series') or []) + ')' if r.get('open') else 'not listing'}"
+                     f" since {(parse_iso(r.get('since')) or now).astimezone(ET):%b %d %I:%M %p} ET")
     # paper rules by series
     by: dict[tuple[str, str], list[dict]] = {}
     for o in db.get("paper") or []:
