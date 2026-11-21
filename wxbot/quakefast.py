@@ -1,9 +1,18 @@
-"""PAPER test: buy YES on Kalshi's earthquake markets right after a big quake (Nov 21, 2026).
+"""Fast quake YES: buy YES on Kalshi's earthquake markets right after a big quake (Nov 21, 2026).
 
 Thread "Paper test fast quake YES bot". Alex, Nov 20 9:10 PM ET: "Understood but still want to
-test. How is it possible they are getting the data faster". PAPER ONLY: nothing here places,
-changes or cancels an order, and it never reads the Kalshi trading key (main() drops it from the
-environment). Real money only after Alex's explicit OK.
+test. How is it possible they are getting the data faster". Built PAPER only (PR #339); then
+Alex, Nov 20 9:25 PM ET: "Let's just make it live with money!"
+
+REAL MONEY (small test), switched by quakefast_control.json on main (mode live | off), read every
+5 min; it also obeys the global kill switch (data/trader_state.json mode off/paper or halted) and
+goes off by itself when either file can't be read for 30 min. Rails (control file, defaults
+below): 1 contract per order, only when GFZ or EMSC show a magnitude at least 0.2 above the
+strike, ask at most 60c with at least 1 contract on offer, immediate-or-cancel at the ask (never
+rests, never chases), one real order per market, exchange shard 0 markets only, and a HARD $3 cap:
+-(settled real P&L) + cost of open real bets + the new order <= $3. When the cap leaves no room for
+another order: one ntfy push, then no more real orders. Every paper bet keeps logging alongside
+(paper twin). Review at 10 real fills.
 
 Why: on Nov 20 (7:09 PM ET) a M6.7 hit Peru. Kalshi's "biggest quake today >= 6.6" YES traded
 13-33c for minutes before USGS (the settlement source) posted it at ~7 min, then jumped to
@@ -54,6 +63,8 @@ from typing import Callable
 
 import requests
 
+from .kalshi_api import OrderRejected, fill_qty
+
 log = logging.getLogger("wxbot")
 UTC = timezone.utc
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
@@ -72,6 +83,14 @@ QUOTE_SERIES = ("KXBIGGESTQUAKE", "KXBIGGESTQUAKEH")
 OTHER_SERIES = ("KXBIGGESTQUAKEMONTH", "KXEARTHQUAKE", "KXEARTHQUAKEM", "KXEARTHQUAKEM7",
                 "KXEARTHQUAKEJAPAN", "KXEARTHQUAKECALIFORNIA", "KXEARTHQUAKELA", "KXTSUNAMI")
 KEEP_QUAKES_S = 3 * 86400
+
+REPO = "alexanderhabel22-commits/kalshi-weather-bot"
+CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/quakefast_control.json"
+SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.json"
+CONTROL_STALE_S = 1800
+REAL_DEFAULTS = {"mode": "off", "contracts": 1, "max_loss_usd": 3.0, "margin": 0.2,
+                 "max_ask": 0.60, "min_depth": 1.0, "sources": ["gfz", "gfz_fdsn", "emsc", "emsc_ws"]}
+REAL_MAX_CONTRACTS = 2    # code ceiling whatever the control file says
 
 
 # ------------------------------------------------------------------ small helpers
@@ -294,11 +313,11 @@ def default_feeds() -> list[Feed]:
     return [
         Feed("usgs", "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/4.5_hour.geojson",
              parse_usgs, 10),
-        Feed("gfz", "https://geofon.gfz.de/eqinfo/list.php", parse_gfz_rss, 15, "text",
+        Feed("gfz", "https://geofon.gfz.de/eqinfo/list.php", parse_gfz_rss, 10, "text",
              {"fmt": "rss"}),
         Feed("gfz_fdsn", "https://geofon.gfz.de/fdsnws/event/1/query", parse_gfz_text, 30, "text",
              since_text()),
-        Feed("emsc", "https://www.seismicportal.eu/fdsnws/event/1/query", parse_emsc, 20, "json",
+        Feed("emsc", "https://www.seismicportal.eu/fdsnws/event/1/query", parse_emsc, 15, "json",
              since()),
         Feed("ptwc", "https://www.tsunami.gov/events/xml/PHEBAtom.xml",
              lambda t: parse_tsunami_atom(t, "ptwc"), 15, "text"),
@@ -422,7 +441,7 @@ def ask_depth(book: dict) -> tuple[float | None, float | None]:
 class QuakeFast:
     def __init__(self, out_dir: Path, feeds: list[Feed] | None = None, clock=time.time,
                  session: requests.Session | None = None, uploader=None, status_up=None,
-                 ws: bool = True):
+                 ws: bool = True, client=None, alert=None):
         self.out = out_dir
         self.out.mkdir(parents=True, exist_ok=True)
         self.feeds = feeds if feeds is not None else default_feeds()
@@ -442,6 +461,13 @@ class QuakeFast:
         self.warm: set[str] = set()                      # feeds past their first (seed) poll
         self.uploaded: set[str] = set()
         self._lock = threading.Lock()
+        self.client = client              # KalshiClient (real orders) or None = paper only
+        self.alert = alert                # (title, body) -> None  ntfy push
+        self.real: list[dict] = []        # real orders (filled or not)
+        self.rcfg = dict(REAL_DEFAULTS)
+        self.switch = {"mode": None, "halted": False}
+        self.ok_at = -1e18
+        self.cap_alerted = False
         self.state_file = self.out / "state.json"
         self.load()
 
@@ -463,11 +489,14 @@ class QuakeFast:
         self.quakes = [Quake.from_json(d) for d in js.get("quakes") or []]
         self.fills = js.get("fills") or []
         self.uploaded = set(js.get("uploaded") or [])
+        self.real = js.get("real") or []
+        self.cap_alerted = bool(js.get("cap_alerted"))
 
     def save(self) -> None:
         tmp = self.state_file.with_suffix(".tmp")
         tmp.write_text(json.dumps({"quakes": [q.to_json() for q in self.quakes], "fills": self.fills,
-                                   "uploaded": sorted(self.uploaded)[-200:]}, separators=(",", ":")))
+                                   "uploaded": sorted(self.uploaded)[-200:], "real": self.real,
+                                   "cap_alerted": self.cap_alerted}, separators=(",", ":")))
         tmp.replace(self.state_file)
 
     # -- feeds
@@ -649,7 +678,13 @@ class QuakeFast:
         if q.t is not None and ts - q.t > FRESH_S:
             return
         t = q.t if q.t is not None else ts
-        ms = self.snapshot(q, f"seen:{src}:{mag}")
+        ms = []
+        for se in QUOTE_SERIES:                   # only the markets we trade: speed matters here
+            try:
+                ms += self.markets(se)
+            except Exception as exc:  # noqa: BLE001
+                log.info("quakefast kalshi %s: %s", se, exc)
+        self.snapshot(q, f"seen:{src}:{mag}", ms)
         if not q.triggered:
             q.triggered = True
             for dly in SNAP_DELAYS:
@@ -681,6 +716,128 @@ class QuakeFast:
                     row.update(status="open", fee=fee1(ask))
                 self.fills.append(row)
                 self.write({"kind": "paper", **row})
+                if row["status"] == "open":
+                    self.real_trade(row, m)
+
+    # -- real money
+    def fetch_json(self, url: str):
+        r = self.s.get(url, params={"t": int(self.clock())}, timeout=10)
+        r.raise_for_status()
+        return r.json()
+
+    def read_control(self, now: float) -> None:
+        try:
+            c = self.fetch_json(CONTROL_URL) or {}
+            sw = self.fetch_json(SWITCH_URL) or {}
+        except Exception as exc:  # noqa: BLE001
+            log.warning("quakefast control read: %s", exc)
+            return
+        self.rcfg = {**REAL_DEFAULTS, **{k: v for k, v in c.items() if k in REAL_DEFAULTS}}
+        self.rcfg["mode"] = str(self.rcfg.get("mode") or "off").lower()
+        halted = sw.get("halted") or {}
+        self.switch = {"mode": (sw.get("mode") or "").lower() or None,
+                       "halted": bool(isinstance(halted, dict) and halted.get("live"))}
+        self.ok_at = now
+
+    def real_mode(self) -> str:
+        if self.client is None or self.rcfg.get("mode") != "live":
+            return "off"
+        if self.switch["mode"] in ("off", "paper") or self.switch["halted"]:
+            return "off"
+        if self.clock() - self.ok_at > CONTROL_STALE_S:
+            return "off"
+        return "live"
+
+    def cap_used(self) -> float:
+        """-(settled real P&L) + cost of open real bets (fees included)."""
+        used = 0.0
+        for r in self.real:
+            if r.get("status") == "settled":
+                used -= r["pnl"]
+            elif r.get("status") == "open":
+                used += r["cost"]
+        return round(used, 4)
+
+    def real_trade(self, row: dict, m: dict) -> None:
+        """Turn one paper bet into a real 1-ct order when every rail allows it."""
+        c = self.rcfg
+        if self.real_mode() != "live":
+            return
+        if row["src"] not in c["sources"] or abs(row["margin"] - float(c["margin"])) > 1e-6:
+            return
+        ask, size = row.get("ask"), row.get("ask_size")
+        if ask is None or ask > float(c["max_ask"]) + 1e-9 or (size or 0) < float(c["min_depth"]):
+            return
+        if int(_f(m.get("exchange_index")) or 0) != 0:
+            return                                    # other balance shard (e.g. Crypto): never
+        if any(r["ticker"] == row["ticker"] for r in self.real):
+            return                                    # one real order per market
+        n = max(1, min(int(c["contracts"]), REAL_MAX_CONTRACTS))
+        price = round(ask, 2)
+        cost = round(n * (price + fee1(price)), 4)
+        cap = float(c["max_loss_usd"])
+        if self.cap_used() + cost > cap + 1e-9:
+            self.write({"kind": "real_skip", "ticker": row["ticker"], "why": "loss cap",
+                        "used": self.cap_used(), "cap": cap})
+            self.cap_check()
+            return
+        rec = {"key": row["key"], "qid": row["qid"], "src": row["src"], "ticker": row["ticker"],
+               "strike": row["strike"], "mag": row["mag"], "place": row.get("place"), "price": price,
+               "ts": round(self.clock(), 1), "et": et(self.clock()), "lag_s": row.get("lag_s"),
+               "placed": n}
+        try:
+            o = self.client.buy_now(row["ticker"], "yes", price, n,
+                                    f"qf-{row['ticker']}-{int(self.clock())}")
+            got = fill_qty(o, n)
+            rec.update(order_id=o.get("order_id"), filled=got)
+        except (OrderRejected, Exception) as exc:  # noqa: BLE001
+            rec.update(status="error", filled=0, err=str(exc)[:200])
+            self.real.append(rec)
+            self.write({"kind": "real", **rec})
+            if self.alert and not any(r.get("status") == "error" for r in self.real[:-1]):
+                self.alert("Quake bot: Kalshi refused an order",
+                           f"{row['ticker']} YES at {price:.2f}: {str(exc)[:150]}. "
+                           "Paper keeps running; I'll look at it.")
+            return
+        if got <= 0:
+            rec.update(status="missed", cost=0.0)     # no chasing
+        else:
+            rec.update(status="open", cost=round(got * (price + fee1(price)), 4))
+        self.real.append(rec)
+        self.write({"kind": "real", **rec})
+        self.cap_check()
+
+    def cap_check(self) -> None:
+        """One push when the cap leaves no room for even a 1-contract order at 1c."""
+        cap = float(self.rcfg["max_loss_usd"])
+        settled_loss = -sum(r["pnl"] for r in self.real if r.get("status") == "settled")
+        if self.cap_alerted or settled_loss + 0.02 <= cap:
+            return
+        self.cap_alerted = True
+        self.write({"kind": "cap_used", "settled_loss": round(settled_loss, 2), "cap": cap})
+        if self.alert:
+            self.alert(f"Quake bot: ${cap:g} loss cap used up",
+                       f"The fast quake YES test lost ${settled_loss:.2f} on real money and stopped "
+                       "placing real orders. Paper keeps logging.")
+
+    def settle_real(self, now: float) -> None:
+        for r in self.real:
+            if r.get("status") != "open" or now - r["ts"] < 600 or now - r.get("checked", 0) < 300:
+                continue
+            r["checked"] = now
+            try:
+                res = self.s.get(f"{KALSHI}/markets/{r['ticker']}", timeout=10)
+                res.raise_for_status()
+                m = res.json().get("market") or {}
+            except Exception as exc:  # noqa: BLE001
+                log.info("quakefast settle %s: %s", r["ticker"], exc)
+                continue
+            out = (m.get("result") or "").lower()
+            if out in ("yes", "no"):
+                r["status"], r["result"] = "settled", out
+                r["pnl"] = round((r["filled"] if out == "yes" else 0.0) - r["cost"], 4)
+                self.write({"kind": "real_settle", "ticker": r["ticker"], "result": out, "pnl": r["pnl"]})
+                self.cap_check()
 
     def run_snaps(self, now: float) -> None:
         due = [x for x in self.snaps if x[0] <= now]
@@ -776,7 +933,20 @@ class QuakeFast:
                     continue
                 lags.setdefault(k, []).append(v["first_ts"] - q.t)
         med = {k: {"n": len(v), "median_s": round(sorted(v)[len(v) // 2], 1)} for k, v in lags.items()}
-        return {"at": et(now), "paper_only": True, "totals": agg([f for f in self.fills]),
+        st = [r for r in self.real if r.get("status") == "settled"]
+        rp = sum(r["pnl"] for r in st)
+        rct = sum(r["filled"] for r in st)
+        real = {"mode": self.real_mode(), "control": {k: v for k, v in self.rcfg.items()},
+                "cap": float(self.rcfg["max_loss_usd"]), "cap_used": self.cap_used(),
+                "stopped": self.cap_alerted, "orders": len(self.real),
+                "filled": len([r for r in self.real if (r.get("filled") or 0) > 0]),
+                "missed": len([r for r in self.real if r.get("status") == "missed"]),
+                "settled": len(st), "won": len([r for r in st if r["pnl"] > 0]), "pnl": round(rp, 2),
+                "c_per_ct": round(100 * rp / rct, 1) if rct else None,
+                "open_cost": round(sum(r["cost"] for r in self.real if r.get("status") == "open"), 2),
+                "recent": self.real[-20:]}
+        return {"at": et(now), "paper_only": real["mode"] != "live", "real": real,
+                "totals": agg([f for f in self.fills]),
                 "first_source": agg(first),
                 "by_source": {k: agg(v) for k, v in sorted(by.items())},
                 "fills": self.fills[-60:], "quakes": quakes, "latency_m6": med,
@@ -825,17 +995,26 @@ class QuakeFast:
         if self.ws:
             threading.Thread(target=self.ws_loop, args=(stop,), daemon=True, name="emsc_ws").start()
         self.write({"kind": "start", "feeds": [f.name for f in self.feeds] + (["emsc_ws"] if self.ws else [])})
-        nq = nup = nsave = 0.0
+        nq = nup = nsave = nctl = 0.0
+        if self.client is not None:
+            try:
+                self.write({"kind": "balance", "shards": self.client.shard_balances()})
+            except Exception as exc:  # noqa: BLE001
+                self.write({"kind": "balance", "err": str(exc)[:120]})
         while True:
             try:
                 self.drain(1.0)
                 now = self.clock()
+                if now >= nctl:
+                    nctl = now + 300
+                    self.read_control(now)
                 if now >= nq:
                     nq = now + 15
                     self.poll_quotes(now)
                 self.run_snaps(now)
                 self.tapes(now)
                 self.settle(now)
+                self.settle_real(now)
                 if now >= nsave:
                     nsave = now + 60
                     self.prune(now)
@@ -852,9 +1031,28 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     out = Path(os.environ.get("QUAKEFAST_DIR", "/var/lib/kalshi-quakefast"))
     token = os.environ.get("GITHUB_TOKEN", "").strip()
-    for k in list(os.environ):          # paper only: drop the trading key and other secrets
-        if k.startswith(("KALSHI", "NTFY", "ANTHROPIC", "OANDA")):
+    client = push = None
+    if os.environ.get("QUAKEFAST_REAL", "1") != "0":
+        from .m15 import client_from_env
+        from .util import Http as _Http
+        try:
+            client = client_from_env(_Http("kalshi-quakefast/1", min_interval=0.05, retries=1))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("quakefast: no Kalshi client (%s): paper only", exc)
+    for k in list(os.environ):          # the client holds the key in memory; drop it from env
+        if k.startswith(("KALSHI", "ANTHROPIC", "OANDA")):
             os.environ.pop(k, None)
+    if client is not None:
+        from . import notify
+        from .util import Http as _Http2, load_config
+        cfg, nh = load_config(), _Http2("kalshi-quakefast/1")
+
+        def alert(title: str, body: str) -> None:
+            try:
+                notify.send(nh, cfg, title, body, priority=3, tags=["earth_americas"])
+            except Exception as exc:  # noqa: BLE001
+                log.warning("quakefast alert: %s", exc)
+        push = alert
     up = status_up = None
     if token:
         from .srclog import github_put
@@ -862,7 +1060,7 @@ def main() -> int:
         from .util import Http
         up = github_put(token, branch="quakefast-data")
         status_up = github_uploader(Http("kalshi-quakefast/1"), token)
-    QuakeFast(out, uploader=up, status_up=status_up).run()
+    QuakeFast(out, uploader=up, status_up=status_up, client=client, alert=push).run()
     return 0
 
 

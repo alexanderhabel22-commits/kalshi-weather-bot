@@ -1,0 +1,10 @@
+{
+ "_note": "Fast quake YES real-money switch (read by the 15-min server every 5 min; wxbot/quakefast.py). Alex OK'd real money Nov 20, 2026 9:25 PM ET ('Let's just make it live with money!'). mode: live | off. Real order only when GFZ or EMSC (sources) show a magnitude at least `margin` above the strike, the YES ask is at most max_ask with at least min_depth contracts on offer; immediate-or-cancel at the ask, never rests, one real order per market. max_loss_usd: HARD cap, -(settled real P&L) + open real bets + the new order. Code ceiling 2 contracts. Kill: mode off (or TRADING_MODE=off). Review at 10 real fills.",
+ "mode": "live",
+ "contracts": 1,
+ "max_loss_usd": 3.0,
+ "margin": 0.2,
+ "max_ask": 0.60,
+ "min_depth": 1.0,
+ "sources": ["gfz", "gfz_fdsn", "emsc", "emsc_ws"]
+}

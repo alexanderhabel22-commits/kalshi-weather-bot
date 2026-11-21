@@ -263,6 +263,20 @@ record earns it. Be candid about odds and risk; no hype.
   orders (`data/quake_no_state.json`). Paper twin `quake_no_paper` runs the same rule uncapped.
   Reviews at 20 and 50 fills (real + twin). One big-quake day costs ~$1.80 per 2-contract bet.
   Dashboard: TESTS tab "Real-money tests" table + earthquake card (cap meter, twin).
+- **Fast quake YES (REAL 1 contract, Nov 21, hard $3 cap; on the 15-min SERVER, not the main bot):**
+  `wxbot/quakefast.py`, service `kalshi-quakefast` (installed by update.sh), switch
+  `quakefast_control.json` on main (Alex, Nov 20 9:10 PM ET "still want to test", 9:25 PM ET "Let's just
+  make it live with money!"). Polls USGS/GFZ/EMSC (+ EMSC push websocket)/PTWC/NTWC/JMA/BMKG/GeoNet
+  every 10-30 s and Kalshi KXBIGGESTQUAKE(H) quotes every 15 s. Paper: per source, 1 ct YES at the ask on
+  every strike the source's magnitude clears (two rules, +0.0 / +0.2). Real: GFZ or EMSC magnitude >=
+  strike + 0.2, ask <= 60c with 1+ on offer, IOC at the ask (never rests or chases), one per market,
+  shard-0 markets only (quake markets are exchange_index 0 = main balance, not Crypto). Cap:
+  -(settled real P&L) + open real cost + new order <= $3; when used up, one push and no more real orders.
+  Obeys TRADING_MODE off/halted; off by itself if the control files go unread 30 min. Key read from
+  /etc/kalshi-m15/env (server only). Status m15/quakefast.json on m15-data, logs on branch quakefast-data,
+  dashboard TESTS "Fast quake YES" card. Review at 10 real fills. Honest odds: fast traders move Kalshi
+  ~2.3 min after a quake (before GFZ ~3.5 min); early magnitudes off by 0.1-0.3; thin books.
+  Off: quakefast_control.json mode "off" (paper keeps logging).
 - **Jobs/GDP/Starship fade (REAL 2 contracts, Nov 20, hard $6 cap):** `wxbot/strats/fade_leads.py`,
   `[trading.fade_leads]` (Alex, Nov 20 2:13 PM ET: "Run em live again, this is test money"). The macro_fade
   rule unchanged (resting NO at best bid + 1c, 71-95c, 2 h-21 days out, up to 3 markets/event) on KXU3,
