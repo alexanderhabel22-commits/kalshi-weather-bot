@@ -413,6 +413,27 @@ exit = "hold"
 max_week_contracts = 60
 max_market_contracts = 1
 
+[trading.fx_paper]
+# PAPER ONLY (Nov 20, 2026; build OK'd in the project chat ~10:20 PM ET). Never live without Alex's OK.
+# wxbot/strats/fx_paper.py. Kalshi FX "above K" markets (weekly AW, daily AD, after-release EVENT; 6 pairs)
+# vs a plain lognormal: Yahoo live spot, 22-day hourly vol, weekday hours to close. Buy the side worth
+# 5c+ more than its price (taker), one entry per market, hold to settlement.
+# Replay weekly AW Aug 7-Oct 30: +10.1c +- 5.7 (17 weeks, 14 positive); 1 h staler spot +4.9c +- 8.5;
+# daily AD -31c (17 trades); EVENT tie. Judge after 8 settled WEEKS of the weekly series (radar flags
+# its return; it has not listed since ~Oct 30). Write-up: analysis/thin-screen/RESULTS.md.
+enabled = true
+live = false
+taker = true
+contracts = 1
+max_contracts = 1
+min_price = 0.03
+max_price = 0.97
+max_open_pct = 1.00
+max_event_pct = 0.40
+exit = "hold"
+max_week_contracts = 400
+max_market_contracts = 1
+
 [trading.locks]
 # Weather LOCKs, PAPER for now. Alex OK'd real money on Nov 5, then paused it the
 # same evening after a bad 6-hour METAR group made a false Philadelphia LOCK.
@@ -756,6 +777,8 @@ push = "on"
 push_categories = ["Commodities"]
 watch = ["KXCORND", "KXSOYBEAND", "KXWHEATD", "KXLCATTLED", "KXCOCOAD", "KXCOFFEED",
          "KXCORNW", "KXSOYBEANW", "KXWHEATW", "KXLCATTLEW", "KXCOCOAW", "KXCOFFEEW"]
+# Series that went quiet and get ONE push when they list again (Nov 20: weekly FX, the fx_paper lead).
+relist_watch = {fx_weekly = ["KXUSDMXNAW", "KXUSDJPYAW", "KXGBPUSDAW", "KXEURUSDAW", "KXUSDCADAW", "KXAUDUSDAW"]}
 
 # Pre-written kill rules for every real-money strategy (Alex, Nov 20: "how will we know when
 # our edge has faded"). The radar FLAGS and pushes when one is hit; Claude then moves the

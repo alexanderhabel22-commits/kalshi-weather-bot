@@ -103,6 +103,9 @@ record earns it. Be candid about odds and risk; no hype.
   max 4/day, each once: watched/Commodities series first lists, a paper rule clears +3c over
   10+ fills (push proposes 1 ct, $3 cap; needs Alex's OK), a kill/fade flag. `push = "shadow"`
   to silence. Every NEW real-money test must get a kill-rule line there before it starts.
+  Relist watch (Nov 20): `[radar].relist_watch` groups of series that went quiet; ONE push when a
+  group has open events again (`relist_check`, state `relist` in radar.json). Group `fx_weekly` =
+  the six KX*AW weekly FX series behind the fx_paper lead (not listing since ~Oct 30).
 - **LAUNCH WATCHER** (added Nov 5): `wxbot/launches.py`, every 30 min. Pulls
   Kalshi's full series list, notices new series and new categories, waits for
   their first open markets, and logs spread/volume plus a recommended test to
@@ -305,6 +308,20 @@ record earns it. Be candid about odds and risk; no hype.
   Reviews: first look at 20 settled fills (Tue Nov 24, when the first week settles), verdict at 100 (~Dec 15) + free replay re-run
   mid-Jan. Real money only with Alex's OK. Dashboard: TESTS tab "Shipping counts test" card (c/ct with
   95% range clustered by chokepoint-week, per-chokepoint and YES/NO table).
+- **FX vs lognormal paper test (PAPER ONLY, Nov 21, 1 ct):** `wxbot/strats/fx_paper.py`,
+  `[trading.fx_paper]` (live = false; build OK'd in the project chat Nov 20 ~10:20 PM ET). Kalshi FX
+  "above K at a fixed time" markets settled on Pyth: weekly KX{pair}AW (the lead), daily KX{pair}AD and
+  after-release KX{pair}EVENT, pairs USDMXN/USDJPY/GBPUSD/EURUSD/USDCAD/AUDUSD. Every 5-min scan:
+  Yahoo chart API live spot (must be <= 30 min old, so nothing trades while FX is shut) + std of the
+  last 528 hourly log returns; p = Phi(ln(S/K) / (sigma sqrt(weekday hours to close))); taker YES at ask
+  / NO at 1-bid in 3-97c when model - price >= 5c (fee at settlement, as the replay), one per market,
+  hold. Which series are open is re-checked hourly. Research: thread "Find thin markets where we
+  out-model casuals", `analysis/thin-screen/RESULTS.md` (project files): weekly replay Aug 7-Oct 30
+  +10.1c +-5.7 (17 weeks, 14 up; model Brier 0.123 vs market 0.133), 1 h staler spot +4.9c +-8.5,
+  daily AD -31c (17 trades), EVENT tie. Same screen found monthly rain/snow, crypto one-touch and
+  Treasury how-high/low all NO. Verdict after 8 settled weeks of the weekly series; real money only
+  with Alex's OK. Dashboard: TESTS tab "FX vs lognormal test" card (weekly c/ct with 95% range
+  clustered by settlement date, weeks settled / 8, per kind and pair).
 - **Late-day weather paper test (Nov 11):** `wxbot/latepaper.py` writes paper orders to
   `data/paper_late.csv` once per bracket between 12 and 5 hours before close: NO on brackets
   beyond the low/high the station has already recorded (spread 4c+, 1c inside the offer), YES

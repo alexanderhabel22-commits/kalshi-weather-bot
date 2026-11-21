@@ -174,3 +174,26 @@ def test_incomplete_events_list_does_not_diff(data, monkeypatch):
     monkeypatch.setattr(radar, "fetch_open_events", lambda http: None)
     db = radar.run(Http(ev("KXOLD") + ev("KXNEW")), cfg, now + timedelta(hours=1))
     assert db["last_new"] == [] and "KXNEW" not in db["series_seen"]
+
+
+def test_relist_watch_pushes_once_when_weekly_fx_returns(data):
+    cfg = load_config()
+    assert "KXUSDMXNAW" in cfg.raw["radar"]["relist_watch"]["fx_weekly"]
+    now = datetime(2026, 11, 20, 15, 0, tzinfo=UTC)
+    # first look: not listing -> state only, no push
+    db = radar.run(Http(ev("KXOLD") + ev("KXUSDMXNEVENT", "Financials")), cfg, now)
+    assert db["relist"]["fx_weekly"]["open"] is False
+    # still quiet
+    http = Http(ev("KXOLD"))
+    db = radar.run(http, cfg, now + timedelta(hours=1))
+    assert not http.posts
+    # comes back -> one push
+    http = Http(ev("KXOLD") + ev("KXUSDMXNAW", "Financials") + ev("KXUSDJPYAW", "Financials"))
+    db = radar.run(http, cfg, now + timedelta(hours=2))
+    assert db["relist"]["fx_weekly"]["open"] and db["relist"]["fx_weekly"]["series"] == ["KXUSDJPYAW", "KXUSDMXNAW"]
+    assert sum("weekly FX" in p["message"] for p in http.posts) == 1
+    # still open next hour -> no second push
+    http2 = Http(ev("KXOLD") + ev("KXUSDMXNAW", "Financials"))
+    db = radar.run(http2, cfg, now + timedelta(hours=3))
+    assert not any("weekly FX" in p["message"] for p in http2.posts)
+    assert any("Relist watch" in l for l in radar.digest_lines(db, now + timedelta(hours=3)))

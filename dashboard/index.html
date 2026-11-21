@@ -300,7 +300,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", quake_no_guard_paper:"#fed7aa", ship_paper:"#38bdf8", fade_leads:"#8b5cf6", fade_leads_paper:"#a78bfa", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", quake_no_guard_paper:"#fed7aa", ship_paper:"#38bdf8", fx_paper:"#4ade80", fade_leads:"#8b5cf6", fade_leads_paper:"#a78bfa", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -519,7 +519,7 @@ function realTestsHTML(){
       ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : x.strategy === "quake_no_guard_paper" ? "paper + guard" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
     </div>`;
   }
-  return h + quakeFastHTML() + shipPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
+  return h + quakeFastHTML() + shipPaperHTML(rowsP) + fxPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
 }
 /* Fast-quake YES paper test (Nov 21): the 15-min server polls free quake feeds every 10-30 s and
    logs, per source, when it first saw each quake, what the Kalshi YES ask was then, and what a
@@ -605,6 +605,49 @@ function shipPaperHTML(rowsP){
   h += `</table></div>
     <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Kalshi's weekly ship-count markets (Mon-Sun week, settled on IMF PortWatch, which posts each Tuesday). The bot forecasts the week from the last 14 published days (x7, negative binomial) and buys whichever side is worth 5¢+ more than its price after the taker fee, once per market, held to settlement. Paper fills at the live ask with the real fee; no money moves. Honest odds: the replay (+4.7¢ ±8.3 on 216 trades, Sep-Nov) is not significant; Suez carries it and Panama loses. The ± range counts each chokepoint-week as one unit. First look at 20 settled fills (Tue Nov 24, when the first week settles), verdict at 100 (~Dec 15), plus a free replay re-run mid-January. Real money only with Alex's OK.</div>
     ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">@ ${Math.round(x.price * 100)}¢</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No paper fills yet. Next week's markets are already open, so the first ones should come within a few runs.</div>`}
+  </div>`;
+  return h;
+}
+/* FX vs lognormal (Nov 20): Kalshi FX "above K at a fixed time" markets vs a plain lognormal
+   (live Yahoo spot, 22-day hourly vol). PAPER ONLY. The lead is the WEEKLY series (AW, replay
+   +10.1c ±5.7 over 17 weeks); daily (AD) and after-release (EVENT) series are logged for comparison.
+   The ± range counts each settlement date as one unit (all pairs move with the dollar). */
+const FX_KINDS = [["AW","Weekly (the lead)","+10.1¢ ±5.7 · 17 wks"],["AD","Daily","−31¢ · 17 trades"],["EVENT","After a release (new)","+2¢ ±14 · tie"]];
+const FX_PAIRS = ["USDMXN","USDJPY","GBPUSD","EURUSD","USDCAD","AUDUSD"];
+function fxKind(t){ const s = String(t || "").split("-")[0]; return s.slice(8); }
+function fxDate(r){ const e = String(r.event || r.ticker || "").split("-")[1] || ""; return e.slice(0, 7); }
+function fxCI(rows){
+  const by = {}; let n = 0, pnl = 0;
+  for (const r of rows){ const k = fxDate(r), c = Math.max(1, r.filled || r.count); by[k] = (by[k] || 0) + r.pnl; n += c; pnl += r.pnl; }
+  const tot = Object.values(by), m = tot.length;
+  if (!n) return {n:0, weeks:0, c:null, pm:null};
+  let pm = null;
+  if (m > 1){ const mu = tot.reduce((a, v) => a + v, 0) / m, sd = Math.sqrt(tot.reduce((a, v) => a + (v - mu) ** 2, 0) / (m - 1)); pm = 196 * sd * Math.sqrt(m) / n; }
+  return {n, weeks:m, c:100 * pnl / n, pm};
+}
+function fxPaperHTML(rowsP){
+  const fp = tradingCfg().fx_paper;
+  if (!fp || !fp.enabled) return "";
+  const r = (rowsP || []).filter(x => x.strategy === "fx_paper"), s = stats(r);
+  const aw = r.filter(x => fxKind(x.ticker) === "AW"), saw = stats(aw), ciw = fxCI(saw.settled);
+  const ciTxt = x => x.c == null ? "—" : cents(x.c) + (x.pm == null ? "" : ` ±${x.pm.toFixed(1)}`);
+  const line = (label, rr, rep) => { const ss = stats(rr), cc = fxCI(ss.settled);
+    return `<tr><td>${esc(label)}</td><td class="${cls(cc.c || 0)}" style="font-weight:700">${ciTxt(cc)}</td><td>${cc.n}</td><td>${cc.weeks}</td><td>${ss.wins}-${ss.settled.length - ss.wins}</td><td>${ss.open.length}</td><td class="mute">${rep}</td></tr>`; };
+  const recent = r.filter(x => ["settled", "filled", "open"].includes(x.status)).sort((a, b) => (b.placed || 0) - (a.placed || 0)).slice(0, 8);
+  let h = `<h2>FX vs lognormal test <span class="sub">PAPER ONLY · ${num(fp.contracts, 1)} ct · since Nov 21</span></h2><div class="card">
+    <div class="sgrid">
+      <div><div class="lbl">Weekly ¢/ct</div><div class="val ${cls(ciw.c || 0)}">${ciTxt(ciw)}<small>95% range · replay +10.1¢ ±5.7</small></div></div>
+      <div><div class="lbl">Weekly weeks settled</div><div class="val">${ciw.weeks} / 8<small>verdict at 8 settled weeks</small></div></div>
+      <div><div class="lbl">All FX paper P&L</div><div class="val ${cls(s.pnl)}">${s.settled.length ? money(s.pnl) : "—"}<small>${filledN(r, "settled")} ct settled · ${s.wins}-${s.settled.length - s.wins}</small></div></div>
+      <div><div class="lbl">Open</div><div class="val">${s.open.length}<small>$${s.exposure.toFixed(2)} on paper</small></div></div>
+    </div>
+    <div class="tbl-wrap" style="margin-top:10px"><table class="tbl"><tr><th>Slice</th><th>¢/ct ±95%</th><th>Ct</th><th>Dates</th><th>W-L</th><th>Open</th><th>Replay</th></tr>`;
+  for (const [k, label, rep] of FX_KINDS) h += line(label, r.filter(x => fxKind(x.ticker) === k), rep);
+  for (const pr of FX_PAIRS) h += line(pr, r.filter(x => String(x.ticker || "").startsWith("KX" + pr)), "");
+  h += line("Bought YES", r.filter(x => x.side === "yes"), "") + line("Bought NO", r.filter(x => x.side === "no"), "");
+  h += `</table></div>
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Kalshi's FX markets ("will USD/MXN be above K at 5 PM ET Friday", settled on Pyth). Every 5 minutes while FX trades, the bot prices each strike with a plain lognormal (live spot, last 22 days of hourly moves, weekday hours left) and buys whichever side is 5¢+ cheaper than the model, once per market, held to settlement. Paper fills at the live ask with the real fee; no money moves. Honest odds: the weekly replay (+10.1¢ ±5.7, 14 of 17 weeks up, Aug-Oct) passed our bar, but it halves with spot one hour staler, Yahoo isn't Pyth, and 4 ideas were tested so one could be luck. The weekly series hasn't listed since ~Oct 30; the radar pushes once when it returns. Daily and after-release FX are logged only to compare (the replay found nothing there). Verdict after 8 settled weeks of the weekly series; real money only with Alex's OK.</div>
+    ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">@ ${Math.round(x.price * 100)}¢</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No paper fills yet. FX is shut on weekends, so the first ones come after it reopens Sunday 5 PM ET (after-release series only until the weekly ones list again).</div>`}
   </div>`;
   return h;
 }
