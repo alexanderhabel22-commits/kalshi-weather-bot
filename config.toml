@@ -16,6 +16,7 @@ auto_discover = true             # pick up new/renamed weather series from Kalsh
 rain_census = false              # silent test Nov 4-11, 2026: all 14 passed thresholds were already $1.00; off
 paper_daybefore = true           # paper-trade day-before limit orders (no money, no alerts)
 paper_late = true                # paper test: late-day orders on today's lows/highs (no money; wxbot/latepaper.py)
+paper_late_cool = true           # paper twin Nov 21: highs "need" Oct-Feb, start 9h before close (no money; wxbot/latecool.py)
 launch_watch = true              # watch for brand-new Kalshi series/categories (data/launches.json)
 
 [strategy]

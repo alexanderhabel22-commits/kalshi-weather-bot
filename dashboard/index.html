@@ -451,13 +451,15 @@ async function loadTests(){
   if (watch) S.watch = watch;
   let late = [];
   try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
+  let cool = [];
+  try { cool = parseCSV(await raw("data/paper_late_cool.csv")); } catch(e){ cool = []; }
   let qstate = null, fstate = null;
   try { qstate = await raw("data/quake_no_state.json", "json"); } catch(e){ qstate = null; }
   try { fstate = await raw("data/fade_leads_state.json", "json"); } catch(e){ fstate = null; }
   let radar = null, farm = null;
   try { radar = await raw("data/radar.json", "json"); } catch(e){ radar = null; }
   try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/farm-watch-data/state/farm_watch.json?t=${Date.now()}`, {cache:"no-store"}); farm = r.ok ? await r.json() : null; } catch(e){ farm = null; }
-  S.tx = {lip, mm, rfq, late, field, qstate, fstate, radar, farm, qfast};
+  S.tx = {lip, mm, rfq, late, cool, field, qstate, fstate, radar, farm, qfast};
 }
 // Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
 function lateCard(rows){
@@ -472,6 +474,43 @@ function lateCard(rows){
     h += `<div class="item" style="padding:6px 0"><div class="main"><div class="t" style="font-size:12px">${lbl}</div><div class="s">${g.length} fills · won ${won} · ${money(pnl)}${` · also REAL money (${num(((tradingCfg().weather_late || {}).contracts_by || {})[m + "/" + k], num((tradingCfg().weather_late || {}).contracts, 1))} ct)`}</div></div><div class="r"><span class="${cls(per || 0)}">${per == null ? "—" : (per > 0 ? "+" : per < 0 ? "−" : "") + Math.abs(per).toFixed(1) + "¢"}</span><small>per contract</small></div></div>`;
   }
   return h + `<div class="mute" style="font-size:11px;margin-top:6px">${rows.length} orders written · ${open} waiting for their market to settle.</div></div>`;
+}
+/* Late-start highs "need" paper twin (Nov 21): same rule as the late-day paper log, highs "need" only,
+   Oct-Feb, written only 9h-5h before close (~4 PM local). Compared with the main paper log's highs "need"
+   on the same dates (12h start). The +/- is 1 s.e. clustered by date (a day's brackets move together). */
+function lateStats(rows){
+  const f = rows.filter(r => r.status === "filled"), n = f.length, pnl = f.reduce((a, r) => a + num(r.pnl), 0);
+  const by = {}, cnt = {};
+  for (const r of f){ by[r.date] = (by[r.date] || 0) + num(r.pnl); cnt[r.date] = (cnt[r.date] || 0) + 1; }
+  const mean = n ? pnl / n : 0, se = n ? Math.sqrt(Object.keys(by).reduce((a, d) => a + (by[d] - mean * cnt[d]) ** 2, 0)) / n : null;
+  return {n, pnl, won: f.filter(r => num(r.pnl) > 0).length, c: n ? 100 * mean : null, se: se == null ? null : 100 * se,
+          open: rows.filter(r => r.status === "open").length, unf: rows.filter(r => r.status === "unfilled").length,
+          days: Object.keys(by).length, cost: f.reduce((a, r) => a + num(r.price), 0)};
+}
+function lateCoolCard(rows, late){
+  rows = rows || []; late = late || [];
+  const s = lateStats(rows), goal = 100, dates = new Set(rows.map(r => r.date));
+  const m = lateStats(late.filter(r => r.metric === "high" && r.kind === "need" && dates.has(r.date)));
+  const all = lateStats(late.filter(r => r.metric === "high" && r.kind === "need"));
+  const cc = x => x.c == null ? "—" : cents(x.c) + (x.se == null ? "" : ` ±${x.se.toFixed(1)}`);
+  const row = (label, x, bt, bold) => `<tr><td>${label}</td><td class="${cls(x.c || 0)}"${bold ? ' style="font-weight:700"' : ""}>${cc(x)}</td><td>${x.n}</td><td>${x.won}</td><td class="${cls(x.pnl)}">${x.n ? money(x.pnl) : "—"}</td><td class="mute">${bt}</td></tr>`;
+  let h = `<h2>Late-start highs test <span class="sub">PAPER ONLY · highs "need" · Oct-Feb · since Nov 21</span></h2><div class="card">
+    <div class="sgrid">
+      <div><div class="lbl">Late start ¢/ct</div><div class="val ${cls(s.c || 0)}">${cc(s)}<small>± 1 se by day · backtest +3.7¢, holdout +5.1¢</small></div></div>
+      <div><div class="lbl">Paper P&L</div><div class="val ${cls(s.pnl)}">${s.n ? money(s.pnl) : "—"}<small>${s.n} fills · won ${s.won} · on $${s.cost.toFixed(2)}</small></div></div>
+      <div><div class="lbl">Verdict</div><div class="val">${s.n} / ${goal}<small>filled orders · ${s.days} days</small></div></div>
+    </div>
+    <div style="margin-top:10px"><div class="lbl">Progress to the ~100-fill verdict: ${s.n} / ${goal}</div><div style="height:8px;background:var(--line,#223);border-radius:4px;overflow:hidden;margin:4px 0"><div style="height:100%;width:${Math.min(100, 100 * s.n / goal)}%;background:#38bdf8"></div></div><div class="mute" style="font-size:11px">${s.open} open · ${s.unf} not filled · ${rows.length} written</div></div>
+    <div class="tbl-wrap" style="margin-top:10px"><table class="tbl"><tr><th>Version</th><th>¢/ct ±1 se</th><th>Fills</th><th>Won</th><th>P&L</th><th>Backtest Oct-Feb (dev / holdout)</th></tr>`
+    + row("<b>Late start</b> (9h before close, ~4 PM local)", s, "+3.7¢ (981) / +5.1¢ (235)", true)
+    + row("Main paper log, same days (12h start)", m, "+1.8¢ (2,092) / +0.6¢ (989)")
+    + row("Main paper log, all days since Nov 11", all, "−2.9¢ on 307 (Nov 11-20)")
+    + `</table></div>
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Same rule as the highs "need" row of the late-day paper log (buy NO 1¢ inside the offer on brackets above the high recorded so far, spreads 4¢+, held to settlement), but each bracket is written only from 9 hours before close, about 4 PM local standard time (Eastern cities ~4 PM ET, Pacific ~7 PM ET), and only on Oct-Feb dates. In the 13-month backtest this roughly doubled the cents per contract on half the fills, so total dollars stayed about flat. Honest odds: about 10 variants were tried, so part of that gain is luck, and the holdout covers only Oct-Nov. No money moves and the real-money late-day bets are untouched. Judged at about 100 fills; real money only with Alex's OK.</div>`;
+  const recent = rows.slice().sort((a, b) => String(b.placed_at).localeCompare(String(a.placed_at))).slice(0, 8);
+  if (recent.length) h += `<div class="list" style="margin-top:6px">` + recent.map(r => `<div class="item" style="padding:6px 0"><span class="side no">NO</span><div class="main"><div class="t" style="font-size:12px">${esc(r.city)} high ${esc(r.bracket)} · ${esc(r.date)} <small class="mute">@ ${Math.round(num(r.price) * 100)}¢ · high so far ${esc(r.extreme)}° · ${esc(r.hours_left)}h left</small></div><div class="s">${r.status === "filled" ? "filled" : r.status === "unfilled" ? "not filled (no trade at our price)" : "waiting for settlement"}</div></div><div class="r ${r.status === "filled" ? cls(num(r.pnl)) : ""}">${r.status === "filled" ? money(num(r.pnl)) : r.status === "open" ? "open" : "—"}</div></div>`).join("") + `</div>`;
+  else h += `<div class="mute" style="font-size:12px;margin-top:6px">No paper orders yet. The first ones are written around 4 PM local time.</div>`;
+  return h + `</div>`;
 }
 /* Small real-money tests (Nov 20): every live strategy still in its small test, with its own stop, the
    review it is heading for and, for the earthquake test, the paper twin that runs the same rule uncapped. */
@@ -816,6 +855,7 @@ function txPage(){
     }
   }
   h += lateCard(T.late);
+  h += lateCoolCard(T.cool, T.late);
   const M = T.mm;
   h += `<h2>Market making <span class="sub">PAPER · wide-spread markets</span></h2><div class="card">`;
   if (!M) h += `<div class="mute" style="font-size:12px">Starting up (first status about an hour after it starts).</div>`;
