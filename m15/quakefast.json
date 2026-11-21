@@ -1,0 +1,148 @@
+{
+ "at": "2026-11-20 23:09:55",
+ "paper_only": false,
+ "real": {
+  "mode": "live",
+  "control": {
+   "mode": "live",
+   "contracts": 1,
+   "max_loss_usd": 3.0,
+   "margin": 0.2,
+   "max_ask": 0.6,
+   "min_depth": 1.0,
+   "sources": [
+    "gfz",
+    "gfz_fdsn",
+    "emsc",
+    "emsc_ws"
+   ]
+  },
+  "cap": 3.0,
+  "cap_used": 0.0,
+  "stopped": false,
+  "orders": 0,
+  "filled": 0,
+  "missed": 0,
+  "settled": 0,
+  "won": 0,
+  "pnl": 0,
+  "c_per_ct": null,
+  "open_cost": 0,
+  "recent": []
+ },
+ "totals": {
+  "n": 0,
+  "settled": 0,
+  "won": 0,
+  "pnl": 0,
+  "c_per_ct": null,
+  "skipped": 0
+ },
+ "first_source": {
+  "n": 0,
+  "settled": 0,
+  "won": 0,
+  "pnl": 0,
+  "c_per_ct": null,
+  "skipped": 0
+ },
+ "by_source": {},
+ "fills": [],
+ "quakes": [
+  {
+   "qid": "q1795234191-gfz_fdsn",
+   "t": 1795219748.79,
+   "et": "2026-11-20 19:09:08",
+   "place": "Central Peru",
+   "best_mag": 6.8,
+   "triggered": false,
+   "kmove": null,
+   "srcs": {
+    "gfz_fdsn": {
+     "lag_s": null,
+     "first_mag": 6.66,
+     "mag": 6.66
+    },
+    "gfz": {
+     "lag_s": null,
+     "first_mag": 6.7,
+     "mag": 6.7
+    },
+    "emsc": {
+     "lag_s": null,
+     "first_mag": 6.8,
+     "mag": 6.8
+    }
+   }
+  }
+ ],
+ "latency_m6": {},
+ "feeds": {
+  "bmkg": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "emsc": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "emsc_ws": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:55",
+   "last_err": null
+  },
+  "geonet": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "gfz": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "gfz_fdsn": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "jma": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "kalshi": {
+   "ok": 2,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:55",
+   "last_err": null
+  },
+  "ntwc": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "ptwc": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  },
+  "usgs": {
+   "ok": 1,
+   "err": 0,
+   "last_ok": "2026-11-20 23:09:51",
+   "last_err": null
+  }
+ }
+}
