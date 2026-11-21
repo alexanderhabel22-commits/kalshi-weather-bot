@@ -120,3 +120,13 @@ def test_high_holds_sub_stop(monkeypatch, tmp_path):
     assert run(lost) == {"KXLOWTNYC-26NOV12-B42.5"}                  # -$3.00: high holds stops
     assert run(lost) == {"KXLOWTNYC-26NOV12-B42.5"} and len(sent) == 1   # pushes once
     assert run(lost, mode="paper") == {"KXLOWTNYC-26NOV12-B42.5", "HH"}  # paper unaffected
+
+
+def test_low_holds_price_floor_blocks_cheap_tails(monkeypatch):
+    paper = [order(tk="CHEAP", kind="holds", side="yes", price="0.03"),
+             order(tk="OK", kind="holds", side="yes", price="0.10"),
+             order(tk="NEED", price="0.05")]
+    setup(monkeypatch, paper, bid=0.02, ask=0.20)
+    got = wl.propose(ctx(kinds=["need", "holds"], min_price_by={"low/holds": 0.10}))
+    assert sorted(i.ticker for i in got) == ["NEED", "OK"]
+    assert len(wl.propose(ctx(kinds=["need", "holds"]))) == 3          # no floor set: unchanged

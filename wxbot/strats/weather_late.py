@@ -78,6 +78,9 @@ def propose(ctx) -> list[Intent]:
                 skip.add(key)
     # per-series size overrides, e.g. newly added cities start at 1 contract (Nov 13)
     per_series = {k: int(v) for k, v in (ctx.params.get("series_contracts") or {}).items()}
+    # per "metric/kind" price floor for real orders, e.g. {"low/holds" = 0.10} (Nov 21, Alex's
+    # decision card): cheap tail YES buys stay paper-only. Paper still logs them.
+    floors = {str(k): float(v) for k, v in (ctx.params.get("min_price_by") or {}).items()}
     picks = []
     for o in load_orders():
         placed = parse_iso(o.get("placed_at"))
@@ -86,6 +89,8 @@ def propose(ctx) -> list[Intent]:
         if o.get("metric") not in metrics or o.get("kind") not in kinds:
             continue
         if f"{o.get('metric')}/{o.get('kind')}" in skip or o.get("series") in skip:
+            continue
+        if float(o.get("price") or 0) < floors.get(f"{o.get('metric')}/{o.get('kind')}", 0.0) - 1e-9:
             continue
         picks.append(o)
     if not picks or (ctx.mode == "live" and stopped(ctx)):
