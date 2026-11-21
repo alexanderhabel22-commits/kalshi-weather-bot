@@ -53,7 +53,28 @@ DAYS = 3653
 DAYS_AT_LEAST = {6.6: 309, 7.0: 130}
 STRIKES = (6.6, 7.0)
 DEFAULTS = {"contracts": 2, "edge": 0.05, "min_price": 0.03, "max_price": 0.97,
-            "max_loss_usd": 4.0, "revision_margin": 0.1}
+            "max_loss_usd": 4.0, "revision_margin": 0.1,
+            "guard": False, "feed_margin": 0.3, "alarm_gap": 0.3, "alarm_floor": 0.5,
+            "alarm_margin": 0.3, "alarm_strikes": 2}
+
+# --- Fast-quake guard (Nov 21, 2026; thread "Get faster quake data for quake bet") -------------
+# The first real fill lost on a M6.7 Peru quake: the bot bought NO 3.5 min after it struck while
+# USGS still showed nothing (USGS first listed it at ~7.4 min; over 123 M6.3+ quakes since Jan
+# 2025 USGS's median is ~12 min). GFZ GEOFON had it at 3.5 min (median 4.8 min, first in 95% of
+# cases); EMSC is similar. Kalshi traders move the price 1-4 min after a big quake. Worse, that
+# move is what makes NO look cheap to this rule, so the rule buys INTO fresh quakes.
+# Guard (only when params guard = true; the paper twin quake_no_guard_paper runs it first):
+#   1. skip a strike X when GFZ or EMSC already shows M >= X - feed_margin today;
+#   2. skip the whole day's markets when 2+ strikes 6.0-7.0 that USGS is 0.3+ short of have a YES
+#      bid of 50c+ AND 30c+ above their own climatology: the market has seen a quake USGS hasn't
+#      posted. Tuned on Kalshi YES trades Sep 15-Nov 21: fires on 16 of 16 big-quake days, false
+#      alarms on 2 of 67 days (single strikes alone: 26 false days, from stray sweeps).
+# It can only skip orders, never add them. Feed failures never block (USGS still decides).
+GFZ = "https://geofon.gfz.de/fdsnws/event/1/query"
+EMSC = "https://www.seismicportal.eu/fdsnws/event/1/query"
+FEED_LOG = DATA_DIR / "quake_feed_log.csv"
+# Same USGS ComCat 2015-2024 climatology for every strike the guard checks (recomputed Nov 21).
+GUARD_DAYS = {6.0: 1041, 6.2: 682, 6.4: 460, 6.6: 309, 6.8: 213, 7.0: 130}
 
 
 def fee1(q: float) -> float:
@@ -146,6 +167,114 @@ def max_so_far(ctx, start: datetime) -> float | None:
     return max(mags) if mags else 0.0
 
 
+def _f(v) -> float | None:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
+def parse_gfz(text: str) -> list[tuple[str, float]]:
+    """GEOFON fdsnws text format -> [(origin time, magnitude)]."""
+    out = []
+    for line in (text or "").splitlines():
+        if line.startswith("#") or "|" not in line:
+            continue
+        c = line.split("|")
+        if len(c) > 10 and _f(c[10]) is not None:
+            out.append((c[1], _f(c[10])))
+    return out
+
+
+def parse_emsc(js) -> list[tuple[str, float]]:
+    out = []
+    for f in (js or {}).get("features") or []:
+        pr = f.get("properties") or {}
+        if _f(pr.get("mag")) is not None:
+            out.append((str(pr.get("time") or ""), _f(pr.get("mag"))))
+    return out
+
+
+def feeds(ctx, start: datetime) -> dict[str, list[tuple[str, float]]]:
+    """Quakes M5.5+ since `start` from the two fast free catalogs (GFZ, EMSC). A feed that fails is empty."""
+    t = start.strftime("%Y-%m-%dT%H:%M:%S")
+    out: dict[str, list] = {}
+    try:
+        out["gfz"] = parse_gfz(ctx.http.get_text(GFZ, params={"format": "text", "starttime": t, "minmag": 5.5}))
+    except Exception as exc:  # a feed problem must never stop the run
+        log.info("quake guard: GFZ %s", exc)
+        out["gfz"] = []
+    try:
+        out["emsc"] = parse_emsc(ctx.http.get_json(EMSC, params={"format": "json", "starttime": t,
+                                                                 "minmag": 5.5, "limit": 50}))
+    except Exception as exc:
+        log.info("quake guard: EMSC %s", exc)
+        out["emsc"] = []
+    return out
+
+
+def market_alarm(markets: list[dict], now: datetime, usgs_max: float, p: dict) -> str | None:
+    """2+ strikes USGS hasn't reached, priced far above climatology = the market knows of a quake."""
+    hits = []
+    for m in markets:
+        x = strike(m)
+        n = GUARD_DAYS.get(x) if x is not None else None
+        start = market_day(m.get("ticker") or "")
+        if not n or start is None or x < usgs_max + float(p["alarm_margin"]) - 1e-9:
+            continue
+        bid = kalshi.price(m, "yes_bid")
+        if bid is None:
+            continue
+        h = max((start + timedelta(days=1) - now).total_seconds() / 3600, 0.0)
+        pr = 1 - (1 - n / DAYS) ** (h / 24)
+        if bid >= max(float(p["alarm_floor"]), pr + float(p["alarm_gap"])) - 1e-9:
+            hits.append(f"M{x} YES {bid:.2f} vs model {pr:.2f}")
+    return "; ".join(hits) if len(hits) >= int(p["alarm_strikes"]) else None
+
+
+def guard(intents: list[Intent], markets: list[dict], now: datetime, usgs_max: float,
+          fd: dict, p: dict) -> list[Intent]:
+    if not intents:
+        return intents
+    alarm = market_alarm(markets, now, usgs_max, p)
+    if alarm:
+        log.info("quake guard: market alarm (%s), skipping %d", alarm, len(intents))
+        return []
+    fmax = max([m for rows in fd.values() for _, m in rows] + [0.0])
+    keep = []
+    for i in intents:
+        x = round(float(i.ticker.rsplit("-", 1)[-1]), 1)
+        if fmax >= x - float(p["feed_margin"]) - 1e-9:
+            log.info("quake guard: GFZ/EMSC M%.1f near %s, skipping", fmax, i.ticker)
+            continue
+        keep.append(i)
+    return keep
+
+
+def log_feeds(now: datetime, fd: dict, usgs_max: float) -> None:
+    """Data: first time each feed showed each M6+ quake (5-min resolution, for the latency review)."""
+    import csv
+    rows = [(src, t, m) for src, v in fd.items() for t, m in v if m >= 6.0]
+    if usgs_max >= 6.0:
+        rows.append(("usgs_max", now.strftime("%Y-%m-%d"), usgs_max))
+    if not rows:
+        return
+    seen = set()
+    if FEED_LOG.exists():
+        with FEED_LOG.open() as fh:
+            seen = {(r.get("source"), r.get("origin"), r.get("mag")) for r in csv.DictReader(fh)}
+    new = [r for r in rows if (r[0], r[1], f"{r[2]:.2f}") not in seen]
+    if not new:
+        return
+    head = not FEED_LOG.exists()
+    with FEED_LOG.open("a", newline="") as fh:
+        w = csv.writer(fh)
+        if head:
+            w.writerow(["seen_at", "source", "origin", "mag"])
+        for src, t, m in new:
+            w.writerow([now.isoformat(timespec="seconds"), src, t, f"{m:.2f}"])
+
+
 def budget(ctx, p: dict) -> tuple[float, float]:
     """(room, settled): dollars still allowed at risk under the hard cap, and settled real P&L."""
     settled = realized(ctx.orders, strategy=NAME, mode="live") + archived_realized("live", NAME)
@@ -191,6 +320,18 @@ def stopped(ctx, p: dict, settled: float) -> bool:
 _CACHE: dict = {}      # one Kalshi + one USGS read per run, shared with the paper twin
 
 
+def _feeds(ctx, start: datetime, ms: float) -> dict:
+    if _CACHE.get("at") == ctx.now and "fd" in _CACHE:
+        return _CACHE["fd"]
+    fd = feeds(ctx, start)
+    try:
+        log_feeds(ctx.now, fd, ms)
+    except OSError as exc:
+        log.info("quake guard: feed log %s", exc)
+    _CACHE["fd"] = fd
+    return fd
+
+
 def _read(ctx, start: datetime):
     if _CACHE.get("at") == ctx.now:
         return _CACHE["today"], _CACHE["ms"]
@@ -213,6 +354,9 @@ def scan(ctx, p: dict, name: str) -> list[Intent]:
     if not today or ms is None:
         return []
     out = candidates(today, now, ms, p, held_by_event(ctx.orders, name, ctx.mode), name=name)
+    if p.get("guard"):                                 # read (and log) the fast feeds every run
+        fd = _feeds(ctx, start, ms)
+        out = guard(out, today, now, ms, fd, p)
     log.info("%s: %d open markets today, max so far M%.1f, %d candidates", name, len(today), ms, len(out))
     return out
 
