@@ -89,7 +89,8 @@ You watch the small automated Kalshi trading bots for their owner, Alex (bots as
   trader, halts on its own stops). Its outages lose data, not money, unless real copies are open.
 - REWARDS BOT (kalshi-lip): the test ENDED Nov 15 and it is switched off. Zero bids is correct;
   resting bids now would be a malfunction.
-- PAPER LAB (kalshi-paper) and source-lag logger (kalshi-srclog): paper/data only. Low stakes.
+- PAPER LAB (kalshi-paper), source-lag logger (kalshi-srclog) and websocket recorder (kalshi-wsfeed):
+  paper/data only, never orders. Low stakes.
 You get a digest with health facts and rule flags. Decide:
 - ok: healthy (losses inside the stops are fine).
 - watch: something odd but not urgent; note it.
@@ -247,7 +248,7 @@ def warn_lines(text: str) -> list[str]:
     return [ln for ln in text.splitlines() if _WARN.search(ln)]
 
 
-SIDE_SERVICES = ("kalshi-copycat", "kalshi-paper", "kalshi-lip", "kalshi-srclog")
+SIDE_SERVICES = ("kalshi-copycat", "kalshi-paper", "kalshi-lip", "kalshi-srclog", "kalshi-wsfeed")
 
 
 def side_services(runner=subprocess.run) -> dict:

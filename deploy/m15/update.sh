@@ -39,7 +39,7 @@ g fetch -q origin main
 after=$(g rev-parse origin/main)
 # Files the 15-min bot itself never loads: changing only these needs no bot restart (the
 # watcher is a separate 15-min timer job), so the trading bot keeps running untouched.
-NO_RESTART='^(wxbot/(watch|lip|lip_rank|paperlab|copycat|copycat_boss|copycat_live|ai_budget|quakefast)\.py|deploy/m15/(update\.sh|install-(watch|lip|paperlab|quakefast)\.sh|set-anthropic-key\.sh|kalshi-watch\.(service|timer)|kalshi-(lip|paper|quakefast)\.service))$'
+NO_RESTART='^(wxbot/(watch|lip|lip_rank|paperlab|copycat|copycat_boss|copycat_live|ai_budget|quakefast|wsfeed)\.py|deploy/m15/(update\.sh|install-(watch|lip|paperlab|quakefast|wsfeed)\.sh|set-anthropic-key\.sh|kalshi-watch\.(service|timer)|kalshi-(lip|paper|quakefast|wsfeed)\.service))$'
 if [ "$before" != "$after" ] && g diff --name-only "$before" "$after" -- $CODE | grep -q . \
    && ! g diff --name-only "$before" "$after" -- $CODE | grep -Evq "$NO_RESTART"; then
   g reset -q --hard "$after"
@@ -82,6 +82,8 @@ fi
 bash "$APP/deploy/m15/install-watch.sh" || echo "watch install failed"
 # Source shadow logger (logging only; never trades, never reads the Kalshi key)
 bash "$APP/deploy/m15/install-srclog.sh" || echo "srclog install failed"
+# Websocket recorder for the main bot's markets + our exact fills (logs only; never trades)
+bash "$APP/deploy/m15/install-wsfeed.sh" || echo "wsfeed install failed"
 # Copycat in shadow mode (logging only; never trades, never reads the Kalshi key)
 bash "$APP/deploy/m15/install-copycat.sh" || echo "copycat install failed"
 # Liquidity-reward test (real money, small; lip_control.json on main switches it)
