@@ -1,5 +1,5 @@
 {
- "at": "2026-11-21 06:00:25",
+ "at": "2026-11-21 06:05:25",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -150,7 +150,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795258618.7701788
+   "checked": 1795258919.2480776
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-7.0|0.2",
@@ -171,7 +171,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795258618.7701788
+   "checked": 1795258919.2480776
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -261,7 +261,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795258699.4116406
+   "checked": 1795258999.952267
   },
   {
    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -388,16 +388,21 @@
     "emsc_ws": {
      "lag_s": 418.0,
      "first_mag": 5.7,
-     "mag": 5.7
+     "mag": 5.8
     },
     "emsc": {
      "lag_s": 424.1,
      "first_mag": 5.7,
-     "mag": 5.7
+     "mag": 5.8
     },
     "gfz": {
      "lag_s": 459.4,
      "first_mag": 5.8,
+     "mag": 5.9
+    },
+    "usgs": {
+     "lag_s": 919.4,
+     "first_mag": 5.9,
      "mag": 5.9
     }
    }
@@ -516,69 +521,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 1232,
+   "ok": 1247,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:12",
+   "last_ok": "2026-11-21 06:05:12",
    "last_err": null
   },
   "emsc": {
-   "ok": 733,
+   "ok": 753,
    "err": 910,
-   "last_ok": "2026-11-21 06:00:22",
+   "last_ok": "2026-11-21 06:05:22",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 206,
+   "ok": 209,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:08",
+   "last_ok": "2026-11-21 06:01:33",
    "last_err": null
   },
   "geonet": {
-   "ok": 822,
+   "ok": 832,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:22",
+   "last_ok": "2026-11-21 06:05:22",
    "last_err": null
   },
   "gfz": {
-   "ok": 2464,
+   "ok": 2494,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:23",
+   "last_ok": "2026-11-21 06:05:23",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 667,
+   "ok": 677,
    "err": 155,
-   "last_ok": "2026-11-21 06:00:22",
+   "last_ok": "2026-11-21 06:05:22",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 822,
+   "ok": 832,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:22",
+   "last_ok": "2026-11-21 06:05:22",
    "last_err": null
   },
   "kalshi": {
-   "ok": 3253,
+   "ok": 3293,
    "err": 5,
-   "last_ok": "2026-11-21 06:00:10",
+   "last_ok": "2026-11-21 06:05:16",
    "last_err": null
   },
   "ntwc": {
-   "ok": 1643,
+   "ok": 1663,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:22",
+   "last_ok": "2026-11-21 06:05:22",
    "last_err": null
   },
   "ptwc": {
-   "ok": 1643,
+   "ok": 1663,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:22",
+   "last_ok": "2026-11-21 06:05:22",
    "last_err": null
   },
   "usgs": {
-   "ok": 2464,
+   "ok": 2494,
    "err": 0,
-   "last_ok": "2026-11-21 06:00:23",
+   "last_ok": "2026-11-21 06:05:23",
    "last_err": null
   }
  }
