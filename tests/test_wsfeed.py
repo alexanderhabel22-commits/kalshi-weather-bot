@@ -155,3 +155,24 @@ def test_service_wiring():
     for p in ("wxbot/wsfeed.py", "deploy/m15/install-wsfeed.sh", "deploy/m15/kalshi-wsfeed.service"):
         assert re.match(no_restart, p), p              # changing the recorder never restarts the 15-min bot
     assert "bot.py wsfeed" in (root / "deploy/m15/kalshi-wsfeed.service").read_text()
+
+
+def test_markets_cached_and_paused_after_429(tmp_path):
+    calls = []
+    c = Clock(1_795_200_000.0)
+
+    def get(url, params):
+        calls.append(params.get("event_ticker"))
+        if params.get("event_ticker") == "BAD":
+            raise RuntimeError("429 Client Error: Too Many Requests")
+        return {"markets": [{"ticker": params["event_ticker"] + "-1"}]}
+    f = wsfeed.WsFeed(tmp_path, get=get, clock=c)
+    assert f._markets(event_ticker="E1") == [{"ticker": "E1-1"}]
+    assert f._markets(event_ticker="E1") == [{"ticker": "E1-1"}]
+    assert calls == ["E1"]                                  # cached
+    assert f._markets(event_ticker="BAD") == []
+    assert f._markets(event_ticker="E2") == []              # paused after the 429
+    assert calls == ["E1", "BAD"]
+    c.t += 1801
+    assert f._markets(event_ticker="E1") == [{"ticker": "E1-1"}]   # cache expired, pause over: fetched again
+    assert calls[-1] == "E1"

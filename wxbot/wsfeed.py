@@ -131,6 +131,9 @@ class WsFeed:
         self.uploaded: set[str] = set()
         self.capped_hour = ""
         self._id = 0
+        self.cache: dict[str, tuple[float, list]] = {}   # REST query -> (fetched at, markets)
+        self.pause_until = 0.0                           # after a 429: no REST calls until then
+        self.sleep = time.sleep if get is None else (lambda s: None)
         self._s = requests.Session()
         self._s.headers["User-Agent"] = "kalshi-wsfeed/1.0"
 
@@ -180,12 +183,27 @@ class WsFeed:
         return r.json() if "json" in r.headers.get("content-type", "") or url.startswith(API) else r.text
 
     def _markets(self, **params) -> list[dict]:
+        """Open markets for one event/series. Cached 30 min and spaced 0.3 s apart: the droplet
+        shares Kalshi's rate limit with the other services. On a 429 the old list is kept and
+        REST calls stop for 2 min."""
+        key = json.dumps(params, sort_keys=True)
+        now = self.clock()
+        hit = self.cache.get(key)
+        if hit and now - hit[0] < 1800:
+            return hit[1]
+        if now < self.pause_until:
+            return hit[1] if hit else []
         try:
+            self.sleep(0.3)
             js = self.get(f"{API}/markets", {"limit": 1000, "status": "open", **params})
-            return (js or {}).get("markets") or []
+            got = (js or {}).get("markets") or []
+            self.cache[key] = (now, got)
+            return got
         except Exception as exc:  # noqa: BLE001
+            if "429" in str(exc):
+                self.pause_until = now + 120
             log.warning("wsfeed markets %s: %s", params, exc)
-            return []
+            return hit[1] if hit else []
 
     def watch_list(self, now: float) -> tuple[list[str], list[str]]:
         try:
@@ -194,6 +212,9 @@ class WsFeed:
         except Exception as exc:  # noqa: BLE001  keep the old list
             log.warning("wsfeed orders: %s", exc)
             return self.tickers, self.books
+        keep = {json.dumps({"event_ticker": ev}, sort_keys=True) for ev in events[:60]}
+        keep |= {json.dumps({"series_ticker": x}, sort_keys=True) for x in ALWAYS}
+        self.cache = {k: v for k, v in self.cache.items() if k in keep}
         siblings = [m["ticker"] for ev in events[:60] for m in self._markets(event_ticker=ev) if m.get("ticker")]
         always = []
         for series, hours in ALWAYS.items():
