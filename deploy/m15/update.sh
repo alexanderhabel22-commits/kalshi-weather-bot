@@ -39,7 +39,7 @@ g fetch -q origin main
 after=$(g rev-parse origin/main)
 # Files the 15-min bot itself never loads: changing only these needs no bot restart (the
 # watcher is a separate 15-min timer job), so the trading bot keeps running untouched.
-NO_RESTART='^(wxbot/(watch|lip|lip_rank|paperlab|copycat|copycat_boss|copycat_live|ai_budget)\.py|deploy/m15/(update\.sh|install-(watch|lip|paperlab)\.sh|set-anthropic-key\.sh|kalshi-watch\.(service|timer)|kalshi-(lip|paper)\.service))$'
+NO_RESTART='^(wxbot/(watch|lip|lip_rank|paperlab|copycat|copycat_boss|copycat_live|ai_budget|quakefast)\.py|deploy/m15/(update\.sh|install-(watch|lip|paperlab|quakefast)\.sh|set-anthropic-key\.sh|kalshi-watch\.(service|timer)|kalshi-(lip|paper|quakefast)\.service))$'
 if [ "$before" != "$after" ] && g diff --name-only "$before" "$after" -- $CODE | grep -q . \
    && ! g diff --name-only "$before" "$after" -- $CODE | grep -Evq "$NO_RESTART"; then
   g reset -q --hard "$after"
@@ -88,5 +88,7 @@ bash "$APP/deploy/m15/install-copycat.sh" || echo "copycat install failed"
 bash "$APP/deploy/m15/install-lip.sh" || echo "lip install failed"
 # Paper tests (no orders: GET requests only): wide-spread maker + parlay quote requests
 bash "$APP/deploy/m15/install-paperlab.sh" || echo "paperlab install failed"
+# Fast-quake PAPER test (no orders, never reads the Kalshi key): quake feeds vs Kalshi prices
+bash "$APP/deploy/m15/install-quakefast.sh" || echo "quakefast install failed"
 # One-time order speed test (1c post-only bids, cancelled at once; runs once per version)
 bash "$APP/deploy/m15/run-latency-probe.sh" || echo "latency probe failed"

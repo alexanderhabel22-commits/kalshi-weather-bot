@@ -447,7 +447,7 @@ function swingHTML(){
 const TEST_START = Date.parse("2026-11-11T13:30:00Z");
 async function loadTests(){
   const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${f}?t=${Date.now()}`, {cache:"no-store"}); return r.ok ? await r.json() : null; } catch(e){ return null; } };
-  const [lip, mm, rfq, field, watch] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json"), get("watch.json")]);
+  const [lip, mm, rfq, field, watch, qfast] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json"), get("watch.json"), get("quakefast.json")]);
   if (watch) S.watch = watch;
   let late = [];
   try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
@@ -457,7 +457,7 @@ async function loadTests(){
   let radar = null, farm = null;
   try { radar = await raw("data/radar.json", "json"); } catch(e){ radar = null; }
   try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/farm-watch-data/state/farm_watch.json?t=${Date.now()}`, {cache:"no-store"}); farm = r.ok ? await r.json() : null; } catch(e){ farm = null; }
-  S.tx = {lip, mm, rfq, late, field, qstate, fstate, radar, farm};
+  S.tx = {lip, mm, rfq, late, field, qstate, fstate, radar, farm, qfast};
 }
 // Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
 function lateCard(rows){
@@ -519,7 +519,48 @@ function realTestsHTML(){
       ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : x.strategy === "quake_no_guard_paper" ? "paper + guard" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
     </div>`;
   }
-  return h + shipPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
+  return h + quakeFastHTML() + shipPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
+}
+/* Fast-quake YES paper test (Nov 21): the 15-min server polls free quake feeds every 10-30 s and
+   logs, per source, when it first saw each quake, what the Kalshi YES ask was then, and what a
+   1-contract paper buy made at settlement. Status file m15/quakefast.json on the m15-data branch. */
+const QF_SRC = {usgs:"USGS feed", gfz:"GFZ (RSS)", gfz_fdsn:"GFZ (catalog)", emsc:"EMSC (catalog)", emsc_ws:"EMSC (push)", ptwc:"Pacific Tsunami Ctr", ntwc:"US Tsunami Ctr", jma:"Japan JMA", bmkg:"Indonesia BMKG", geonet:"NZ GeoNet"};
+function quakeFastHTML(){
+  const Q = (S.tx || {}).qfast;
+  let h = `<h2>Fast quake YES <span class="sub">PAPER ONLY · no real money without Alex's OK</span></h2><div class="card">`;
+  h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">Idea: hear about a big quake from the fastest free feeds (GFZ, EMSC, tsunami centers, Japan/Indonesia/NZ agencies) before USGS posts it, then buy YES on the strikes the quake clears while the price is still low. Each source gets its own paper bets (1 contract at the ask, at the moment that source first showed the quake), in two versions: magnitude at or above the strike, and 0.2+ above it (early magnitudes often get revised by 0.1-0.3). Honest odds: fast traders already move Kalshi 1-4 min after a quake, often before GFZ; asks near the strike are thin; a revised magnitude turns a "sure" win into a loss. Peru (Nov 20) looked good for GFZ (6.6 YES ~19-28¢, settled YES) but lost on the 6.8 strike for EMSC/PTWC (they said 6.8/6.9, USGS 6.7). One quake proves nothing.</div>`;
+  if (!Q) return h + `<div class="mute" style="font-size:12px">No status yet. The server starts this test within ~2 hours of the update; the first file appears 5 minutes later.</div></div>`;
+  const ag = Q.first_source || {}, tot = Q.totals || {};
+  const cc = v => v == null ? "—" : (v > 0 ? "+" : "") + (+v).toFixed(1) + "¢";
+  h += `<div class="sgrid" style="margin-bottom:8px">
+    <div><div class="lbl">First source to see it</div><div class="val ${cls(ag.pnl || 0)}">${ag.settled ? money(ag.pnl) : "—"}<small>${ag.settled || 0} settled · ${cc(ag.c_per_ct)}/ct · ${ag.won || 0} won</small></div></div>
+    <div><div class="lbl">All sources, all paper bets</div><div class="val ${cls(tot.pnl || 0)}">${tot.settled ? money(tot.pnl) : "—"}<small>${tot.n || 0} bets · ${tot.settled || 0} settled · ${tot.skipped || 0} skipped (ask over 95¢ or none)</small></div></div>
+    <div><div class="lbl">Quakes logged (M5.5+)</div><div class="val">${(Q.quakes || []).length}<small>updated ${esc(Q.at || "")} ET</small></div></div></div>`;
+  const by = Object.entries(Q.by_source || {});
+  if (by.length){
+    h += `<div style="overflow-x:auto"><table class="tbl"><tr><th>Source</th><th>Rule</th><th align="right">Bets</th><th align="right">Settled</th><th align="right">Won</th><th align="right">P&L</th><th align="right">¢/ct</th></tr>`;
+    for (const [k, v] of by){ const [src, mg] = k.split("|");
+      h += `<tr><td>${esc(QF_SRC[src] || src)}</td><td>${+mg > 0 ? "mag ≥ strike + 0.2" : "mag ≥ strike"}</td><td align="right">${v.n}</td><td align="right">${v.settled}</td><td align="right">${v.won}</td><td align="right" class="${cls(v.pnl)}">${v.settled ? money(v.pnl) : "—"}</td><td align="right">${cc(v.c_per_ct)}</td></tr>`; }
+    h += `</table></div>`;
+  }
+  const lat = Object.entries(Q.latency_m6 || {}).sort((a, b) => a[1].median_s - b[1].median_s);
+  if (lat.length) h += `<div class="mute" style="font-size:11px;margin-top:6px"><b>Median minutes after the quake (M6+):</b> ${lat.map(([k, v]) => `${esc(QF_SRC[k] || k)} ${(v.median_s / 60).toFixed(1)} (${v.n})`).join(" · ")}</div>`;
+  const qs = (Q.quakes || []).filter(q => q.best_mag >= 5.8).slice(0, 12);
+  if (qs.length){
+    h += `<div style="overflow-x:auto;margin-top:6px"><table class="tbl"><tr><th>Quake (ET)</th><th>Where</th><th align="right">Mag</th><th>Who saw it first (min after, magnitude)</th><th align="right">Kalshi moved</th></tr>`;
+    for (const q of qs){
+      const ss = Object.entries(q.srcs || {}).map(([k, v]) => `${esc(QF_SRC[k] || k)} ${v.lag_s == null ? "(before start)" : (v.lag_s / 60).toFixed(1)} · M${(+v.first_mag).toFixed(1)}${Math.abs(v.mag - v.first_mag) >= 0.05 ? "→" + (+v.mag).toFixed(1) : ""}`).join("<br>");
+      const km = q.kmove && q.kmove.lag_s != null ? (q.kmove.lag_s / 60).toFixed(1) + " min" : "—";
+      h += `<tr><td>${esc((q.et || "").slice(5, 16))}</td><td>${esc(q.place || "")}</td><td align="right">${(+q.best_mag).toFixed(1)}</td><td style="font-size:11px">${ss}</td><td align="right">${km}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+  const fl = (Q.fills || []).filter(f => f.status !== "skip").slice(-10).reverse();
+  if (fl.length) h += `<div class="list" style="margin-top:6px">` + fl.map(f => `<div class="item" style="padding:6px 0"><span class="side yes">YES</span><div class="main"><div class="t" style="font-size:12px">${esc(f.place || "")} ≥ ${(+f.strike).toFixed(1)} <small class="mute">${esc(QF_SRC[f.src] || f.src)} said M${(+f.mag).toFixed(2)} · ${f.lag_s == null ? "" : (f.lag_s / 60).toFixed(1) + " min after"}${f.margin > 0 ? " · +0.2 rule" : ""}</small></div><div class="s">paper buy at ${(f.ask * 100).toFixed(0)}¢${f.ask_size ? " (" + Math.round(f.ask_size) + " on offer)" : ""} · ${esc(f.et || "")} ET</div></div><div class="r ${f.pnl == null ? "" : cls(f.pnl)}">${f.pnl == null ? "open" : money(f.pnl)}</div></div>`).join("") + `</div>`;
+  else h += `<div class="mute" style="font-size:12px;margin-top:6px">No paper bets yet. They come only with an M5.8+ quake (several a week; M6.5+ a few a month).</div>`;
+  const fd = Object.entries(Q.feeds || {});
+  if (fd.length) h += `<div class="mute" style="font-size:10px;margin-top:6px">Feeds: ${fd.map(([k, v]) => `${esc(QF_SRC[k] || k)} ${v.err && !v.ok ? "❌" : v.err > v.ok / 10 ? "⚠️" : "✓"}`).join(" · ")}</div>`;
+  return h + `</div>`;
 }
 /* Shipping counts paper test (Nov 20): cents per contract with a 95% range that treats each week of
    one chokepoint as one unit (the markets of a week move together), like the replay did. */
