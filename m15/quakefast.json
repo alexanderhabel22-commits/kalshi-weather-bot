@@ -1,5 +1,5 @@
 {
- "at": "2026-11-21 04:45:17",
+ "at": "2026-11-21 04:50:18",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -20,7 +20,7 @@
   "cap": 3.0,
   "cap_used": 0.0,
   "stopped": false,
-  "orders": 0,
+  "orders": 1,
   "filled": 0,
   "missed": 0,
   "settled": 0,
@@ -28,10 +28,28 @@
   "pnl": 0,
   "c_per_ct": null,
   "open_cost": 0,
-  "recent": []
+  "recent": [
+   {
+    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.2",
+    "qid": "q1795254412-bmkg",
+    "src": "gfz",
+    "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+    "strike": 6.8,
+    "mag": 7.0,
+    "place": "43 km BaratLaut MALUKUBRTDAYA",
+    "price": 0.54,
+    "ts": 1795254493.1,
+    "et": "2026-11-21 04:48:13",
+    "lag_s": 361.9,
+    "placed": 1,
+    "status": "error",
+    "filled": 0,
+    "err": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_parameters\",\"message\":\"invalid parameters\"}}"
+   }
+  ]
  },
  "totals": {
-  "n": 0,
+  "n": 8,
   "settled": 0,
   "won": 0,
   "pnl": 0,
@@ -39,16 +57,250 @@
   "skipped": 0
  },
  "first_source": {
-  "n": 0,
+  "n": 4,
   "settled": 0,
   "won": 0,
   "pnl": 0,
   "c_per_ct": null,
   "skipped": 0
  },
- "by_source": {},
- "fills": [],
+ "by_source": {
+  "bmkg|0.0": {
+   "n": 2,
+   "settled": 0,
+   "won": 0,
+   "pnl": 0,
+   "c_per_ct": null,
+   "skipped": 0
+  },
+  "bmkg|0.2": {
+   "n": 2,
+   "settled": 0,
+   "won": 0,
+   "pnl": 0,
+   "c_per_ct": null,
+   "skipped": 0
+  },
+  "gfz_fdsn|0.0": {
+   "n": 1,
+   "settled": 0,
+   "won": 0,
+   "pnl": 0,
+   "c_per_ct": null,
+   "skipped": 0
+  },
+  "gfz|0.0": {
+   "n": 2,
+   "settled": 0,
+   "won": 0,
+   "pnl": 0,
+   "c_per_ct": null,
+   "skipped": 0
+  },
+  "gfz|0.2": {
+   "n": 1,
+   "settled": 0,
+   "won": 0,
+   "pnl": 0,
+   "c_per_ct": null,
+   "skipped": 0
+  }
+ },
+ "fills": [
+  {
+   "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-7.0|0.0",
+   "qid": "q1795254412-bmkg",
+   "src": "bmkg",
+   "rank": 1,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-7.0",
+   "strike": 7.0,
+   "mag": 7.2,
+   "ts": 1795254412.5,
+   "et": "2026-11-21 04:46:52",
+   "lag_s": 281.5,
+   "since_first_s": -0.0,
+   "bid": 0.12,
+   "ask": 0.54,
+   "ask_size": 12.05,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  },
+  {
+   "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-7.0|0.2",
+   "qid": "q1795254412-bmkg",
+   "src": "bmkg",
+   "rank": 1,
+   "margin": 0.2,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-7.0",
+   "strike": 7.0,
+   "mag": 7.2,
+   "ts": 1795254412.5,
+   "et": "2026-11-21 04:46:52",
+   "lag_s": 281.5,
+   "since_first_s": -0.0,
+   "bid": 0.12,
+   "ask": 0.54,
+   "ask_size": 12.05,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  },
+  {
+   "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
+   "qid": "q1795254412-bmkg",
+   "src": "bmkg",
+   "rank": 1,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+   "strike": 6.8,
+   "mag": 7.2,
+   "ts": 1795254412.5,
+   "et": "2026-11-21 04:46:52",
+   "lag_s": 281.5,
+   "since_first_s": -0.0,
+   "bid": 0.19,
+   "ask": 0.29,
+   "ask_size": 1.0,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  },
+  {
+   "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-6.8|0.2",
+   "qid": "q1795254412-bmkg",
+   "src": "bmkg",
+   "rank": 1,
+   "margin": 0.2,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+   "strike": 6.8,
+   "mag": 7.2,
+   "ts": 1795254412.5,
+   "et": "2026-11-21 04:46:52",
+   "lag_s": 281.5,
+   "since_first_s": -0.0,
+   "bid": 0.19,
+   "ask": 0.29,
+   "ask_size": 1.0,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  },
+  {
+   "key": "q1795254412-bmkg|gfz_fdsn|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
+   "qid": "q1795254412-bmkg",
+   "src": "gfz_fdsn",
+   "rank": 2,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+   "strike": 6.8,
+   "mag": 6.99,
+   "ts": 1795254472.1,
+   "et": "2026-11-21 04:47:52",
+   "lag_s": 341.1,
+   "since_first_s": 59.6,
+   "bid": 0.24,
+   "ask": 0.54,
+   "ask_size": 22.73,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  },
+  {
+   "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-7.0|0.0",
+   "qid": "q1795254412-bmkg",
+   "src": "gfz",
+   "rank": 3,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-7.0",
+   "strike": 7.0,
+   "mag": 7.0,
+   "ts": 1795254492.9,
+   "et": "2026-11-21 04:48:12",
+   "lag_s": 361.9,
+   "since_first_s": 80.4,
+   "bid": 0.13,
+   "ask": 0.54,
+   "ask_size": 0.05,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  },
+  {
+   "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
+   "qid": "q1795254412-bmkg",
+   "src": "gfz",
+   "rank": 3,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+   "strike": 6.8,
+   "mag": 7.0,
+   "ts": 1795254492.9,
+   "et": "2026-11-21 04:48:12",
+   "lag_s": 361.9,
+   "since_first_s": 80.4,
+   "bid": 0.3,
+   "ask": 0.54,
+   "ask_size": 22.73,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  },
+  {
+   "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.2",
+   "qid": "q1795254412-bmkg",
+   "src": "gfz",
+   "rank": 3,
+   "margin": 0.2,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+   "strike": 6.8,
+   "mag": 7.0,
+   "ts": 1795254492.9,
+   "et": "2026-11-21 04:48:12",
+   "lag_s": 361.9,
+   "since_first_s": 80.4,
+   "bid": 0.3,
+   "ask": 0.54,
+   "ask_size": 22.73,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "open",
+   "fee": 0.02
+  }
+ ],
  "quakes": [
+  {
+   "qid": "q1795254412-bmkg",
+   "t": 1795254131.0,
+   "et": "2026-11-21 04:42:11",
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "best_mag": 7.2,
+   "triggered": true,
+   "kmove": {
+    "ts": 1795254513.6,
+    "lag_s": 382.6,
+    "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+    "from": 0.23,
+    "to": 0.43
+   },
+   "srcs": {
+    "bmkg": {
+     "lag_s": 281.5,
+     "first_mag": 7.2,
+     "mag": 7.2
+    },
+    "gfz_fdsn": {
+     "lag_s": 341.1,
+     "first_mag": 6.99,
+     "mag": 6.94
+    },
+    "gfz": {
+     "lag_s": 361.9,
+     "first_mag": 7.0,
+     "mag": 6.9
+    }
+   }
+  },
   {
    "qid": "q1795234191-gfz_fdsn",
    "t": 1795219748.79,
@@ -76,72 +328,85 @@
    }
   }
  ],
- "latency_m6": {},
+ "latency_m6": {
+  "bmkg": {
+   "n": 1,
+   "median_s": 281.5
+  },
+  "gfz_fdsn": {
+   "n": 1,
+   "median_s": 341.1
+  },
+  "gfz": {
+   "n": 1,
+   "median_s": 361.9
+  }
+ },
  "feeds": {
   "bmkg": {
-   "ok": 1007,
+   "ok": 1022,
    "err": 0,
-   "last_ok": "2026-11-21 04:45:12",
+   "last_ok": "2026-11-21 04:50:12",
    "last_err": null
   },
   "emsc": {
    "ok": 478,
-   "err": 864,
+   "err": 884,
    "last_ok": "2026-11-21 01:09:07",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 166,
+   "ok": 168,
    "err": 0,
-   "last_ok": "2026-11-21 04:44:18",
+   "last_ok": "2026-11-21 04:47:09",
    "last_err": null
   },
   "geonet": {
-   "ok": 671,
+   "ok": 681,
    "err": 0,
-   "last_ok": "2026-11-21 04:44:52",
+   "last_ok": "2026-11-21 04:49:52",
    "last_err": null
   },
   "gfz": {
-   "ok": 2013,
+   "ok": 2043,
    "err": 0,
-   "last_ok": "2026-11-21 04:45:12",
+   "last_ok": "2026-11-21 04:50:12",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 527,
-   "err": 144,
-   "last_ok": "2026-11-21 04:44:52",
+   "ok": 534,
+   "err": 147,
+   "last_ok": "2026-11-21 04:49:52",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 671,
+   "ok": 681,
    "err": 0,
-   "last_ok": "2026-11-21 04:44:52",
+   "last_ok": "2026-11-21 04:49:52",
    "last_err": null
   },
   "kalshi": {
-   "ok": 2659,
+   "ok": 2697,
    "err": 5,
-   "last_ok": "2026-11-21 04:45:15",
+   "last_ok": "2026-11-21 04:50:04",
    "last_err": null
   },
   "ntwc": {
-   "ok": 1342,
+   "ok": 1362,
    "err": 0,
-   "last_ok": "2026-11-21 04:45:07",
+   "last_ok": "2026-11-21 04:50:07",
    "last_err": null
   },
   "ptwc": {
-   "ok": 1342,
+   "ok": 1362,
    "err": 0,
-   "last_ok": "2026-11-21 04:45:07",
+   "last_ok": "2026-11-21 04:50:07",
    "last_err": null
   },
   "usgs": {
-   "ok": 2013,
+   "ok": 2043,
    "err": 0,
-   "last_ok": "2026-11-21 04:45:12",
+   "last_ok": "2026-11-21 04:50:12",
    "last_err": null
   }
  }
