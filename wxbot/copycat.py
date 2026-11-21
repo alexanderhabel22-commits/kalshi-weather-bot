@@ -194,7 +194,7 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
             if r.get("new") and r.get("ours") is not None:   # as we'd really have copied it
                 out["new_ours"].append(round(100 * ((1.0 if r["side"] == res else 0.0) - r["ours"])
                                              - taker_fee_c(r["ours"]), 1))
-        recent.append({**{k: r.get(k) for k in ("et", "nick", "ticker", "side", "paid", "count", "usd", "joined",
+        recent.append({"_r": r, **{k: r.get(k) for k in ("nick", "ticker", "side", "paid", "count", "usd", "joined",
                                                     "markets", "new", "anon", "role", "lag_s", "ours")}, "result_c": c})
 
     def stats(v):
@@ -203,12 +203,16 @@ def whale_summary(rows: list[dict], results: dict[str, str], now: float) -> dict
     nw = [x for x in recent if x["new"]]
     an = [x for x in recent if x.get("anon")]
     named = [x for x in recent if not x.get("anon")]
+
+    def show(v):                                  # "et" for the rows shown only (held rows drop it)
+        return [{"et": _et(x["_r"]), **{k: x[k] for k in x if k != "_r"}} for x in v]
     return {"min_usd": WHALE_USD, "anon_min_usd": WHALE_ANON_USD, "new_days": WHALE_NEW_DAYS,
             "count": len(named), "new_count": len(nw), "anon_count": len(an),
             "new": stats(out["new"]), "new_ours": stats(out["new_ours"]), "old": stats(out["old"]),
             "anon": stats(out["anon"]),
-            "recent_new": list(reversed(nw))[:40], "recent_anon": sorted(an, key=lambda x: -(x["usd"] or 0))[:10],
-            "recent": list(reversed(named))[:40]}
+            "recent_new": show(list(reversed(nw))[:40]),
+            "recent_anon": show(sorted(an, key=lambda x: -(x["usd"] or 0))[:10]),
+            "recent": show(list(reversed(named))[:40])}
 
 
 def real_ok(their: float, pay: float, lag: float | None) -> bool:
@@ -221,7 +225,7 @@ def real_ok(their: float, pay: float, lag: float | None) -> bool:
 
 def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
     """Per account (and "ALL"): lists of cents/contract on the sharp's side.
-    move_N = mid N s after we saw the fill minus the sharp's price; follow_N = mid minus the ask a
+    (move_N lists, never read, dropped Nov 21 to save memory.) follow_N = mid minus the ask a
     copier would have paid at detection (and the taker fee); settle = settlement value minus that
     ask and fee. Lists are in time order."""
     fills = {r["trade_id"]: r for r in rows if r.get("kind") == "fill" and not r.get("backfill")
@@ -236,7 +240,7 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
             results.setdefault(r["ticker"], r["result"])
     out: dict = defaultdict(lambda: defaultdict(list))
     for tid, f in fills.items():
-        s = ({d: {"bid": b, "ask": a} for d, (b, a) in f["_s"].items()} if f.get("_s")
+        s = ({d: {"bid": b, "ask": a} for d, (b, a) in _snaps_of(f).items()} if f.get("_s")
              else snaps.get(tid) or {})
         s0 = s.get(0)
         if not s0 or s0.get("bid") is None or s0.get("ask") is None:
@@ -254,7 +258,6 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
                 if snap.get("bid") is None or snap.get("ask") is None:
                     continue
                 mid = side_value(side, (snap["bid"] + snap["ask"]) / 2)
-                o[f"move_{d}"].append(100 * (mid - entry))
                 o[f"follow_{d}"].append(100 * (mid - pay) - fee)
             res = (results or {}).get(f["ticker"])
             if res in ("yes", "no") and ok:    # the score: only copies real money could have made
@@ -262,7 +265,7 @@ def grade(rows: list[dict], results: dict[str, str] | None = None) -> dict:
                 o["settle_ev"].append(event_of(f.get("ticker") or ""))
         res = (results or {}).get(f["ticker"])
         out[f["nick"]]["trades"].append({
-            "tid": tid, "ts": f.get("ts"), "et": (f.get("et") or "")[5:16], "ticker": f.get("ticker"), "side": side,
+            "tid": tid, "ts": f.get("ts"), "et": _et(f)[5:16], "ticker": f.get("ticker"), "side": side,
             "their_c": round(100 * entry), "pay_c": round(100 * pay), "count": f.get("count"),
             "role": f.get("role"), "result": res, "ok": ok,
             "c": round(100 * ((1.0 if res == side else 0.0) - pay) - fee, 1) if res in ("yes", "no") else None})
@@ -367,7 +370,7 @@ def _slim(r: dict) -> bool:
     return k in ("snap", "whale")
 
 
-_INTERN_VALS = ("kind", "nick", "ticker", "role", "side", "src")
+_INTERN_VALS = ("kind", "nick", "ticker", "role", "side", "src", "count")   # fill counts repeat ("1.00", "25.00")
 
 
 def _compact(r: dict) -> dict:
@@ -387,10 +390,27 @@ def _hour_end(p: Path) -> float | None:
     return h.timestamp() + 3600
 
 
+def _et(r: dict) -> str:
+    """A row's ET time string. Rows held in memory drop "et" (Nov 21 memory fix) and get it back from ts."""
+    e = r.get("et")
+    if e:
+        return e
+    ts = r.get("ts")
+    return datetime.fromtimestamp(ts, ET).strftime("%Y-%m-%d %H:%M:%S") if ts else ""
+
+
+def _snaps_of(f: dict) -> dict:
+    """{delay: (bid, ask)} from a held fill's flat "_s" tuple (delay, bid, ask, delay, bid, ask, ...)."""
+    s = f.get("_s") or ()
+    if isinstance(s, dict):
+        return s
+    return {s[i]: (s[i + 1], s[i + 2]) for i in range(0, len(s) - 2, 3)}
+
+
 def _read_part(p: Path, prev: dict, whale_cut: float | None = None) -> tuple[list[dict], dict]:
     """One hour's scoring rows, streamed line by line: a busy hour is tens of MB once unzipped, and
     reading whole files pushed the service past its 200 MB cap (crash loop, Nov 11 4:28 AM ET).
-    To keep memory small each snapshot is folded into its fill (fill["_s"] = {delay: (bid, ask)});
+    To keep memory small each snapshot is folded into its fill (fill["_s"] = flat (delay, bid, ask, ...) tuple);
     snapshots come within ~5 min, so a fill from this hour or the one before is found. Settled
     results become one small {"kind": "result"} row per ticker."""
     part, tids, res = [], {}, {}
@@ -415,15 +435,17 @@ def _read_part(p: Path, prev: dict, whale_cut: float | None = None) -> tuple[lis
                         res[r["ticker"]] = r["result"]
                     f = tids.get(r.get("trade_id")) or prev.get(r.get("trade_id"))
                     if f is not None:
-                        f.setdefault("_s", {})[r.get("delay")] = (r.get("bid"), r.get("ask"))
+                        sn = _snaps_of(f)            # a later snapshot of the same delay wins, as before
+                        sn[r.get("delay")] = (r.get("bid"), r.get("ask"))
+                        f["_s"] = tuple(x for k, (b, a) in sn.items() for x in (k, b, a))
                     continue
                 r = _compact(r)
                 if r["kind"] == "fill":
-                    for k in ("trade_time", "snap", "dropped"):
+                    for k in ("trade_time", "snap", "dropped", "et", "backfill", "act"):   # unused once held
                         r.pop(k, None)
                     tids[r.get("trade_id")] = r
                 elif r["kind"] == "whale":
-                    for k in ("trade_id", "trade_time", "age_d", "their_pnl", "fills"):
+                    for k in ("trade_id", "trade_time", "age_d", "their_pnl", "fills", "et"):
                         r.pop(k, None)
                 part.append(r)
     except (OSError, EOFError) as exc:              # a torn gzip tail (killed mid-write) keeps what parsed
@@ -437,14 +459,20 @@ def load_rows(d: Path, cache_done_hours: bool = False, now: float | None = None)
     cur = (datetime.fromtimestamp(now, timezone.utc).strftime("copycat-%Y-%m-%d-%H.jsonl")
            if now else None)
     prev: dict = {}
+    last_cached = None
     for p in sorted(d.glob("copycat-*.jsonl*")):
         if cache_done_hours and p.name in _ROW_CACHE:
             part, prev = _ROW_CACHE[p.name]
             rows += part
+            last_cached = p.name
             continue
         part, tids = _read_part(p, prev, whale_cut=now - WHALE_MEM_DAYS * 86400 if now else None)
         if cache_done_hours and p.name != cur:
             _ROW_CACHE[p.name] = (part, tids)
+            if last_cached and last_cached in _ROW_CACHE and _ROW_CACHE[last_cached][1]:
+                # only the newest cached hour's trade ids are needed (to fold the next hour's snapshots)
+                _ROW_CACHE[last_cached] = (_ROW_CACHE[last_cached][0], {})
+            last_cached = p.name
         rows += part
         prev = tids
     if cache_done_hours and _trim_cache(rows, now):
@@ -785,8 +813,8 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
             f"last {ROLL_WINDOW} copies average better than -leeway (5c, +up to 5c for a high score); paused "
             "below that, back when it recovers. Size: 90+ = 2, 95+ (300 copies) = 3, only after 20+ real copies in profit",
             "accounts": accounts, "_paper_c": paper_c,
-            "recent": [{k: r.get(k) for k in ("et", "nick", "ticker", "side", "yes_price", "count",
-                                                  "role", "lag_s")} for r in reversed(recent)]}
+            "recent": [{"et": _et(r), **{k: r.get(k) for k in ("nick", "ticker", "side", "yes_price", "count",
+                                                                "role", "lag_s")}} for r in reversed(recent)]}
 
 
 def real_results(state: dict | None) -> dict:

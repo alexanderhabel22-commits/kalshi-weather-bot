@@ -126,7 +126,7 @@ def test_grade_follow_and_settle():
     out = copycat.grade(rows_, {"T": "yes"})
     o = out["sharp"]
     assert len(o["lag"]) == 1                          # backfill ignored
-    assert round(o["move_300"][0], 1) == 11.0          # mid 0.61 - 0.50
+    assert "move_300" not in o                         # never read; dropped Nov 21 (memory)
     assert round(o["follow_300"][0], 1) == 5.0         # mid 0.61 - ask 0.54 - 2c taker fee
     assert o["settle"] == []                           # ask ran 4c past their price: real money would
     assert o["trades"][0]["c"] == 44.0 and o["trades"][0]["ok"] is False   # skip it, so it is not scored
@@ -483,7 +483,7 @@ def test_load_rows_folds_snaps_across_hours_and_skips_unscored(tmp_path):
     (tmp_path / "copycat-2026-11-11-02.jsonl").write_text(js.dumps(b[0]) + "\n{torn")
     rows = copycat.load_rows(tmp_path)
     fills = [r for r in rows if r["kind"] == "fill"]
-    assert [f["trade_id"] for f in fills] == ["t1"] and fills[0]["_s"] == {0: (0.48, 0.52), 60: (0.6, 0.62)}
+    assert [f["trade_id"] for f in fills] == ["t1"] and copycat._snaps_of(fills[0]) == {0: (0.48, 0.52), 60: (0.6, 0.62)}
     res = {}
     g = copycat.grade(rows, res)
     assert res == {"K": "yes"} and len(g["n"]["settle"]) == 1
@@ -736,3 +736,32 @@ def test_earn_back_counts_events_like_the_entry_test():
     res = {f"KXG-G{i % 10}-M{i}": ("yes" if i % 10 < 8 else "no") for i in range(160)}
     a = copycat.build_status(rows_, res, {"good": {}}, now=2000.0, earn_since={"good": 0.0})["accounts"][0]
     assert a["earn_back"]["n"] == 160 and a["earn_back"]["events"] == 10 < copycat.EARN_EVENTS
+
+
+def test_held_rows_are_slim_and_rereading_the_current_hour_is_stable(tmp_path):
+    """Memory fix Nov 21 (Copycat hit its 700 MB cap every ~3-5 h): held rows drop "et"/"backfill"/"act",
+    snapshots are a flat tuple, only the newest cached hour keeps its trade-id index, and the open hour
+    (re-read every status pass) never adds a snapshot twice. Times shown still come back from ts."""
+    import json as js
+    from datetime import datetime, timezone
+    copycat._ROW_CACHE.clear()
+    now = datetime(2026, 11, 13, 14, 30, tzinfo=timezone.utc).timestamp()
+    f = {"kind": "fill", "v": 2, "nick": "n", "trade_id": "t1", "ticker": "K", "side": "yes", "yes_price": 0.5,
+         "snap": True, "backfill": False, "act": "buy", "ts": now - 7200, "et": "2026-11-13 07:30:00"}
+    s0 = {"kind": "snap", "trade_id": "t1", "ticker": "K", "delay": 0, "bid": 0.48, "ask": 0.52}
+    s1 = {"kind": "snap", "trade_id": "t1", "ticker": "K", "delay": 60, "bid": 0.6, "ask": 0.62}
+    old = dict(f, trade_id="t0", ts=now - 4 * 3600, et="2026-11-13 05:30:00")
+    (tmp_path / "copycat-2026-11-13-10.jsonl").write_text(js.dumps(old) + "\n")
+    (tmp_path / "copycat-2026-11-13-13.jsonl").write_text(js.dumps(f) + "\n" + js.dumps(s0) + "\n")
+    (tmp_path / "copycat-2026-11-13-14.jsonl").write_text(js.dumps(s1) + "\n")   # the open hour
+    for _ in range(3):
+        got = copycat.load_rows(tmp_path, cache_done_hours=True, now=now)
+    fill = [r for r in got if r["kind"] == "fill" and r["trade_id"] == "t1"][0]
+    assert not {"et", "backfill", "act"} & set(fill)
+    assert fill["_s"] == (0, 0.48, 0.52, 60, 0.6, 0.62)
+    assert copycat._ROW_CACHE["copycat-2026-11-13-10.jsonl"][1] == {}        # older hour: index freed
+    assert "t1" in copycat._ROW_CACHE["copycat-2026-11-13-13.jsonl"][1]      # newest: kept for the open hour
+    assert copycat._et(fill) == "2026-11-13 07:30:00"
+    g = copycat.grade(got, {"K": "yes"})
+    assert g["n"]["trades"][-1]["et"] == "11-13 07:30" and len(g["n"]["follow_60"]) == 1
+    copycat._ROW_CACHE.clear()
