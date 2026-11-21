@@ -1,5 +1,5 @@
 {
- "at": "2026-11-21 05:10:20",
+ "at": "2026-11-21 05:15:20",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -150,7 +150,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255613.929651
+   "checked": 1795255914.5038908
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-7.0|0.2",
@@ -171,7 +171,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255613.929651
+   "checked": 1795255914.5038908
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -192,7 +192,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255613.929651
+   "checked": 1795255914.5038908
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-6.8|0.2",
@@ -213,7 +213,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255613.929651
+   "checked": 1795255914.5038908
   },
   {
    "key": "q1795254412-bmkg|gfz_fdsn|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -234,7 +234,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255673.356033
+   "checked": 1795255973.941415
   },
   {
    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-7.0|0.0",
@@ -255,7 +255,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255694.4529235
+   "checked": 1795255995.0460467
   },
   {
    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -276,7 +276,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255694.4529235
+   "checked": 1795255995.0460467
   },
   {
    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.2",
@@ -297,7 +297,7 @@
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
    "fee": 0.02,
-   "checked": 1795255694.4529235
+   "checked": 1795255995.0460467
   },
   {
    "key": "q1795254412-bmkg|usgs|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -373,7 +373,19 @@
     "lag_s": 382.6,
     "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
     "from": 0.23,
-    "to": 0.43
+    "to": 0.43,
+    "tape": {
+     "KXBIGGESTQUAKE-21NOV26-6.8": {
+      "first_50c_s": 343.4,
+      "n_after": 69,
+      "first_s": 167.2
+     },
+     "KXBIGGESTQUAKE-21NOV26-7.0": {
+      "first_50c_s": 309.0,
+      "n_after": 2,
+      "first_s": 309.0
+     }
+    }
    },
    "srcs": {
     "bmkg": {
@@ -463,69 +475,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 1082,
+   "ok": 1097,
    "err": 0,
-   "last_ok": "2026-11-21 05:10:12",
+   "last_ok": "2026-11-21 05:15:12",
    "last_err": null
   },
   "emsc": {
-   "ok": 532,
+   "ok": 552,
    "err": 910,
-   "last_ok": "2026-11-21 05:10:07",
+   "last_ok": "2026-11-21 05:15:07",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 182,
+   "ok": 184,
    "err": 0,
-   "last_ok": "2026-11-21 05:08:13",
+   "last_ok": "2026-11-21 05:11:41",
    "last_err": null
   },
   "geonet": {
-   "ok": 721,
+   "ok": 731,
    "err": 0,
-   "last_ok": "2026-11-21 05:09:52",
+   "last_ok": "2026-11-21 05:14:52",
    "last_err": null
   },
   "gfz": {
-   "ok": 2163,
+   "ok": 2193,
    "err": 0,
-   "last_ok": "2026-11-21 05:10:12",
+   "last_ok": "2026-11-21 05:15:12",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 573,
+   "ok": 583,
    "err": 148,
-   "last_ok": "2026-11-21 05:09:52",
+   "last_ok": "2026-11-21 05:14:52",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 721,
+   "ok": 731,
    "err": 0,
-   "last_ok": "2026-11-21 05:09:52",
+   "last_ok": "2026-11-21 05:14:52",
    "last_err": null
   },
   "kalshi": {
-   "ok": 2857,
+   "ok": 2897,
    "err": 5,
-   "last_ok": "2026-11-21 05:10:15",
+   "last_ok": "2026-11-21 05:15:17",
    "last_err": null
   },
   "ntwc": {
-   "ok": 1442,
+   "ok": 1462,
    "err": 0,
-   "last_ok": "2026-11-21 05:10:07",
+   "last_ok": "2026-11-21 05:15:07",
    "last_err": null
   },
   "ptwc": {
-   "ok": 1442,
+   "ok": 1462,
    "err": 0,
-   "last_ok": "2026-11-21 05:10:07",
+   "last_ok": "2026-11-21 05:15:07",
    "last_err": null
   },
   "usgs": {
-   "ok": 2163,
+   "ok": 2193,
    "err": 0,
-   "last_ok": "2026-11-21 05:10:12",
+   "last_ok": "2026-11-21 05:15:12",
    "last_err": null
   }
  }
