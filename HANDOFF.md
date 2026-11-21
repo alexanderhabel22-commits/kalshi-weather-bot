@@ -328,6 +328,14 @@ record earns it. Be candid about odds and risk; no hype.
   on the bracket holding it. Backtest for lows: +5.7c per contract Oct 2025-Aug 2026, +3.7c
   Sep-Nov 2026, about 7 fills a day. Review at 300 filled low orders; real money needs Alex's
   OK. Switch off with `[markets] paper_late = false`.
+- **Late-start highs "need" paper twin (Nov 21, PAPER ONLY):** `wxbot/latecool.py` reuses the
+  latepaper rule but writes only highs "need", only Oct-Feb dates, only 9h-5h before close
+  (~4 PM local std time), to its own `data/paper_late_cool.csv` (weather_late real mirror reads
+  only paper_late.csv, so nothing real changes). Backtest Oct-Feb: +1.8 -> +3.7c dev, +0.6 ->
+  +5.1c holdout, $ flat, ~10 variants tried
+  (/mnt/project-files/analysis/weather-forecast-season/RESULTS.md). Dashboard TESTS card
+  "Late-start highs test". Judge at ~100 fills; real only with Alex's OK. Off:
+  `[markets] paper_late_cool = false`.
 - **Late-day weather on 16 more low cities, REAL since Nov 13** (Alex: "start em up with real money
   whenever" if confident; replay +3.9c need / +4.2c holds, `research_wx/RESULTS_cities.md`). Kalshi
   lists weather.com as every weather series' settlement source now, so discovery can't read the
