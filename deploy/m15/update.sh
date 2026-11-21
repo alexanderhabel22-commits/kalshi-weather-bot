@@ -88,7 +88,7 @@ bash "$APP/deploy/m15/install-copycat.sh" || echo "copycat install failed"
 bash "$APP/deploy/m15/install-lip.sh" || echo "lip install failed"
 # Paper tests (no orders: GET requests only): wide-spread maker + parlay quote requests
 bash "$APP/deploy/m15/install-paperlab.sh" || echo "paperlab install failed"
-# Fast-quake PAPER test (no orders, never reads the Kalshi key): quake feeds vs Kalshi prices
+# Fast quake YES: paper log + small real test (quakefast_control.json on main switches it)
 bash "$APP/deploy/m15/install-quakefast.sh" || echo "quakefast install failed"
 # One-time order speed test (1c post-only bids, cancelled at once; runs once per version)
 bash "$APP/deploy/m15/run-latency-probe.sh" || echo "latency probe failed"

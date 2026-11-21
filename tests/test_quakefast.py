@@ -161,13 +161,103 @@ def test_main_drops_secrets(monkeypatch, tmp_path):
 
     class Stub:
         def __init__(self, out, **kw):
-            seen["env"] = {k for k in __import__("os").environ if k.startswith(("KALSHI", "NTFY"))}
+            seen["env"] = {k for k in __import__("os").environ if k.startswith("KALSHI")}
+            seen["client"] = kw.get("client")
 
         def run(self):
             pass
     monkeypatch.setenv("KALSHI_PRIVATE_KEY", "secret")
-    monkeypatch.setenv("NTFY_TOPIC", "t")
+    monkeypatch.setenv("QUAKEFAST_REAL", "0")
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     monkeypatch.setenv("QUAKEFAST_DIR", str(tmp_path))
     monkeypatch.setattr(qf, "QuakeFast", Stub)
-    assert qf.main() == 0 and seen["env"] == set()
+    assert qf.main() == 0 and seen["env"] == set() and seen["client"] is None
+
+
+class FakeClient:
+    def __init__(self, fill=1.0, fail=False):
+        self.orders, self.fill, self.fail = [], fill, fail
+
+    def buy_now(self, ticker, side, price, count, coid):
+        if self.fail:
+            raise RuntimeError("insufficient balance")
+        self.orders.append((ticker, side, price, count))
+        return {"order_id": f"o{len(self.orders)}", "fill_count_fp": f"{self.fill:.2f}"}
+
+
+def live(tmp_path, clock, client, **cfg):
+    pushes = []
+    w = qf.QuakeFast(tmp_path, feeds=[], clock=lambda: clock[0], session=FakeKalshi(), ws=False,
+                     client=client, alert=lambda t, b: pushes.append(t))
+    w.rcfg = {**qf.REAL_DEFAULTS, "mode": "live", **cfg}
+    w.switch = {"mode": "live", "halted": False}
+    w.ok_at = clock[0]
+    for f in ("gfz", "emsc_ws", "ptwc"):
+        w.on_feed(f, clock[0], [], 200, 0.1, None)
+    return w, pushes
+
+
+def gfz_peru(w, clock, mag=6.66):
+    clock[0] = T0 + 207
+    w.on_feed("gfz", clock[0], [qf.Det("gfz", "g", T0 - 11, -10.74, -75.95, mag, "Central Peru")], 200, 0.1, None)
+
+
+def test_real_orders_follow_the_rails(tmp_path):
+    clock = [T0 - 600]
+    c = FakeClient()
+    w, _ = live(tmp_path, clock, c)
+    gfz_peru(w, clock)
+    # M6.66: +0.2 clears 5.8/6.0/6.2/6.4; asks 61/49/33/30 -> 5.8 (61c) is over the 60c limit
+    assert sorted(o[0].rsplit("-", 1)[-1] for o in c.orders) == ["6.0", "6.2", "6.4"]
+    assert all(o[1] == "yes" and o[3] == 1 for o in c.orders)
+    assert {o[2] for o in c.orders} == {0.49, 0.33, 0.30}
+    assert abs(w.cap_used() - (0.49 + 0.02 + 0.33 + 0.02 + 0.30 + 0.02)) < 1e-9
+    # EMSC sees the same quake: no second order on markets we already bought
+    n = len(c.orders)
+    clock[0] = T0 + 240
+    w.on_feed("emsc_ws", clock[0], qf.parse_emsc_ws(EMSC_WS), 200, 0, None)
+    assert [o[0] for o in c.orders[n:]] == ["KXBIGGESTQUAKE-21NOV26-6.6"]   # 6.8 >= 6.6 + 0.2, ask 19c
+    # PTWC is not a real-money source
+    assert all(r["src"] in ("gfz", "emsc_ws") for r in w.real)
+
+
+def test_real_cap_counts_open_bets_and_pushes_once(tmp_path):
+    clock = [T0 - 600]
+    c = FakeClient()
+    w, pushes = live(tmp_path, clock, c, max_loss_usd=0.87)
+    gfz_peru(w, clock)
+    # 6.0 at 49c+2c fee fits; 6.2 (35c) makes 0.86, fits; 6.4 (32c) -> 1.18 > 0.87 skipped
+    assert len(c.orders) == 2 and w.cap_used() <= 0.87
+    # both lose -> settled loss 0.86 leaves no room: one push, nothing more
+    for r in w.real:
+        w.s.result[r["ticker"]] = "no"
+    clock[0] = T0 + 3600
+    w.settle_real(clock[0])
+    w.settle_real(clock[0] + 400)
+    assert pushes == ["Quake bot: $0.87 loss cap used up"] and w.cap_alerted
+    st = w.status(clock[0])
+    assert st["real"]["settled"] == 2 and st["real"]["pnl"] == -0.86
+
+
+def test_real_off_switches_and_misses(tmp_path):
+    clock = [T0 - 600]
+    c = FakeClient()
+    w, _ = live(tmp_path, clock, c)
+    w.switch = {"mode": "off", "halted": False}            # TRADING_MODE=off
+    gfz_peru(w, clock)
+    assert c.orders == [] and w.real == []
+    w2, _ = live(tmp_path / "b", [T0 - 600], c)
+    w2.ok_at = -1e18                                       # control unread for 30+ min
+    gfz_peru(w2, [T0])
+    assert c.orders == []
+    c0 = FakeClient(fill=0.0)                              # IOC got nothing: no chase, no cost
+    w3, _ = live(tmp_path / "c", [T0 - 600], c0)
+    gfz_peru(w3, [T0])
+    assert c0.orders and all(r["status"] == "missed" for r in w3.real) and w3.cap_used() == 0
+    cf = FakeClient(fail=True)
+    w4, p4 = live(tmp_path / "d", [T0 - 600], cf)
+    gfz_peru(w4, [T0])
+    assert all(r["status"] == "error" for r in w4.real) and p4 == ["Quake bot: Kalshi refused an order"]
+    w5, _ = live(tmp_path / "e", [T0 - 600], None)         # no key on the server: paper only
+    gfz_peru(w5, [T0])
+    assert w5.real == [] and w5.real_mode() == "off"
