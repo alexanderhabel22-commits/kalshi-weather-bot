@@ -2,9 +2,31 @@
  "ai_fade": {},
  "allocator": {
   "apply": true,
-  "graded_at": "2026-11-14T20:06:11+00:00",
+  "graded_at": "2026-11-21T20:07:30+00:00",
   "grades": {
    "ai_fade": {
+    "events_live": 2,
+    "events_paper": 0,
+    "grade": 0.0312,
+    "profit": 0.73,
+    "risked": 8.07,
+    "roi": 0.0905,
+    "se": 0.2468,
+    "target": 1.04,
+    "trust": 0.02
+   },
+   "fade_leads": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "fade_leads_paper": {
     "events_live": 0,
     "events_paper": 0,
     "grade": 0.03,
@@ -18,13 +40,13 @@
    "favorites": {
     "events_live": 6,
     "events_paper": 0,
-    "grade": 0.0322,
-    "profit": 2.52,
-    "risked": 40.9,
-    "roi": 0.0616,
-    "se": 0.1293,
-    "target": 1.073,
-    "trust": 0.068
+    "grade": 0.0321,
+    "profit": 3.02,
+    "risked": 52.26,
+    "roi": 0.0578,
+    "se": 0.1239,
+    "target": 1.07,
+    "trust": 0.074
    },
    "favorites_late": {
     "events_live": 0,
@@ -37,7 +59,29 @@
     "target": 1.0,
     "trust": 0.0
    },
+   "favorites_mid": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
    "favorites_wide": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "fx_paper": {
     "events_live": 0,
     "events_paper": 0,
     "grade": 0.03,
@@ -82,26 +126,26 @@
     "trust": 0.016
    },
    "macro_wide": {
-    "events_live": 0,
+    "events_live": 2,
     "events_paper": 0,
-    "grade": 0.03,
-    "profit": 0.0,
-    "risked": 0.0,
-    "roi": null,
-    "se": null,
-    "target": 1.0,
-    "trust": 0.0
+    "grade": 0.029,
+    "profit": -0.22,
+    "risked": 3.19,
+    "roi": -0.069,
+    "se": 0.3397,
+    "target": 0.967,
+    "trust": 0.011
    },
    "mentions": {
-    "events_live": 3,
+    "events_live": 5,
     "events_paper": 0,
-    "grade": 0.0307,
-    "profit": 1.2,
-    "risked": 18.8,
-    "roi": 0.0638,
-    "se": 0.2445,
-    "target": 1.023,
-    "trust": 0.02
+    "grade": 0.0326,
+    "profit": 3.96,
+    "risked": 32.04,
+    "roi": 0.1236,
+    "se": 0.206,
+    "target": 1.087,
+    "trust": 0.028
    },
    "mentions_wide": {
     "events_live": 0,
@@ -114,16 +158,71 @@
     "target": 1.0,
     "trust": 0.0
    },
-   "rain_evening": {
+   "ndx_range": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "quake_no": {
     "events_live": 1,
     "events_paper": 0,
-    "grade": 0.0219,
-    "profit": -0.88,
-    "risked": 1.88,
-    "roi": -0.4681,
-    "se": 0.2714,
-    "target": 0.73,
-    "trust": 0.016
+    "grade": 0.0227,
+    "profit": -0.86,
+    "risked": 0.86,
+    "roi": -1.0,
+    "se": 0.4152,
+    "target": 0.757,
+    "trust": 0.007
+   },
+   "quake_no_guard_paper": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "quake_no_paper": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
+   },
+   "rain_evening": {
+    "events_live": 4,
+    "events_paper": 0,
+    "grade": 0.0218,
+    "profit": -1.27,
+    "risked": 5.27,
+    "roi": -0.241,
+    "se": 0.1983,
+    "target": 0.727,
+    "trust": 0.03
+   },
+   "ship_paper": {
+    "events_live": 0,
+    "events_paper": 0,
+    "grade": 0.03,
+    "profit": 0.0,
+    "risked": 0.0,
+    "roi": null,
+    "se": null,
+    "target": 1.0,
+    "trust": 0.0
    },
    "spx_range": {
     "events_live": 0,
@@ -148,15 +247,15 @@
     "trust": 0.023
    },
    "weather_late": {
-    "events_live": 29,
+    "events_live": 133,
     "events_paper": 0,
-    "grade": 0.03,
-    "profit": 0.96,
-    "risked": 32.63,
-    "roi": 0.0294,
-    "se": 0.139,
-    "target": 1.0,
-    "trust": 0.06
+    "grade": 0.0293,
+    "profit": 4.22,
+    "risked": 159.37,
+    "roi": 0.0265,
+    "se": 0.072,
+    "target": 0.977,
+    "trust": 0.191
    }
   },
   "history": [
@@ -188,24 +287,61 @@
      "weather": 0.85,
      "weather_late": 1.0
     }
+   },
+   {
+    "at": "2026-11-21T20:07:30+00:00",
+    "multipliers": {
+     "ai_fade": 1.04,
+     "fade_leads": 1.0,
+     "fade_leads_paper": 1.0,
+     "favorites": 1.07,
+     "favorites_late": 1.0,
+     "favorites_mid": 1.0,
+     "favorites_wide": 1.0,
+     "fx_paper": 1.0,
+     "locks": 1.0,
+     "m15_btc": 0.51,
+     "macro_fade": 0.753,
+     "macro_wide": 0.967,
+     "mentions": 1.087,
+     "mentions_wide": 1.0,
+     "ndx_range": 1.0,
+     "quake_no": 0.757,
+     "quake_no_guard_paper": 1.0,
+     "quake_no_paper": 1.0,
+     "rain_evening": 0.727,
+     "ship_paper": 1.0,
+     "spx_range": 1.0,
+     "weather": 0.85,
+     "weather_late": 0.977
+    }
    }
   ],
   "hurdle": 0.03,
   "multipliers": {
-   "ai_fade": 1.0,
-   "favorites": 1.073,
+   "ai_fade": 1.04,
+   "fade_leads": 1.0,
+   "fade_leads_paper": 1.0,
+   "favorites": 1.07,
    "favorites_late": 1.0,
+   "favorites_mid": 1.0,
    "favorites_wide": 1.0,
+   "fx_paper": 1.0,
    "locks": 1.0,
-   "m15_btc": 0.75,
+   "m15_btc": 0.51,
    "macro_fade": 0.753,
-   "macro_wide": 1.0,
-   "mentions": 1.023,
+   "macro_wide": 0.967,
+   "mentions": 1.087,
    "mentions_wide": 1.0,
-   "rain_evening": 0.75,
+   "ndx_range": 1.0,
+   "quake_no": 0.757,
+   "quake_no_guard_paper": 1.0,
+   "quake_no_paper": 1.0,
+   "rain_evening": 0.727,
+   "ship_paper": 1.0,
    "spx_range": 1.0,
    "weather": 0.85,
-   "weather_late": 1.0
+   "weather_late": 0.977
   }
  },
  "archive_day": "2026-11-21",
