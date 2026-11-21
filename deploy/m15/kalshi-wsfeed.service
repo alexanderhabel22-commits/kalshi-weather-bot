@@ -1,0 +1,24 @@
+[Unit]
+Description=Websocket recorder: Kalshi prices, trades and books for the main bot's markets + our exact fills (logs only, never trades)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kalshi
+WorkingDirectory=/opt/kalshi-m15/app
+# Uses GITHUB_TOKEN (uploads to branch wsfeed-data) and the Kalshi key ONLY to sign the websocket
+# login (wxbot/wsfeed.py has no order code). Every other secret is dropped at start.
+EnvironmentFile=/etc/kalshi-m15/env
+ExecStart=/opt/kalshi-m15/venv/bin/python bot.py wsfeed -v
+Environment=WSFEED_DIR=/var/lib/kalshi-wsfeed
+StateDirectory=kalshi-wsfeed
+Restart=always
+RestartSec=60
+Nice=10
+CPUQuota=15%
+MemoryMax=200M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

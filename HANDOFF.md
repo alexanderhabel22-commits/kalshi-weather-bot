@@ -623,6 +623,26 @@ IP without a token). It never places, changes or cancels anything and needs no s
   faster bot, but stale prices keep trading for 3 s-5 min (Trump approval ~+20-39c/ct). Judge after
   1-2 weeks: our detect time vs the first Kalshi move. Write-up: Library analysis/source-lag/RESULTS.md.
 
+## Websocket recorder + speed study (built Nov 21, 2026, logging only)
+
+- Study (Library analysis/speed/RESULTS.md): every real fill since Nov 5 matched to Kalshi's tape. No
+  live strategy gains from cheap speed. Main bot reacts ~3-4 min after a price (runs every 5.0 min,
+  0.5-2.5 min each). Weather pick-offs (16 of 295 fills lost 10c+ within 5 min) were all filled in the
+  same millisecond as one sweep, so reacting to Kalshi prices can't save them; S&P/Nasdaq range orders
+  never had a trade reach our price; Copycat's ~18 s delay costs 0.0c +-0.1 (14,680 copies). The one
+  speed loss (quake NO, Nov 20) belongs to the quake guard paper test.
+- `wxbot/wsfeed.py`, `python bot.py wsfeed`, systemd `kalshi-wsfeed` on the 15-min server (installed by
+  the hourly update via `deploy/m15/install-wsfeed.sh`; 15% CPU, 200 MB cap; changes never restart the
+  15-min bot). Records ticker + trade for every market where the main bot has a real order resting or
+  held, the other brackets of those events, and S&P/Nasdaq ranges (36 h) and quake markets (72 h);
+  full order books for resting orders; our own fills to the ms; "jump" lines (mid 5c+ in 60 s).
+  Hourly files on branch `wsfeed-data` (wsfeed/wsfeed-YYYY-MM-DD-HH.jsonl.gz). The Kalshi key only
+  signs the websocket login; the module has no order code (a test checks). Off:
+  `sudo systemctl disable --now kalshi-wsfeed` and `sudo touch /var/lib/kalshi-wsfeed.disabled`.
+- `research_speed/ws_fills.py`: per fill, seconds since the last jump/trade and the mid 1 s-5 min
+  later. A "pull on fast move" guard is a rule change: paper twin first, and only if fills 1 s+ after a
+  jump turn up. No live strategy was moved to a faster path.
+
 ## Scale-up kit (built Nov 10, 2026, switched OFF)
 `wxbot/scaleup.py` + `[scaleup]` in `config.toml` (`enabled = false`). Turn it on (with
 Alex's OK) after the 500-contract reviews and the Nov 17 checkpoint pass, before adding bankroll.
