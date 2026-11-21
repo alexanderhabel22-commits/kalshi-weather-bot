@@ -1,5 +1,5 @@
 {
- "at": "2026-11-21 04:55:18",
+ "at": "2026-11-21 05:00:19",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -54,7 +54,7 @@
   "won": 0,
   "pnl": 0,
   "c_per_ct": null,
-  "skipped": 1
+  "skipped": 3
  },
  "first_source": {
   "n": 4,
@@ -80,6 +80,22 @@
    "pnl": 0,
    "c_per_ct": null,
    "skipped": 0
+  },
+  "emsc_ws|0.0": {
+   "n": 0,
+   "settled": 0,
+   "won": 0,
+   "pnl": 0,
+   "c_per_ct": null,
+   "skipped": 1
+  },
+  "emsc|0.0": {
+   "n": 0,
+   "settled": 0,
+   "won": 0,
+   "pnl": 0,
+   "c_per_ct": null,
+   "skipped": 1
   },
   "gfz_fdsn|0.0": {
    "n": 1,
@@ -133,7 +149,8 @@
    "ask_size": 12.05,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255012.9706318
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-7.0|0.2",
@@ -153,7 +170,8 @@
    "ask_size": 12.05,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255012.9706318
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -173,7 +191,8 @@
    "ask_size": 1.0,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255012.9706318
   },
   {
    "key": "q1795254412-bmkg|bmkg|KXBIGGESTQUAKE-21NOV26-6.8|0.2",
@@ -193,7 +212,8 @@
    "ask_size": 1.0,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255012.9706318
   },
   {
    "key": "q1795254412-bmkg|gfz_fdsn|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -213,7 +233,8 @@
    "ask_size": 22.73,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255072.652649
   },
   {
    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-7.0|0.0",
@@ -233,7 +254,8 @@
    "ask_size": 0.05,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255093.8176165
   },
   {
    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -253,7 +275,8 @@
    "ask_size": 22.73,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255093.8176165
   },
   {
    "key": "q1795254412-bmkg|gfz|KXBIGGESTQUAKE-21NOV26-6.8|0.2",
@@ -273,7 +296,8 @@
    "ask_size": 22.73,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "open",
-   "fee": 0.02
+   "fee": 0.02,
+   "checked": 1795255093.8176165
   },
   {
    "key": "q1795254412-bmkg|usgs|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
@@ -291,6 +315,46 @@
    "bid": 0.98,
    "ask": 0.99,
    "ask_size": 238.47,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "skip",
+   "why": "ask 0.99 > 0.95"
+  },
+  {
+   "key": "q1795254412-bmkg|emsc_ws|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
+   "qid": "q1795254412-bmkg",
+   "src": "emsc_ws",
+   "rank": 5,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+   "strike": 6.8,
+   "mag": 6.8,
+   "ts": 1795255012.3,
+   "et": "2026-11-21 04:56:52",
+   "lag_s": 881.3,
+   "since_first_s": 599.8,
+   "bid": 0.98,
+   "ask": 0.99,
+   "ask_size": 233.47,
+   "place": "43 km BaratLaut MALUKUBRTDAYA",
+   "status": "skip",
+   "why": "ask 0.99 > 0.95"
+  },
+  {
+   "key": "q1795254412-bmkg|emsc|KXBIGGESTQUAKE-21NOV26-6.8|0.0",
+   "qid": "q1795254412-bmkg",
+   "src": "emsc",
+   "rank": 6,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-21NOV26-6.8",
+   "strike": 6.8,
+   "mag": 6.8,
+   "ts": 1795255012.7,
+   "et": "2026-11-21 04:56:52",
+   "lag_s": 881.7,
+   "since_first_s": 600.2,
+   "bid": 0.98,
+   "ask": 0.99,
+   "ask_size": 233.47,
    "place": "43 km BaratLaut MALUKUBRTDAYA",
    "status": "skip",
    "why": "ask 0.99 > 0.95"
@@ -320,7 +384,7 @@
     "gfz_fdsn": {
      "lag_s": 341.1,
      "first_mag": 6.99,
-     "mag": 6.77
+     "mag": 6.78
     },
     "gfz": {
      "lag_s": 361.9,
@@ -329,6 +393,16 @@
     },
     "usgs": {
      "lag_s": 701.9,
+     "first_mag": 6.8,
+     "mag": 6.8
+    },
+    "emsc_ws": {
+     "lag_s": 881.3,
+     "first_mag": 6.8,
+     "mag": 6.8
+    },
+    "emsc": {
+     "lag_s": 881.7,
      "first_mag": 6.8,
      "mag": 6.8
     }
@@ -377,73 +451,81 @@
   "usgs": {
    "n": 1,
    "median_s": 701.9
+  },
+  "emsc_ws": {
+   "n": 1,
+   "median_s": 881.3
+  },
+  "emsc": {
+   "n": 1,
+   "median_s": 881.7
   }
  },
  "feeds": {
   "bmkg": {
-   "ok": 1037,
+   "ok": 1052,
    "err": 0,
-   "last_ok": "2026-11-21 04:55:12",
+   "last_ok": "2026-11-21 05:00:12",
    "last_err": null
   },
   "emsc": {
-   "ok": 478,
-   "err": 904,
-   "last_ok": "2026-11-21 01:09:07",
+   "ok": 492,
+   "err": 910,
+   "last_ok": "2026-11-21 05:00:07",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 170,
+   "ok": 175,
    "err": 0,
-   "last_ok": "2026-11-21 04:52:08",
+   "last_ok": "2026-11-21 04:58:39",
    "last_err": null
   },
   "geonet": {
-   "ok": 691,
+   "ok": 701,
    "err": 0,
-   "last_ok": "2026-11-21 04:54:52",
+   "last_ok": "2026-11-21 04:59:52",
    "last_err": null
   },
   "gfz": {
-   "ok": 2073,
+   "ok": 2103,
    "err": 0,
-   "last_ok": "2026-11-21 04:55:12",
+   "last_ok": "2026-11-21 05:00:12",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 544,
+   "ok": 554,
    "err": 147,
-   "last_ok": "2026-11-21 04:54:52",
+   "last_ok": "2026-11-21 04:59:52",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 691,
+   "ok": 701,
    "err": 0,
-   "last_ok": "2026-11-21 04:54:52",
+   "last_ok": "2026-11-21 04:59:52",
    "last_err": null
   },
   "kalshi": {
-   "ok": 2737,
+   "ok": 2777,
    "err": 5,
-   "last_ok": "2026-11-21 04:55:07",
+   "last_ok": "2026-11-21 05:00:10",
    "last_err": null
   },
   "ntwc": {
-   "ok": 1382,
+   "ok": 1402,
    "err": 0,
-   "last_ok": "2026-11-21 04:55:07",
+   "last_ok": "2026-11-21 05:00:07",
    "last_err": null
   },
   "ptwc": {
-   "ok": 1382,
+   "ok": 1402,
    "err": 0,
-   "last_ok": "2026-11-21 04:55:07",
+   "last_ok": "2026-11-21 05:00:07",
    "last_err": null
   },
   "usgs": {
-   "ok": 2073,
+   "ok": 2103,
    "err": 0,
-   "last_ok": "2026-11-21 04:55:12",
+   "last_ok": "2026-11-21 05:00:12",
    "last_err": null
   }
  }
