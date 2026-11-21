@@ -90,3 +90,54 @@ def test_paper_twin_same_rule(monkeypatch):
     assert len(out) == 1 and out[0].strategy == "quake_no_paper" and out[0].count == 2
     out2 = q.propose(ctx(mode="paper"))
     assert out2[0].strategy == "quake_no" and len(calls) == 1      # one Kalshi read per run
+
+
+# --- fast-quake guard (Nov 21, 2026) ---------------------------------------------------------
+def test_guard_off_by_default_and_on_for_paper_twin():
+    assert q.DEFAULTS["guard"] is False
+    from wxbot.strats import quake_no_guard_paper as g
+    assert g.NAME == "quake_no_guard_paper"
+
+
+def test_parse_feeds():
+    txt = ("#EventID|Time|Latitude|Longitude|Depth/km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|"
+           "MagAuthor|EventLocationName|EventType\n"
+           "gfz2026wtzh|2026-11-21T00:09:08.79|-10.74|-75.954|10.0|||GFZ|gfz2026wtzh|Mw|6.66||Central Peru|earthquake\n")
+    assert q.parse_gfz(txt) == [("2026-11-21T00:09:08.79", 6.66)]
+    js = {"features": [{"properties": {"time": "2026-11-21T00:09:21.4Z", "mag": 6.8}}, {"properties": {"mag": None}}]}
+    assert q.parse_emsc(js) == [("2026-11-21T00:09:21.4Z", 6.8)]
+    assert q.parse_gfz("") == [] and q.parse_emsc(None) == []
+
+
+def test_guard_feed_skips_near_strike():
+    out = q.candidates([mkt(7.0, 0.07), mkt(6.6, 0.12)], NOW, 5.9, P)
+    p = {**P, "guard": True}
+    kept = q.guard(out, [mkt(7.0, 0.07), mkt(6.6, 0.12)], NOW, 5.9, {"gfz": [("t", 6.4)], "emsc": []}, p)
+    assert [i.ticker.rsplit("-", 1)[-1] for i in kept] == ["7.0"]           # 6.4 >= 6.6 - 0.3
+    kept = q.guard(out, [], NOW, 5.9, {"gfz": [], "emsc": [("t", 6.8)]}, p)
+    assert kept == []
+    kept = q.guard(out, [], NOW, 5.9, {"gfz": [], "emsc": []}, p)            # feeds down: no block
+    assert len(kept) == 2
+
+
+def test_guard_market_alarm_needs_two_strikes():
+    p = {**P, "guard": True}
+    calm = [mkt(6.0, 0.20), mkt(6.2, 0.12), mkt(6.6, 0.08), mkt(7.0, 0.04)]
+    assert q.market_alarm(calm, NOW, 5.0, p) is None
+    one = [mkt(6.0, 0.85), mkt(6.2, 0.12), mkt(6.6, 0.08)]                  # a stray sweep on one strike
+    assert q.market_alarm(one, NOW, 5.0, p) is None
+    peru = [mkt(6.0, 0.88), mkt(6.2, 0.80), mkt(6.6, 0.15), mkt(7.0, 0.09)]
+    assert q.market_alarm(peru, NOW, 5.0, p)
+    out = q.candidates([mkt(7.0, 0.09), mkt(6.6, 0.15)], NOW, 5.0, P)
+    assert out and q.guard(out, peru, NOW, 5.0, {"gfz": [], "emsc": []}, p) == []
+    # strikes USGS already reached (or nearly) don't count: that quake is already known
+    assert q.market_alarm([mkt(6.0, 0.99), mkt(6.2, 0.95)], NOW, 6.0, p) is None
+
+
+def test_feed_log(monkeypatch, tmp_path):
+    monkeypatch.setattr(q, "FEED_LOG", tmp_path / "f.csv")
+    fd = {"gfz": [("2026-11-21T00:09:08", 6.66), ("x", 5.6)], "emsc": []}
+    q.log_feeds(NOW, fd, 0.0)
+    q.log_feeds(NOW, fd, 0.0)                                                # no duplicates
+    lines = (tmp_path / "f.csv").read_text().splitlines()
+    assert len(lines) == 2 and "gfz" in lines[1] and "6.66" in lines[1]

@@ -331,6 +331,22 @@ exit = "hold"
 max_week_contracts = 40
 max_market_contracts = 2
 
+
+[trading.quake_no_guard_paper]
+# PAPER test of the fast-quake guard (Nov 21, 2026): quake_no's rule, but skip when GFZ/EMSC already
+# show a quake within 0.3 of the strike, or when Kalshi bids 2+ unreached strikes 50c+ and 30c+ over
+# climatology (market saw a quake USGS hasn't posted; USGS lags ~7-20 min). Never live.
+enabled = true
+live = false
+taker = true
+contracts = 2
+max_contracts = 2
+min_price = 0.03
+max_price = 0.97
+max_open_pct = 0.10
+max_event_pct = 0.10
+exit = "hold"
+
 [trading.fade_leads]
 # 2-CONTRACT REAL-MONEY TEST from Nov 20, 2026 (Alex, Nov 20 2:13 PM ET: "Run em live again, this is
 # test money"). wxbot/strats/fade_leads.py. The macro_fade rule (resting NO at best bid + 1c, 71-95c,
