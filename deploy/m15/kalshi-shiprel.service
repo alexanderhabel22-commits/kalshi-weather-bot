@@ -1,5 +1,5 @@
 [Unit]
-Description=Shipping release-window watcher (PAPER ONLY: PortWatch Tuesday release vs Kalshi order books)
+Description=Shipping release window: PortWatch Tuesday release vs Kalshi books (paper log + small REAL test, shiprelease_control.json)
 After=network-online.target
 Wants=network-online.target
 
@@ -7,8 +7,9 @@ Wants=network-online.target
 Type=simple
 User=kalshi
 WorkingDirectory=/opt/kalshi-m15/app
-# GET requests only; never places orders. The env file is read for GITHUB_TOKEN (status upload);
-# the Kalshi key and other secrets are dropped from the environment at start.
+# Reads the Kalshi key (KALSHI_API_KEY_ID + KALSHI_PRIVATE_KEY_FILE, server-only, never in the repo)
+# into memory, then drops it from the environment. Real orders only while shiprelease_control.json on
+# main says live (and TRADING_MODE isn't off); hard $5 cap. SHIPREL_REAL=0 = paper only.
 EnvironmentFile=/etc/kalshi-m15/env
 ExecStart=/opt/kalshi-m15/venv/bin/python -m wxbot.shiprelease
 Environment=SHIPREL_DIR=/var/lib/kalshi-shiprel

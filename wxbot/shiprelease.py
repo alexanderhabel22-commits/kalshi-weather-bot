@@ -1,4 +1,17 @@
-"""Shipping release-window watcher: PAPER ONLY, never places orders (Nov 22, 2026).
+"""Shipping release-window watcher: paper log + small REAL test (Nov 22, 2026).
+
+REAL MONEY from Tue Nov 24 (Alex, Nov 22 1:08 AM ET: "Let's go live with porteatch for this
+Tuesday"), switched by shiprelease_control.json on main (mode live | off, read every 5 min; also obeys
+the global kill switch data/trader_state.json mode off/paper or halted, and goes off by itself when
+either file can't be read for 30 min). Rails: 1 contract per bracket, only brackets the posted count
+clears by more than `margin` (2) ships, price + taker fee <= `max_cost` (95c), immediate-or-cancel
+(never rests, never chases), one real order per market ever, exchange shard 0 only, HARD $5 cap:
+cost of open real bets + settled real losses + the new order <= $5 (profits never add room).
+Anomaly stop (real orders stop until the control file's `epoch` is raised): a second PortWatch read
+disagrees with the first, PortWatch history can't be read, a market's rules don't name PortWatch and
+this week, Kalshi refuses an order, Kalshi settles on a different count than PortWatch showed, or a
+real bet loses. A total far from the last 4 weeks (50% and 10+ ships) skips that chokepoint's real orders.
+The paper twin below keeps logging every Tuesday whatever the real switch says. Review at 10 real fills.
 
 Kalshi's weekly ship-count markets (KXHORMUZWEEKLY, KXSUEZWEEKLY, KXPANAMAWEEKLY,
 KXBABELMANDEBWEEKLY) settle on the IMF PortWatch Mon-Sun sum of daily transit calls, and they stay
@@ -15,8 +28,7 @@ open until Tuesday 9:00 AM ET. PortWatch posts the finished week early Tuesday (
   - after settlement, scores the paper takes against Kalshi's result and checks Kalshi's settled value
     against our total.
 
-GET requests only. The service never loads the Kalshi key. Status: m15/shiprelease.json on m15-data.
-Verdict after 4 Tuesdays (~Dec 15); any real-money version needs Alex's OK first.
+Status: m15/shiprelease.json on m15-data. Paper verdict after 4 Tuesdays (~Dec 15).
 """
 from __future__ import annotations
 
@@ -31,6 +43,8 @@ from typing import Callable
 from zoneinfo import ZoneInfo
 
 import requests
+
+from .kalshi_api import OrderRejected, fill_qty
 
 log = logging.getLogger("wxbot")
 ET = ZoneInfo("America/New_York")
@@ -49,6 +63,16 @@ MARGIN = 2                # skip brackets with |total - strike| <= MARGIN ships
 FAST_S, SLOW_S = 20, 600
 LAGS_S = (0, 60, 300, 900, 1800, 3600, 7200)
 KEEP_WEEKS = 12
+
+REPO = "alexanderhabel22-commits/kalshi-weather-bot"
+CONTROL_URL = f"https://raw.githubusercontent.com/{REPO}/main/shiprelease_control.json"
+SWITCH_URL = f"https://raw.githubusercontent.com/{REPO}/main/data/trader_state.json"
+CONTROL_STALE_S = 1800
+REAL_DEFAULTS = {"mode": "off", "contracts": 1, "max_loss_usd": 5.0, "max_cost": 0.95, "margin": 2,
+                 "slack": 0.03, "epoch": 0}
+REAL_MAX_CONTRACTS = 1     # code ceiling whatever the control file says
+REAL_MAX_LOSS = 5.0        # code ceiling for the cap
+HIST_DEV = 0.5             # anomaly: total more than 50% (and 10+ ships) away from the last 4 weeks' mean
 
 
 def fee1(q: float) -> float:
@@ -133,13 +157,22 @@ def take(asks: list[tuple[float, float]], cap: float | None = CAP_CT) -> dict:
             "avg": round(cost / n, 4) if n else None}
 
 
+def rules_ok(m: dict, end: date) -> bool:
+    """The market's own rules must name IMF PortWatch and this Mon-Sun week."""
+    txt = m.get("rules_primary") or ""
+    start = end - timedelta(days=6)
+    return ("IMF PortWatch" in txt and f"{start:%b} {start.day}, {start.year}" in txt
+            and f"{end:%b} {end.day}, {end.year}" in txt)
+
+
 def side_for(total: int, strike: float) -> str:
     return "yes" if total > strike else "no"
 
 
 class ShipRelease:
     def __init__(self, out_dir: Path, clock: Callable[[], float] = time.time,
-                 status_up: Callable[[dict], None] | None = None, session=None):
+                 status_up: Callable[[dict], None] | None = None, session=None, client=None,
+                 alert: Callable[[str, str], None] | None = None):
         self.out = out_dir
         self.out.mkdir(parents=True, exist_ok=True)
         self.clock = clock
@@ -148,6 +181,12 @@ class ShipRelease:
         self.s.headers.update({"User-Agent": UA})
         self.weeks: dict[str, dict] = {}
         self.polls = {"ok": 0, "err": 0, "last_ok": None, "last_err": None, "edit": None}
+        self.client, self.alert = client, alert
+        self.rcfg = dict(REAL_DEFAULTS)
+        self.switch = {"mode": None, "halted": False}
+        self.ok_at = -1e12
+        self.real: list[dict] = []
+        self.stopped: dict | None = None
         self.load()
 
     # -- persistence
@@ -158,12 +197,14 @@ class ShipRelease:
         try:
             d = json.loads(self.state_file().read_text())
             self.weeks, self.polls = d.get("weeks", {}), d.get("polls", self.polls)
+            self.real, self.stopped = d.get("real", []), d.get("stopped")
         except (OSError, ValueError):
             pass
 
     def save(self) -> None:
         tmp = self.state_file().with_suffix(".tmp")
-        tmp.write_text(json.dumps({"weeks": self.weeks, "polls": self.polls}))
+        tmp.write_text(json.dumps({"weeks": self.weeks, "polls": self.polls, "real": self.real,
+                                   "stopped": self.stopped}))
         tmp.replace(self.state_file())
 
     def write(self, row: dict) -> None:
@@ -177,12 +218,13 @@ class ShipRelease:
         r.raise_for_status()
         return r.json()
 
-    def portwatch(self, end: date) -> tuple[list[dict], float | None]:
-        start = end - timedelta(days=6)
+    def portwatch(self, end: date, days: int = 7) -> tuple[list[dict], float | None]:
+        start = end - timedelta(days=days - 1)
         ids = ",".join(f"'{p}'" for p in SERIES.values())
         d = self.get_json(f"{PW_LAYER}/query", {
-            "where": f"portid IN ({ids}) AND date >= '{start}'", "outFields": "date,portid,n_total",
-            "resultRecordCount": 500, "f": "json"})
+            "where": f"portid IN ({ids}) AND date >= '{start}' AND date <= '{end}'",
+            "outFields": "date,portid,n_total",
+            "resultRecordCount": 2000, "f": "json"})
         if "error" in d:
             raise RuntimeError(str(d["error"])[:200])
         rows = [f.get("attributes") or {} for f in d.get("features") or []]
@@ -234,6 +276,7 @@ class ShipRelease:
                  layer_edit_et=et_str(edit) if edit else None)
         self.write({"kind": "release", "end": str(end), "totals": tot, "edit": edit})
         log.info("shiprelease: week %s out at %s ET: %s", end, et_str(now), tot)
+        w["checks"] = self.release_checks(end, tot)
         self.snapshot(w, end, now, "0")
         self.push(now)
 
@@ -252,7 +295,8 @@ class ShipRelease:
                 if m.get("strike_type") != "greater" or k is None:
                     continue
                 row = {"series": series, "ticker": m["ticker"], "strike": k, "status": m.get("status"),
-                       "close": m.get("close_time")}
+                       "close": m.get("close_time"), "shard": m.get("exchange_index"),
+                       "rules_ok": rules_ok(m, end)}
                 if (m.get("status") or "") not in ("active", "open"):
                     snap["markets"].append(row)
                     continue
@@ -283,6 +327,7 @@ class ShipRelease:
                     w["takes"].append({"ticker": r["ticker"], "series": r["series"], "side": r["side"],
                                        "dist": r["dist"], "skip": abs(r["dist"]) <= MARGIN, **r["cap"],
                                        "result": None, "pnl": None})
+            self.real_orders(w, snap)
 
     def follow_up(self, now: float) -> None:
         for w in self.weeks.values():
@@ -325,9 +370,198 @@ class ShipRelease:
                     else:
                         done = False
             w["kalshi_values"] = values
+            for sr_, v in values.items():
+                tv = (w.get("totals") or {}).get(sr_)
+                if tv is not None and str(v).strip() != str(tv) and not w.get("value_flag", {}).get(sr_):
+                    w.setdefault("value_flag", {})[sr_] = str(v)
+                    self.anomaly(f"Kalshi settled {SHORT[sr_]} week {w['end']} on {v}, PortWatch showed {tv} at release")
             if done:
                 w["settled"] = True
                 self.write({"kind": "settled", "end": w["end"], "values": values})
+
+    # -- real money
+    def fetch_json(self, url: str):
+        r = self.s.get(url, params={"t": int(self.clock())}, timeout=10)
+        r.raise_for_status()
+        return r.json()
+
+    def read_control(self, now: float) -> None:
+        try:
+            c = self.fetch_json(CONTROL_URL) or {}
+            sw = self.fetch_json(SWITCH_URL) or {}
+        except Exception as exc:  # noqa: BLE001
+            log.warning("shiprelease control read: %s", exc)
+            return
+        self.rcfg = {**REAL_DEFAULTS, **{k: v for k, v in c.items() if k in REAL_DEFAULTS}}
+        self.rcfg["mode"] = str(self.rcfg.get("mode") or "off").lower()
+        halted = sw.get("halted") or {}
+        self.switch = {"mode": (sw.get("mode") or "").lower() or None,
+                       "halted": bool(isinstance(halted, dict) and halted.get("live"))}
+        self.ok_at = now
+        if self.stopped and int(self.rcfg.get("epoch") or 0) > int(self.stopped.get("epoch") or 0):
+            self.write({"kind": "resume", "was": self.stopped})
+            self.stopped = None
+
+    def real_mode(self) -> str:
+        if self.client is None or self.rcfg.get("mode") != "live":
+            return "off"
+        if self.switch["mode"] in ("off", "paper") or self.switch["halted"]:
+            return "off"
+        if self.clock() - self.ok_at > CONTROL_STALE_S:
+            return "off"
+        if self.stopped:
+            return "stopped"
+        return "live"
+
+    def cap(self) -> float:
+        return min(float(self.rcfg.get("max_loss_usd") or 0), REAL_MAX_LOSS)
+
+    def cap_used(self) -> float:
+        """Open real bets at cost + settled real losses. Profits never add room."""
+        used = 0.0
+        for r in self.real:
+            if r.get("status") == "open":
+                used += r["cost"]
+            elif r.get("status") == "settled" and r["pnl"] < 0:
+                used -= r["pnl"]
+        return round(used, 4)
+
+    def anomaly(self, why: str) -> None:
+        """Stop real orders until the control file's epoch is raised; one push."""
+        self.write({"kind": "anomaly", "why": why})
+        log.warning("shiprelease anomaly: %s", why)
+        if self.stopped:
+            return
+        self.stopped = {"why": why, "et": et_str(self.clock()), "epoch": int(self.rcfg.get("epoch") or 0)}
+        if self.alert and self.client is not None:
+            self.alert("Ship release bot: real orders stopped",
+                       f"{why}. The paper log keeps running; I'll look at it before any more real orders.")
+
+    def release_checks(self, end: date, tot: dict) -> dict:
+        """Second read must match (else anomaly stop). A total far from the last 4 weeks: that
+        chokepoint gets no real orders this week. History unreadable: anomaly stop."""
+        out = {"second_read": None, "history": {}, "skip_series": []}
+        try:
+            rows, _ = self.portwatch(end)
+            again = week_totals(rows, end)
+        except Exception as exc:  # noqa: BLE001
+            again, out["second_read_err"] = None, str(exc)[:100]
+        out["second_read"] = again == tot
+        if again != tot:
+            self.anomaly(f"PortWatch second read for week {end} gave {again}, first {tot}")
+        try:
+            rows, _ = self.portwatch(end - timedelta(days=7), days=28)
+            for s_, pid in SERIES.items():
+                vals = [int(a["n_total"]) for a in rows if a.get("portid") == pid and a.get("n_total") is not None]
+                if len(vals) < 21:
+                    continue
+                mean = sum(vals) / len(vals) * 7
+                out["history"][s_] = round(mean, 1)
+                if abs(tot[s_] - mean) > max(10, HIST_DEV * mean):
+                    out["skip_series"].append(s_)     # no real orders on this chokepoint this week
+                    self.write({"kind": "real_skip_series", "series": s_, "total": tot[s_], "mean4": mean})
+        except Exception as exc:  # noqa: BLE001
+            out["history_err"] = str(exc)[:100]
+            self.anomaly(f"PortWatch history read failed ({str(exc)[:60]})")
+        return out
+
+    def real_orders(self, w: dict, snap: dict) -> None:
+        """At release: 1-ct IOC buys on the clearest, cheapest winning sides, inside the cap."""
+        mode = self.real_mode()
+        w["real_mode"] = mode
+        if mode != "live":
+            return
+        c = self.rcfg
+        margin, max_cost, slack = float(c["margin"]), float(c["max_cost"]), float(c["slack"])
+        n = max(1, min(int(c["contracts"]), REAL_MAX_CONTRACTS))
+        cands = []
+        for r in snap["markets"]:
+            if r.get("best") is None or abs(r["dist"]) <= margin:
+                continue
+            if r["series"] in ((w.get("checks") or {}).get("skip_series") or []):
+                continue
+            if not r.get("rules_ok"):
+                self.anomaly(f"{r['ticker']} rules don't name IMF PortWatch and week {w['end']}")
+                return
+            if int(float(r.get("shard") or 0)) != 0 or any(x["ticker"] == r["ticker"] for x in self.real):
+                continue
+            if r["best"] + fee1(r["best"]) > max_cost + 1e-9:
+                continue
+            cands.append(r)
+        cands.sort(key=lambda r: r["best"])        # biggest edge first
+        for r in cands:
+            # limit = best ask + slack, but never past max_cost after the fee
+            lim = round(min(r["best"] + slack, 0.99), 2)
+            while lim > r["best"] and lim + fee1(lim) > max_cost + 1e-9:
+                lim = round(lim - 0.01, 2)
+            worst = round(n * (lim + fee1(lim)), 4)
+            if self.cap_used() + worst > self.cap() + 1e-9:
+                self.write({"kind": "real_skip", "ticker": r["ticker"], "why": "cap",
+                            "used": self.cap_used(), "cap": self.cap()})
+                continue
+            rec = {"week": w["end"], "ticker": r["ticker"], "series": r["series"], "side": r["side"],
+                   "dist": r["dist"], "seen_ask": r["best"], "limit": lim, "placed": n,
+                   "ts": round(self.clock(), 1), "et": et_str(self.clock()),
+                   "after_s": round(self.clock() - w["released"], 1)}
+            try:
+                o = self.client.buy_now(r["ticker"], r["side"], lim, n,
+                                        f"sr-{r['ticker']}-{int(self.clock())}")
+                got = fill_qty(o, n)
+                paid = o.get("taker_fill_cost_dollars")
+                paid = float(paid) if paid not in (None, "") else None
+                rec.update(order_id=o.get("order_id"), filled=got)
+            except (OrderRejected, Exception) as exc:  # noqa: BLE001
+                rec.update(status="error", filled=0, cost=0.0, err=str(exc)[:200])
+                self.real.append(rec)
+                self.write({"kind": "real", **rec})
+                self.anomaly(f"Kalshi refused {r['ticker']} {r['side'].upper()} at {lim:.2f}: {str(exc)[:100]}")
+                return
+            if got <= 0:
+                rec.update(status="missed", cost=0.0)
+            else:
+                avg = (paid / got) if paid else lim
+                rec.update(status="open", avg=round(avg, 4), cost=round(got * avg + got * fee1(round(avg, 2)), 4))
+            self.real.append(rec)
+            self.write({"kind": "real", **rec})
+        week_real = [x for x in self.real if x["week"] == w["end"]]
+        filled = [x for x in week_real if (x.get("filled") or 0) > 0]
+        if self.alert and filled:
+            self.alert("Ship release bot: real bets placed",
+                       f"PortWatch posted week to {w['end']} at {w.get('released_et', '')[11:16]} ET. Bought "
+                       f"{len(filled)} brackets (1 ct each), ${sum(x['cost'] for x in filled):.2f} at risk, "
+                       f"worth +${sum(x['filled'] - x['cost'] for x in filled):.2f} if PortWatch holds. "
+                       f"{len(week_real) - len(filled)} missed.")
+
+    def settle_real(self, now: float) -> None:
+        for r in self.real:
+            if r.get("status") != "open" or now - r["ts"] < 600 or now - r.get("checked", 0) < 300:
+                continue
+            r["checked"] = now
+            try:
+                m = self.get_json(f"{KALSHI}/markets/{r['ticker']}").get("market") or {}
+            except Exception as exc:  # noqa: BLE001
+                log.info("shiprelease settle %s: %s", r["ticker"], exc)
+                continue
+            out = (m.get("result") or "").lower()
+            if out in ("yes", "no"):
+                r["status"], r["result"] = "settled", out
+                r["pnl"] = round((r["filled"] if out == r["side"] else 0.0) - r["cost"], 4)
+                self.write({"kind": "real_settle", "ticker": r["ticker"], "result": out, "pnl": r["pnl"]})
+                if out != r["side"]:
+                    self.anomaly(f"real bet {r['ticker']} {r['side'].upper()} lost (Kalshi said {out})")
+
+    def real_status(self) -> dict:
+        st = [r for r in self.real if r.get("status") == "settled"]
+        rp = sum(r["pnl"] for r in st)
+        rct = sum(r["filled"] for r in st)
+        return {"mode": self.real_mode(), "control": dict(self.rcfg), "cap": self.cap(),
+                "cap_used": self.cap_used(), "stopped": self.stopped, "orders": len(self.real),
+                "filled": len([r for r in self.real if (r.get("filled") or 0) > 0]),
+                "missed": len([r for r in self.real if r.get("status") == "missed"]),
+                "settled": len(st), "won": len([r for r in st if r["pnl"] > 0]), "pnl": round(rp, 2),
+                "c_per_ct": round(100 * rp / rct, 1) if rct else None,
+                "open_cost": round(sum(r["cost"] for r in self.real if r.get("status") == "open"), 2),
+                "recent": self.real[-30:]}
 
     def prune(self) -> None:
         for k in sorted(self.weeks)[:-KEEP_WEEKS]:
@@ -353,14 +587,16 @@ class ShipRelease:
                           "layer_edit_et": w.get("layer_edit_et"), "first_partial": w.get("first_partial"),
                           "totals": w.get("totals"), "kalshi_values": w.get("kalshi_values"),
                           "lags": lags, "takes": w.get("takes", []), "settled": w.get("settled", False),
+                          "checks": w.get("checks"), "real_mode": w.get("real_mode"),
                           "paper": {"markets": len(tk), "ct": round(sum(t["ct"] for t in tk), 1),
                                     "settled": len(st), "won": len([t for t in st if t["pnl"] > 0]),
                                     "pnl": round(sum(t["pnl"] for t in st), 2)},
                           "pre": w.get("pre") if isinstance(w.get("pre"), dict) else None})
         allst = [t for w in self.weeks.values() for t in w.get("takes", [])
                  if not t["skip"] and t["pnl"] is not None]
-        return {"at": et_str(now), "paper_only": True, "rules": {"max_price": MAX_PRICE, "cap_ct": CAP_CT,
-                                                                 "margin": MARGIN},
+        real = self.real_status()
+        return {"at": et_str(now), "paper_only": real["mode"] != "live", "real": real,
+                "rules": {"max_price": MAX_PRICE, "cap_ct": CAP_CT, "margin": MARGIN},
                 "polls": self.polls, "weeks": weeks,
                 "totals": {"weeks_released": len([w for w in self.weeks.values() if w.get("released")]),
                            "settled_takes": len(allst), "ct": round(sum(t["ct"] for t in allst), 1),
@@ -376,9 +612,12 @@ class ShipRelease:
 
     def step(self, now: float) -> float:
         """One loop step; returns seconds to sleep."""
+        if now - self.ok_at >= 300:
+            self.read_control(now)
         self.poll(now)
         self.follow_up(now)
         self.settle(now)
+        self.settle_real(now)
         self.prune()
         self.save()
         w = self.weeks.get(str(last_week_end(now))) or {}
@@ -406,15 +645,34 @@ def main() -> int:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     out = Path(os.environ.get("SHIPREL_DIR", "/var/lib/kalshi-shiprel"))
     token = os.environ.get("GITHUB_TOKEN", "").strip()
-    for k in list(os.environ):          # paper only: drop the trading key and other secrets
-        if k.startswith(("KALSHI", "NTFY", "ANTHROPIC", "OANDA")):
+    client = alert = None
+    if os.environ.get("SHIPREL_REAL", "1") != "0":
+        from .m15 import client_from_env
+        from .util import Http as _Http
+        try:
+            client = client_from_env(_Http("kalshi-shiprelease/1", min_interval=0.05, retries=1))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("shiprelease: no Kalshi client (%s): paper only", exc)
+    for k in list(os.environ):          # the client holds the key in memory; drop it from env
+        if k.startswith(("KALSHI", "ANTHROPIC", "OANDA")):
             os.environ.pop(k, None)
+    if client is not None:
+        from . import notify
+        from .util import Http as _Http2, load_config
+        cfg, nh = load_config(), _Http2("kalshi-shiprelease/1")
+
+        def _alert(title: str, body: str) -> None:
+            try:
+                notify.send(nh, cfg, title, body, priority=3, tags=["ship"])
+            except Exception as exc:  # noqa: BLE001
+                log.warning("shiprelease alert: %s", exc)
+        alert = _alert
     status_up = None
     if token:
         from .m15 import github_uploader
         from .util import Http
         status_up = github_uploader(Http("kalshi-shiprelease/1"), token)
-    ShipRelease(out, status_up=status_up).run()
+    ShipRelease(out, status_up=status_up, client=client, alert=alert).run()
     return 0
 
 

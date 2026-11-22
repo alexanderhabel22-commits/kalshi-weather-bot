@@ -92,7 +92,7 @@ bash "$APP/deploy/m15/install-lip.sh" || echo "lip install failed"
 bash "$APP/deploy/m15/install-paperlab.sh" || echo "paperlab install failed"
 # Fast quake YES: paper log + small real test (quakefast_control.json on main switches it)
 bash "$APP/deploy/m15/install-quakefast.sh" || echo "quakefast install failed"
-# Shipping release-window watcher (PAPER ONLY, GET requests; PortWatch Tuesday release vs order books)
+# Shipping release window: paper log + small real test (shiprelease_control.json on main switches it)
 bash "$APP/deploy/m15/install-shiprel.sh" || echo "shiprel install failed"
 # One-time order speed test (1c post-only bids, cancelled at once; runs once per version)
 bash "$APP/deploy/m15/run-latency-probe.sh" || echo "latency probe failed"

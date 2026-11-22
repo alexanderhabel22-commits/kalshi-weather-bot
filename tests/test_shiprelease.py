@@ -35,11 +35,31 @@ class FakeSession:
     def __init__(self, end):
         self.end, self.days, self.headers, self.calls = end, 0, {}, []
         self.results = {}
+        self.control = {"mode": "off"}
+        self.switch = {"mode": "live"}
+        self.override = {}          # date -> {portid: n} to fake odd values
+        self.rules = None
+        self.values = {}
 
     def get(self, url, params=None, timeout=None):
         self.calls.append(url)
+        if url == sr.CONTROL_URL:
+            return Resp(self.control)
+        if url == sr.SWITCH_URL:
+            return Resp(self.switch)
         if url.endswith("/query"):
-            return Resp({"features": [{"attributes": a} for a in pw_rows(self.end, self.days)]})
+            w = params["where"]
+            lo = date.fromisoformat(w.split(">= '")[1][:10])
+            hi = date.fromisoformat(w.split("<= '")[1][:10])
+            cur0 = self.end - sr.timedelta(days=6)
+            rows = []
+            for i in range((hi - lo).days + 1):
+                d = lo + sr.timedelta(days=i)
+                if d >= cur0 and (d - cur0).days >= self.days:
+                    continue
+                for pid, per in {"chokepoint1": 70, "chokepoint2": 28, "chokepoint4": 25, "chokepoint6": 2}.items():
+                    rows.append({"date": str(d), "portid": pid, "n_total": self.override.get(str(d), {}).get(pid, per)})
+            return Resp({"features": [{"attributes": a} for a in rows]})
         if url == sr.PW_LAYER:
             return Resp({"editingInfo": {"dataLastEditDate": 1795000000000}})
         if url.endswith("/markets"):
@@ -51,9 +71,15 @@ class FakeSession:
             for k in (base - 10, base - 1, base + 5):
                 t = f"{ev}-T{k}"
                 ms.append({"ticker": t, "strike_type": "greater", "floor_strike": k, "status": "active",
+                           "exchange_index": 0, "rules_primary": self.rules or
+                           f"If the number of transit calls ... reported by the IMF PortWatch is above {k} "
+                           f"from Nov 16, 2026 to Nov 22, 2026, then the market resolves to Yes.",
                            "close_time": "2026-11-24T14:00:00Z", "result": self.results.get(t, ""),
-                           "expiration_value": "490" if self.results else ""})
+                           "expiration_value": self.values.get(s, str(base)) if self.results else ""})
             return Resp({"markets": ms})
+        if "/markets/" in url and not url.endswith("/orderbook"):
+            t = url.rsplit("/", 1)[1]
+            return Resp({"market": {"ticker": t, "result": self.results.get(t, "")}})
         if url.endswith("/orderbook"):
             # YES bids at 0.60 (x50), NO bids at 0.30 (x20): YES ask 0.70, NO ask 0.40
             return Resp({"orderbook_fp": {"yes_dollars": [["0.6000", "50.00"]],
@@ -155,3 +181,142 @@ def test_portwatch_error_counts(tmp_path):
     w = sr.ShipRelease(tmp_path, clock=lambda: ts(2026, 11, 24, 5), session=Bad(date(2026, 11, 22)))
     w.step(ts(2026, 11, 24, 5))
     assert w.polls["err"] == 1 and w.weeks["2026-11-22"]["released"] is None
+
+
+class FakeClient:
+    def __init__(self, fill=1, refuse=False):
+        self.orders, self.fill, self.refuse = [], fill, refuse
+
+    def buy_now(self, ticker, side, price, count, coid):
+        self.orders.append((ticker, side, price, count))
+        if self.refuse:
+            raise sr.OrderRejected("insufficient balance")
+        return {"order_id": f"o{len(self.orders)}", "fill_count_fp": str(self.fill),
+                "taker_fill_cost_dollars": f"{(price - 0.02) * self.fill:.2f}" if self.fill else "0"}
+
+
+def live(tmp_path, client, **ctl):
+    end = date(2026, 11, 22)
+    fs = FakeSession(end)
+    fs.control = {"mode": "live", "max_loss_usd": 5, **ctl}
+    clock = [ts(2026, 11, 24, 4, 0)]
+    alerts = []
+    w = sr.ShipRelease(tmp_path, clock=lambda: clock[0], session=fs, client=client,
+                       alert=lambda t, b: alerts.append((t, b)))
+    return w, fs, clock, alerts
+
+
+def release(w, fs, clock):
+    fs.days = 3
+    w.step(clock[0])
+    fs.days = 7
+    clock[0] = ts(2026, 11, 24, 5, 15)
+    w.step(clock[0])
+    return w.weeks["2026-11-22"]
+
+
+def test_real_orders_rails(tmp_path):
+    c = FakeClient()
+    w, fs, clock, alerts = live(tmp_path, c)
+    assert w.real_mode() == "off"            # control not read yet
+    wk = release(w, fs, clock)
+    assert wk["real_mode"] == "live" and wk["checks"]["second_read"] is True
+    # books: YES ask 0.70, NO ask 0.40; brackets at dist -1 (T491/T197...) are skipped
+    tk = [o[0] for o in c.orders]
+    assert all(not t.endswith(("-T489", "-T195", "-T174", "-T13")) for t in tk)
+    assert all(o[3] == 1 for o in c.orders)
+    # cheapest winning side first (NO at 0.40), limit = ask + 3c
+    assert c.orders[0][1] == "no" and c.orders[0][2] == 0.43
+    # $5 cap incl. open bets: never exceeded at the worst-case limit
+    assert w.cap_used() <= 5.0 + 1e-9
+    worst = sum(o[2] + sr.fee1(o[2]) for o in c.orders)
+    assert worst <= 5.0 + 1e-9
+    assert len(c.orders) == 8               # 4 NO legs at 0.43+fee, then YES legs at 0.73+fee until the cap
+    assert alerts and "real bets placed" in alerts[-1][0]
+    # one real order per market: a second snapshot-0 never re-buys
+    n = len(c.orders)
+    w.real_orders(wk, wk["snaps"]["0"])
+    assert len(c.orders) == n
+    st = w.status(clock[0])
+    assert st["paper_only"] is False and st["real"]["orders"] == n
+
+
+def test_real_settle_loss_stops(tmp_path):
+    c = FakeClient()
+    w, fs, clock, alerts = live(tmp_path, c)
+    wk = release(w, fs, clock)
+    bad = w.real[0]["ticker"]
+    for t in wk["takes"]:
+        fs.results[t["ticker"]] = t["side"]
+    fs.results[bad] = "yes"                  # our NO leg loses
+    clock[0] = ts(2026, 11, 24, 9, 30)
+    for _ in range(10):
+        w.step(clock[0])
+    assert w.stopped and "lost" in w.stopped["why"]
+    assert w.real_mode() == "stopped"
+    assert any("stopped" in a[0] for a in alerts)
+    # raising the control epoch resumes
+    fs.control["epoch"] = 1
+    w.read_control(clock[0])
+    assert w.stopped is None and w.real_mode() == "live"
+
+
+def test_kalshi_value_mismatch_stops(tmp_path):
+    c = FakeClient()
+    w, fs, clock, _ = live(tmp_path, c)
+    wk = release(w, fs, clock)
+    for t in wk["takes"]:
+        fs.results[t["ticker"]] = t["side"]
+    fs.values = {"KXPANAMAWEEKLY": "197"}
+    clock[0] = ts(2026, 11, 24, 9, 30)
+    for _ in range(10):
+        w.step(clock[0])
+    assert w.stopped and "Kalshi settled Panama" in w.stopped["why"]
+
+
+def test_kill_switch_and_control_off(tmp_path):
+    c = FakeClient()
+    w, fs, clock, _ = live(tmp_path, c)
+    fs.switch = {"mode": "off"}
+    release(w, fs, clock)
+    assert c.orders == []
+    c2 = FakeClient()
+    w2, fs2, clock2, _ = live(tmp_path / "b", c2, mode="off")
+    release(w2, fs2, clock2)
+    assert c2.orders == []
+    c3 = FakeClient()
+    w3, fs3, clock3, _ = live(tmp_path / "c", c3)
+    fs3.switch = {"mode": "live", "halted": {"live": True}}
+    release(w3, fs3, clock3)
+    assert c3.orders == []
+
+
+def test_rules_mismatch_and_refusal_stop(tmp_path):
+    c = FakeClient()
+    w, fs, clock, _ = live(tmp_path, c)
+    fs.rules = "If the number of transit calls ... from Nov 9, 2026 to Nov 15, 2026"
+    release(w, fs, clock)
+    assert c.orders == [] and "rules" in w.stopped["why"]
+    c2 = FakeClient(refuse=True)
+    w2, fs2, clock2, _ = live(tmp_path / "b", c2)
+    release(w2, fs2, clock2)
+    assert len(c2.orders) == 1 and "refused" in w2.stopped["why"]
+
+
+def test_history_outlier_skips_series(tmp_path):
+    c = FakeClient()
+    w, fs, clock, _ = live(tmp_path, c)
+    for i in range(7):                       # Suez this week 7 x 10 = 70 vs 490 normal
+        fs.override[str(date(2026, 11, 22) - sr.timedelta(days=i))] = {"chokepoint1": 10}
+    release(w, fs, clock)
+    assert not any(o[0].startswith("KXSUEZ") for o in c.orders) and c.orders
+    assert w.weeks["2026-11-22"]["checks"]["skip_series"] == ["KXSUEZWEEKLY"]
+    assert w.stopped is None
+
+
+def test_max_cost_after_fee(tmp_path):
+    c = FakeClient()
+    w, fs, clock, _ = live(tmp_path, c, max_cost=0.5)
+    release(w, fs, clock)
+    # only NO legs (ask 0.40); limit 0.43 + 2c fee = 0.45 <= 0.50; YES at 0.70 never
+    assert c.orders and all(o[1] == "no" and o[2] + sr.fee1(o[2]) <= 0.5 for o in c.orders)
