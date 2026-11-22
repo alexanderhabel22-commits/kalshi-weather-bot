@@ -1,6 +1,6 @@
 # Weather bot report
 
-Updated Fri Nov 20, 09:00 PM · bankroll $54.32 · risk level normal · EDGE alerts off
+Updated Sat Nov 21, 09:00 PM · bankroll $59.08 · risk level normal · EDGE alerts off
 
 ## Alerts sent to your phone
 
@@ -25,13 +25,13 @@ By type: LOCK 0-2 (-$4.47).
 
 | Day | Locks seen | Cheap enough to alert | Priced ≥98¢ when first seen |
 |---|---|---|---|
-| 2026-11-14 | 105 | 0 | 105 |
 | 2026-11-15 | 104 | 0 | 104 |
 | 2026-11-16 | 119 | 0 | 119 |
 | 2026-11-17 | 120 | 0 | 120 |
 | 2026-11-18 | 117 | 0 | 117 |
 | 2026-11-19 | 120 | 0 | 120 |
-| 2026-11-20 | 121 | 0 | 121 |
+| 2026-11-20 | 122 | 0 | 122 |
+| 2026-11-21 | 107 | 0 | 107 |
 
 Over these days, 0% of decided brackets were ever cheap enough to be worth buying. The rest were already priced in by other traders.
 
@@ -41,12 +41,12 @@ None logged. Add a line per trade you place: `ticker,side,contracts,price,note` 
 
 ## Silent near-lock test (late-day calls the model rates 95%+, not yet certain)
 
-**Record: 73-14**, -$14.63 if you had taken them (-8.1%). Pending: 3.
-Accuracy (Brier, lower is better): model 0.151 vs market 0.132 → **market ahead**.
+**Record: 76-15**, -$16.62 if you had taken them (-8.8%). Pending: 4.
+Accuracy (Brier, lower is better): model 0.155 vs market 0.133 → **market ahead**.
 
 | Model said | Calls | Market said (avg) | Actually won |
 |---|---|---|---|
-| 90-99% | 87 | 87% | 84% |
+| 90-99% | 91 | 87% | 84% |
 
 Verdict: keep near-lock alerts silent. Needs 50+ settled calls, a profit, and the model beating the market.
 
@@ -54,14 +54,14 @@ Verdict: keep near-lock alerts silent. Needs 50+ settled calls, a profit, and th
 
 | Lead time | City-days | Model bias | Model avg miss | 80% range held | NWS avg miss |
 |---|---|---|---|---|---|
-| More than 24h out | 1949 | +0.6°F | 2.0°F | 95% (target 80%) | 1.9°F |
-| 12–24h out | 1117 | +0.7°F | 1.5°F | 90% (target 80%) | 1.7°F |
-| 6–12h out | 563 | +0.4°F | 0.8°F | 93% (target 80%) | 1.6°F |
-| Last 6h | 413 | +0.1°F | 0.5°F | 92% (target 80%) | 1.4°F |
+| More than 24h out | 2117 | +0.6°F | 2.0°F | 95% (target 80%) | 1.9°F |
+| 12–24h out | 1209 | +0.7°F | 1.5°F | 90% (target 80%) | 1.7°F |
+| 6–12h out | 609 | +0.4°F | 0.8°F | 94% (target 80%) | 1.6°F |
+| Last 6h | 443 | +0.1°F | 0.5°F | 92% (target 80%) | 1.4°F |
 
 Bias is actual minus model median (positive = model too cold). If the 80% range holds far more than 80% of the time, the model is too unsure; far less, too sure.
 
-Biggest city biases (12h+ out): Newark high +3.1°F (n=33); Atlanta high +2.7°F (n=77); Dallas high +2.7°F (n=93); Trenton high +2.5°F (n=33); San Antonio low -2.5°F (n=40).
+Biggest city biases (12h+ out): Newark high +3.3°F (n=38); Dallas high +2.7°F (n=99); Trenton high +2.6°F (n=38); Atlanta high +2.5°F (n=82); San Antonio low -2.4°F (n=46).
 
 ## Rain census (silent test): monthly rain thresholds already passed
 
@@ -90,14 +90,13 @@ Provisional = NWS report plus hourly station rain since; official = NWS climate 
 
 Orders the bot would rest 1¢ inside the spread about 36 hours before close (no money). Filled = a real trade printed at our price or better.
 
-Placed 591 · open 52 · graded 539 · filled 441 (81%)
+Placed 622 · open 56 · graded 566 · filled 465 (82%)
 
-- All fills (1 contract each): 441 contracts, 186 won, P&L $-13.44 on $199.44 (-6.7%)
-- Certain fills only (traded through our price): 434 contracts, 179 won, P&L $-15.08 on $194.08 (-7.8%)
+- All fills (1 contract each): 465 contracts, 198 won, P&L $-13.78 on $211.78 (-6.5%)
+- Certain fills only (traded through our price): 457 contracts, 190 won, P&L $-15.54 on $205.54 (-7.6%)
 
 | Day | Fills | Won | P&L |
 |---|---|---|---|
-| 2026-11-10 | 39 | 14 | $-1.93 |
 | 2026-11-11 | 34 | 14 | $+0.23 |
 | 2026-11-12 | 39 | 23 | $+3.33 |
 | 2026-11-13 | 36 | 18 | $+2.29 |
@@ -107,85 +106,88 @@ Placed 591 · open 52 · graded 539 · filled 441 (81%)
 | 2026-11-17 | 26 | 12 | $-0.49 |
 | 2026-11-18 | 30 | 10 | $-3.75 |
 | 2026-11-19 | 18 | 7 | $-1.88 |
+| 2026-11-20 | 24 | 12 | $-0.34 |
 
 ## Paper test: late-day weather orders
 
 No money. From midday on, the rule sells the brackets that still need the temperature to pass today's low/high so far (kind need, buys NO) and buys the bracket that holds it (kind holds). Filled = a real trade printed at our price or better. Backtest for lows, need: +3.7c per contract in Sep-Nov 2026. The lows, need orders also trade real money (strategy weather_late).
 
-Written 758 · open 76 · graded 682 · filled 588
+Written 830 · open 73 · graded 757 · filled 650
 
 | Group | Fills | Won | P&L | Per contract (± 1 se) |
 |---|---|---|---|---|
-| lows, need | 132 | 99 | $+3.38 on $95.62 | +2.6c ±1.7 |
-| lows, holds | 67 | 44 | $+1.50 on $42.50 | +2.2c ±4.4 |
-| highs, need | 276 | 136 | $-5.82 on $141.82 | -2.1c ±1.1 |
-| highs, holds | 113 | 67 | $+3.59 on $63.41 | +3.2c ±4.6 |
+| lows, need | 140 | 105 | $+3.33 on $101.67 | +2.4c ±1.6 |
+| lows, holds | 73 | 48 | $+1.64 on $46.36 | +2.2c ±4.1 |
+| highs, need | 309 | 149 | $-8.65 on $157.65 | -2.8c ±1.1 |
+| highs, holds | 128 | 71 | $+2.83 on $68.17 | +2.2c ±4.1 |
 
 ## Automatic trading
 
-Mode: **live** · bankroll $54.32 · caps: 10 contracts/order, $54.32 open (100%), daily stop $-5.43 (10%), total stop $-13.58 (25%)
+Mode: **live** · bankroll $59.08 · caps: 10 contracts/order, $59.08 open (100%), daily stop $-5.91 (10%), total stop $-14.77 (25%)
 
 Scale-up kit: **OFF** (switches on after the 500-contract reviews + Nov 17 checkpoint). At this bankroll it would use the 'test money' tier.
 
 | Strategy | Mode | Orders | Open | Filled | Settled | P&L |
 |---|---|---|---|---|---|---|
 | ai_fade | live | 2 | 0 | 2 | 2 | $+0.73 |
-| ai_fade | paper | 1 | 1 | 1 | 0 | $+0.00 |
+| ai_fade | paper | 1 | 0 | 1 | 1 | $+0.32 |
 | fade_leads | live | 1 | 1 | 1 | 0 | $+0.00 |
 | fade_leads_paper | paper | 1 | 1 | 1 | 0 | $+0.00 |
 | favorites | live | 18 | 0 | 16 | 16 | $+3.02 |
 | favorites | paper | 4 | 0 | 4 | 4 | $+0.28 |
+| fx_paper | paper | 37 | 37 | 37 | 0 | $+0.00 |
 | macro_fade | live | 9 | 6 | 5 | 2 | $-0.74 |
 | macro_fade | paper | 4 | 2 | 4 | 2 | $-0.71 |
 | macro_wide | live | 8 | 3 | 3 | 3 | $-0.22 |
-| macro_wide | paper | 3 | 2 | 2 | 1 | $+0.07 |
+| macro_wide | paper | 3 | 1 | 2 | 2 | $+0.23 |
 | mentions | live | 11 | 0 | 11 | 11 | $+3.96 |
 | mentions | paper | 11 | 0 | 11 | 11 | $+0.90 |
 | mentions_wide | paper | 18 | 1 | 16 | 16 | $+1.11 |
 | ndx_range | live | 36 | 0 | 0 | 0 | $+0.00 |
-| quake_no | live | 1 | 0 | 1 | 1 | $-0.86 |
-| quake_no_paper | paper | 2 | 1 | 2 | 1 | $-1.72 |
+| quake_no | live | 2 | 1 | 2 | 1 | $-0.86 |
+| quake_no_paper | paper | 3 | 1 | 3 | 2 | $-1.48 |
 | rain_evening | live | 6 | 0 | 6 | 6 | $-1.27 |
-| ship_paper | paper | 34 | 34 | 34 | 0 | $+0.00 |
+| ship_paper | paper | 44 | 44 | 44 | 0 | $+0.00 |
 | spx_range | live | 33 | 0 | 0 | 0 | $+0.00 |
 | weather | live | 80 | 0 | 61 | 61 | $-3.43 |
-| weather | paper | 99 | 15 | 87 | 78 | $-0.56 |
-| weather_late | live | 225 | 27 | 189 | 168 | $+4.42 |
+| weather | paper | 102 | 10 | 93 | 85 | $+0.36 |
+| weather_late | live | 246 | 23 | 205 | 190 | $+4.22 |
 | weather_late | paper | 21 | 0 | 17 | 17 | $+0.33 |
 
 ## Strategy grades (allocator)
 
-Mode: **APPLIED to live sizing** · last re-graded 2026-11-14 · hurdle 3c profit per $1 risked
+Mode: **APPLIED to live sizing** · last re-graded 2026-11-21 · hurdle 3c profit per $1 risked
 
 | Strategy | Settled events (real/paper) | Risked | Profit | Per $1 | Trust | Grade | Size x |
 |---|---|---|---|---|---|---|---|
-| ai_fade | 2/0 | $8.07 | $+0.73 | +9.0c | 2% | +3.1c | 1.00 (target 1.04) |
+| ai_fade | 2/0 | $8.07 | $+0.73 | +9.0c | 2% | +3.1c | 1.04 (target 1.04) |
 | fade_leads | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | fade_leads_paper | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | favorites | 6/0 | $52.26 | $+3.02 | +5.8c | 7% | +3.2c | 1.07 (target 1.07) |
 | favorites_mid | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | favorites_wide | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
+| fx_paper | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | locks | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
-| m15_btc | 329/0 | $446.37 | $+2.63 | +0.6c | 61% | +1.5c | 0.75 (target 0.51) |
+| m15_btc | 329/0 | $446.37 | $+2.63 | +0.6c | 61% | +1.5c | 0.51 (target 0.51) |
 | macro_fade | 2/0 | $1.74 | $-0.74 | -42.5c | 2% | +2.3c | 0.75 (target 0.75) |
-| macro_wide | 2/0 | $3.19 | $-0.22 | -6.9c | 1% | +2.9c | 1.00 (target 0.97) |
-| mentions | 5/0 | $32.04 | $+3.96 | +12.4c | 3% | +3.3c | 1.02 (target 1.09) |
+| macro_wide | 2/0 | $3.19 | $-0.22 | -6.9c | 1% | +2.9c | 0.97 (target 0.97) |
+| mentions | 5/0 | $32.04 | $+3.96 | +12.4c | 3% | +3.3c | 1.09 (target 1.09) |
 | mentions_wide | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | ndx_range | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
-| quake_no | 1/0 | $0.86 | $-0.86 | -100.0c | 1% | +2.3c | 1.00 (target 0.76) |
+| quake_no | 1/0 | $0.86 | $-0.86 | -100.0c | 1% | +2.3c | 0.76 (target 0.76) |
 | quake_no_guard_paper | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | quake_no_paper | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
-| rain_evening | 4/0 | $5.27 | $-1.27 | -24.1c | 3% | +2.2c | 0.75 (target 0.73) |
+| rain_evening | 4/0 | $5.27 | $-1.27 | -24.1c | 3% | +2.2c | 0.73 (target 0.73) |
 | ship_paper | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | spx_range | 0/0 | $0.00 | $+0.00 |  | 0% | +3.0c | 1.00 (target 1.00) |
 | weather | 37/0 | $20.84 | $-3.43 | -16.5c | 2% | +2.5c | 0.85 (target 0.85) |
-| weather_late | 115/0 | $139.17 | $+4.42 | +3.2c | 18% | +3.0c | 1.00 (target 1.01) |
+| weather_late | 133/0 | $159.37 | $+4.22 | +2.6c | 19% | +2.9c | 0.98 (target 0.98) |
 
 Trust = how much the grade follows the strategy's own record instead of the hurdle. It grows with settled events and grows slower for longshots (noisier per dollar).
 
 ## New Kalshi markets (launch watcher)
 
-Watching 16768 series since 2026-11-05; 400 new series have opened markets, 532 waiting for their first market.
+Watching 16770 series since 2026-11-05; 400 new series have opened markets, 519 waiting for their first market.
 
 
 | Opened | Series | Category | Freq | Markets | Spread | Test |
@@ -206,6 +208,6 @@ Watching 16768 series since 2026-11-05; 400 new series have opened markets, 532 
 
 ## Bot health
 
-Scans per day: 11-14: 293, 11-15: 292, 11-16: 290, 11-17: 290, 11-18: 292, 11-19: 291, 11-20: 256
+Scans per day: 11-15: 292, 11-16: 290, 11-17: 290, 11-18: 292, 11-19: 291, 11-20: 292, 11-21: 256
 
 - 2026-11-17: could not reach NWS observations
