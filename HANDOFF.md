@@ -308,6 +308,18 @@ record earns it. Be candid about odds and risk; no hype.
   Reviews: first look at 20 settled fills (Tue Nov 24, when the first week settles), verdict at 100 (~Dec 15) + free replay re-run
   mid-Jan. Real money only with Alex's OK. Dashboard: TESTS tab "Shipping counts test" card (c/ct with
   95% range clustered by chokepoint-week, per-chokepoint and YES/NO table).
+- **Shipping release-window watcher (PAPER ONLY, Nov 22, never trades):** `wxbot/shiprelease.py`, droplet
+  service `kalshi-shiprel` (installed by update.sh via `deploy/m15/install-shiprel.sh`; GET requests only, drops
+  the Kalshi key from its environment). Why: the four ship-count series settle on the PortWatch Mon-Sun sum
+  (matched 35/38 weeks), PortWatch posts the week early Tuesday (Nov 17: layer edit 5:15 AM ET) and the
+  markets stay open until Tue 9 AM ET; the tape showed stale winning-side orders for hours after
+  (`/mnt/project-files/analysis/ship-live-data/RESULTS.md`). The watcher polls PortWatch every 20 s Mon noon -
+  Tue 11 AM ET (10 min otherwise), logs the exact release time + layer edit time, snapshots every order book of
+  the ending events at release and +1/5/15/30/60/120 min, paper-takes the winning side at <= 97c (10 ct per
+  market, skip brackets within 2 ships of the total), and scores against Kalshi's result and settled value.
+  Status m15/shiprelease.json on m15-data; dashboard TESTS card "Shipping release window". First release
+  Tue Nov 24; verdict after 4 Tuesdays (~Dec 15). Real money only with Alex's OK (suggested hard $10 cap per
+  Tuesday). Off: `sudo systemctl disable --now kalshi-shiprel && sudo touch /var/lib/kalshi-shiprel.disabled`.
 - **FX vs lognormal paper test (PAPER ONLY, Nov 21, 1 ct):** `wxbot/strats/fx_paper.py`,
   `[trading.fx_paper]` (live = false; build OK'd in the project chat Nov 20 ~10:20 PM ET). Kalshi FX
   "above K at a fixed time" markets settled on Pyth: weekly KX{pair}AW (the lead), daily KX{pair}AD and
