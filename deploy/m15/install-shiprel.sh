@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Installs/refreshes the shipping release-window PAPER watcher (idempotent; update.sh calls it every hour).
-# Separate service: if it fails, nothing else is affected. It never places orders.
+# Installs/refreshes the shipping release-window service (paper log + small real test switched by
+# shiprelease_control.json; idempotent; update.sh calls it every hour). Separate service: if it fails,
+# nothing else is affected.
 # Turn it off: sudo systemctl disable --now kalshi-shiprel && sudo touch /var/lib/kalshi-shiprel.disabled
 set -euo pipefail
 APP=/opt/kalshi-m15/app

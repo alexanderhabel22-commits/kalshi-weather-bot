@@ -1,0 +1,10 @@
+{
+ "_note": "Shipping release-window REAL-money switch (read by the 15-min server every 5 min; wxbot/shiprelease.py, service kalshi-shiprel). Alex OK'd real money Nov 22, 2026 1:08 AM ET ('Let's go live with porteatch for this Tuesday'). mode: live | off. When PortWatch posts the finished week (Tuesday early AM ET), 1-contract immediate-or-cancel buys of the side the posted count decides, only brackets cleared by more than `margin` ships, price + taker fee <= max_cost, limit = seen ask + slack (never past max_cost), one real order per market ever, shard 0 only. max_loss_usd: HARD cap = open real bets + settled real losses + the new order (profits add no room; code ceiling $5 and 1 contract). Anomaly stop (bad second read, rules mismatch, order refused, Kalshi value differs from PortWatch, a real bet loses): raise `epoch` by 1 to resume after checking. Kill: mode off (or TRADING_MODE=off). Paper twin always logs. Review at 10 real fills.",
+ "mode": "live",
+ "contracts": 1,
+ "max_loss_usd": 5.0,
+ "max_cost": 0.95,
+ "margin": 2,
+ "slack": 0.03,
+ "epoch": 0
+}
