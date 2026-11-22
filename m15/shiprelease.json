@@ -1,0 +1,96 @@
+{
+ "at": "2026-11-22 02:47:07",
+ "paper_only": false,
+ "real": {
+  "mode": "live",
+  "control": {
+   "mode": "live",
+   "contracts": 1,
+   "max_loss_usd": 5.0,
+   "max_cost": 0.95,
+   "margin": 2,
+   "slack": 0.03,
+   "epoch": 0
+  },
+  "cap": 5.0,
+  "cap_used": 0.0,
+  "stopped": null,
+  "orders": 0,
+  "filled": 0,
+  "missed": 0,
+  "settled": 0,
+  "won": 0,
+  "pnl": 0,
+  "c_per_ct": null,
+  "open_cost": 0,
+  "recent": []
+ },
+ "rules": {
+  "max_price": 0.97,
+  "cap_ct": 10,
+  "margin": 2
+ },
+ "polls": {
+  "ok": 1,
+  "err": 0,
+  "last_ok": "2026-11-22 02:47:07",
+  "last_err": null,
+  "edit": "2026-11-17 05:15:06"
+ },
+ "weeks": [
+  {
+   "end": "2026-11-15",
+   "released_et": "2026-11-22 02:47:07",
+   "layer_edit_et": "2026-11-17 05:15:06",
+   "first_partial": {
+    "et": "2026-11-22 02:47:07",
+    "days": 28
+   },
+   "totals": {
+    "KXSUEZWEEKLY": 323,
+    "KXPANAMAWEEKLY": 197,
+    "KXBABELMANDEBWEEKLY": 179,
+    "KXHORMUZWEEKLY": 16
+   },
+   "kalshi_values": null,
+   "lags": {
+    "0": {
+     "et": "2026-11-22 02:47:07",
+     "closed": false,
+     "profit_cap": 0,
+     "ct_cap": 0,
+     "profit_all_mkts": 0,
+     "profit_uncapped": 0
+    }
+   },
+   "takes": [],
+   "settled": false,
+   "checks": {
+    "second_read": true,
+    "history": {
+     "KXSUEZWEEKLY": 302.8,
+     "KXPANAMAWEEKLY": 194.2,
+     "KXBABELMANDEBWEEKLY": 190.5,
+     "KXHORMUZWEEKLY": 26.8
+    },
+    "skip_series": []
+   },
+   "real_mode": "live",
+   "paper": {
+    "markets": 0,
+    "ct": 0,
+    "settled": 0,
+    "won": 0,
+    "pnl": 0
+   },
+   "pre": null
+  }
+ ],
+ "totals": {
+  "weeks_released": 1,
+  "settled_takes": 0,
+  "ct": 0,
+  "pnl": 0,
+  "lost": 0
+ }
+}
