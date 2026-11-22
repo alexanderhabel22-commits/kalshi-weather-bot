@@ -1,20 +1,9 @@
 {
  "last": {
-  "at": "2026-11-22T11:05:25+00:00",
-  "flags": [
-   {
-    "code": "COPYCAT_DOWN",
-    "sev": "warn",
-    "text": "kalshi-copycat service is 'activating' (paper; no money at risk)",
-    "malfunction": false,
-    "paper": true,
-    "runs": 1
-   }
-  ],
+  "at": "2026-11-22T11:20:07+00:00",
+  "flags": [],
   "haiku": {
-   "level": "watch",
-   "summary": "Main bot live, not halted, runs succeeding. 15-min bot in paper with control matching, no errors, no halt. Rewards bot off with zero bids, as expected after its test ended. Copycat is still 'activating' on a paper-only service with no money at risk; it has been stuck here before, so I'll keep an eye on it.",
-   "remember": ""
+   "skipped": "no warn/critical flags"
   },
   "opus": null,
   "action": null,
@@ -70,8 +59,6 @@
   "Rewards bot cancel events continue for a few checks after its live window ends; expected while resting stays $0."
  ],
  "journal": [
-  "Nov 13 7:50 AM ET: new: paper lab service kalshi-paper is 'activating'",
-  "Nov 13 7:50 AM ET: check: escalate. Paper lab kalshi-paper is 'activating' again at 7:50 AM ET, the same flap seen since 2 AM, now recurring for the fourth time. Main, rewards, and 15-min bots are within their rules. Paper lab is read-only and low stakes, but",
   "Nov 13 8:35 AM ET: cleared: PAPER_DOWN",
   "Nov 13 8:50 AM ET: new: kalshi-copycat service is 'activating'; paper lab service kalshi-paper is 'activating'",
   "Nov 13 8:50 AM ET: check: escalate. Copycat service is stuck in 'activating' (critical flag), and the paper lab is flapping again between activating and active, the known engineer issue. Main, rewards, and 15-min bots are within their rules: main is live and ",
@@ -99,7 +86,9 @@
   "Nov 18 4:20 PM ET: new: errors in the 15-min bot log (last 20 min)",
   "Nov 18 4:35 PM ET: cleared: M15_LOG_ERRORS",
   "Nov 18 4:35 PM ET: check: ok. All rule checks clear.",
-  "Nov 22 6:05 AM ET: new: kalshi-copycat service is 'activating' (paper; no money at risk)"
+  "Nov 22 6:05 AM ET: new: kalshi-copycat service is 'activating' (paper; no money at risk)",
+  "Nov 22 6:20 AM ET: cleared: COPYCAT_DOWN",
+  "Nov 22 6:20 AM ET: check: ok. All rule checks clear."
  ],
  "log": [
   {
@@ -1137,44 +1126,44 @@
    "opus": null
   },
   {
+   "action": null,
+   "ai_spend": {
+    "by": {
+     "copycat_boss": 0.0285,
+     "foreman": 0.004
+    },
+    "day": "2026-11-22",
+    "total": 0.0325
+   },
    "at": "2026-11-22T11:05:25+00:00",
    "flags": [
     {
      "code": "COPYCAT_DOWN",
-     "sev": "warn",
-     "text": "kalshi-copycat service is 'activating' (paper; no money at risk)",
      "malfunction": false,
      "paper": true,
-     "runs": 1
+     "runs": 1,
+     "sev": "warn",
+     "text": "kalshi-copycat service is 'activating' (paper; no money at risk)"
     }
    ],
    "haiku": {
     "level": "watch",
-    "summary": "Main bot live, not halted, runs succeeding. 15-min bot in paper with control matching, no errors, no halt. Rewards bot off with zero bids, as expected after its test ended. Copycat is still 'activating' on a paper-only service with no money at risk; it has been stuck here before, so I'll keep an eye on it.",
-    "remember": ""
+    "remember": "",
+    "summary": "Main bot live, not halted, runs succeeding. 15-min bot in paper with control matching, no errors, no halt. Rewards bot off with zero bids, as expected after its test ended. Copycat is still 'activating' on a paper-only service with no money at risk; it has been stuck here before, so I'll keep an eye on it."
    },
-   "opus": null,
-   "action": null,
-   "ai_spend": {
-    "day": "2026-11-22",
-    "total": 0.0325,
-    "by": {
-     "foreman": 0.004,
-     "copycat_boss": 0.0285
-    }
-   }
+   "opus": null
   }
  ],
- "digest": "Time: 6:05 AM ET Sun Nov 22\n15-MIN: service=active mode=paper control=paper status_at=2026-11-22T11:02:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 45.0% used, 15-min bot at 24.7% of its memory cap\nCOPYCAT (separate paper/copy service): activating, status file updated 0.7 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-22T10:54:33+00:00 mode=off halted=None bids=0 resting=$0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXWATECHEMP-27FEB28-T235000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXWAAEROEMP-27APR30-T92000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXNYCASKRENT-27JAN31-T4500 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXILNUCLEAR-27FEB28-T87.5 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXFLVISITORCOUNT-27FEB26-T136 mode off (control live, switch {'mode': 'live', 'halted': Fa\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$55.99 cash=$18.95 at=2026-11-22T10:55:54.574242+00:00\nRecent Actions runs: weather-scan in_progress 11:05Z; trade in_progress 11:03Z; weather-scan success 11:00Z; trade success 10:55Z; weather-scan success 10:55Z; trade success 10:50Z; weather-scan success 10:50Z; trade success 10:45Z\nRULE FLAGS: [warn] COPYCAT_DOWN: kalshi-copycat service is 'activating' (paper; no money at risk)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Foreman cannot change caps, stops, sizes or code; propose fixes to engineer.; Copycat status file is fresh again as of 6:20 PM ET Nov 13, so the earlier stuck-activating item looks resolved.; Rewards bot cancels on reference-price moves are normal churn, not a fault.; 15-min bot control reads paper now and mode paper, so the earlier control/mode mismatch is gone; a 15-min halt is not present.; 15-min funding 403 count reached 40 by 9:50 PM ET Nov 13; standing engineer item, not re-escalating each check.; 15-min funding 403 is a standing engineer item; do not re-escalate each check unless the error changes or the bot starts trading against it.; Rewards bot switched to live until Nov 15 05:00Z; expect $0 credits until period ends.; Rewards bot cancel events continue for a few checks after its live window ends; expected while resting stays $0.\nRecent log:\n  Nov 13 5:05 PM ET: pushed Alex: 15-min bot: funding 403 persists, bot in paper\n  Nov 13 6:35 PM ET: check: escalate. 15-min bot is live and its losses sit inside its stops, but the funding call still returns 403 insufficient_scope (write::transfer), now 27 checks in a row. That is a standing engineer item and it is still open. Main bot an\n  Nov 13 10:35 PM ET: check: ok. Main bot live, not halted, Actions runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper mode with control matching, no halt; its live losses sit inside its stops. Copycat fresh. The \n  Nov 14 12:35 AM ET: check: ok. Main bot live, not halted, runs succeeding. Rewards bot live, $10.54 resting within budget, no fills, $0 credits expected until period ends. 15-min bot in paper with control matching, no halt; losses sit inside its stops. Copycat\n  Nov 14 1:05 AM ET: cleared: M15_FUND\n  Nov 15 1:05 AM ET: check: ok. Main bot live, not halted, runs succeeding. Rewards bot switch expired at 05:00Z; mode off, zero bids and zero resting, cancels are the normal wind-down. 15-min bot in paper with control matching, no halt, no errors. Copycat fres\n  Nov 18 4:20 PM ET: new: errors in the 15-min bot log (last 20 min)\n  Nov 18 4:35 PM ET: cleared: M15_LOG_ERRORS\n  Nov 18 4:35 PM ET: check: ok. All rule checks clear.\n  Nov 22 6:05 AM ET: new: kalshi-copycat service is 'activating' (paper; no money at risk)",
+ "digest": "Time: 6:20 AM ET Sun Nov 22\n15-MIN: service=active mode=paper control=paper status_at=2026-11-22T11:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 53.0% used, 15-min bot at 24.8% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 15.4 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-22T11:09:36+00:00 mode=off halted=None bids=0 resting=$0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXWATECHEMP-27FEB28-T235000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXWAAEROEMP-27APR30-T92000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXNYCASKRENT-27JAN31-T4500 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXILNUCLEAR-27FEB28-T87.5 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXFLVISITORCOUNT-27FEB26-T136 mode off (control live, switch {'mode': 'live', 'halted': Fa\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$55.99 cash=$18.95 at=2026-11-22T11:17:31.582553+00:00\nRecent Actions runs: trade success 11:17Z; weather-scan success 11:15Z; trade success 11:10Z; weather-scan success 11:10Z; trade success 11:05Z; weather-scan success 11:05Z; trade success 11:03Z; weather-scan success 11:00Z\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Foreman cannot change caps, stops, sizes or code; propose fixes to engineer.; Copycat status file is fresh again as of 6:20 PM ET Nov 13, so the earlier stuck-activating item looks resolved.; Rewards bot cancels on reference-price moves are normal churn, not a fault.; 15-min bot control reads paper now and mode paper, so the earlier control/mode mismatch is gone; a 15-min halt is not present.; 15-min funding 403 count reached 40 by 9:50 PM ET Nov 13; standing engineer item, not re-escalating each check.; 15-min funding 403 is a standing engineer item; do not re-escalate each check unless the error changes or the bot starts trading against it.; Rewards bot switched to live until Nov 15 05:00Z; expect $0 credits until period ends.; Rewards bot cancel events continue for a few checks after its live window ends; expected while resting stays $0.\nRecent log:\n  Nov 13 6:35 PM ET: check: escalate. 15-min bot is live and its losses sit inside its stops, but the funding call still returns 403 insufficient_scope (write::transfer), now 27 checks in a row. That is a standing engineer item and it is still open. Main bot an\n  Nov 13 10:35 PM ET: check: ok. Main bot live, not halted, Actions runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper mode with control matching, no halt; its live losses sit inside its stops. Copycat fresh. The \n  Nov 14 12:35 AM ET: check: ok. Main bot live, not halted, runs succeeding. Rewards bot live, $10.54 resting within budget, no fills, $0 credits expected until period ends. 15-min bot in paper with control matching, no halt; losses sit inside its stops. Copycat\n  Nov 14 1:05 AM ET: cleared: M15_FUND\n  Nov 15 1:05 AM ET: check: ok. Main bot live, not halted, runs succeeding. Rewards bot switch expired at 05:00Z; mode off, zero bids and zero resting, cancels are the normal wind-down. 15-min bot in paper with control matching, no halt, no errors. Copycat fres\n  Nov 18 4:20 PM ET: new: errors in the 15-min bot log (last 20 min)\n  Nov 18 4:35 PM ET: cleared: M15_LOG_ERRORS\n  Nov 18 4:35 PM ET: check: ok. All rule checks clear.\n  Nov 22 6:05 AM ET: new: kalshi-copycat service is 'activating' (paper; no money at risk)\n  Nov 22 6:20 AM ET: cleared: COPYCAT_DOWN",
  "services": {
   "kalshi-copycat": {
-   "Result": "oom-kill",
-   "NRestarts": "1",
-   "MemoryCurrent": "[not set]",
+   "Result": "success",
+   "NRestarts": "2",
+   "MemoryCurrent": "680 MB",
    "MemoryPeak": "701 MB",
    "MemoryMax": "700 MB",
-   "ActiveState": "activating",
-   "SubState": "auto-restart",
+   "ActiveState": "active",
+   "SubState": "running",
    "log": "2026-11-22T09:24:49+00:00 kalshi-m15 python[124684]: 2026-11-22 09:24:49,448 WARNING copycat status upload: 403 Client Error: Forbidden for url: https://api.github.com/repos/alexanderhabel22-commits/kalshi-weather-bot/contents/copycat/status.json"
   },
   "kalshi-paper": {
