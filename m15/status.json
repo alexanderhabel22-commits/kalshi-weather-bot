@@ -1,5 +1,5 @@
 {
- "at": "2026-11-23T18:30:16+00:00",
+ "at": "2026-11-23T18:32:00+00:00",
  "code": "367d2ae",
  "control": "live",
  "control_real": {
@@ -17,30 +17,12 @@
  },
  "halted": null,
  "last_reject": null,
- "live_exposure": 0.73,
+ "live_exposure": 0.0,
  "live_now": {
-  "KXNATGAS15M-26NOV231330-30": {
-   "bid_ask": [
-    0.99,
-    1.0
-   ],
-   "mode": "live",
-   "order": false,
-   "why": "out of band"
-  },
-  "KXNATGAS15M-26NOV231330-30|paper": {
-   "bid_ask": [
-    0.99,
-    1.0
-   ],
-   "mode": "paper",
-   "order": false,
-   "why": "out of band"
-  },
   "KXNATGAS15M-26NOV231345-45": {
    "bid_ask": [
-    0.58,
-    0.64
+    0.34,
+    0.37
    ],
    "mode": "live",
    "order": false,
@@ -48,8 +30,8 @@
   },
   "KXNATGAS15M-26NOV231345-45|paper": {
    "bid_ask": [
-    0.58,
-    0.64
+    0.34,
+    0.37
    ],
    "mode": "paper",
    "order": false,
@@ -57,7 +39,7 @@
   }
  },
  "mode": "live",
- "open_markets": 14,
+ "open_markets": 18,
  "pnl": {
   "halt_base": 0.0,
   "live_days": {
@@ -67,10 +49,16 @@
    "2026-11-10": -7.605,
    "2026-11-11": -14.3143,
    "2026-11-12": -1.7,
-   "2026-11-13": -3.22
+   "2026-11-13": -3.22,
+   "2026-11-23": 0.27
   },
-  "live_log": [],
-  "live_total": -11.1128,
+  "live_log": [
+   [
+    1795458600,
+    0.27
+   ]
+  ],
+  "live_total": -10.8428,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
@@ -88,12 +76,24 @@
    "2026-11-20": -5.09,
    "2026-11-21": -6.06,
    "2026-11-22": -12.45,
-   "2026-11-23": -28.48
+   "2026-11-23": -27.31
   },
-  "paper_total": -456.71
+  "paper_total": -455.54
  },
- "pnl_24h": 0,
- "realtest": {},
+ "pnl_24h": 0.27,
+ "realtest": {
+  "KXNATGAS15M": {
+   "ct": 1.0,
+   "first_fill": null,
+   "markets": 1,
+   "paper_ct": 2.0,
+   "paper_pnl": 0.45,
+   "pnl": 0.27,
+   "reviews": [],
+   "tag": "natgas-2026-11-23",
+   "won": 1
+  }
+ },
  "roll_stop": null,
  "series": {
   "KXBTC15M": {
@@ -1906,6 +1906,28 @@
     ]
    ],
    "step_since": 1794376843.299195
+  },
+  "KXNATGAS15M": {
+   "at_step": [
+    1.0,
+    0.27
+   ],
+   "fills": 1.0,
+   "pnl": 0.27,
+   "recent": [
+    [
+     1.0,
+     0.27
+    ]
+   ],
+   "step": 0,
+   "step_recent": [
+    [
+     1.0,
+     0.27
+    ]
+   ],
+   "step_since": 1795458640.335016
   },
   "KXPALLADIUM15M": {
    "fills": 194.67,
