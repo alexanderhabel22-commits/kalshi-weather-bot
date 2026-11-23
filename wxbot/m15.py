@@ -1401,9 +1401,13 @@ class Bot(FillQuality):
         self.state["retrued"] = version
         self.state["roll_stop"] = None                 # re-judged on the corrected numbers
         log.warning("history true-up: live P&L $%.2f -> $%.2f over %d files", old, live_total, len(files))
-        self.alert("15-min bot books corrected",
-                   f"Re-read every real fill from Kalshi: all-time live P&L ${old:+.2f} -> ${live_total:+.2f} "
-                   "(the bot had assumed a fee Kalshi doesn't charge and miscounted some fills).", 3)
+        # Phone push only for a real mismatch (Alex, Nov 23: "get rid of the books corrected
+        # alert"). The true-up re-runs on every restart (state.json doesn't keep "retrued"), so
+        # a routine run with no change is log-only; a swing of $1+ still pushes.
+        if abs(live_total - old) >= float(self.s.get("retrue_push_usd", 1.0)):
+            self.alert("15-min bot books corrected",
+                       f"Re-read every real fill from Kalshi: all-time live P&L ${old:+.2f} -> "
+                       f"${live_total:+.2f}. Big mismatch between the bot's books and Kalshi.", 3)
         if self.uploader is not None:
             up = {path.name: path.read_text(encoding="utf-8") for path in files}
             try:
