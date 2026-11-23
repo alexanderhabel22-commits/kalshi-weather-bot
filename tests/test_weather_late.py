@@ -105,6 +105,7 @@ def test_skip_and_series_contracts(monkeypatch):
 
 def test_high_holds_sub_stop(monkeypatch, tmp_path):
     monkeypatch.setattr(wl, "STATE", tmp_path / "st.json")
+    monkeypatch.setattr(wl, "_archived_rows", lambda: [])
     sent = []
     monkeypatch.setattr(wl.notify, "send", lambda *a, **k: sent.append(a[2]))
     paper = [order(), order(tk="HH", metric="high", kind="holds", side="yes", price="0.15")]
@@ -120,6 +121,20 @@ def test_high_holds_sub_stop(monkeypatch, tmp_path):
     assert run(lost) == {"KXLOWTNYC-26NOV12-B42.5"}                  # -$3.00: high holds stops
     assert run(lost) == {"KXLOWTNYC-26NOV12-B42.5"} and len(sent) == 1   # pushes once
     assert run(lost, mode="paper") == {"KXLOWTNYC-26NOV12-B42.5", "HH"}  # paper unaffected
+    assert run([]) == {"KXLOWTNYC-26NOV12-B42.5"}                    # sticky after the losses archive
+
+
+def test_high_holds_sub_stop_counts_archived(monkeypatch, tmp_path):
+    monkeypatch.setattr(wl, "STATE", tmp_path / "st.json")
+    monkeypatch.setattr(wl.notify, "send", lambda *a, **k: None)
+    paper = [order(), order(tk="HH", metric="high", kind="holds", side="yes", price="0.15")]
+    setup(monkeypatch, paper)
+    lost = [{"id": str(i), "status": "settled", "strategy": "weather_late", "mode": "live", "pnl": "-0.75",
+             "note": "late-day holds: high so far 63.0, 12.0h left"} for i in range(4)]
+    monkeypatch.setattr(wl, "_archived_rows", lambda: lost[:3])
+    c = ctx(lost[2:], mode="live")                                   # row 2 in both: counted once
+    c.params.update(metrics=["low", "high"], kinds=["need", "holds"], sub_loss_stop={"high/holds": 3.0})
+    assert {i.ticker for i in wl.propose(c)} == {"KXLOWTNYC-26NOV12-B42.5"}
 
 
 def test_low_holds_price_floor_blocks_cheap_tails(monkeypatch):
