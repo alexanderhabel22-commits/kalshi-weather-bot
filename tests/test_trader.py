@@ -733,6 +733,37 @@ def test_orders_use_kalshi_v2_single_book():
     assert (h.calls[-1][1]["side"], h.calls[-1][1]["price"]) == ("ask", "0.98")
 
 
+def test_client_order_id_only_uses_characters_kalshi_accepts():
+    """Nov 21: the fast quake bot's first real order was refused (HTTP 400 invalid_parameters)
+    because its client_order_id held the ticker "...-6.8"; Kalshi allows only letters, digits
+    and _ - : + = / (64 max). The client now cleans every id before sending."""
+    import re
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    pem = rsa.generate_private_key(public_exponent=65537, key_size=2048).private_bytes(
+        serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
+        serialization.NoEncryption()).decode()
+
+    class H:
+        def __init__(self):
+            self.calls = []
+
+        def post_json(self, url, payload, headers=None):
+            self.calls.append(payload)
+            return {"order_id": "o1", "fill_count": "1.00"}
+    h = H()
+    c = KalshiClient(h, "kid", pem)
+    c.buy_now("KXBIGGESTQUAKE-21NOV26-6.8", "yes", 0.54, 1, "qf-KXBIGGESTQUAKE-21NOV26-6.8-1795254493")
+    cid = h.calls[-1]["client_order_id"]
+    assert cid == "qf-KXBIGGESTQUAKE-21NOV26-6_8-1795254493"
+    assert h.calls[-1]["ticker"] == "KXBIGGESTQUAKE-21NOV26-6.8"       # ticker itself untouched
+    c.buy_now("T", "yes", 0.5, 1, "sr-KXPORT-26NOV24-B45.5 x" + "y" * 80)
+    cid = h.calls[-1]["client_order_id"]
+    assert len(cid) <= 64 and re.fullmatch(r"[A-Za-z0-9_\-:+=/]+", cid)
+    c.place_limit("T", "no", 0.85, 1, "wx-favorite-0123abcd")             # valid ids unchanged
+    assert h.calls[-1]["client_order_id"] == "wx-favorite-0123abcd"
+
+
 def test_yes_and_no_in_one_market_net_like_kalshi():
     base = {"mode": "live", "strategy": "weather", "ticker": "KXLOWTPHIL-26NOV07-T49", "close": CLOSE}
     rows = [dict(base, id="t|yes", side="yes", price="0.27", count=1, filled=1, status="filled"),

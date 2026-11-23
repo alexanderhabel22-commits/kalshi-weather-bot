@@ -14,6 +14,7 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import re
 import time
 from urllib.parse import urlparse
 
@@ -193,6 +194,14 @@ class KalshiClient:
             if exc.status != 404:
                 raise
 
+    # Kalshi's client_order_id: up to 64 characters from letters, digits and _ - : + = /
+    # (anything else = HTTP 400 invalid_parameters). Nov 21: the fast quake bot's first real
+    # order used the ticker in its id, "qf-KXBIGGESTQUAKE-21NOV26-6.8-...", and the "." in
+    # "6.8" got it refused. Ids are cleaned here so every bot is covered.
+    @staticmethod
+    def clean_client_id(cid: str) -> str:
+        return re.sub(r"[^A-Za-z0-9_\-:+=/]", "_", str(cid))[:64]
+
     # Orders use Kalshi's V2 endpoint (POST /portfolio/events/orders; the old
     # /portfolio/orders create was retired, HTTP 410). V2 has one YES book:
     # side "bid" = buy YES, "ask" = sell YES (= buy NO); price is the YES price
@@ -206,6 +215,7 @@ class KalshiClient:
             check_lip_order(side, price, count)
         else:
             check_order(side, price, count)
+        client_order_id = self.clean_client_id(client_order_id)
         yes_px = price if side == "yes" else 1.0 - price
         book = "bid" if (side == "yes") == buy else "ask"
         payload = {"ticker": ticker, "client_order_id": client_order_id, "side": book,
