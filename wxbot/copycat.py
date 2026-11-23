@@ -27,6 +27,8 @@ Run: python bot.py copycat   (systemd unit deploy/m15/kalshi-copycat.service on 
 """
 from __future__ import annotations
 
+import ctypes
+import gc
 import gzip
 import json
 import logging
@@ -310,6 +312,15 @@ def detail(o: dict) -> dict:
     }
 
 
+def light_detail(o: dict) -> dict:
+    """The few report-card numbers the dashboard filters on, for traders no longer watched."""
+    tr = o.get("trades") or []
+    done = [t["c"] for t in tr if t["c"] is not None]
+    return {"won": sum(1 for c in done if c > 0), "lost": sum(1 for c in done if c <= 0),
+            "maker_pct": round(100 * sum(1 for t in tr if t["role"] == "maker") / len(tr)) if tr else None,
+            "light": True}
+
+
 def _curve(vals: list[float], pts: int = 120) -> list[float]:
     """Running total of paper copy results in cents (1 contract each), thinned to <= pts points."""
     out, tot = [], 0.0
@@ -356,6 +367,19 @@ def mean_low_events(vals: list[float], events: list[str]) -> tuple[float | None,
 
 
 _ROW_CACHE: dict[str, tuple[list[dict], dict]] = {}
+SEEN_KEEP = 5000            # trade ids remembered per account (dropped accounts are never polled, so the
+                            # feed alone fed their sets without a cap: Copycat memory leak, Nov 23)
+
+
+def release_memory() -> None:
+    """After a status pass: collect cycles and hand freed heap back to the OS. Each pass builds and drops
+    ~250 MB of short-lived objects; without the trim glibc keeps the pages, and the service crept into its
+    700 MB cap every 2-6 h (8 restarts Nov 21-23, ~20 min of lost logging each)."""
+    gc.collect()
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):             # not glibc (macOS, musl): nothing to trim
+        pass
 KEEP_COPIES = 500           # newest copies per account held in memory for grading (verdicts come at 100-150;
                             # everything stays on disk). Memory grew ~100 MB/day without it (crash Nov 11)
 WHALE_MEM_DAYS = 3          # big-bet rows held in memory (anonymous $2,000+ bets alone are ~1,000/hour)
@@ -750,8 +774,6 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         copyable = score is not None and score >= COPY_SCORE and n_ev >= MIN_EVENTS
         rmean = st.mean(window) if window else None
         cg = cat_grades(o.get("trades") or [], cats)
-        if n >= CAT_DETAIL_MIN:
-            cg = cat_breakdown(o.get("trades") or [], cats, cg)
         if nick in (earn_since or {}):
             # earn-back = the entry test again, on copies settled since the bench (same basis: buyable
             # copies, one credit per event): EARN_N+ copies in EARN_EVENTS+ events, score 77.5+, average > 0
@@ -786,6 +808,12 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
         else:
             verdict = "fails"
         blocked = [] if admitted else sorted(k for k, v in cg.items() if v["blocked"])
+        # report card + category breakdown (dashboard pop-up) only for traders that can still matter: watched,
+        # on real money, or clearing a bar. ~2,000 traders the watch list let go kept full cards, ~60% of the
+        # 20 MB status and the bulk of the pass that pushed Copycat into its 700 MB cap (Nov 23)
+        card = n > 0 and (nick in watch or admitted or verdict in ("ready", "passes"))
+        if card and n >= CAT_DETAIL_MIN:
+            cg = cat_breakdown(o.get("trades") or [], cats, cg)
         accounts.append({"nick": nick, "watched": nick in watch, **(watch.get(nick) or {}),
                          "fills": n, "settled": len(settle_all), "window": len(window), "days": round(days, 1),
                          "lag_s": round(st.median(o["lag"]), 1) if n else None,
@@ -794,7 +822,7 @@ def build_status(rows: list[dict], results: dict[str, str], watch: dict, now: fl
                          "grade": gl, "score": score, "events": n_ev, "edge_c": edge, "edge_sd": edge_sd,
                          "real_events": sum(1 for _, w in ev_acct if w > 1), "banked": round(banked, 2), "leeway_c": round(leeway, 1),
                          "size": max(1, size_for(score, len(settle_all))) if verdict == "passes" else 0,
-                         "boss_note": (notes or {}).get(nick), "detail": detail(o) if n else None,
+                         "boss_note": (notes or {}).get(nick), "detail": detail(o) if card else light_detail(o) if n else None,
                          "earn_back": earn, "cat_grades": cg, "blocked_cats": blocked,
                          "on_real": (on_real or {}).get(nick), "real_budget": real_budget(score)})
     recent = [r for r in rows if r.get("kind") == "fill" and not r.get("backfill")][-40:]
@@ -1377,6 +1405,7 @@ class Copycat:
                 log.warning("copycat status: %s", exc)
             finally:
                 self._in_status = False
+                release_memory()
         if now >= self.feed_next:
             self.feed_next = now + FEED_EVERY_S
             try:
@@ -1600,6 +1629,8 @@ class Copycat:
             self.last_snap[key] = now
             for d in SNAP_DELAYS:
                 self.snaps.append((now + d, d, nick, key[1], tid))
+        if quiet and len(seen) > SEEN_KEEP:        # dropped accounts: feed-only, never polled (poll() caps the rest)
+            self.seen[nick] = {t.get("trade_id") for t in trades if t.get("trade_id")}
 
     def load_cats(self, now: float) -> None:
         """Fill the series -> category map from Kalshi's full series list (one ~20 MB call, daily),
@@ -1795,13 +1826,17 @@ class Copycat:
         status["mode"] = live["mode"] if live and live["mode"] == "live" else "paper only"
         if self.boss is not None:
             status["boss"] = self.boss.summary(status)     # shadow judge since Nov 15: calls logged, no benches
-        self.acct = {a["nick"]: a for a in status["accounts"]}
+        # only passing accounts are ever copied (try_copy runs for self.hot), so only their rows are kept
+        # between passes; holding all ~3,500 (with report cards) kept the previous status alive during the next
         self.hot = {a["nick"] for a in status["accounts"] if a["verdict"] == "passes"}
+        self.acct = {a["nick"]: a for a in status["accounts"] if a["nick"] in self.hot}
+        self.last_snap = {k: v for k, v in self.last_snap.items() if now - v < SNAP_GAP_S}   # older never gate a snapshot
         self.keep = {a["nick"] for a in status["accounts"] if a["verdict"] in ("passes", "ready")}   # never evicted by the scout
-        (self.out / "status.json").write_text(json.dumps(status, separators=(",", ":")))
+        blob = json.dumps(status, separators=(",", ":")).encode()   # one ~20 MB copy, saved and uploaded
+        (self.out / "status.json").write_bytes(blob)
         if self.uploader:
             try:
-                self.uploader("copycat/status.json", json.dumps(status).encode())
+                self.uploader("copycat/status.json", blob)
             except Exception as exc:  # noqa: BLE001
                 log.warning("copycat status upload: %s", exc)
         if self.boss is not None and not self._boss_busy:
@@ -1825,6 +1860,7 @@ class Copycat:
                 if not self.uploader and self.clock() - self.last_up > STATUS_EVERY_S:
                     self.last_up = self.clock()
                     self.update_status(self.last_up)
+                    release_memory()
             except Exception as exc:  # noqa: BLE001  never die; log and keep going
                 log.warning("copycat step: %s", exc)
                 time.sleep(10)

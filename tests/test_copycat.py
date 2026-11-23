@@ -765,3 +765,40 @@ def test_held_rows_are_slim_and_rereading_the_current_hour_is_stable(tmp_path):
     g = copycat.grade(got, {"K": "yes"})
     assert g["n"]["trades"][-1]["et"] == "11-13 07:30" and len(g["n"]["follow_60"]) == 1
     copycat._ROW_CACHE.clear()
+
+
+def test_dropped_account_seen_ids_stay_bounded(tmp_path):
+    """Memory leak Nov 23: dropped accounts arrive only through the feed (never polled), so their
+    seen-id sets had no cap."""
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: 1_000_000.0, req_gap=0)
+    cc.drop("mm", "failed its paper test")
+    for b in range(4):
+        batch = [trade(f"b{b}-{i}", taker="mm") for i in range(2000)]
+        cc.ingest("mm", batch, 1_000_000.0, quiet=True, src="feed")
+    assert len(cc.seen["mm"]) <= copycat.SEEN_KEEP
+    assert "b3-0" in cc.seen["mm"]                 # the newest batch is still remembered
+
+
+def test_status_pass_keeps_only_passing_rows_and_fresh_snap_gates(tmp_path):
+    cc = copycat.Copycat(tmp_path, session=FakeSession(), clock=lambda: 1_000_000.0, req_gap=0)
+    cc.watch = {"sharp": {"pnl": 5}}
+    cc.last_snap = {("sharp", "OLD"): 1_000_000.0 - copycat.SNAP_GAP_S - 1, ("sharp", "NEW"): 1_000_000.0 - 10}
+    st_ = cc.update_status(1_000_000.0)
+    assert set(cc.acct) == cc.hot                  # only accounts that can be copied stay in memory
+    assert list(cc.last_snap) == [("sharp", "NEW")]
+    assert json.loads((tmp_path / "status.json").read_text())["mode"] == st_["mode"]
+    copycat.release_memory()                       # safe to call anywhere (no-op off glibc)
+
+
+def test_unwatched_traders_get_light_report_cards():
+    rows_ = []
+    for nick in ("kept", "gone"):
+        for i in range(30):
+            tid = f"{nick}{i}"
+            rows_ += [{"kind": "fill", "trade_id": tid, "nick": nick, "ticker": f"T{i}", "side": "yes", "role": "taker",
+                       "yes_price": 0.50, "backfill": False, "lag_s": 9, "ts": 1000.0 + i},
+                      {"kind": "snap", "trade_id": tid, "ticker": f"T{i}", "delay": 0, "bid": 0.50, "ask": 0.52}]
+    res = {f"T{i}": "no" for i in range(30)}       # both lose: no bar cleared
+    acc = {a["nick"]: a for a in copycat.build_status(rows_, res, {"kept": {"pnl": 1}}, now=2000.0)["accounts"]}
+    assert "curve" in acc["kept"]["detail"] and acc["gone"]["detail"]["light"]
+    assert acc["gone"]["detail"]["maker_pct"] == 0 and acc["gone"]["fills"] == 30   # grading unchanged
