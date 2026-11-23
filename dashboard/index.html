@@ -537,7 +537,7 @@ function realTestsHTML(){
       const nx = (marks && marks.find(m => n0 < m)) || nextReview(n0);
       h += `<tr><td><i style="background:${colorOf(k, 0)}"></i>${esc(strategyName(k))}<small class="mute"> · ${esc(since)}</small></td><td>${esc(sizeText(k))}</td><td class="${cls(s.edgeC || 0)}" style="font-weight:700">${s.contracts ? c(s.edgeC) : "—"}</td><td class="${s.settled.length ? cls(s.pnl) : "mute"}">${s.settled.length ? money(s.pnl) : "—"}</td><td>${n0}</td><td>${s.wins}-${s.settled.length - s.wins}</td><td>${s.open.length}${s.open.length ? `<small class="mute"> $${s.exposure.toFixed(2)}</small>` : ""}</td><td>${n0} / ${nx}</td></tr>`;
     }
-    h += `</table></div><div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">${live.map(([k, , note]) => `<b>${esc(strategyName(k))}:</b> ${esc(note)}`).join("<br>")}<br>Ct = settled contracts. Under ~100 contracts a test's ¢/ct is mostly luck.</div></div>`;
+    h += ngTestRow() + `</table></div><div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">${live.map(([k, , note]) => `<b>${esc(strategyName(k))}:</b> ${esc(note)}`).join("<br>")}${ngData() ? "<br><b>Natgas 15-min:</b> 1 ct real, hard $3 cap, paper twin; reviews at 20 and 50 fills, paper verdict ~Dec 1. Tap the row for its card on 15-MIN." : ""}<br>Ct = settled contracts. Under ~100 contracts a test's ¢/ct is mostly luck.</div></div>`;
   }
   const Q = t.quake_no;
   if (Q && Q.enabled){
@@ -1024,10 +1024,10 @@ function sumData(){
     pts:st.settled.filter(r => r.settled).map(r => ({x:+r.settled, y:r.pnl}))};
   // 15-MIN: own server; real money all-time (paper since Nov 13)
   const M = S.m15, ms = M ? M.status || {} : {}, mp = ms.pnl || {};
-  if (M){ const tot = num(mp.live_total) + (M.kxAll || 0), f = m15Fills();
+  if (M){ const tot = num(mp.live_total) + (M.kxAll || 0), f = m15Fills(true);
     out.m15 = {pnl:tot, today:num((mp.live_days || {})[M.today]) + (M.kxToday || 0), risk:num(ms.live_exposure), live:String(ms.mode || "").toLowerCase() === "live",
       note:String(ms.mode || "?").toLowerCase() === "live" ? "real money" : "paper only", ct:f.reduce((a, x) => a + x.n, 0), n:f.length, won:f.filter(x => x.won).length,
-      pts:f.map(x => ({x:x.t, y:x.pnl})), base:tot - f.reduce((a, x) => a + x.pnl, 0)}; }
+      pts:f.map(x => ({x:x.t, y:x.pnl, n:x.n})), base:tot - f.reduce((a, x) => a + x.pnl, 0)}; }
   // COPYCAT: real copies (status keeps the newest 30 settled; older ones fold into the start)
   const C = S.cc || {}, L = C.live || {};
   if (S.cc){ const done = (L.settled || []).filter(x => x.settled), tot = num(L.total_pnl);
@@ -1043,7 +1043,8 @@ function sumData(){
     out.tx = {pnl:paid, today:cr.filter(c => etDay(new Date(c.created_time)) === today).reduce((a, c) => a + num(c.amount_dollars), 0), risk:num(T.filled_cost), live:T.mode === "live",
       note:T.mode === "live" ? `$${num(T.resting_cost).toFixed(2)} in bids` : "ended Nov 15", pts:cr.map(c => ({x:Date.parse(c.created_time), y:num(c.amount_dollars)}))};
     strat.push({eng:"tx", key:"lip", name:"Liquidity rewards", live:T.mode === "live", size:"$" + num(T.budget).toFixed(0) + " budget", pnl:paid, today:out.tx.today, ct:0, c:null, n:cr.length, won:null, open:num(T.filled_cost), col:"#67e8f9"}); }
-  if (M) strat.push({eng:"m15", key:"m15", name:"15-minute markets", live:out.m15.live, size:out.m15.live ? "1 ct" : "", pnl:out.m15.pnl, today:out.m15.today, ct:out.m15.ct, c:out.m15.ct ? 100 * out.m15.pnl / out.m15.ct : null,
+  const NGd = ngData(), ngOnly = NGd && JSON.stringify(((S.data.config || {}).m15 || {}).live_series || []) === JSON.stringify([NG.series]);
+  if (M) strat.push({eng:"m15", key:"m15", name:ngOnly ? "15-min · Natgas real test" : "15-minute markets", live:out.m15.live, size:out.m15.live ? "1 ct" : "", bt:ngOnly && NGd.one.c != null ? NGd.one.c : undefined, btLbl:ngOnly ? "paper" : undefined, pnl:out.m15.pnl, today:out.m15.today, ct:out.m15.ct, c:out.m15.ct ? 100 * out.m15.pnl / out.m15.ct : null,
     n:out.m15.n, won:out.m15.won, open:out.m15.risk, col:"#f5b335"});
   freshen(out, strat, today);
   const tot = ["main", "m15", "cc", "tx"].reduce((a, k) => ({pnl:a.pnl + num(out[k].pnl), today:a.today + num(out[k].today), risk:a.risk + num(out[k].risk)}), {pnl:0, today:0, risk:0});
@@ -1060,7 +1061,7 @@ function freshen(out, strat, today){
     const o = out[k]; if (!o || !o.pts) continue;
     const pts = o.pts.filter(after), pnl = pts.reduce((a, p) => a + num(p.y), 0);
     o.pts = pts; o.base = 0; o.pnl = pnl; o.today = pts.filter(p => etDay(new Date(p.x)) === today).reduce((a, p) => a + num(p.y), 0);
-    if (k === "m15"){ o.n = pts.length; o.won = pts.filter(p => num(p.y) > 0).length; o.ct = o.n ? o.ct : 0; }
+    if (k === "m15"){ o.n = pts.length; o.won = pts.filter(p => num(p.y) > 0).length; o.ct = pts.reduce((a, p) => a + num(p.n), 0); }
   }
   const C = S.cc || {}, done = (((C.live || {}).settled) || []).filter(x => x.settled && x.settled * 1000 >= cut);
   for (const x of strat){
@@ -1858,6 +1859,135 @@ function ccCatCharts(a){
     {h:110, fy:v => v.toFixed(0), fv:v => v + " copies", empty:"No copies yet"});
 }
 document.addEventListener("click", e => { const it = e.target.closest("[data-ccn]"); if (it) ccOpen(it.getAttribute("data-ccn")); });
+/* Natgas 15-min REAL test (Nov 23, Alex OK, PR #354): 1 real contract per window, hard $3 cap (settled
+   real P&L since the test tag + open real bets), paper twin on the same windows with the paper sizes.
+   Real record: status.json "realtest" + m15/realtest-*.csv (bot fills only, never Alex's manual trades).
+   Paper record since Nov 13 from markets-*.csv (paper rows; since Nov 23 those are the twin). */
+const NG = {series:"KXNATGAS15M", start:"2026-11-23T17:45:00Z", paperFrom:"2026-11-13", verdict:"2026-12-01", cap:3, reviews:[20, 50], launch:"+5.6¢ on 1,014 ct"};
+const ngQ = s => { const m = /@([\d.]+)/.exec(String(s || "")); return m ? +m[1] : null; };
+// ratio estimate of ¢/ct with a standard error that treats each window as one unit
+function ngSE(ws){
+  const N = ws.reduce((a, w) => a + w.n, 0), P = ws.reduce((a, w) => a + w.p, 0), m = ws.length;
+  if (!N) return {c:null, se:null, n:0, m:0, pnl:0};
+  const c = P / N, se = m > 1 ? Math.sqrt(m / (m - 1) * ws.reduce((a, w) => a + (w.p - c * w.n) ** 2, 0)) / N : null;
+  return {c:100 * c, se:se == null ? null : 100 * se, n:N, m, pnl:P};
+}
+function ngData(){
+  const M = S.m15; if (!M || !M.status) return null;
+  if (M._ng) return M._ng;
+  const st = M.status, rt = (st.realtest || {})[NG.series];
+  const mc = (S.data && S.data.config || {}).m15 || {};
+  if (!rt && !(mc.live_series || []).includes(NG.series)) return null;
+  const caps = mc.real_caps && typeof mc.real_caps === "object" ? mc.real_caps : {};
+  const cap = num(caps[NG.series], NG.cap), reviews = Array.isArray(mc.real_reviews) && mc.real_reviews.length ? mc.real_reviews.map(Number) : NG.reviews;
+  // one row per graded window: real vs paper twin
+  const seen = new Set(), win = (M.rt || []).filter(r => r.series === NG.series && (!rt || !rt.tag || r.tag === rt.tag) && !seen.has(r.ticker) && seen.add(r.ticker)).map(r => {
+    const rf = num(r.real_filled), pf = num(r.paper_filled), pq = num(r.paper_first_q, null), res = String(r.result || "");
+    const fills = String(r.paper_fills || "").split(";").filter(Boolean);
+    const p1 = pf && pq != null && res ? ((r.paper_side === res ? 1 : 0) - pq) : null;
+    return {r, t:+pdate(r.close) || 0, rf, rq:rf ? num(r.real_cost) / rf : null, rp:num(r.real_pnl), won:rf ? r.real_side === res : null, side:r.real_side || r.paper_side,
+      pf, pq, pp:num(r.paper_pnl), p1, p2:fills.slice(1).map(ngQ).filter(x => x != null), res, model:r.model_filled === "1"};
+  }).filter(w => w.t).sort((a, b) => a.t - b.t);
+  const real = {pnl:rt ? num(rt.pnl) : win.reduce((a, w) => a + w.rp, 0), ct:rt ? num(rt.ct) : win.reduce((a, w) => a + w.rf, 0),
+    markets:rt ? num(rt.markets) : win.filter(w => w.rf).length, won:rt ? num(rt.won) : win.filter(w => w.won).length,
+    ppnl:rt ? num(rt.paper_pnl) : win.reduce((a, w) => a + w.pp, 0), pct:rt ? num(rt.paper_ct) : win.reduce((a, w) => a + w.pf, 0), first:rt && rt.first_fill ? rt.first_fill * 1000 : null};
+  const both = win.filter(w => w.rf && w.pf && w.pq != null), slip = both.length ? 100 * both.reduce((a, w) => a + (w.rq - w.pq), 0) / both.length : null;
+  const tw1 = win.filter(w => w.p1 != null), tw1c = tw1.length ? 100 * tw1.reduce((a, w) => a + w.p1, 0) / tw1.length : null;
+  const realSE = ngSE(win.filter(w => w.rf).map(w => ({p:w.rp, n:w.rf})));
+  // paper record since Nov 13 (every paper natgas window; the twin since the real test started)
+  const pr = (M.all || M.rows).filter(r => r.series === NG.series && r.mode === "paper" && num(r.filled) > 0 && (r.won === "1" || r.won === "0") && String(r.close) >= NG.paperFrom);
+  const pseen = new Set(), pw = pr.filter(r => !pseen.has(r.ticker) && pseen.add(r.ticker)).map(r => { const n = num(r.filled), q = ngQ(String(r.fills || "").split(";")[0]) ?? num(r.first_q), fee1 = n ? num(r.fee) / n : 0;
+    return {t:+pdate(r.close) || 0, n, p:num(r.pnl), p1:(r.won === "1" ? 1 : 0) - q - fee1, q, won:r.won === "1"}; }).filter(w => w.t).sort((a, b) => a.t - b.t);
+  const all = ngSE(pw), one = ngSE(pw.map(w => ({p:w.p1, n:1})));
+  const cut = (st.cut || {})[NG.series], sw = (st.control_real || {})[NG.series];
+  const open = Object.entries(st.live_now || {}).filter(([k]) => k.startsWith(NG.series + "-")).map(([k, v]) => ({k, ...v}));
+  const risk = num(st.live_exposure), used = Math.max(0, risk - real.pnl), room = cap + real.pnl - risk;
+  M._ng = {st, rt, cap, reviews, win, real, both, slip, tw1, tw1c, realSE, pw, all, one, cut, sw, open, risk, used, room,
+    on:String(st.mode) === "live" && sw === "on" && !cut && !st.halted && (mc.live_series || [NG.series]).includes(NG.series)};
+  return M._ng;
+}
+function ngHTML(){
+  const G = ngData(); if (!G) return "";
+  const {st, real, cap, reviews} = G, c = v => v == null ? "—" : cents(v), pm = v => v == null ? "" : ` ±${v.toFixed(1)}`;
+  const rc = real.ct ? 100 * real.pnl / real.ct : null, pc = real.pct ? 100 * real.ppnl / real.pct : null;
+  const nx = reviews.find(k => real.ct < k), at = pdate(st.at), cash = st.shards && st.shards["2"] != null ? num(st.shards["2"]) : null;
+  const status = G.cut ? `<span class="neg">CUT to paper (${esc(G.cut.why || "cap")})</span>` : G.on ? `<span class="pos">● REAL MONEY ON</span>` : `<span class="neg">REAL OFF</span>`;
+  let h = `<h2>Natgas real test <span class="sub">real money · 1 ct a window · $${cap.toFixed(0)} cap · paper twin · since Nov 23</span></h2><div class="card glow">
+    <div class="hero"><div><div class="lbl">Real money · natural gas 15-min</div><div class="big ${cls(real.pnl)}">${money(real.pnl)}</div>
+      <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${status} · ${+real.ct.toFixed(2)} ct · ${real.won}-${real.markets - real.won}${rc != null ? ` · <span class="${cls(rc)}">${cents(rc)}/ct</span>` : ""} · server ${esc(ago(at))}</div></div>
+      <div style="text-align:right"><div class="lbl">Paper twin, same windows</div><div class="val ${cls(real.ppnl)}">${money(real.ppnl)}</div><small class="mute">${+real.pct.toFixed(2)} ct${pc != null ? " · " + cents(pc) + "/ct" : ""}</small></div></div>
+    <div class="sgrid" style="margin-top:12px">
+      <div><div class="lbl">Real ¢/ct</div><div class="val ${cls(rc || 0)}">${c(rc)}<small>${G.realSE.se != null ? "±" + G.realSE.se.toFixed(1) + " (1 SE) · " : ""}${+real.ct.toFixed(2)} ct</small></div></div>
+      <div><div class="lbl">Twin 1st contract</div><div class="val ${cls(G.tw1c || 0)}">${c(G.tw1c)}<small>same size as real · ${G.tw1.length} windows</small></div></div>
+      <div><div class="lbl">Price slippage</div><div class="val ${G.slip == null ? "" : G.slip > 0.05 ? "neg" : "pos"}">${G.slip == null ? "—" : (G.slip > 0 ? "+" : G.slip < 0 ? "−" : "") + Math.abs(G.slip).toFixed(1) + "¢"}<small>real fill vs twin's 1st fill · ${G.both.length} windows${G.slip != null ? (G.slip > 0.05 ? " · real paid more" : G.slip < -0.05 ? " · real paid less" : " · same price") : ""}</small></div></div>
+      <div><div class="lbl">Win rate</div><div class="val">${real.markets ? pct(real.won / real.markets) : "—"}<small>${real.markets} windows${G.both.length ? ` · need ~${Math.round(100 * G.both.reduce((a, w) => a + w.rq, 0) / G.both.length)}%` : ""}</small></div></div>
+    </div>
+    <div style="margin-top:12px">${meter("Loss cap used (settled real P&L + open real bets)", G.used, cap, {txt:`$${G.used.toFixed(2)} / $${cap.toFixed(2)}`, sub:`Room left $${Math.max(0, G.room).toFixed(2)} (profits add room) · open now $${G.risk.toFixed(2)} · when even a 71¢ bid no longer fits, the bot moves natgas back to paper and pushes your phone`})}</div>
+    ${meter(nx ? `Real fills toward the ${nx}-fill review` : "Reviews done", real.ct, nx || real.ct || 1, {txt:`${+real.ct.toFixed(2)} / ${nx || reviews.at(-1)}`, sub:`Reviews at ${reviews.join(" and ")} real fills (phone push at each)${(G.rt && G.rt.reviews && G.rt.reviews.length) ? " · done: " + G.rt.reviews.join(", ") : ""}`})}
+    <div class="grid g3" style="margin-top:12px">
+      <div><div class="lbl">Kill switch</div><div class="val" style="font-size:15px">${G.sw === "on" ? `<span class="pos">ON</span>` : `<span class="neg">${esc(String(G.sw || "off").toUpperCase())}</span>`}</div><small class="mute">m15_control.json · server ${esc(String(st.mode || "?").toUpperCase())}${st.halted ? " · HALTED" : ""}</small></div>
+      <div><div class="lbl">Crypto &amp; commodities cash</div><div class="val" style="font-size:15px">${cash == null ? "—" : "$" + cash.toFixed(2)}</div><small class="mute">Exchange 2 · ${cash == null ? "" : cash >= 1 ? "enough for the next bets" : `<span class="neg">low: orders may be rejected</span>`}</small></div>
+      <div><div class="lbl">Paper verdict</div><div class="val" style="font-size:15px">${fday(pdate(NG.verdict + "T12:00:00-05:00"))}</div><small class="mute">${Math.max(0, Math.ceil((+pdate(NG.verdict + "T12:00:00-05:00") - Date.now()) / 864e5))} days left</small></div>
+    </div>
+    ${st.last_reject ? `<div class="mute" style="font-size:11px;margin-top:6px"><span class="neg">Last Kalshi rejection:</span> ${esc(typeof st.last_reject === "string" ? st.last_reject : JSON.stringify(st.last_reject))}</div>` : ""}
+    ${G.open.filter(o => !o.k.endsWith("|paper")).map(o => `<div class="mute" style="font-size:11px;margin-top:6px"><b>Now:</b> window closing ${esc((h4 => { const hh = +h4.slice(0, 2); return (hh % 12 || 12) + ":" + h4.slice(2) + (hh < 12 ? " AM" : " PM"); })(o.k.split("-")[1].slice(-4)))} ET · bid/ask ${o.bid_ask ? o.bid_ask.map(v => Math.round(v * 100) + "¢").join(" / ") : "—"} · ${o.order ? `<span class="pos">real bid resting</span>` : "no real bid yet (bids in the last 5 min, 71-95¢ favourite)"}</div>`).join("")}
+    <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Same rule as paper: in the last 5 minutes, join the best bid of the 71-95¢ favourite, hold to settlement. Real takes 1 contract; the twin keeps paper's sizes (a 2nd contract at 80-87¢), so compare ¢/ct, or the twin's 1st contract for a like-for-like check. Real fills sit at the back of the line, so expect real a bit below paper. Bot fills only; your own trades are never counted. Kill only natgas: set <b>"real": {"KXNATGAS15M": "off"}</b> in m15_control.json (Claude does this).</div></div>`;
+  h += `<h2>Real vs paper twin <span class="sub">profit over time · same windows</span></h2><div class="card"><div class="legend" id="ngLeg"></div><div class="chart" id="ngCum"></div>
+    <div class="mute" style="font-size:11px;margin-top:4px">Blue = real money. Dashed = the paper twin on the same windows: all its contracts, and only its 1st contract (same size as real). If blue keeps up with the 1st-contract line, the paper record is telling the truth.</div></div>`;
+  // fills table
+  const rows = G.win.slice().reverse(), shown = isOpen("ngall") ? rows.slice(0, 300) : rows.slice(0, 20);
+  const q = v => v == null ? "—" : Math.round(v * 100) + "¢";
+  h += `<h2>Every window <span class="sub">newest first · real vs twin · ${G.win.length} windows</span></h2><div class="card">${rows.length ? `<div class="tbl-wrap"><table class="tbl"><tr><th>Start ET</th><th>Side</th><th>Real</th><th>Twin 1st</th><th>Slip</th><th>Twin 2nd</th><th>Result</th><th>Real P&L</th><th>Twin P&L</th></tr>`
+    + shown.map(w => { const d = w.rq != null && w.pq != null ? Math.round(100 * (w.rq - w.pq)) : null, t = new Date(w.t);
+      return `<tr><td style="white-space:nowrap"><b>${esc(fmt(new Date(w.t - 15 * 60e3), {hour:"numeric", minute:"2-digit"}))}</b>${etDay(t) !== etDay(new Date()) ? `<br><small class="mute">${esc(fday(t))}</small>` : ""}</td>
+        <td><span class="side ${w.side === "no" ? "no" : "yes"}" style="font-size:10px">${esc(String(w.side || "–").toUpperCase())}</span></td>
+        <td>${w.rf ? q(w.rq) + (w.model ? "" : `<small class="mute" title="the paper fill model would not have filled this"> *</small>`) : `<span class="dim">no fill</span>`}</td><td>${w.pf ? q(w.pq) : `<span class="dim">no fill</span>`}</td>
+        <td class="${d == null ? "mute" : d > 0 ? "neg" : d < 0 ? "pos" : "dim"}">${d == null ? "—" : (d > 0 ? "+" : d < 0 ? "−" : "") + Math.abs(d) + "¢"}</td><td class="mute">${w.p2.length ? w.p2.map(q).join(", ") : "—"}</td>
+        <td>${w.won == null ? esc(w.res.toUpperCase() || "—") : w.won ? `<span class="pos">won</span>` : `<span class="neg">lost</span>`}</td>
+        <td class="${w.rf ? cls(w.rp) : "mute"}" style="font-weight:700">${w.rf ? money(w.rp) : "—"}</td><td class="${w.pf ? cls(w.pp) : "mute"}">${w.pf ? money(w.pp) : "—"}</td></tr>`; }).join("")
+    + `</table></div>${rows.length > 20 ? moreBtn("ngall", "Show every window") : ""}` : `<div class="mute" style="font-size:12px">No graded windows yet.</div>`}
+    <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5">Slip = real fill price minus the twin's 1st fill price (+ means real paid more). * = real filled where the paper fill model would not have (it only counts a fill when the price trades through). Fills match: ${G.win.filter(w => w.rf && w.pf).length} both, ${G.win.filter(w => w.rf && !w.pf).length} real only, ${G.win.filter(w => !w.rf && w.pf).length} twin only.</div></div>`;
+  // by day
+  const byD = {}; for (const w of G.win){ const k = etDay(new Date(w.t - 60e3)), b = byD[k] = byD[k] || {rn:0, rp:0, w:0, l:0, pn:0, pp:0}; if (w.rf){ b.rn += w.rf; b.rp += w.rp; w.won ? b.w++ : b.l++; } if (w.pf){ b.pn += w.pf; b.pp += w.pp; } }
+  const ds = Object.keys(byD).sort().reverse();
+  if (ds.length) h += `<h2>By day <span class="sub">ET · real vs twin</span></h2><div class="card"><div class="tbl-wrap"><table class="tbl"><tr><th>Day</th><th>Real ct</th><th>W-L</th><th>Real ¢/ct</th><th>Real P&L</th><th>Twin ct</th><th>Twin ¢/ct</th><th>Twin P&L</th></tr>`
+    + ds.map(k => { const b = byD[k], rcc = b.rn ? 100 * b.rp / b.rn : null, pcc = b.pn ? 100 * b.pp / b.pn : null;
+      return `<tr><td>${esc(fday(pdate(k + "T12:00:00-05:00")))}</td><td>${+b.rn.toFixed(2)}</td><td>${b.w}-${b.l}</td><td class="${cls(rcc || 0)}" style="font-weight:700">${c(rcc)}</td><td class="${cls(b.rp)}">${money(b.rp)}</td><td>${+b.pn.toFixed(2)}</td><td class="${cls(pcc || 0)}">${c(pcc)}</td><td class="${cls(b.pp)}">${money(b.pp)}</td></tr>`; }).join("") + `</table></div></div>`;
+  // paper verdict
+  const A = G.all, O = G.one, tA = A.se ? A.c / A.se : null, tO = O.se ? O.c / O.se : null;
+  const verdict = A.c == null ? "No paper fills loaded yet." : A.c - 2 * (A.se || 0) > 0 ? `Clearly positive so far: more than 2 standard errors above zero.` : A.c > 0 ? `Positive but not yet clear of luck (under 2 standard errors).` : `Not positive: the paper edge has gone.`;
+  h += `<h2>Paper verdict <span class="sub">natgas paper since Nov 13 · due ~${esc(fday(pdate(NG.verdict + "T12:00:00-05:00")))}</span></h2><div class="card">
+    <div class="sgrid">
+      <div><div class="lbl">Paper ¢/ct, all contracts</div><div class="val ${cls(A.c || 0)}">${c(A.c)}<small>${A.se != null ? "±" + A.se.toFixed(1) + " (1 SE)" + (tA != null ? " · " + tA.toFixed(1) + " SE from 0" : "") : ""}</small></div></div>
+      <div><div class="lbl">Paper ¢/ct, 1st contract</div><div class="val ${cls(O.c || 0)}">${c(O.c)}<small>${O.se != null ? "±" + O.se.toFixed(1) + " (1 SE)" + (tO != null ? " · " + tO.toFixed(1) + " SE from 0" : "") : ""} · what real buys</small></div></div>
+      <div><div class="lbl">Paper P&L</div><div class="val ${cls(A.pnl)}">${A.n ? money(A.pnl) : "—"}<small>${+A.n.toFixed(0)} ct · ${A.m} windows · ${G.pw.filter(w => w.won).length}-${G.pw.filter(w => !w.won).length}</small></div></div>
+    </div>
+    <div class="lbl" style="margin-top:12px">Paper profit over time <span class="mute" style="text-transform:none;letter-spacing:0">· by contract · yellow line = real test starts</span></div><div class="chart" id="ngPaper"></div>
+    <div class="lbl" style="margin-top:12px">Paper ¢/ct by day</div><div class="chart" id="ngPDay"></div>
+    <div class="mute" style="font-size:11px;margin-top:6px;line-height:1.5"><b>${esc(verdict)}</b> At launch it was ${esc(NG.launch)}. SE treats each 15-min window as one unit. Paper fills are optimistic (front of the line), so the real line above is the honest check. ~Dec 1 Claude decides: keep the real test going, size it up (needs your OK), or stop it.</div></div>`;
+  return h;
+}
+function drawNG(){
+  const G = ngData(); if (!G || !$("#ngCum")) return;
+  const fromT = G.win.length ? G.win[0].t - 15 * 60e3 : Date.now();
+  const cum = (name, c, f, o = {}) => { let a = 0; const pts = [{x:fromT, y:0}]; for (const w of G.win){ const v = f(w); if (v == null) continue; a += v; pts.push({x:w.t, y:a}); } return {name, c, pts, tot:a, ...o}; };
+  const ser = [cum("Real", "#3b82f6", w => w.rf ? w.rp : null, {w:3}), cum("Twin, all contracts", "#a78bfa", w => w.pf ? w.pp : null, {dash:true, w:1.5}), cum("Twin, 1st contract", "#94a3c8", w => w.p1, {dash:true, w:1.5})];
+  $("#ngLeg").innerHTML = ser.map(x => `<span><i style="background:${x.c}"></i>${esc(x.name)} <b class="${cls(x.tot)}">${money(x.tot)}</b></span>`).join("");
+  lineChart($("#ngCum"), ser, {step:true, h:190, empty:"No graded windows yet"});
+  if ($("#ngPaper")){ let k = 0, a = 0, b = 0; const start = +pdate(NG.start), pa = [{x:0, y:0}], pb = [{x:0, y:0}]; let mark = null;
+    for (const w of G.pw){ if (mark == null && w.t >= start) mark = k; k += w.n; a += w.p; b += w.p1; pa.push({x:k, y:a, t:w.t}); pb.push({x:k, y:b, t:w.t}); }
+    lineChart($("#ngPaper"), [{name:"Paper, all contracts", c:"#3b82f6", pts:pa}, {name:"1st contract only", c:"#94a3c8", dash:true, w:1.5, pts:pb}],
+      {h:170, xnum:true, xlab:t => Math.round(t) + " ct", xtip:(x, p) => `contract ${Math.round(x)}${p && p.t ? " · " + fdt(new Date(p.t)) : ""}`, vlines:mark ? [{x:mark, label:"real test"}] : [], empty:"No paper fills loaded"}); }
+  if ($("#ngPDay")){ const by = {}; for (const w of G.pw){ const d = etDay(new Date(w.t - 60e3)), x = by[d] = by[d] || {n:0, p:0, m:0}; x.n += w.n; x.p += w.p; x.m++; }
+    barChart($("#ngPDay"), Object.keys(by).sort().map(d => ({label:d, short:d.slice(5).replace("-", "/"), v:100 * by[d].p / by[d].n, c:by[d].p >= 0 ? "#3b82f6" : "#f87171", extra:`${by[d].m} windows · ${+by[d].n.toFixed(0)} ct · ${money(by[d].p)}`})),
+      {h:130, fy:v => v.toFixed(0) + "¢", fv:v => cents(v) + "/ct", empty:"No paper fills loaded"}); }
+}
+// one row for the TESTS tab's real-money tests table
+function ngTestRow(){
+  const G = ngData(); if (!G) return "";
+  const R = G.real, rc = R.ct ? 100 * R.pnl / R.ct : null, nx = G.reviews.find(k => R.ct < k) || G.reviews.at(-1);
+  return `<tr data-goto="m15"><td><i style="background:#3b82f6"></i>Natgas 15-min<small class="mute"> · Nov 23 · 15-MIN tab</small></td><td>1 ct</td><td class="${cls(rc || 0)}" style="font-weight:700">${rc == null ? "—" : cents(rc)}</td><td class="${R.markets ? cls(R.pnl) : "mute"}">${R.markets ? money(R.pnl) : "—"}</td><td>${+R.ct.toFixed(2)}</td><td>${R.won}-${R.markets - R.won}</td><td>${G.risk ? "1" + `<small class="mute"> $${G.risk.toFixed(2)}</small>` : "0"}</td><td>${+R.ct.toFixed(2)} / ${nx}</td></tr>`;
+}
 // the 15-minute bot runs on its own server and uploads to the m15-data branch every 15 min
 async function loadM15(){
   const get = async (path, json) => { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${path}?t=${Date.now()}`, {cache:"no-store"});
@@ -1865,9 +1995,17 @@ async function loadM15(){
   try {
     const status = await get("status.json", true);
     if (!status){ S.m15 = null; return; }
-    const days = [...Array(7).keys()].map(i => new Date(Date.now() - i * 864e5).toLocaleDateString("en-CA", {timeZone:TZ}));
-    const texts = await Promise.all(days.map(d => get(`markets-${d}.csv`).catch(() => null)));
-    S.m15 = {status, rows:texts.filter(Boolean).flatMap(t => parseCSV(t)), today:days[0]};
+    // 7 days for the bot views; further back (to the natgas paper start / real test start, max 45 days) for the
+    // natgas test and the fresh-start totals. Days older than yesterday don't change, so they are fetched once.
+    const dayN = i => new Date(Date.now() - i * 864e5).toLocaleDateString("en-CA", {timeZone:TZ});
+    const from = Date.now() > Date.parse(NG.verdict + "T12:00:00-05:00") + 7 * 864e5 ? NG.start.slice(0, 10) : NG.paperFrom;
+    const days = [...Array(45).keys()].map(dayN).filter((d, i) => i < 7 || d >= from);
+    S.m15Cache = S.m15Cache || {};
+    const cached = async (f, i) => { if (i >= 2 && S.m15Cache[f] !== undefined) return S.m15Cache[f]; const t = await get(f).catch(() => null); if (i >= 2) S.m15Cache[f] = t; return t; };
+    const texts = await Promise.all(days.map((d, i) => cached(`markets-${d}.csv`, i)));
+    const rtd = days.filter(d => d >= NG.start.slice(0, 10)), rtt = await Promise.all(rtd.map((d, i) => cached(`realtest-${d}.csv`, i)));
+    const parsed = texts.map(t => t ? parseCSV(t) : []);
+    S.m15 = {status, rows:parsed.slice(0, 7).flat(), all:parsed.flat(), rt:rtt.filter(Boolean).flatMap(t => parseCSV(t)), today:days[0]};
   } catch(e){ S.errors.push("15-min bot: " + String(e.message || e)); }
 }
 function m15HTML(full){
@@ -1875,10 +2013,10 @@ function m15HTML(full){
   let h = `<h2>15-minute bot <span class="sub">own server · ${pct(num(mc.pool_pct, .25))} pool</span></h2><div class="card">`;
   if (!M) return h + `<div class="mute" style="font-size:12px;line-height:1.5">Not running yet: it starts once the server is set up. It fades longshots in BTC, silver and copper 15-minute markets, 1 contract per market, with its own 25% slice of the bankroll.</div></div>`;
   const st = M.status, at = pdate(st.at), stale = !at || Date.now() - at > 2 * 3600e3, mode = String(st.mode || "?").toUpperCase();
-  const p = st.pnl || {}, live = num(p.live_total) + (M.kxAll || 0), today = num((p.live_days || {})[M.today]) + (M.kxToday || 0), B = bankroll(), pool = num(mc.pool_pct, .25) * B;
+  const p = st.pnl || {}, allT = num(p.live_total) + (M.kxAll || 0), lsT = liveSince(), live = lsT ? m15Fills(true).filter(f => f.t >= +lsT).reduce((a, f) => a + f.pnl, 0) : allT, today = num((p.live_days || {})[M.today]) + (M.kxToday || 0), B = bankroll(), pool = num(mc.pool_pct, .25) * B;
   const flags = [st.halted ? "HALTED (total loss stop)" : "", st.day_stop === M.today ? "paused for today (daily stop)" : ""].filter(Boolean);
-  h += `<div class="hero"><div><div class="lbl">Real-money P&L · ${liveSince() ? "before the fresh start (testing fees)" : "all time"}</div><div class="big ${cls(live)}">${money(live)}</div>
-    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">mode ${esc(mode)} · server ${esc(ago(at))}${liveOK() && S.live.sets ? ` · <span class="pos">● Kalshi results live</span>` : ""}${stale ? ` · <span class="neg">server quiet</span>` : ""}${flags.length ? ` · <span class="neg">${esc(flags.join(", "))}</span>` : ""}</div></div>
+  h += `<div class="hero"><div><div class="lbl">Real-money P&L · ${lsT ? "since the fresh start" : "all time"}</div><div class="big ${cls(live)}">${money(live)}</div>
+    <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${lsT ? `all time incl. testing fees ${money(allT)} · ` : ""}mode ${esc(mode)} · server ${esc(ago(at))}${liveOK() && S.live.sets ? ` · <span class="pos">● Kalshi results live</span>` : ""}${stale ? ` · <span class="neg">server quiet</span>` : ""}${flags.length ? ` · <span class="neg">${esc(flags.join(", "))}</span>` : ""}</div></div>
     <div style="text-align:right"><div class="lbl">Today</div><div class="val ${cls(today)}">${money(today)}</div>
     <div class="lbl" style="margin-top:8px">At risk now</div><div class="val" style="font-size:17px">$${num(st.live_exposure).toFixed(2)} <small class="mute">/ $${pool.toFixed(2)}</small></div></div></div>`;
   const pc = st.shards && st.shards["2"] != null ? num(st.shards["2"]) : null, risk = num(st.live_exposure);
@@ -1945,9 +2083,9 @@ function m15OnlyHTML(){ const L = m15LiveSeries(); if (!L) return "";
     <input type="checkbox" ${m15OnlyLive() ? "checked" : ""} style="width:18px;height:18px;accent-color:#f5b335;margin:0">
     <span><b>Live markets only</b> <span class="mute">· ${String(((S.m15 || {}).status || {}).mode || "") === "live" ? esc(names.join(", ") || "none") + " on real money now" : "ALL PAPER since Nov 13 (no real money without Alex's OK) · last real market: " + esc(names.join(", ") || "none")}${m15OnlyLive() && m15AllRealPnl() != null ? ` · all 15-min real money incl. cut markets: <b>${m15AllRealPnl() >= 0 ? "+" : "-"}$${Math.abs(m15AllRealPnl()).toFixed(2)}</b>` : ""}</span></span></label>`; }
 function m15Name(r){ return String(r.series || "").replace(/^KX|15M$/g, ""); }
-function m15Fills(){
+function m15Fills(all){
   const M = S.m15; if (!M) return [];
-  return M.rows.filter(r => r.mode === "live" && m15Keep(r) && num(r.filled) > 0 && (r.won === "1" || r.won === "0"))
+  return (all ? M.all || M.rows : M.rows).filter(r => r.mode === "live" && (all || m15Keep(r)) && num(r.filled) > 0 && (r.won === "1" || r.won === "0"))
     .map(r => { const n = num(r.filled), cost = num(r.cost), fee = num(r.fee);
       return {r, name:m15Name(r), n, px:cost / n, be:(cost + fee) / n, pnl:num(r.pnl), won:r.won === "1", t:+pdate(r.close) || 0, ttc:num(r.fill_ttc_s, null), ct:num(r.contracts, 1)}; })
     .filter(f => f.t).sort((a, b) => a.t - b.t);
@@ -2103,7 +2241,7 @@ function m15PaperHTML(){
   return h;
 }
 function m15Page(){
-  let h = liveAcctHTML() + m15OnlyHTML() + m15HTML(true);
+  let h = liveAcctHTML() + m15OnlyHTML() + m15HTML(true) + ngHTML();
   const M = S.m15;
   const live = M ? M.rows.filter(r => r.mode === "live" && m15Keep(r)) : [];
   if (!live.length) return h + m15PaperHTML();
@@ -2260,13 +2398,14 @@ function m15FromKalshi(){
   const M = S.m15, sets = S.live && S.live.sets; if (!M || !sets) return false;
   M.kx = M.kx || {}; const have = new Set(M.rows.filter(r => r.mode === "live" && r.won !== "" && r.won != null && !r.kx).map(r => r.ticker));
   let added = 0;
+  const mine = new Set(((S.data || {}).mytrades || []).map(r => r.ticker));   // Alex's own trades are never the bot's
   for (const x of sets){
-    if (!/15M-/.test(x.ticker || "") || have.has(x.ticker) || M.kx[x.ticker]) continue;
+    if (!/15M-/.test(x.ticker || "") || have.has(x.ticker) || M.kx[x.ticker] || mine.has(x.ticker)) continue;
     const n = (x.yes || 0) + (x.no || 0); if (!(n > 0)) continue;
     const pnl = x.revenue - x.cost - x.fee;
     const row = {ticker:x.ticker, series:x.ticker.split("-")[0], mode:"live", close:x.at, fav_side:x.yes > 0 ? "yes" : "no", contracts:String(Math.round(n)),
       filled:String(n), cost:String(x.cost), fee:String(x.fee), pnl:String(+pnl.toFixed(4)), result:x.result, won:x.revenue > 0 ? "1" : "0", kx:true};
-    M.kx[x.ticker] = row; M.rows.push(row); added++;
+    M.kx[x.ticker] = row; M.rows.push(row); if (M.all && M.all !== M.rows) M.all.push(row); added++;
   }
   // today's P&L: add what the server hasn't counted yet
   { M.kxAll = Object.values(M.kx).filter(r => !have.has(r.ticker)).reduce((a, r) => a + num(r.pnl), 0); const today = new Date().toLocaleDateString("en-CA", {timeZone:TZ}); M.kxToday = Object.values(M.kx).filter(r => !have.has(r.ticker) && new Date(r.close).toLocaleDateString("en-CA", {timeZone:TZ}) === today).reduce((a, r) => a + num(r.pnl), 0); }
@@ -2822,8 +2961,8 @@ function renderOverview(){
   if (S.bot === "cc"){ $("#v-overview").innerHTML = ccPage(); drawCCLive(); drawCCEarned(); drawCCTraders(); drawCCBoss(); return; }
   if (S.bot === "tx"){ $("#v-overview").innerHTML = foldSections(txPage(), "t_", 1); return; }
   if (S.bot === "m15"){
-    $("#v-overview").innerHTML = foldSections(m15Page() + liveFillsHTML(true), "f_", 1, ["How it's doing"]);
-    drawM15();
+    $("#v-overview").innerHTML = foldSections(m15Page() + liveFillsHTML(true), "f_", 1, ["How it's doing", "Natgas real test", "Real vs paper twin", "Every window", "By day", "Paper verdict"]);
+    drawM15(); drawNG();
     if ($("#m15Only")) $("#m15Only").querySelector("input").onchange = e => { ls.set("m15Only2", e.target.checked ? "1" : "0"); renderOverview(); };
     $("#v-overview").onclick = e => { const b = e.target.closest("[data-more]"); if (!b) return; const k = b.dataset.more; if (isOpen(k)) S.open.delete(k); else S.open.add(k); ls.set("ovOpen", JSON.stringify([...S.open])); renderOverview(); };
     return;
