@@ -609,7 +609,7 @@ paper_weight = 0.0     # real money only (Alex, Nov 7); paper is a sandbox for n
 mode = "live"                    # off | paper | live. LIVE from the start (Alex, Nov 8: "this is the
                                  # test", no paper run). Without a Kalshi key on the server it stays
                                  # paper. The repo kill switch TRADING_MODE=off stops it too (~10 min).
-live_series = ["KXBTC15M"]   # real money only on these. Nov 13 (Alex: E2 "we can put it on real"): BTC only, under rule E2 at 1 ct; silver stays PAPER (no edge, Nov 12). Before: GOLD back to PAPER Nov 11 3:40 PM ET (Alex: "find a profitable way or cut it"; live -3.8c/ct on 84 ct, no gold rule with an honest edge). Was: GOLD live Nov 11 12:50 AM ET (Alex OK, 1 ct + same 2nd-contract rule; review at 100 fills, paper if < -5c). Nov 10 12:15 PM ET (Alex, trim
+live_series = ["KXNATGAS15M"]   # real money only on these. Nov 23 (Alex OK "ok sure"): NATGAS ONLY, small real test (see real_caps below); BTC/E2 stays PAPER. Before: Nov 13 (Alex: E2 "we can put it on real"): BTC only, under rule E2 at 1 ct; silver stays PAPER (no edge, Nov 12). Before: GOLD back to PAPER Nov 11 3:40 PM ET (Alex: "find a profitable way or cut it"; live -3.8c/ct on 84 ct, no gold rule with an honest edge). Was: GOLD live Nov 11 12:50 AM ET (Alex OK, 1 ct + same 2nd-contract rule; review at 100 fills, paper if < -5c). Nov 10 12:15 PM ET (Alex, trim
                                  # decision): copper, palladium, platinum, WTI back to PAPER, all red
                                  # all-time (-$18.59 on 469 ct) vs BTC+silver +$14.23. They keep logging.
                                  # platinum + WTI live Nov 9 ~1:30 PM ET (Alex OK), 1 contract, last 5 min,
@@ -662,6 +662,18 @@ e2_series = ["KXBTC15M", "KXETH15M", "KXSOL15M", "KXSILVER15M", "KXPALLADIUM15M"
                                  # only (live_series); the others are PAPER tests (Alex: "do the other markets show the
                                  # same?"). Replay E2 vs with-trend: ETH +1.6/-0.4, SOL +1.2/+0.6, silver +1.3/-1.3,
                                  # Pd +4.7/+0.8, Pt +4.0/+1.3 (metal replays run 5-20c rosy). Gold/copper/WTI: no gap, left alone.
+# NATGAS REAL TEST (Nov 23, Alex OK). Same entry rules as paper (last 5 min, join the 71-95c favourite),
+# but 1 real contract per window (the paper twin keeps paper's 1+1 at 80-87c). HARD $3 cap: -(settled real
+# P&L) + open real bets + the new order <= $3; when no 71c bid fits any more it goes back to paper + push.
+# Fast kill: m15_control.json "real": {"KXNATGAS15M": "off"}. Reviews at 20/50 real fills; paper verdict ~Dec 1.
+# Natgas trades on the commodity (Crypto) exchange balance; the bot key can't move cash there.
+control_gated = ["KXNATGAS15M"]
+twin_series = ["KXNATGAS15M"]
+live_max_contracts = { KXNATGAS15M = 1 }
+real_caps = { KXNATGAS15M = 3.0 }
+real_test_tag = "natgas-2026-11-23"
+real_reviews = [20, 50]
+fund = false                     # no automatic cash moves into the commodity balance (the natgas test needs ~$3; Alex moves cash by hand)
 early_contracts = 1              # Nov 13: 1 ct/window under rule E2 (real-money test). Was 2: MEET IN THE MIDDLE (Alex Nov 11 12:45 AM ET): 2 ct/window when rule E starts at 500; 3 if E holds at its review. Was 3: (Alex Nov 10 8:12 PM ET wants ~today's daily
                                  # volume; rule E trades ~31 windows/day vs ~90). 3 = ~95 ct/day.
 

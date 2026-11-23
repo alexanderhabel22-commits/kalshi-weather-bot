@@ -1,5 +1,8 @@
 {
  "mode": "paper",
- "note": "Claude-only fast switch for the 15-minute server bot: live | paper | off. The server reads it every minute. reset_halt: set to a new string to clear a total-loss halt.",
- "changed": "2026-11-13 7:52 PM ET: PAPER. Alex: turn E2 off. No real money without Alex's explicit OK."
+ "note": "Claude-only fast switch for the 15-minute server bot: live | paper | off. The server reads it every minute. reset_halt: set to a new string to clear a total-loss halt. real: per-series switch for small real tests (\"on\" = allowed, anything else = paper); only series in config [m15] control_gated need it.",
+ "changed": "2026-11-23 ET: natgas real test switch added (still PAPER until the server runs the new code). Before: 2026-11-13 7:52 PM ET: PAPER. Alex: turn E2 off. No real money without Alex's explicit OK.",
+ "real": {
+  "KXNATGAS15M": "on"
+ }
 }
