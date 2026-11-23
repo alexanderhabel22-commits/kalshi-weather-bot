@@ -872,6 +872,22 @@ def test_history_true_up_rewrites_csv_and_state(monkeypatch):
     assert b.state["series"]["KXBTC15M"]["fills"] == 1
     assert path.name in sent and b.state["retrued"] == 1
     b.retrue_history()                              # runs once only
+
+
+def test_history_true_up_small_change_no_push(monkeypatch):
+    World(monkeypatch)
+    b = bot(cfg(mode="live"), Clock(), FillClient())
+    pushed = []
+    b.alert = lambda *a, **k: pushed.append(a)
+    b.state["pnl"]["live_total"] = 0.0
+    b.retrue_history()                              # nothing changed -> log only
+    assert b.state["retrued"] == 1 and pushed == []
+    b.state["retrued"] = None
+    b.state["pnl"]["live_total"] = 5.0              # $5 swing -> real problem, push
+    b.retrue_history()
+    assert len(pushed) == 1 and "books corrected" in pushed[0][0]
+
+
 class QClient(Client):
     """Fake Kalshi that also answers queue-position requests."""
 
