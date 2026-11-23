@@ -39,17 +39,38 @@ def stopped(ctx) -> bool:
     return False
 
 
+def _archived_rows() -> list[dict]:
+    """Finished real orders already moved to data/orders/<month>.csv."""
+    from .. import trader
+    out = []
+    for m in trader.archive_summary().get("months") or []:
+        out += trader._archive_rows(trader.ARCHIVE_DIR / f"{m}.csv")
+    return out
+
+
 def sub_stopped(ctx, key: str, limit: float) -> bool:
     """Per metric/kind real-money stop (Nov 14: high/holds at -$3). Once the settled
     real P&L of that piece is at or below -limit it stops trading (one push, once)."""
     metric, kind = key.split("/")
+    st = read_json(STATE, {}) or {}
+    if key in st.get("sub_stopped", {}):   # sticky (Nov 23): once tripped it stays paper
+        log.warning("weather_late %s: stopped since %s; paper only", key, st["sub_stopped"][key])
+        return True
     tag = f"late-day {kind}: {metric} so far"
-    lost = sum(float(r.get("pnl") or 0) for r in ctx.orders
+    # all-time: hot ledger + monthly archives (Nov 23 fix: the hot ledger alone holds ~2 days,
+    # so older losses dropped out and the -$3 high/holds stop never tripped at -$5.24)
+    rows, seen = [], set()
+    for r in list(ctx.orders) + _archived_rows():
+        k = (r.get("id"), r.get("mode"))
+        if r.get("id") and k in seen:
+            continue
+        seen.add(k)
+        rows.append(r)
+    lost = sum(float(r.get("pnl") or 0) for r in rows
                if r.get("strategy") == NAME and r.get("mode") == "live" and r.get("status") == "settled"
                and str(r.get("note", "")).startswith(tag) and r.get("pnl") not in (None, ""))
     if lost > -limit:
         return False
-    st = read_json(STATE, {}) or {}
     if key not in st.get("sub_stopped", {}):
         st.setdefault("sub_stopped", {})[key] = ctx.now.isoformat(timespec="seconds")
         write_json(STATE, st)
