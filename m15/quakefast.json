@@ -1,5 +1,5 @@
 {
- "at": "2026-11-22 21:53:19",
+ "at": "2026-11-22 21:58:19",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -54,7 +54,7 @@
   "won": 5,
   "pnl": 1.02,
   "c_per_ct": 12.7,
-  "skipped": 81
+  "skipped": 85
  },
  "first_source": {
   "n": 4,
@@ -62,7 +62,7 @@
   "won": 2,
   "pnl": 0.26,
   "c_per_ct": 6.5,
-  "skipped": 11
+  "skipped": 13
  },
  "by_source": {
   "bmkg|0.0": {
@@ -87,7 +87,7 @@
    "won": 0,
    "pnl": 0,
    "c_per_ct": null,
-   "skipped": 7
+   "skipped": 8
   },
   "emsc_ws|0.2": {
    "n": 0,
@@ -95,7 +95,7 @@
    "won": 0,
    "pnl": 0,
    "c_per_ct": null,
-   "skipped": 5
+   "skipped": 6
   },
   "emsc|0.0": {
    "n": 0,
@@ -103,7 +103,7 @@
    "won": 0,
    "pnl": 0,
    "c_per_ct": null,
-   "skipped": 7
+   "skipped": 8
   },
   "emsc|0.2": {
    "n": 0,
@@ -111,7 +111,7 @@
    "won": 0,
    "pnl": 0,
    "c_per_ct": null,
-   "skipped": 5
+   "skipped": 6
   },
   "gfz_fdsn|0.0": {
    "n": 1,
@@ -195,86 +195,6 @@
   }
  },
  "fills": [
-  {
-   "key": "q1795402059-emsc_ws|emsc|KXBIGGESTQUAKE-23NOV26-5.2|0.2",
-   "qid": "q1795402059-emsc_ws",
-   "src": "emsc",
-   "rank": 2,
-   "margin": 0.2,
-   "ticker": "KXBIGGESTQUAKE-23NOV26-5.2",
-   "strike": 5.2,
-   "mag": 6.2,
-   "ts": 1795402062.0,
-   "et": "2026-11-22 21:47:42",
-   "lag_s": 404.1,
-   "since_first_s": 2.9,
-   "bid": 0.96,
-   "ask": 1.0,
-   "ask_size": null,
-   "place": "VANUATU REGION",
-   "status": "skip",
-   "why": "ask 1.00 > 0.95"
-  },
-  {
-   "key": "q1795402059-emsc_ws|gfz_fdsn|KXBIGGESTQUAKE-23NOV26-6.0|0.0",
-   "qid": "q1795402059-emsc_ws",
-   "src": "gfz_fdsn",
-   "rank": 3,
-   "margin": 0.0,
-   "ticker": "KXBIGGESTQUAKE-23NOV26-6.0",
-   "strike": 6.0,
-   "mag": 6.14,
-   "ts": 1795402073.9,
-   "et": "2026-11-22 21:47:53",
-   "lag_s": 416.0,
-   "since_first_s": 14.8,
-   "bid": 0.75,
-   "ask": 0.99,
-   "ask_size": null,
-   "place": "VANUATU REGION",
-   "status": "skip",
-   "why": "ask 0.99 > 0.95"
-  },
-  {
-   "key": "q1795402059-emsc_ws|gfz_fdsn|KXBIGGESTQUAKE-23NOV26-5.8|0.0",
-   "qid": "q1795402059-emsc_ws",
-   "src": "gfz_fdsn",
-   "rank": 3,
-   "margin": 0.0,
-   "ticker": "KXBIGGESTQUAKE-23NOV26-5.8",
-   "strike": 5.8,
-   "mag": 6.14,
-   "ts": 1795402073.9,
-   "et": "2026-11-22 21:47:53",
-   "lag_s": 416.0,
-   "since_first_s": 14.8,
-   "bid": 0.94,
-   "ask": 0.98,
-   "ask_size": 1.0,
-   "place": "VANUATU REGION",
-   "status": "skip",
-   "why": "ask 0.98 > 0.95"
-  },
-  {
-   "key": "q1795402059-emsc_ws|gfz_fdsn|KXBIGGESTQUAKE-23NOV26-5.8|0.2",
-   "qid": "q1795402059-emsc_ws",
-   "src": "gfz_fdsn",
-   "rank": 3,
-   "margin": 0.2,
-   "ticker": "KXBIGGESTQUAKE-23NOV26-5.8",
-   "strike": 5.8,
-   "mag": 6.14,
-   "ts": 1795402073.9,
-   "et": "2026-11-22 21:47:53",
-   "lag_s": 416.0,
-   "since_first_s": 14.8,
-   "bid": 0.94,
-   "ask": 0.98,
-   "ask_size": 1.0,
-   "place": "VANUATU REGION",
-   "status": "skip",
-   "why": "ask 0.98 > 0.95"
-  },
   {
    "key": "q1795402059-emsc_ws|gfz_fdsn|KXBIGGESTQUAKE-23NOV26-5.6|0.0",
    "qid": "q1795402059-emsc_ws",
@@ -413,7 +333,8 @@
    "ask_size": 10.0,
    "place": "VANUATU REGION",
    "status": "open",
-   "fee": 0.01
+   "fee": 0.01,
+   "checked": 1795402692.449162
   },
   {
    "key": "q1795402059-emsc_ws|ptwc|KXBIGGESTQUAKE-23NOV26-6.2|0.0",
@@ -673,7 +594,8 @@
    "ask_size": 10.0,
    "place": "VANUATU REGION",
    "status": "open",
-   "fee": 0.01
+   "fee": 0.01,
+   "checked": 1795402699.4842122
   },
   {
    "key": "q1795402059-emsc_ws|usgs|KXBIGGESTQUAKE-23NOV26-6.2|0.0",
@@ -1394,6 +1316,86 @@
    "place": "VANUATU REGION",
    "status": "skip",
    "why": "ask 1.00 > 0.95"
+  },
+  {
+   "key": "q1795402059-emsc_ws|emsc_ws|KXBIGGESTQUAKE-23NOV26-6.4|0.0",
+   "qid": "q1795402059-emsc_ws",
+   "src": "emsc_ws",
+   "rank": 1,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-23NOV26-6.4",
+   "strike": 6.4,
+   "mag": 6.5,
+   "ts": 1795402670.6,
+   "et": "2026-11-22 21:57:50",
+   "lag_s": 1012.7,
+   "since_first_s": 611.5,
+   "bid": 0.93,
+   "ask": 0.98,
+   "ask_size": null,
+   "place": "VANUATU REGION",
+   "status": "skip",
+   "why": "ask 0.98 > 0.95"
+  },
+  {
+   "key": "q1795402059-emsc_ws|emsc_ws|KXBIGGESTQUAKE-23NOV26-6.2|0.2",
+   "qid": "q1795402059-emsc_ws",
+   "src": "emsc_ws",
+   "rank": 1,
+   "margin": 0.2,
+   "ticker": "KXBIGGESTQUAKE-23NOV26-6.2",
+   "strike": 6.2,
+   "mag": 6.5,
+   "ts": 1795402670.6,
+   "et": "2026-11-22 21:57:50",
+   "lag_s": 1012.7,
+   "since_first_s": 611.5,
+   "bid": 0.99,
+   "ask": 1.0,
+   "ask_size": null,
+   "place": "VANUATU REGION",
+   "status": "skip",
+   "why": "ask 1.00 > 0.95"
+  },
+  {
+   "key": "q1795402059-emsc_ws|emsc|KXBIGGESTQUAKE-23NOV26-6.4|0.0",
+   "qid": "q1795402059-emsc_ws",
+   "src": "emsc",
+   "rank": 2,
+   "margin": 0.0,
+   "ticker": "KXBIGGESTQUAKE-23NOV26-6.4",
+   "strike": 6.4,
+   "mag": 6.5,
+   "ts": 1795402677.1,
+   "et": "2026-11-22 21:57:57",
+   "lag_s": 1019.2,
+   "since_first_s": 618.0,
+   "bid": 0.98,
+   "ask": 1.0,
+   "ask_size": null,
+   "place": "VANUATU REGION",
+   "status": "skip",
+   "why": "ask 1.00 > 0.95"
+  },
+  {
+   "key": "q1795402059-emsc_ws|emsc|KXBIGGESTQUAKE-23NOV26-6.2|0.2",
+   "qid": "q1795402059-emsc_ws",
+   "src": "emsc",
+   "rank": 2,
+   "margin": 0.2,
+   "ticker": "KXBIGGESTQUAKE-23NOV26-6.2",
+   "strike": 6.2,
+   "mag": 6.5,
+   "ts": 1795402677.1,
+   "et": "2026-11-22 21:57:57",
+   "lag_s": 1019.2,
+   "since_first_s": 618.0,
+   "bid": 0.99,
+   "ask": 1.0,
+   "ask_size": null,
+   "place": "VANUATU REGION",
+   "status": "skip",
+   "why": "ask 1.00 > 0.95"
   }
  ],
  "quakes": [
@@ -1415,12 +1417,12 @@
     "emsc_ws": {
      "lag_s": 401.2,
      "first_mag": 6.2,
-     "mag": 6.2
+     "mag": 6.5
     },
     "emsc": {
      "lag_s": 404.1,
      "first_mag": 6.2,
-     "mag": 6.2
+     "mag": 6.5
     },
     "gfz_fdsn": {
      "lag_s": 416.0,
@@ -1620,69 +1622,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 8411,
+   "ok": 8426,
    "err": 0,
-   "last_ok": "2026-11-22 21:53:15",
+   "last_ok": "2026-11-22 21:58:15",
    "last_err": null
   },
   "emsc": {
-   "ok": 2136,
+   "ok": 2156,
    "err": 9078,
-   "last_ok": "2026-11-22 21:53:12",
+   "last_ok": "2026-11-22 21:58:12",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 1234,
+   "ok": 1237,
    "err": 1,
-   "last_ok": "2026-11-22 21:51:55",
+   "last_ok": "2026-11-22 21:57:50",
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 5607,
+   "ok": 5617,
    "err": 0,
-   "last_ok": "2026-11-22 21:52:54",
+   "last_ok": "2026-11-22 21:57:54",
    "last_err": null
   },
   "gfz": {
-   "ok": 16821,
+   "ok": 16851,
    "err": 0,
-   "last_ok": "2026-11-22 21:53:18",
+   "last_ok": "2026-11-22 21:58:18",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 5272,
+   "ok": 5282,
    "err": 335,
-   "last_ok": "2026-11-22 21:52:53",
+   "last_ok": "2026-11-22 21:57:53",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 5607,
+   "ok": 5617,
    "err": 0,
-   "last_ok": "2026-11-22 21:52:54",
+   "last_ok": "2026-11-22 21:57:54",
    "last_err": null
   },
   "kalshi": {
-   "ok": 22220,
+   "ok": 22260,
    "err": 30,
-   "last_ok": "2026-11-22 21:53:04",
+   "last_ok": "2026-11-22 21:58:08",
    "last_err": null
   },
   "ntwc": {
-   "ok": 11214,
+   "ok": 11234,
    "err": 0,
-   "last_ok": "2026-11-22 21:53:12",
+   "last_ok": "2026-11-22 21:58:12",
    "last_err": null
   },
   "ptwc": {
-   "ok": 11214,
+   "ok": 11234,
    "err": 0,
-   "last_ok": "2026-11-22 21:53:12",
+   "last_ok": "2026-11-22 21:58:12",
    "last_err": null
   },
   "usgs": {
-   "ok": 16821,
+   "ok": 16851,
    "err": 0,
-   "last_ok": "2026-11-22 21:53:18",
+   "last_ok": "2026-11-22 21:58:18",
    "last_err": null
   }
  }
