@@ -1,37 +1,19 @@
 {
  "last": {
-  "at": "2026-11-23T18:05:11+00:00",
+  "at": "2026-11-23T18:20:26+00:00",
   "flags": [
    {
     "code": "M15_REJECT",
     "sev": "warn",
     "text": "15-min order reject: {'at': 1795456703, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag",
     "malfunction": false,
-    "runs": 1
+    "runs": 2
    }
   ],
   "haiku": {
-   "level": "escalate",
-   "summary": "15-min bot flipped to control=live, mode=live, and is firing real orders on KXNATGAS15M that Kalshi rejects with insufficient_balance, roughly every 3 to 5 seconds since 17:57Z. The 15-min bot was meant to stay paper since Nov 13, so this is a mode mismatch. Stop the 15-min bot or set control back to paper, and check who changed the control file.",
-   "remember": "15-min bot control was switched to live on Nov 23 around 12:50 PM ET; the paper-to-live change needs an owner to confirm."
+   "skipped": "same flags as the last AI check"
   },
-  "opus": {
-   "severity": "pause_m15",
-   "title": "15-min bot firing live orders it cannot fund",
-   "message": "The 15-min bot is set to live and has retried rejected KXNATGAS orders every few seconds since about 12:57 PM ET. Kalshi refused each one, so no money was lost. I recommend pausing it to paper now. Please check who changed the control file to live.",
-   "diagnosis": "Control and mode both read live since about 12:50 PM ET, but the bot was meant to stay paper since Nov 13. It is in a tight retry loop, sending orders every 3 to 5 seconds that Kalshi rejects with insufficient_balance. Exposure is $0. The error has changed from the standing 403 funding item, so this is a new escalation, not a repeat. Memory check: control-lag warning was cleared earlier today, but this is different.",
-   "proposed_fix": "Set the 15-min control back to paper, or run pause_m15, and confirm the bot reads paper. Engineer to find what wrote control=live and when. Add a guard so the bot stops retrying a rejected order in a tight loop. Check the 15-min account funding path. Do not change caps or sizes.",
-   "needs_alex": true,
-   "notebook": [
-    "15-min bot was meant to stay paper since Nov 13; control flipped to live about 12:50 PM ET Nov 23.",
-    "Nov 23 1:05 PM: live order retry loop on KXNATGAS, rejected insufficient_balance; proposed pause to paper.",
-    "15-min funding 403 is a standing engineer item; the error changed to insufficient_balance, so it is a new escalation.",
-    "Copycat stale alerts recur every 6 to 12 hours; engineer asked to check the restart cycle.",
-    "Rewards bot live until Nov 15 05:00Z; expect $0 credits; cancel-on-reference-move churn is normal.",
-    "Rewards bot cancel events continue a few checks after live window ends; expected while resting stays $0.",
-    " Control file changes on the 15-min bot need an owner; ask Alex who set live."
-   ]
-  },
+  "opus": null,
   "action": null,
   "ai_spend": {
    "day": "2026-11-23",
@@ -1154,27 +1136,33 @@
    "opus": null
   },
   {
+   "action": null,
+   "ai_spend": {
+    "by": {
+     "copycat_boss": 0.0215,
+     "foreman": 0.0318
+    },
+    "day": "2026-11-23",
+    "total": 0.0533
+   },
    "at": "2026-11-23T18:05:11+00:00",
    "flags": [
     {
      "code": "M15_REJECT",
-     "sev": "warn",
-     "text": "15-min order reject: {'at': 1795456703, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag",
      "malfunction": false,
-     "runs": 1
+     "runs": 1,
+     "sev": "warn",
+     "text": "15-min order reject: {'at': 1795456703, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag"
     }
    ],
    "haiku": {
     "level": "escalate",
-    "summary": "15-min bot flipped to control=live, mode=live, and is firing real orders on KXNATGAS15M that Kalshi rejects with insufficient_balance, roughly every 3 to 5 seconds since 17:57Z. The 15-min bot was meant to stay paper since Nov 13, so this is a mode mismatch. Stop the 15-min bot or set control back to paper, and check who changed the control file.",
-    "remember": "15-min bot control was switched to live on Nov 23 around 12:50 PM ET; the paper-to-live change needs an owner to confirm."
+    "remember": "15-min bot control was switched to live on Nov 23 around 12:50 PM ET; the paper-to-live change needs an owner to confirm.",
+    "summary": "15-min bot flipped to control=live, mode=live, and is firing real orders on KXNATGAS15M that Kalshi rejects with insufficient_balance, roughly every 3 to 5 seconds since 17:57Z. The 15-min bot was meant to stay paper since Nov 13, so this is a mode mismatch. Stop the 15-min bot or set control back to paper, and check who changed the control file."
    },
    "opus": {
-    "severity": "pause_m15",
-    "title": "15-min bot firing live orders it cannot fund",
-    "message": "The 15-min bot is set to live and has retried rejected KXNATGAS orders every few seconds since about 12:57 PM ET. Kalshi refused each one, so no money was lost. I recommend pausing it to paper now. Please check who changed the control file to live.",
     "diagnosis": "Control and mode both read live since about 12:50 PM ET, but the bot was meant to stay paper since Nov 13. It is in a tight retry loop, sending orders every 3 to 5 seconds that Kalshi rejects with insufficient_balance. Exposure is $0. The error has changed from the standing 403 funding item, so this is a new escalation, not a repeat. Memory check: control-lag warning was cleared earlier today, but this is different.",
-    "proposed_fix": "Set the 15-min control back to paper, or run pause_m15, and confirm the bot reads paper. Engineer to find what wrote control=live and when. Add a guard so the bot stops retrying a rejected order in a tight loop. Check the 15-min account funding path. Do not change caps or sizes.",
+    "message": "The 15-min bot is set to live and has retried rejected KXNATGAS orders every few seconds since about 12:57 PM ET. Kalshi refused each one, so no money was lost. I recommend pausing it to paper now. Please check who changed the control file to live.",
     "needs_alex": true,
     "notebook": [
      "15-min bot was meant to stay paper since Nov 13; control flipped to live about 12:50 PM ET Nov 23.",
@@ -1184,25 +1172,19 @@
      "Rewards bot live until Nov 15 05:00Z; expect $0 credits; cancel-on-reference-move churn is normal.",
      "Rewards bot cancel events continue a few checks after live window ends; expected while resting stays $0.",
      " Control file changes on the 15-min bot need an owner; ask Alex who set live."
-    ]
-   },
-   "action": null,
-   "ai_spend": {
-    "day": "2026-11-23",
-    "total": 0.0533,
-    "by": {
-     "foreman": 0.0318,
-     "copycat_boss": 0.0215
-    }
+    ],
+    "proposed_fix": "Set the 15-min control back to paper, or run pause_m15, and confirm the bot reads paper. Engineer to find what wrote control=live and when. Add a guard so the bot stops retrying a rejected order in a tight loop. Check the 15-min account funding path. Do not change caps or sizes.",
+    "severity": "pause_m15",
+    "title": "15-min bot firing live orders it cannot fund"
    }
   }
  ],
- "digest": "Time: 1:05 PM ET Mon Nov 23\n15-MIN: service=active mode=live control=live status_at=2026-11-23T18:02:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 67.8% used, 15-min bot at 22.9% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated -0.0 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-23T17:53:02+00:00 mode=off halted=None bids=0 resting=$0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXWATECHEMP-27FEB28-T235000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXWAAEROEMP-27APR30-T92000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXNYCASKRENT-27JAN31-T4500 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXILNUCLEAR-27FEB28-T87.5 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXFLVISITORCOUNT-27FEB26-T136 mode off (control live, switch {'mode': 'live', 'halted': Fa\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$53.42 cash=$35.44 at=2026-11-23T17:56:01.486903+00:00\nRecent Actions runs: weather-scan in_progress 18:05Z; trade in_progress 18:02Z; weather-scan success 18:00Z; trade success 17:55Z; weather-scan success 17:55Z; trade success 17:50Z; weather-scan success 17:50Z; trade success 17:45Z\n15-min log warnings (last 20 min):\n2026-11-23 17:57:29,960 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:57:39,869 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:57:53,952 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:57:57,279 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:01,473 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:04,554 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:07,635 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:10,972 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:14,353 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:17,500 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:20,645 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\n2026-11-23 17:58:23,743 WARNING place KXNATGAS15M-26NOV231300-00: HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}\nRULE FLAGS: [warn] M15_REJECT: 15-min order reject: {'at': 1795456703, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Rewards bot cancels on reference-price moves are normal churn, not a fault.; 15-min bot control reads paper now and mode paper, so the earlier control/mode mismatch is gone; a 15-min halt is not present.; 15-min funding 403 count reached 40 by 9:50 PM ET Nov 13; standing engineer item, not re-escalating each check.; 15-min funding 403 is a standing engineer item; do not re-escalate each check unless the error changes or the bot starts trading against it.; Rewards bot switched to live until Nov 15 05:00Z; expect $0 credits until period ends.; Rewards bot cancel events continue for a few checks after its live window ends; expected while resting stays $0.; Copycat stale alerts have now recurred (Nov 22 7:35 PM and 11:05 PM ET); if they keep coming back, ask an engineer to look at its restart cycle.; Copycat stale alerts recur about every 6 to 12 hours (Nov 22 7:35 PM, 11:05 PM, Nov 23 5:05 AM); engineer asked to check the restart cycle.\nRecent log:\n  Nov 22 7:50 PM ET: check: ok. All rule checks clear.\n  Nov 22 11:05 PM ET: new: Copycat status not updated for 23 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 22 11:20 PM ET: cleared: COPYCAT_STALE\n  Nov 22 11:20 PM ET: check: ok. All rule checks clear.\n  Nov 23 5:05 AM ET: new: Copycat status not updated for 20 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 23 5:20 AM ET: cleared: COPYCAT_STALE\n  Nov 23 5:20 AM ET: check: ok. All rule checks clear.\n  Nov 23 12:50 PM ET: new: control file says live, bot last read paper (normal for ~20 min after a change)\n  Nov 23 1:05 PM ET: new: 15-min order reject: {'at': 1795456703, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag\n  Nov 23 1:05 PM ET: cleared: M15_CONTROL_LAG",
+ "digest": "Time: 1:20 PM ET Mon Nov 23\n15-MIN: service=active mode=live control=live status_at=2026-11-23T18:17:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 64.5% used, 15-min bot at 23.4% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 0.6 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-23T18:08:05+00:00 mode=off halted=None bids=0 resting=$0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXWATECHEMP-27FEB28-T235000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXWAAEROEMP-27APR30-T92000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXNYCASKRENT-27JAN31-T4500 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXILNUCLEAR-27FEB28-T87.5 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXFLVISITORCOUNT-27FEB26-T136 mode off (control live, switch {'mode': 'live', 'halted': Fa\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$53.42 cash=$35.44 at=2026-11-23T18:16:34.866140+00:00\nRecent Actions runs: weather-scan in_progress 18:20Z; trade success 18:15Z; weather-scan success 18:15Z; trade success 18:12Z; weather-scan success 18:10Z; trade success 18:07Z; weather-scan success 18:05Z; trade success 18:02Z\nRULE FLAGS: [warn] M15_REJECT: 15-min order reject: {'at': 1795456703, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag (2 checks in a row)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: 15-min bot was meant to stay paper since Nov 13; control flipped to live about 12:50 PM ET Nov 23.; Nov 23 1:05 PM: live order retry loop on KXNATGAS, rejected insufficient_balance; proposed pause to paper.; 15-min funding 403 is a standing engineer item; the error changed to insufficient_balance, so it is a new escalation.; Copycat stale alerts recur every 6 to 12 hours; engineer asked to check the restart cycle.; Rewards bot live until Nov 15 05:00Z; expect $0 credits; cancel-on-reference-move churn is normal.; Rewards bot cancel events continue a few checks after live window ends; expected while resting stays $0.;  Control file changes on the 15-min bot need an owner; ask Alex who set live.\nRecent log:\n  Nov 22 11:20 PM ET: check: ok. All rule checks clear.\n  Nov 23 5:05 AM ET: new: Copycat status not updated for 20 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 23 5:20 AM ET: cleared: COPYCAT_STALE\n  Nov 23 5:20 AM ET: check: ok. All rule checks clear.\n  Nov 23 12:50 PM ET: new: control file says live, bot last read paper (normal for ~20 min after a change)\n  Nov 23 1:05 PM ET: new: 15-min order reject: {'at': 1795456703, 'error': 'HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"messag\n  Nov 23 1:05 PM ET: cleared: M15_CONTROL_LAG\n  Nov 23 1:05 PM ET: check: escalate. 15-min bot flipped to control=live, mode=live, and is firing real orders on KXNATGAS15M that Kalshi rejects with insufficient_balance, roughly every 3 to 5 seconds since 17:57Z. The 15-min bot was meant to stay paper since \n  Nov 23 1:05 PM ET: escalated: 15-min bot firing live orders it cannot fund (pause_m15). Control and mode both read live since about 12:50 PM ET, but the bot was meant to stay paper since Nov 13. It is in a tight retry loop, sending orders every 3 to 5 seconds\n  Nov 23 1:05 PM ET: pushed Alex: 15-min bot firing live orders it cannot fund",
  "services": {
   "kalshi-copycat": {
    "Result": "success",
    "NRestarts": "0",
-   "MemoryCurrent": "660 MB",
+   "MemoryCurrent": "588 MB",
    "MemoryPeak": "701 MB",
    "MemoryMax": "700 MB",
    "ActiveState": "active",
@@ -1233,7 +1215,7 @@
    "Result": "success",
    "NRestarts": "0",
    "MemoryCurrent": "56 MB",
-   "MemoryPeak": "56 MB",
+   "MemoryPeak": "57 MB",
    "MemoryMax": "300 MB",
    "ActiveState": "active",
    "SubState": "running",
@@ -1242,7 +1224,7 @@
   "kalshi-wsfeed": {
    "Result": "success",
    "NRestarts": "0",
-   "MemoryCurrent": "111 MB",
+   "MemoryCurrent": "112 MB",
    "MemoryPeak": "200 MB",
    "MemoryMax": "200 MB",
    "ActiveState": "active",
