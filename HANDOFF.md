@@ -495,6 +495,10 @@ IP without a token). It never places, changes or cancels anything and needs no s
   Pushes: first real fill, 20/50 fills (reviews), cap. `fund = false`: never moves cash between
   exchange balances; natgas uses the Crypto/commodity balance (Alex moves cash at kalshi.com/account/exchange-indexes).
   Paper verdict ~Dec 1.
+  Dashboard (Nov 23): 15-MIN tab "Natgas real test" card (ngHTML/ngData in dashboard/index.html, constants `NG`):
+  real vs twin tiles, slippage, $3 cap meter, 20/50 review bar, kill switch, Exchange 2 cash, real-vs-twin chart,
+  every-window table, by-day table, paper verdict since Nov 13 with window-clustered SE. Also a row on TESTS and
+  the SUMMARY row "15-min · Natgas real test". loadM15 loads markets CSVs back to Nov 13 (cached) for this.
 - Fast switch (Claude): `m15_control.json` on main, mode live|paper|off, read every minute (~5 min with the CDN). `reset_halt` = a new string clears a total-loss halt.
 - Results: uploaded every 15 min to branch `m15-data` (`m15/status.json`, `m15/markets-*.csv`).
 - Rails: real orders only with `[m15] mode = "live"`, series in `live_series`, and the repo
