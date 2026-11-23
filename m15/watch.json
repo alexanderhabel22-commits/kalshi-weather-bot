@@ -1,7 +1,15 @@
 {
  "last": {
-  "at": "2026-11-23T17:35:24+00:00",
-  "flags": [],
+  "at": "2026-11-23T17:50:33+00:00",
+  "flags": [
+   {
+    "code": "M15_CONTROL_LAG",
+    "sev": "info",
+    "text": "control file says live, bot last read paper (normal for ~20 min after a change)",
+    "malfunction": false,
+    "runs": 1
+   }
+  ],
   "haiku": {
    "skipped": "no warn/critical flags"
   },
@@ -60,7 +68,6 @@
   "Copycat stale alerts recur about every 6 to 12 hours (Nov 22 7:35 PM, 11:05 PM, Nov 23 5:05 AM); engineer asked to check the restart cycle."
  ],
  "journal": [
-  "Nov 13 9:50 AM ET: cleared: PAPER_DOWN",
   "Nov 13 9:50 AM ET: check: ok. Main bot live, not halted, Actions runs succeeding. Rewards bot live with $19.95 resting, no fills, within budget. 15-min bot in paper mode, no halt; its recent live losses are inside its stops. Copycat status file is fresh (2.5 ",
   "Nov 13 11:50 AM ET: new: control file says live, bot last read paper (normal for ~20 min after a change)",
   "Nov 13 12:05 PM ET: new: 15-min funding error: HTTP 403 for https://api.elections.kalshi.com/trade-api/v2/portfolio/intra_exchange_instance_transfer: {\"error\":{\"code\":\"insufficient_scope:_write::transfer_required\",\"message\":\"insufficient scope: write::transfer",
@@ -89,7 +96,8 @@
   "Nov 22 11:20 PM ET: check: ok. All rule checks clear.",
   "Nov 23 5:05 AM ET: new: Copycat status not updated for 20 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)",
   "Nov 23 5:20 AM ET: cleared: COPYCAT_STALE",
-  "Nov 23 5:20 AM ET: check: ok. All rule checks clear."
+  "Nov 23 5:20 AM ET: check: ok. All rule checks clear.",
+  "Nov 23 12:50 PM ET: new: control file says live, bot last read paper (normal for ~20 min after a change)"
  ],
  "log": [
   {
@@ -1156,12 +1164,12 @@
    "opus": null
   }
  ],
- "digest": "Time: 12:35 PM ET Mon Nov 23\n15-MIN: service=active mode=paper control=paper status_at=2026-11-23T17:32:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 63.4% used, 15-min bot at 17.2% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 0.5 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-23T17:22:56+00:00 mode=off halted=None bids=0 resting=$0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXWATECHEMP-27FEB28-T235000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXWAAEROEMP-27APR30-T92000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXNYCASKRENT-27JAN31-T4500 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXILNUCLEAR-27FEB28-T87.5 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXFLVISITORCOUNT-27FEB26-T136 mode off (control live, switch {'mode': 'live', 'halted': Fa\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$53.52 cash=$38.88 at=2026-11-23T17:25:57.195767+00:00\nRecent Actions runs: weather-scan in_progress 17:35Z; trade in_progress 17:33Z; tests success 17:31Z; tests success 17:30Z; weather-scan success 17:30Z; trade success 17:25Z; weather-scan success 17:25Z; trade success 17:20Z\n15-min log warnings (last 20 min):\n2026-11-23 17:28:27,515 WARNING fair-value feed coinbase connected (BTC-USD, ETH-USD, SOL-USD)\n2026-11-23 17:28:27,520 WARNING fair-value feed cf (Kalshi CF Benchmarks) connected\n2026-11-23 17:28:27,523 WARNING kalshi feed connected (0 markets)\n2026-11-23 17:28:27,524 WARNING spot feed connected (BTC-USD, DOGE-USD, ETH-USD, NEAR-USD, SOL-USD, XRP-USD, ZEC-USD)\n2026-11-23 17:28:27,621 WARNING fair-value feed kraken connected (BTC/USD, ETH/USD, SOL/USD)\n2026-11-23 17:28:27,750 WARNING fair-value feed bitstamp connected (btcusd, ethusd, solusd)\n2026-11-23 17:28:28,553 WARNING history true-up: live P&L $-11.11 -> $-11.11 over 17 files\n2026-11-23 17:28:52,441 WARNING m15 mode: paper\nRULE FLAGS: none\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Rewards bot cancels on reference-price moves are normal churn, not a fault.; 15-min bot control reads paper now and mode paper, so the earlier control/mode mismatch is gone; a 15-min halt is not present.; 15-min funding 403 count reached 40 by 9:50 PM ET Nov 13; standing engineer item, not re-escalating each check.; 15-min funding 403 is a standing engineer item; do not re-escalate each check unless the error changes or the bot starts trading against it.; Rewards bot switched to live until Nov 15 05:00Z; expect $0 credits until period ends.; Rewards bot cancel events continue for a few checks after its live window ends; expected while resting stays $0.; Copycat stale alerts have now recurred (Nov 22 7:35 PM and 11:05 PM ET); if they keep coming back, ask an engineer to look at its restart cycle.; Copycat stale alerts recur about every 6 to 12 hours (Nov 22 7:35 PM, 11:05 PM, Nov 23 5:05 AM); engineer asked to check the restart cycle.\nRecent log:\n  Nov 22 6:20 AM ET: check: ok. All rule checks clear.\n  Nov 22 7:35 PM ET: new: Copycat status not updated for 21 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 22 7:50 PM ET: cleared: COPYCAT_STALE\n  Nov 22 7:50 PM ET: check: ok. All rule checks clear.\n  Nov 22 11:05 PM ET: new: Copycat status not updated for 23 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 22 11:20 PM ET: cleared: COPYCAT_STALE\n  Nov 22 11:20 PM ET: check: ok. All rule checks clear.\n  Nov 23 5:05 AM ET: new: Copycat status not updated for 20 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 23 5:20 AM ET: cleared: COPYCAT_STALE\n  Nov 23 5:20 AM ET: check: ok. All rule checks clear.",
+ "digest": "Time: 12:50 PM ET Mon Nov 23\n15-MIN: service=active mode=paper control=live status_at=2026-11-23T17:47:00+00:00 errors=0 halted=None stop=None exposure=$0.0 pnl_24h=$0 live_total=$-11.1128\n15-MIN live P&L by day: 2026-11-10 $-7.61, 2026-11-11 $-14.31, 2026-11-12 $-1.70, 2026-11-13 $-3.22\n  KXBTC15M: fills=557.0 pnl=$2.63 decay_alert=2026-11-13\n  KXCOPPER15M: fills=165.89 pnl=$-5.5145\n  KXGOLD15M: fills=90.0 pnl=$-6.19\n  KXPALLADIUM15M: fills=194.67 pnl=$-0.4332\n  KXPLATINUM15M: fills=39.0 pnl=$-6.37\n  KXSILVER15M: fills=411.9 pnl=$4.3549 decay_alert=2026-11-12\n  KXWTI15M: fills=92.0 pnl=$0.41\nSERVER: RAM 64.6% used, 15-min bot at 22.6% of its memory cap\nCOPYCAT (separate paper/copy service): active, status file updated 0.5 min ago (normal: under 6)\nREWARDS BOT (real $, liquidity rewards): service=active switch=live until=2026-11-15T05:00:00Z status_at=2026-11-23T17:37:59+00:00 mode=off halted=None bids=0 resting=$0 filled=$0 budget=$20.0 fill_stop=$10.0 credits_seen=0\n  recent rewards-bot events: cancel KXWATECHEMP-27FEB28-T235000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXWAAEROEMP-27APR30-T92000 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXNYCASKRENT-27JAN31-T4500 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXILNUCLEAR-27FEB28-T87.5 mode off (control live, switch {'mode': 'live', 'halted': Fa; cancel KXFLVISITORCOUNT-27FEB26-T136 mode off (control live, switch {'mode': 'live', 'halted': Fa\nPAPER LAB: service=active\nMAIN: mode=live halted=False bankroll=$53.4 cash=$37.26 at=2026-11-23T17:45:57.980151+00:00\nRecent Actions runs: weather-scan in_progress 17:50Z; trade success 17:45Z; weather-scan success 17:45Z; trade success 17:40Z; weather-scan success 17:40Z; trade success 17:38Z; weather-scan success 17:35Z; trade success 17:33Z\n15-min log warnings (last 20 min):\n2026-11-23 17:47:58,938 WARNING m15 mode: live\nRULE FLAGS: [info] M15_CONTROL_LAG: control file says live, bot last read paper (normal for ~20 min after a change)\n\nYOUR MEMORY (the Foreman's notebook):\nNotes: Rewards bot cancels on reference-price moves are normal churn, not a fault.; 15-min bot control reads paper now and mode paper, so the earlier control/mode mismatch is gone; a 15-min halt is not present.; 15-min funding 403 count reached 40 by 9:50 PM ET Nov 13; standing engineer item, not re-escalating each check.; 15-min funding 403 is a standing engineer item; do not re-escalate each check unless the error changes or the bot starts trading against it.; Rewards bot switched to live until Nov 15 05:00Z; expect $0 credits until period ends.; Rewards bot cancel events continue for a few checks after its live window ends; expected while resting stays $0.; Copycat stale alerts have now recurred (Nov 22 7:35 PM and 11:05 PM ET); if they keep coming back, ask an engineer to look at its restart cycle.; Copycat stale alerts recur about every 6 to 12 hours (Nov 22 7:35 PM, 11:05 PM, Nov 23 5:05 AM); engineer asked to check the restart cycle.\nRecent log:\n  Nov 22 7:35 PM ET: new: Copycat status not updated for 21 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 22 7:50 PM ET: cleared: COPYCAT_STALE\n  Nov 22 7:50 PM ET: check: ok. All rule checks clear.\n  Nov 22 11:05 PM ET: new: Copycat status not updated for 23 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 22 11:20 PM ET: cleared: COPYCAT_STALE\n  Nov 22 11:20 PM ET: check: ok. All rule checks clear.\n  Nov 23 5:05 AM ET: new: Copycat status not updated for 20 min (running but stuck or restarting; it writes every 5 min; paper, no money at risk)\n  Nov 23 5:20 AM ET: cleared: COPYCAT_STALE\n  Nov 23 5:20 AM ET: check: ok. All rule checks clear.\n  Nov 23 12:50 PM ET: new: control file says live, bot last read paper (normal for ~20 min after a change)",
  "services": {
   "kalshi-copycat": {
    "Result": "success",
    "NRestarts": "0",
-   "MemoryCurrent": "599 MB",
+   "MemoryCurrent": "605 MB",
    "MemoryPeak": "701 MB",
    "MemoryMax": "700 MB",
    "ActiveState": "active",
@@ -1171,7 +1179,7 @@
   "kalshi-paper": {
    "Result": "success",
    "NRestarts": "0",
-   "MemoryCurrent": "96 MB",
+   "MemoryCurrent": "97 MB",
    "MemoryPeak": "107 MB",
    "MemoryMax": "450 MB",
    "ActiveState": "active",
@@ -1181,7 +1189,7 @@
   "kalshi-lip": {
    "Result": "success",
    "NRestarts": "0",
-   "MemoryCurrent": "25 MB",
+   "MemoryCurrent": "26 MB",
    "MemoryPeak": "26 MB",
    "MemoryMax": "150 MB",
    "ActiveState": "active",
@@ -1201,7 +1209,7 @@
   "kalshi-wsfeed": {
    "Result": "success",
    "NRestarts": "0",
-   "MemoryCurrent": "108 MB",
+   "MemoryCurrent": "110 MB",
    "MemoryPeak": "200 MB",
    "MemoryMax": "200 MB",
    "ActiveState": "active",
