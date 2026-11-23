@@ -21,7 +21,9 @@ def iso(ts):
 def cfg(**kw):
     c = load_config()
     c.raw["m15"].update({"series": ["KXBTC15M"], "guard": False, "contracts": 1, "extra_contracts": 0,
-                         "early_on": False, "e2_series": []})   # tests turn rule E / E2 on themselves
+                         "early_on": False, "e2_series": [],    # tests turn rule E / E2 on themselves
+                         "live_series": ["KXBTC15M"], "control_gated": [], "twin_series": [],
+                         "live_max_contracts": {}, "real_caps": {}, "fund": True})   # ... and the real-test rails
     c.raw["m15"].update(kw)
     return c
 

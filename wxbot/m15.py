@@ -186,6 +186,21 @@ DEFAULTS = {
     # strike of the window that opened 1 h earlier). Unknown move -> skip. 80-day replay +3.3c/ct
     # at the bid (1,216 windows, 10 of 13 weeks up) vs +1.1c with the trend. tools/e2_check.py.
     "e2_series": [],
+    # SMALL REAL TESTS (Nov 23, natgas: Alex OK "ok sure"). Per series:
+    #  control_gated: real orders only while m15_control.json "real" says "on" for the series
+    #                 (missing/other -> no real orders; the fast kill for that test alone)
+    #  twin_series:   each live market gets a PAPER twin with the exact paper rules, so the paper
+    #                 record (and verdict) keeps running next to the real one
+    #  live_max_contracts: most real contracts per market (the twin keeps the paper sizes)
+    #  real_caps:     HARD $ cap: -(settled real P&L since real_test_tag) + open real bets + the new
+    #                 order <= cap. When no order fits any more, the series is cut to paper + push.
+    #  real_reviews:  push when the test's real contracts reach these counts
+    "control_gated": [],
+    "twin_series": [],
+    "live_max_contracts": {},
+    "real_caps": {},
+    "real_test_tag": "",
+    "real_reviews": [20, 50],
 }
 
 
@@ -324,6 +339,7 @@ class Bot(FillQuality):
                      "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0, "queue": 0.0}
         self.switch = {"mode": None, "halted": False}
         self.control = None
+        self.control_real: dict = {}
         self.balance = None
         self.paper_bankroll = None
         self.errors = 0
@@ -406,6 +422,8 @@ class Bot(FillQuality):
         try:
             c = self.fetch_json(CONTROL_URL) or {}
             self.control = (c.get("mode") or "").lower() or None
+            real = c.get("real")
+            self.control_real = {str(k): str(v).lower() for k, v in real.items()} if isinstance(real, dict) else {}
             if c.get("reset_halt") and self.state.get("halted"):
                 if self.state.get("reset_seen") != c.get("reset_halt"):
                     self.state["reset_seen"] = c.get("reset_halt")
@@ -477,6 +495,8 @@ class Bot(FillQuality):
         src_free = bal.get(0, 0.0)
         amt = min(need, src_free - 1.0)               # leave $1 on the main shard at least
         self.state["shards"] = {str(k): v for k, v in bal.items()}
+        if not s.get("fund", True):
+            return 0.0                    # read-only (natgas test, Nov 23): Alex moves cash by hand
         if amt < 1.0:
             return 0.0
         try:
@@ -576,8 +596,17 @@ class Bot(FillQuality):
                     hist[str(int(ct.timestamp()))] = float(mk["floor_strike"])
                     for old in sorted(hist, key=int)[:-12]:
                         del hist[old]
+        twins = set(self.s.get("twin_series") or [])
+        for tk, m in list(self.state["markets"].items()):
+            if (twins and m["series"] in twins and not m.get("twin") and not m.get("graded")
+                    and not m["quotes"] and m["mode"] != "paper" and m["close"] > now and f"{tk}|paper" not in self.state["markets"]):
+                tw = {k: m[k] for k in ("ticker", "series", "close", "strike")}
+                tw.update({"mode": "paper", "twin": True, "order": None, "quotes": 0, "filled": 0,
+                           "cost": 0.0, "fee": 0.0, "trade_ts": 0, "model_filled": None,
+                           "touched": False, "pulls": 0, "tape_at": 0})
+                self.state["markets"][f"{tk}|paper"] = tw
         if self.kfeed is not None:
-            self.kfeed.watch([k for k, m in self.state["markets"].items() if m["close"] > now])
+            self.kfeed.watch(sorted({m["ticker"] for m in self.state["markets"].values() if m["close"] > now}))
 
     def trades(self, m: dict) -> list:
         out, cursor = [], None
@@ -737,6 +766,14 @@ class Bot(FillQuality):
                 if mv is not None:
                     # signed so that + = spot moved toward our side's win (assumes YES = up)
                     m["spot_bps"] = round(mv if m.get("fav_side") == "yes" else -mv, 1)
+        if m.get("mode") == "live" and m["series"] in (self.s.get("real_caps") or {}):
+            st = self.realtest(m["series"])
+            if not st.get("first_fill"):
+                st["first_fill"] = int(ts or self.clock())
+                self.alert(f"15-min bot: first REAL {m['series'].replace('KX', '').replace('15M', '')} fill",
+                           f"{m['ticker']}: bought {qty_str(new)} {m.get('fav_side', '').upper()} at "
+                           f"{o['q'] * 100:.0f}c. Real test, 1 contract, hard "
+                           f"${float(self.s['real_caps'][m['series']]):g} cap incl. open bets.", 3)
         self.fillq_open(m, o, new, ts)           # shadow fill-quality log (never trades)
 
     def cancel_all(self, why: str) -> None:
@@ -897,20 +934,122 @@ class Bot(FillQuality):
                 n += 1
         return n
 
+    # ------------------------------------------------------------ small real tests
+
+    def real_ok(self, series: str) -> bool:
+        """False while a control-gated series isn't switched "on" in m15_control.json."""
+        if series in (self.s.get("control_gated") or []):
+            return self.control_real.get(series) == "on"
+        return True
+
+    def realtest(self, series: str) -> dict:
+        """This series' real-test record, reset when real_test_tag changes."""
+        tag = self.s.get("real_test_tag") or ""
+        allr = self.state.setdefault("realtest", {})
+        st = allr.get(series)
+        if not st or st.get("tag") != tag:
+            st = allr[series] = {"tag": tag, "pnl": 0.0, "ct": 0.0, "markets": 0, "won": 0,
+                                 "paper_pnl": 0.0, "paper_ct": 0.0, "first_fill": None, "reviews": []}
+        return st
+
+    def series_exposure(self, series: str) -> float:
+        tot = 0.0
+        for m in self.state["markets"].values():
+            if m.get("mode") != "live" or m["series"] != series or m.get("graded"):
+                continue
+            tot += m.get("cost", 0.0)
+            o = m.get("order")
+            if o and not m.get("closed"):
+                tot += o["q"] * (o["n"] - o.get("filled", 0))
+        return tot
+
+    def cap_room(self, series: str) -> float | None:
+        cap = (self.s.get("real_caps") or {}).get(series)
+        if cap is None:
+            return None
+        return float(cap) + self.realtest(series)["pnl"] - self.series_exposure(series)
+
+    def cap_check(self, series: str) -> None:
+        """Cut to paper + push once the settled real loss leaves no room for even the cheapest bid."""
+        cap = (self.s.get("real_caps") or {}).get(series)
+        if cap is None:
+            return
+        st = self.realtest(series)
+        cut = self.state.setdefault("cut", {})
+        if series in cut or -st["pnl"] + float(self.s["min_fav"]) <= float(cap) + 1e-9:
+            return
+        cut[series] = {"at": self.day(self.clock()), "why": "real-test cap", "pnl": round(st["pnl"], 2)}
+        self.alert(f"15-min bot: {series} real test hit its ${float(cap):g} cap, back to PAPER",
+                   f"Real P&L ${st['pnl']:+.2f} on {st['ct']:.0f} contracts ({st['markets']} windows). "
+                   "No more real orders; the paper twin keeps running. Claude reviews.", 4)
+
+    def realtest_grade(self, m: dict) -> None:
+        """After a live test market settles: add it to the test record and log real vs paper twin."""
+        series = m["series"]
+        if series not in (self.s.get("real_caps") or {}) or not m["quotes"]:
+            return
+        st = self.realtest(series)
+        tw = self.state["markets"].get(f"{m['ticker']}|paper") or {}
+        r = m.get("result")
+        tw_won = (r == tw.get("fav_side")) if r in ("yes", "no") and tw.get("fav_side") else None
+        tw_pnl = round(tw.get("filled", 0) * (1.0 if tw_won else 0.0) - tw.get("cost", 0.0) - tw.get("fee", 0.0), 4) \
+            if tw.get("filled") and tw_won is not None else 0.0
+        tw_fills = tw.get("fills") or []
+        tw_first = tw_fills[0].split("@")[1] if tw_fills else ""
+        if m["filled"]:
+            st["pnl"] = round(st["pnl"] + m.get("pnl", 0.0), 4)
+            st["ct"] = round(st["ct"] + m["filled"], 2)
+            st["markets"] += 1
+            st["won"] += 1 if m.get("won") else 0
+        if tw.get("filled"):
+            st["paper_pnl"] = round(st["paper_pnl"] + tw_pnl, 4)
+            st["paper_ct"] = round(st["paper_ct"] + tw["filled"], 2)
+        row = {"ticker": m["ticker"], "series": series, "tag": st["tag"],
+               "close": datetime.fromtimestamp(m["close"], timezone.utc).isoformat(timespec="seconds"),
+               "result": r or "", "real_side": m.get("fav_side", ""), "real_quotes": m["quotes"],
+               "real_filled": qty_str(m["filled"]), "real_fills": ";".join(m.get("fills") or []),
+               "real_cost": round(m["cost"], 2), "real_pnl": round(m.get("pnl", 0.0), 2),
+               "paper_side": tw.get("fav_side", ""), "paper_filled": qty_str(tw.get("filled", 0)),
+               "paper_fills": ";".join(tw_fills), "paper_first_q": tw_first,
+               "paper_cost": round(tw.get("cost", 0.0), 2), "paper_pnl": round(tw_pnl, 2),
+               "model_filled": 1 if m.get("model_filled") else 0,
+               "test_pnl": round(st["pnl"], 2), "test_ct": st["ct"]}
+        path = M15_DIR / f"realtest-{self.day(m['close'])}.csv"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        new = not path.exists()
+        with open(path, "a", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=list(row))
+            if new:
+                w.writeheader()
+            w.writerow(row)
+        for k in self.s.get("real_reviews") or []:
+            if st["ct"] >= k and k not in st["reviews"]:
+                st["reviews"].append(k)
+                per = 100 * st["pnl"] / st["ct"] if st["ct"] else 0.0
+                pp = 100 * st["paper_pnl"] / st["paper_ct"] if st["paper_ct"] else 0.0
+                self.alert(f"15-min bot: {series} real test at {k} fills (review)",
+                           f"Real ${st['pnl']:+.2f} on {st['ct']:.0f} ct ({per:+.1f}c/ct, {st['won']}/{st['markets']} won). "
+                           f"Paper twin same windows {pp:+.1f}c/ct on {st['paper_ct']:.0f} ct. Claude reviews.", 3)
+        self.cap_check(series)
+
     def manage(self, m: dict, quote: dict | None, mode: str, now: float) -> None:
         s = self.limits(now)
         left = m["close"] - now
-        eligible = (mode == "live" and m["series"] in s["live_series"]
-                    and m["series"] not in self.state.get("cut", {}))
+        eligible = (mode == "live" and m["series"] in s["live_series"] and not m.get("twin")
+                    and m["series"] not in self.state.get("cut", {}) and self.real_ok(m["series"]))
         if m["mode"] is None and mode != "off":
             m["mode"] = "live" if eligible else "paper"
         elif m["mode"] == "paper" and eligible and not m["filled"] and not m.get("order"):
             m["mode"] = "live"          # went live mid-window: don't leave this market on paper
+        if m["mode"] == "paper" and not m.get("twin") and f"{m['ticker']}|paper" in self.state["markets"]:
+            m["why"] = "paper runs on the twin"
+            return                      # the twin is this market's paper record; never count it twice
         self.tape_check(m)
         o = m.get("order")
-        if mode == "off" or (m["mode"] == "live" and mode != "live"):
+        if mode == "off" or (m["mode"] == "live" and (mode != "live" or not self.real_ok(m["series"])
+                                                         or m["series"] in self.state.get("cut", {}))):
             if o:
-                self._end_order(m)
+                self._end_order(m)              # switched off / cut mid-window: pull, keep what's held
             return
         early = self.early_active(m, now)
         floor = (s.get("series_min_fav") or {}).get(m["series"])
@@ -938,6 +1077,10 @@ class Bot(FillQuality):
                                                              # a bigger scale-up step still wins
         target = base_n if early else target_contracts(want[1] if want else None, s, m["series"])
         if m["mode"] == "live":
+            cap_n = (s.get("live_max_contracts") or {}).get(m["series"])
+            if cap_n is not None:
+                target = min(target, int(cap_n))         # real-test size; the paper twin keeps paper sizes
+                base_n = min(base_n, int(cap_n))
             m["base"] = base_n
         room = target - m["filled"] - (o["n"] - o["filled"] if o else 0)
         if early:
@@ -991,6 +1134,10 @@ class Bot(FillQuality):
         if m.get("fav_side") and side != m["fav_side"] and m["filled"]:
             return                                       # one side per market
         if m["mode"] == "live":
+            room_cap = self.cap_room(m["series"])
+            if room_cap is not None and q * n_new > room_cap + 1e-9:
+                m["why"] = f"real-test cap (room ${room_cap:.2f})"
+                return
             b = self.bankroll(now) or 0
             if self.exposure("live") + q * n_new > s["pool_pct"] * b + 1e-9:
                 m["why"] = f"pool full (bankroll {b:.2f})"
@@ -1132,7 +1279,7 @@ class Bot(FillQuality):
                     self._end_order(m)
                 m["order"] = None
             m["closed"] = True
-        need = [m["ticker"] for m in due if m["quotes"]]
+        need = sorted({m["ticker"] for m in due if m["quotes"]})
         res = {}
         if need:
             try:
@@ -1155,7 +1302,7 @@ class Bot(FillQuality):
                 won = (r == m["fav_side"])
                 pnl = round(m["filled"] * (1.0 if won else 0.0) - m["cost"] - m["fee"], 4)
             m.update({"graded": True, "result": r, "won": won, "pnl": pnl})
-            if self.kfeed is not None:
+            if self.kfeed is not None and not m.get("twin"):
                 self.kfeed.forget(m["ticker"])
             if m["quotes"] or m.get("e2_skip"):     # E2 skips get a row too (dashboard counts them)
                 self.record(m)
@@ -1170,6 +1317,11 @@ class Bot(FillQuality):
                 if m["mode"] == "live":
                     self.e2_check(m, pnl)
                     self.series_check(m, pnl)
+            if m["mode"] == "live":
+                try:
+                    self.realtest_grade(m)
+                except Exception as exc:
+                    log.warning("real-test log %s: %s", m["ticker"], exc)
         # forget graded markets after a day
         self.state["markets"] = {k: v for k, v in self.state["markets"].items()
                                  if not (v.get("graded") and now - v["close"] > 86400)}
@@ -1435,10 +1587,12 @@ class Bot(FillQuality):
                                if m["series"] in self.s["live_series"] and not m.get("graded")},
                   "pnl": self.state["pnl"], "open_markets": sum(1 for m in self.state["markets"].values()
                                                                  if not m.get("graded")),
-                  "live_exposure": round(self.exposure("live"), 2), "errors": self.errors}
+                  "live_exposure": round(self.exposure("live"), 2), "errors": self.errors,
+                  "code": (self.state.get("code_version") or "")[:7], "control_real": self.control_real,
+                  "realtest": self.state.get("realtest", {})}
         files = {"status.json": json.dumps(status, indent=1, sort_keys=True)}
         for d in {self.day(now), self.day(now - 86400)}:
-            for kind in ("markets", "fills"):
+            for kind in ("markets", "fills", "realtest"):
                 p = M15_DIR / f"{kind}-{d}.csv"
                 if p.exists():
                     files[p.name] = p.read_text(encoding="utf-8")
@@ -1493,7 +1647,7 @@ class Bot(FillQuality):
         if live_open and mode != "off" and now - self.last["quotes"] >= self.s["rest_quote_s"]:
             self.last["quotes"] = now
             try:
-                got = kalshi.get_markets(self.http, [m["ticker"] for m in live_open])
+                got = kalshi.get_markets(self.http, sorted({m["ticker"] for m in live_open}))
                 self.rest_quotes = {tk: {"yes_bid": kalshi.price(x, "yes_bid"),
                                          "yes_ask": kalshi.price(x, "yes_ask"), "at": now}
                                     for tk, x in got.items()}

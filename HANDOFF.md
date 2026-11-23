@@ -23,7 +23,7 @@ record earns it. Be candid about odds and risk; no hype.
 - Nov 17 (Alex card "Double every live strategy", PR #318): every live strategy's contracts x2 (favorites 8,
   Fed/CPI fade 6, ai_fade 6, weather_late 2 / lows-need 4, the 1-contract tests 2). Global stops unchanged
   (10%/day, 25% halt). Scale-up kit stays OFF (Alex chose "leave it off" Nov 17).
-- 15-min bot paper; Copycat real off. Main bot is the only real-money bot.
+- 15-min bot paper EXCEPT the natgas real test (Nov 23, below); Copycat real off.
 
 ## Where everything lives
 - Repo (public): **github.com/alexanderhabel22-commits/kalshi-weather-bot**,
@@ -487,6 +487,14 @@ IP without a token). It never places, changes or cancels anything and needs no s
   Run: `python bot.py m15`. Settings: `[m15]` in config.toml.
 - Server: DigitalOcean ~$4/mo, Ubuntu, systemd `kalshi-m15` (+ hourly `kalshi-m15-update.timer`
   that pulls main and restarts). Setup for Alex: `deploy/m15/SETUP.md`.
+- **Natgas REAL test (Nov 23, Alex OK):** `live_series = ["KXNATGAS15M"]` only. Same entry rules as
+  paper, 1 real contract/window, HARD $3 cap (-(settled real P&L since `real_test_tag`) + open real bets +
+  new order); when no 71c bid fits it cuts to paper + push. Paper twin (`twin_series`, key `<ticker>|paper`)
+  keeps the paper record with paper sizes. Kill: `m15_control.json` `"real": {"KXNATGAS15M": "off"}`.
+  Per-window real vs paper log `m15/realtest-*.csv`; status.json `realtest`, `shards`, `code`.
+  Pushes: first real fill, 20/50 fills (reviews), cap. `fund = false`: never moves cash between
+  exchange balances; natgas uses the Crypto/commodity balance (Alex moves cash at kalshi.com/account/exchange-indexes).
+  Paper verdict ~Dec 1.
 - Fast switch (Claude): `m15_control.json` on main, mode live|paper|off, read every minute (~5 min with the CDN). `reset_halt` = a new string clears a total-loss halt.
 - Results: uploaded every 15 min to branch `m15-data` (`m15/status.json`, `m15/markets-*.csv`).
 - Rails: real orders only with `[m15] mode = "live"`, series in `live_series`, and the repo
