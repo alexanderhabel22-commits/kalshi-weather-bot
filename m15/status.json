@@ -1,7 +1,7 @@
 {
- "at": "2026-11-23T17:47:00+00:00",
+ "at": "2026-11-23T18:02:00+00:00",
  "code": "cb214a0",
- "control": "paper",
+ "control": "live",
  "control_real": {
   "KXNATGAS15M": "on"
  },
@@ -16,26 +16,33 @@
   "KXBTC15M": 1794394096
  },
  "halted": null,
- "last_reject": null,
+ "last_reject": {
+  "at": 1795456703,
+  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}",
+  "ticker": "KXNATGAS15M-26NOV231300-00"
+ },
  "live_exposure": 0.0,
  "live_now": {
-  "KXNATGAS15M-26NOV231300-00": {
-   "bid_ask": null,
-   "mode": "paper",
-   "order": false,
-   "why": "paper runs on the twin"
-  },
-  "KXNATGAS15M-26NOV231300-00|paper": {
+  "KXNATGAS15M-26NOV231315-15": {
    "bid_ask": [
-    0.59,
-    0.64
+    0.41,
+    0.44
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXNATGAS15M-26NOV231315-15|paper": {
+   "bid_ask": [
+    0.41,
+    0.44
    ],
    "mode": "paper",
    "order": false,
    "why": "out of band"
   }
  },
- "mode": "paper",
+ "mode": "live",
  "open_markets": 18,
  "pnl": {
   "halt_base": 0.0,
@@ -67,12 +74,24 @@
    "2026-11-20": -5.09,
    "2026-11-21": -6.06,
    "2026-11-22": -12.45,
-   "2026-11-23": -23.97
+   "2026-11-23": -28.16
   },
-  "paper_total": -452.2
+  "paper_total": -456.39
  },
  "pnl_24h": 0,
- "realtest": {},
+ "realtest": {
+  "KXNATGAS15M": {
+   "ct": 0.0,
+   "first_fill": null,
+   "markets": 0,
+   "paper_ct": 0.0,
+   "paper_pnl": 0.0,
+   "pnl": 0.0,
+   "reviews": [],
+   "tag": "natgas-2026-11-23",
+   "won": 0
+  }
+ },
  "roll_stop": null,
  "series": {
   "KXBTC15M": {
@@ -3760,7 +3779,12 @@
    ]
   }
  },
- "shards": null,
+ "shards": {
+  "0": 34.6155,
+  "1": 0.0,
+  "2": 0.8337,
+  "3": 0.0
+ },
  "spot_ok": true,
  "switch": {
   "halted": false,
