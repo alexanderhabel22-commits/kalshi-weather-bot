@@ -25,24 +25,6 @@
  "found": [
   {
    "alert_worthy": false,
-   "category": "Politics",
-   "checked": "2026-11-10T15:00:29+00:00",
-   "example": "KXHEGSETHIMPEACHARTICLES-27JAN01-AL8",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-10T15:00:29+00:00",
-   "frequency": "one_off",
-   "markets_seen": "2026-11-10T15:00:29+00:00",
-   "median_spread": null,
-   "n_open": 4,
-   "new_category": false,
-   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest).",
-   "series": "KXHEGSETHIMPEACHARTICLES",
-   "status": "live",
-   "title": "Articles of impeachment against Pete Hegseth",
-   "volume": 0.0
-  },
-  {
-   "alert_worthy": false,
    "category": "Elections",
    "checked": "2026-11-10T15:00:29+00:00",
    "example": "KXAGCOMMRACE-WV-28-R",
@@ -7222,6 +7204,24 @@
    "status": "live",
    "title": "Will the U.S. or Singapore criminally charge Megaspeed?",
    "volume": 0.0
+  },
+  {
+   "alert_worthy": false,
+   "category": "Politics",
+   "checked": "2026-11-23T17:30:27+00:00",
+   "example": "KXMULLINANNOUNCEOUT-26NOV-29JAN01",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-19T17:30:26+00:00",
+   "frequency": "one_off",
+   "markets_seen": "2026-11-23T17:30:27+00:00",
+   "median_spread": 0.04,
+   "n_open": 7,
+   "new_category": false,
+   "recommendation": "New category: check who sets the price and what it settles on before any test; launches are usually already efficient (Nov 5 backtest). Spreads already tight (4c): probably already efficient.",
+   "series": "KXMULLINANNOUNCEOUT",
+   "status": "live",
+   "title": "Markwayne Mullin out as Secretary of Homeland Security?",
+   "volume": 7625.8
   }
  ],
  "known": [
@@ -13776,6 +13776,7 @@
   "KXIBOVPOS",
   "KXIBOVW",
   "KXIBPLGAME",
+  "KXICCWITHDRAW",
   "KXICECONF",
   "KXICEDIRECTOR",
   "KXICEERO",
@@ -24015,7 +24016,7 @@
   "YINVERT",
   "ZYNBAN"
  ],
- "last_check": "2026-11-23T17:00:33+00:00",
+ "last_check": "2026-11-23T17:30:27+00:00",
  "pending": {
   "KX20YRRATED": {
    "category": "Financials",
@@ -25967,6 +25968,15 @@
    "series": "KXIBMA",
    "title": "IBM annual KPI"
   },
+  "KXICCWITHDRAW": {
+   "category": "Politics",
+   "fee_multiplier": 1,
+   "first_seen": "2026-11-23T17:30:27+00:00",
+   "frequency": "custom",
+   "new_category": false,
+   "series": "KXICCWITHDRAW",
+   "title": "ICC withdrawal announcements"
+  },
   "KXINDIATARIFF": {
    "category": "Politics",
    "fee_multiplier": 1,
@@ -26644,15 +26654,6 @@
    "new_category": false,
    "series": "KXMUA",
    "title": "Micron Technology annual KPI"
-  },
-  "KXMULLINANNOUNCEOUT": {
-   "category": "Politics",
-   "fee_multiplier": 1,
-   "first_seen": "2026-11-19T17:30:26+00:00",
-   "frequency": "one_off",
-   "new_category": false,
-   "series": "KXMULLINANNOUNCEOUT",
-   "title": "Markwayne Mullin out as Secretary of Homeland Security?"
   },
   "KXNBA2DPROT": {
    "category": "Sports",
@@ -27372,7 +27373,7 @@
   },
   "KXRAINDCOACHELLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-11T22:00:46+00:00",
    "frequency": "daily",
@@ -27624,7 +27625,7 @@
   },
   "KXSNOWDAYSAUS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27634,7 +27635,7 @@
   },
   "KXSNOWDAYSBAL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27644,7 +27645,7 @@
   },
   "KXSNOWDAYSBOS": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27654,7 +27655,7 @@
   },
   "KXSNOWDAYSCHI": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27664,7 +27665,7 @@
   },
   "KXSNOWDAYSCLE": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27674,7 +27675,7 @@
   },
   "KXSNOWDAYSCLT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27684,7 +27685,7 @@
   },
   "KXSNOWDAYSCVG": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27694,7 +27695,7 @@
   },
   "KXSNOWDAYSDC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27704,7 +27705,7 @@
   },
   "KXSNOWDAYSDEN": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27714,7 +27715,7 @@
   },
   "KXSNOWDAYSDFW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27724,7 +27725,7 @@
   },
   "KXSNOWDAYSDTW": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27734,7 +27735,7 @@
   },
   "KXSNOWDAYSHOU": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27744,7 +27745,7 @@
   },
   "KXSNOWDAYSIND": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27754,7 +27755,7 @@
   },
   "KXSNOWDAYSKC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27764,7 +27765,7 @@
   },
   "KXSNOWDAYSMSP": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27774,7 +27775,7 @@
   },
   "KXSNOWDAYSNASH": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27784,7 +27785,7 @@
   },
   "KXSNOWDAYSNOLA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27794,7 +27795,7 @@
   },
   "KXSNOWDAYSNYC": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27804,7 +27805,7 @@
   },
   "KXSNOWDAYSPDX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27814,7 +27815,7 @@
   },
   "KXSNOWDAYSPHL": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27824,7 +27825,7 @@
   },
   "KXSNOWDAYSPHX": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:30:25+00:00",
    "frequency": "custom",
@@ -27834,7 +27835,7 @@
   },
   "KXSNOWDAYSPIT": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
@@ -27844,7 +27845,7 @@
   },
   "KXSNOWDAYSSEA": {
    "category": "Climate and Weather",
-   "checked": "2026-11-23T17:00:33+00:00",
+   "checked": "2026-11-23T17:30:27+00:00",
    "fee_multiplier": 1,
    "first_seen": "2026-11-12T19:00:28+00:00",
    "frequency": "custom",
