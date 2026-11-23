@@ -1,5 +1,5 @@
 {
- "at": "2026-11-22 21:58:19",
+ "at": "2026-11-22 22:03:19",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -50,10 +50,10 @@
  },
  "totals": {
   "n": 11,
-  "settled": 8,
-  "won": 5,
-  "pnl": 1.02,
-  "c_per_ct": 12.7,
+  "settled": 10,
+  "won": 7,
+  "pnl": 1.14,
+  "c_per_ct": 11.4,
   "skipped": 85
  },
  "first_source": {
@@ -163,10 +163,10 @@
   },
   "ptwc|0.0": {
    "n": 1,
-   "settled": 0,
-   "won": 0,
-   "pnl": 0,
-   "c_per_ct": null,
+   "settled": 1,
+   "won": 1,
+   "pnl": 0.06,
+   "c_per_ct": 6.0,
    "skipped": 6
   },
   "ptwc|0.2": {
@@ -179,10 +179,10 @@
   },
   "usgs|0.0": {
    "n": 1,
-   "settled": 0,
-   "won": 0,
-   "pnl": 0,
-   "c_per_ct": null,
+   "settled": 1,
+   "won": 1,
+   "pnl": 0.06,
+   "c_per_ct": 6.0,
    "skipped": 7
   },
   "usgs|0.2": {
@@ -332,9 +332,11 @@
    "ask": 0.93,
    "ask_size": 10.0,
    "place": "VANUATU REGION",
-   "status": "open",
+   "status": "settled",
    "fee": 0.01,
-   "checked": 1795402692.449162
+   "checked": 1795402992.9105818,
+   "result": "yes",
+   "pnl": 0.06
   },
   {
    "key": "q1795402059-emsc_ws|ptwc|KXBIGGESTQUAKE-23NOV26-6.2|0.0",
@@ -593,9 +595,11 @@
    "ask": 0.93,
    "ask_size": 10.0,
    "place": "VANUATU REGION",
-   "status": "open",
+   "status": "settled",
    "fee": 0.01,
-   "checked": 1795402699.4842122
+   "checked": 1795402999.9438632,
+   "result": "yes",
+   "pnl": 0.06
   },
   {
    "key": "q1795402059-emsc_ws|usgs|KXBIGGESTQUAKE-23NOV26-6.2|0.0",
@@ -1075,7 +1079,8 @@
    "ask_size": 10.0,
    "place": "VANUATU REGION",
    "status": "open",
-   "fee": 0.01
+   "fee": 0.01,
+   "checked": 1795402827.9884498
   },
   {
    "key": "q1795402059-emsc_ws|ntwc|KXBIGGESTQUAKE-23NOV26-6.2|0.0",
@@ -1622,69 +1627,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 8426,
+   "ok": 8441,
    "err": 0,
-   "last_ok": "2026-11-22 21:58:15",
+   "last_ok": "2026-11-22 22:03:15",
    "last_err": null
   },
   "emsc": {
-   "ok": 2156,
+   "ok": 2176,
    "err": 9078,
-   "last_ok": "2026-11-22 21:58:12",
+   "last_ok": "2026-11-22 22:03:12",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 1237,
+   "ok": 1245,
    "err": 1,
-   "last_ok": "2026-11-22 21:57:50",
+   "last_ok": "2026-11-22 22:01:37",
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 5617,
+   "ok": 5627,
    "err": 0,
-   "last_ok": "2026-11-22 21:57:54",
+   "last_ok": "2026-11-22 22:02:54",
    "last_err": null
   },
   "gfz": {
-   "ok": 16851,
+   "ok": 16881,
    "err": 0,
-   "last_ok": "2026-11-22 21:58:18",
+   "last_ok": "2026-11-22 22:03:18",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 5282,
-   "err": 335,
-   "last_ok": "2026-11-22 21:57:53",
+   "ok": 5291,
+   "err": 336,
+   "last_ok": "2026-11-22 22:02:53",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 5617,
+   "ok": 5627,
    "err": 0,
-   "last_ok": "2026-11-22 21:57:54",
+   "last_ok": "2026-11-22 22:02:54",
    "last_err": null
   },
   "kalshi": {
-   "ok": 22260,
+   "ok": 22300,
    "err": 30,
-   "last_ok": "2026-11-22 21:58:08",
+   "last_ok": "2026-11-22 22:03:10",
    "last_err": null
   },
   "ntwc": {
-   "ok": 11234,
+   "ok": 11254,
    "err": 0,
-   "last_ok": "2026-11-22 21:58:12",
+   "last_ok": "2026-11-22 22:03:12",
    "last_err": null
   },
   "ptwc": {
-   "ok": 11234,
+   "ok": 11254,
    "err": 0,
-   "last_ok": "2026-11-22 21:58:12",
+   "last_ok": "2026-11-22 22:03:12",
    "last_err": null
   },
   "usgs": {
-   "ok": 16851,
+   "ok": 16881,
    "err": 0,
-   "last_ok": "2026-11-22 21:58:18",
+   "last_ok": "2026-11-22 22:03:18",
    "last_err": null
   }
  }
