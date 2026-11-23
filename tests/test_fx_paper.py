@@ -84,3 +84,14 @@ def test_fx_inputs_requires_fresh_spot():
     assert got["USDMXN"][0] == 18.4 and abs(got["USDMXN"][1] - 0.002) < 1e-4
     ctx = SimpleNamespace(now=NOW, http=FakeHttp(int(NOW.timestamp()) - 3 * 3600), state={})
     assert fx.fx_inputs(ctx, {"USDMXN"}, P) == {}                                  # FX shut / stale
+
+
+def test_weekend_blocked():
+    et = fx.ET
+    assert fx.fx_closed(datetime(2026, 11, 21, 8, 0, tzinfo=et))          # Sat
+    assert fx.fx_closed(datetime(2026, 11, 20, 17, 30, tzinfo=et))        # Fri after 5 PM
+    assert fx.fx_closed(datetime(2026, 11, 22, 16, 0, tzinfo=et))         # Sun before 5 PM
+    assert not fx.fx_closed(datetime(2026, 11, 22, 17, 5, tzinfo=et))     # Sun reopen
+    assert not fx.fx_closed(datetime(2026, 11, 23, 9, 0, tzinfo=et))      # Mon
+    ctx = SimpleNamespace(now=datetime(2026, 11, 21, 13, 0, tzinfo=UTC), params={}, state={}, http=None, orders=[], mode="paper")
+    assert fx.propose(ctx) == []
