@@ -1,6 +1,6 @@
 {
- "at": "2026-11-23T18:17:00+00:00",
- "code": "cb214a0",
+ "at": "2026-11-23T18:30:16+00:00",
+ "code": "367d2ae",
  "control": "live",
  "control_real": {
   "KXNATGAS15M": "on"
@@ -16,17 +16,13 @@
   "KXBTC15M": 1794394096
  },
  "halted": null,
- "last_reject": {
-  "at": 1795456703,
-  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"insufficient_balance\",\"message\":\"insufficient balance\"}}",
-  "ticker": "KXNATGAS15M-26NOV231300-00"
- },
- "live_exposure": 0.0,
+ "last_reject": null,
+ "live_exposure": 0.73,
  "live_now": {
   "KXNATGAS15M-26NOV231330-30": {
    "bid_ask": [
-    0.39,
-    0.44
+    0.99,
+    1.0
    ],
    "mode": "live",
    "order": false,
@@ -34,8 +30,26 @@
   },
   "KXNATGAS15M-26NOV231330-30|paper": {
    "bid_ask": [
-    0.39,
-    0.44
+    0.99,
+    1.0
+   ],
+   "mode": "paper",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXNATGAS15M-26NOV231345-45": {
+   "bid_ask": [
+    0.58,
+    0.64
+   ],
+   "mode": "live",
+   "order": false,
+   "why": "out of band"
+  },
+  "KXNATGAS15M-26NOV231345-45|paper": {
+   "bid_ask": [
+    0.58,
+    0.64
    ],
    "mode": "paper",
    "order": false,
@@ -43,7 +57,7 @@
   }
  },
  "mode": "live",
- "open_markets": 18,
+ "open_markets": 14,
  "pnl": {
   "halt_base": 0.0,
   "live_days": {
@@ -74,24 +88,12 @@
    "2026-11-20": -5.09,
    "2026-11-21": -6.06,
    "2026-11-22": -12.45,
-   "2026-11-23": -25.96
+   "2026-11-23": -28.48
   },
-  "paper_total": -454.19
+  "paper_total": -456.71
  },
  "pnl_24h": 0,
- "realtest": {
-  "KXNATGAS15M": {
-   "ct": 0.0,
-   "first_fill": null,
-   "markets": 0,
-   "paper_ct": 0.0,
-   "paper_pnl": 0.0,
-   "pnl": 0.0,
-   "reviews": [],
-   "tag": "natgas-2026-11-23",
-   "won": 0
-  }
- },
+ "realtest": {},
  "roll_stop": null,
  "series": {
   "KXBTC15M": {
@@ -3780,9 +3782,9 @@
   }
  },
  "shards": {
-  "0": 34.6155,
+  "0": 29.6155,
   "1": 0.0,
-  "2": 0.8337,
+  "2": 5.1037,
   "3": 0.0
  },
  "spot_ok": true,
