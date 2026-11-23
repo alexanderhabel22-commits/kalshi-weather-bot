@@ -16,7 +16,8 @@ trades. EVENT series: tie with the market. 4 model families were tested, so one 
 plausible. The weekly series has not listed since ~Oct 30; the radar flags its return.
 
 The rule is the replay's (fxust_an.py, edge 0.05):
-  - spot S = Yahoo's live price for the pair (must be <= 30 min old: no trading when FX is shut);
+  - spot S = Yahoo's live price for the pair (must be <= 30 min old), and never Fri 5 PM - Sun 5 PM ET
+    (FX shut; Yahoo's weekend quotes look fresh, so the weekend is blocked by the clock);
   - sigma = std of the last 528 hourly log returns (22 trading days of Yahoo hourly closes);
   - tau = hours to the market's close, counting weekdays only (at least 1);
   - p = P(rate > K) = Phi(ln(S/K) / (sigma * sqrt(tau)))  ('less' markets: 1 - p);
@@ -29,6 +30,7 @@ from __future__ import annotations
 import logging
 import math
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from .. import kalshi
 from ..trader import Intent, held_by_event
@@ -45,6 +47,15 @@ UA = {"User-Agent": "Mozilla/5.0 (research client)"}
 DEFAULTS = {"contracts": 1, "edge": 0.05, "min_price": 0.03, "max_price": 0.97,
             "vol_hours": 528, "max_spot_age_min": 30, "active_refresh_min": 60}
 log = logging.getLogger("wxbot")
+ET = ZoneInfo("America/New_York")
+
+
+def fx_closed(now: datetime) -> bool:
+    """Spot FX is shut Fri 5 PM - Sun 5 PM ET. Yahoo still stamps weekend quotes as fresh
+    (first live weekend Nov 21-22 placed 37 paper orders), so the weekend is blocked outright."""
+    t = now.astimezone(ET)
+    wd, h = t.weekday(), t.hour
+    return wd == 5 or (wd == 4 and h >= 17) or (wd == 6 and h < 17)
 
 
 def phi(x: float) -> float:
@@ -186,6 +197,8 @@ def active(ctx, p: dict) -> list[dict]:
 
 def propose(ctx) -> list[Intent]:
     p = {**DEFAULTS, **(ctx.params or {})}
+    if fx_closed(ctx.now):
+        return []
     markets = active(ctx, p)
     if not markets:
         return []
