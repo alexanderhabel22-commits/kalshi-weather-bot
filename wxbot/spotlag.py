@@ -50,6 +50,7 @@ import os
 import re
 import statistics
 import time
+from collections import deque
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
@@ -209,6 +210,12 @@ class Spot:
             comp = Composite(sorted(set(SERIES.values())), keep_s=VOL_LOOK_S + 300)
         self.comp = comp
         self.cf_ids: dict[str, int] = {}
+        # Own CF history, exactly one point per second. (Composite.sample can append the CF
+        # point many times a second whenever no exchange price is fresh, which squeezed its
+        # deque down to minutes and left the CF volatility empty on the server, Nov 24.)
+        self.cf_last: dict[str, tuple[float, float]] = {}
+        self.cf_series: dict[str, deque] = {c: deque(maxlen=VOL_LOOK_S + 300)
+                                            for c in sorted(set(SERIES.values()))}
         self._sig: dict[tuple, tuple[float, float | None]] = {}   # (coin, src) -> (at, sigma)
 
     def sigma(self, coin: str, cf: bool, now: float) -> float | None:
@@ -217,7 +224,7 @@ class Spot:
         hit = self._sig.get(k)
         if hit and now - hit[0] < SIG_EVERY_S:
             return hit[1]
-        src = self.comp.cf_series if cf else self.comp.series
+        src = self.cf_series if cf else self.comp.series
         v = sigma_1m(src.get(coin, ()), now)
         self._sig[k] = (now, v)
         return v
@@ -232,19 +239,24 @@ class Spot:
         coin = cf_coin(iid)
         p = _f(msg.get("value_usd", msg.get("value")))
         if coin and p and p > 0:
-            self.comp.on_cf(coin, p, now)
+            self.cf_last[coin] = (now, p)
 
     def sample(self, now: float) -> None:
         self.comp.sample(now)
+        sec = int(now)
+        for c, d in self.cf_series.items():
+            last = self.cf_last.get(c)
+            if last and now - last[0] <= 10 and (not d or d[-1][0] < sec):
+                d.append((sec, last[1]))
 
     def fair(self, coin: str, strike: float, close: float, now: float) -> dict | None:
         from .m15_fv import fair_yes
         left = close - now
-        d = self.comp.cf_series.get(coin)
-        if d and now - d[-1][0] <= CF_FRESH_S:
+        last = self.cf_last.get(coin)
+        if last and now - last[0] <= CF_FRESH_S:
             sig = self.sigma(coin, True, now)
             if sig is not None:
-                px = d[-1][1]
+                px = last[1]
                 return {"src": "cf", "px": px, "sigma": sig, "fv_yes": fair_yes(px, strike, sig, left, [])}
         if self.comp.healthy(coin, now):
             px, n = self.comp.now_px(coin, now)
@@ -257,8 +269,9 @@ class Spot:
     def health(self, now: float) -> dict:
         out = {}
         for c in sorted(set(SERIES.values())):
-            cf, mx = self.comp.cf_series.get(c), self.comp.series.get(c)
-            out[c] = {"cf_age_s": round(now - cf[-1][0], 1) if cf else None,
+            cf, mx = self.cf_last.get(c), self.comp.series.get(c)
+            out[c] = {"cf_age_s": round(now - cf[0], 1) if cf else None,
+                      "cf_points": len(self.cf_series.get(c, ())),
                       "mix_age_s": round(now - mx[-1][0], 1) if mx else None,
                       "venues": self.comp.now_px(c, now)[1],
                       "cf_vol_ok": self.sigma(c, True, now) is not None,

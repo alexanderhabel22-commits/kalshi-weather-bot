@@ -248,7 +248,7 @@ def test_real_spot_prefers_cf_after_warmup():
     f = sp.fair("DOGE", 0.15, T0 + 300, T0)
     assert f["src"] == "cf" and 0 < f["fv_yes"] < 1
     assert sp.fair("NEAR", 3.0, T0 + 300, T0) is None          # no NEAR data at all
-    sp.comp.cf_series["DOGE"].clear()
+    sp.cf_series["DOGE"].clear(); sp.cf_last.clear()
     assert sp.fair("DOGE", 0.15, T0 + 300, T0)["src"].startswith("mix")
 
 
@@ -259,7 +259,7 @@ def test_sigma_cached_between_recomputes():
         sp.on_cf({"index_id": "DOGEUSD_RTI", "value_usd": str(0.15 * math.exp(0.002 * math.sin(i / 300)))}, T0 - 3600 + i)
         sp.sample(T0 - 3600 + i)
     a = sp.sigma("DOGE", True, T0)
-    sp.comp.cf_series["DOGE"].clear()
+    sp.cf_series["DOGE"].clear(); sp.cf_last.clear()
     assert sp.sigma("DOGE", True, T0 + 5) == a                 # cached
     assert sp.sigma("DOGE", True, T0 + 20) is None             # recomputed
 
@@ -270,3 +270,17 @@ def test_scan_throttled_per_tick(tmp_path):
     for i in range(10):
         sl.tick(clk.t + i * 0.01, timers)
     assert sl.counts["scans"] == 1
+
+
+def test_cf_history_one_point_per_second_even_without_exchange_prices():
+    from wxbot.m15_fv import Composite
+    sp = spotlag.Spot(Composite(["DOGE", "NEAR"], keep_s=4000))
+    t = T0 - 3600
+    while t < T0:                    # CF at 5 Hz, sampled at 50 Hz, no exchange prices at all
+        if round((t - T0) * 50) % 10 == 0:
+            sp.on_cf({"index_id": "NEARUSD_RTI", "value_usd": str(3.0 * math.exp(0.002 * math.sin(t / 300)))}, t)
+        sp.sample(t)
+        t += 0.02
+    assert 3590 <= len(sp.cf_series["NEAR"]) <= 3601
+    f = sp.fair("NEAR", 3.0, T0 + 300, T0 - 0.01)
+    assert f and f["src"] == "cf"
