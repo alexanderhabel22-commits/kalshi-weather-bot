@@ -327,6 +327,18 @@ record earns it. Be candid about odds and risk; no hype.
   market, skip brackets within 2 ships of the total), and scores against Kalshi's result and settled value.
   Status m15/shiprelease.json on m15-data; dashboard TESTS card "Shipping release window". First release
   Tue Nov 24; paper verdict after 4 Tuesdays (~Dec 15). Off (whole service): `sudo systemctl disable --now kalshi-shiprel && sudo touch /var/lib/kalshi-shiprel.disabled`.
+- **DOGE/NEAR spot-lag logger (PAPER ONLY, Nov 24, 1 ct):** `wxbot/spotlag.py`, droplet service
+  `kalshi-spotlag` (installed by update.sh via `deploy/m15/install-spotlag.sh`; no trading-bot restart),
+  switch `spotlag_control.json` on main (mode paper | off). No order code at all: the Kalshi key only signs
+  the websocket login. Alex Nov 24 ~12:30 AM ET "Ok please do that paper logger then" (design: section 5 of
+  analysis/m15-permutations/RESULTS.md). Spot = Kalshi's CF Benchmarks feed (DOGEUSD_RTI / NEARUSD_RTI)
+  when fresh, else the Coinbase/Kraken/Bitstamp median; vol = 1-min returns over 60 min; fair =
+  `m15_fv.fair_yes` vs floor_strike. Signal: fair - ask - fee >= 10c, 840 s >= left >= 60 s, first per
+  market; logs ask/size/fair/edge at +0.5/1/2/5 s from the orderbook_delta book; paper IOC at the +1 s ask
+  if edge >= 5c with 1+ ct on offer. Status m15/spotlag.json (daily catchability table + per-delay c/ct
+  +/- SE) and m15/spotlag-YYYY-MM-DD.csv on m15-data; dashboard TESTS card "DOGE/NEAR spot lag". Day-1
+  check: under half still 5c+ at +1 s = stop. Verdict ~300 settled +1 s fills (~Nov 28): keep only if
+  >= +3c/ct with the 90% range above 0 (SE ~2.6c at 300 = first read). Real money needs Alex's OK.
 - **FX vs lognormal paper test (PAPER ONLY, Nov 21, 1 ct):** `wxbot/strats/fx_paper.py`,
   `[trading.fx_paper]` (live = false; build OK'd in the project chat Nov 20 ~10:20 PM ET). Kalshi FX
   "above K at a fixed time" markets settled on Pyth: weekly KX{pair}AW (the lead), daily KX{pair}AD and

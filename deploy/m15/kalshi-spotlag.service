@@ -1,0 +1,25 @@
+[Unit]
+Description=DOGE/NEAR 15-min spot-lag PAPER logger (CF index + exchange spot vs Kalshi order book; never trades)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=kalshi
+WorkingDirectory=/opt/kalshi-m15/app
+# Uses GITHUB_TOKEN (status + CSV to branch m15-data) and the Kalshi key ONLY to sign the websocket
+# login (wxbot/spotlag.py has no order code). Every other secret is dropped at start.
+# Switch: spotlag_control.json on main (mode paper | off).
+EnvironmentFile=/etc/kalshi-m15/env
+ExecStart=/opt/kalshi-m15/venv/bin/python -m wxbot.spotlag
+Environment=SPOTLAG_DIR=/var/lib/kalshi-spotlag
+StateDirectory=kalshi-spotlag
+Restart=always
+RestartSec=60
+Nice=10
+CPUQuota=15%
+MemoryMax=200M
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

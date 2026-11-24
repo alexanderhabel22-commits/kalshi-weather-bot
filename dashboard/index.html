@@ -447,7 +447,7 @@ function swingHTML(){
 const TEST_START = Date.parse("2026-11-11T13:30:00Z");
 async function loadTests(){
   const get = async f => { try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/m15-data/m15/${f}?t=${Date.now()}`, {cache:"no-store"}); return r.ok ? await r.json() : null; } catch(e){ return null; } };
-  const [lip, mm, rfq, field, watch, qfast, shiprel] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json"), get("watch.json"), get("quakefast.json"), get("shiprelease.json")]);
+  const [lip, mm, rfq, field, watch, qfast, shiprel, spotlag] = await Promise.all([get("lip-status.json"), get("paper-mm.json"), get("paper-rfq.json"), get("paper-field.json"), get("watch.json"), get("quakefast.json"), get("shiprelease.json"), get("spotlag.json")]);
   if (watch) S.watch = watch;
   let late = [];
   try { late = parseCSV(await raw("data/paper_late.csv")); } catch(e){ late = []; }
@@ -459,7 +459,7 @@ async function loadTests(){
   let radar = null, farm = null;
   try { radar = await raw("data/radar.json", "json"); } catch(e){ radar = null; }
   try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/farm-watch-data/state/farm_watch.json?t=${Date.now()}`, {cache:"no-store"}); farm = r.ok ? await r.json() : null; } catch(e){ farm = null; }
-  S.tx = {lip, mm, rfq, late, cool, field, qstate, fstate, radar, farm, qfast, shiprel};
+  S.tx = {lip, mm, rfq, late, cool, field, qstate, fstate, radar, farm, qfast, shiprel, spotlag};
 }
 // Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
 function lateCard(rows){
@@ -558,7 +558,48 @@ function realTestsHTML(){
       ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : x.strategy === "quake_no_guard_paper" ? "paper + guard" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
     </div>`;
   }
-  return h + quakeFastHTML() + shipPaperHTML(rowsP) + shipReleaseHTML() + fxPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
+  return h + spotLagHTML() + quakeFastHTML() + shipPaperHTML(rowsP) + shipReleaseHTML() + fxPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
+}
+/* DOGE/NEAR spot-lag PAPER logger (Nov 24): the 15-min server compares the CF Benchmarks index (what
+   Kalshi settles on; exchange median as fallback) with the live Kalshi order book. When fair - ask - fee
+   is 10c+ (14 to 1 min before close, first per market) it logs the ask again at +0.5/+1/+2/+5 s and takes a
+   1-contract PAPER buy at the +1 s ask if 5c+ edge is still there. Status m15/spotlag.json on m15-data. */
+const SL_DELAYS = [["0","at signal"],["0.5","+0.5 s"],["1","+1 s (paper fill)"],["2","+2 s"],["5","+5 s"]];
+function spotLagHTML(){
+  const L = (S.tx || {}).spotlag;
+  let h = `<h2>DOGE/NEAR spot lag <span class="sub">PAPER ONLY · 1 ct · since Nov 24 · verdict at 300 fills (~Nov 28)</span></h2><div class="card">`;
+  h += `<div class="mute" style="font-size:11px;line-height:1.5;margin-bottom:6px">The Nov 24 search found Kalshi's DOGE and NEAR 15-minute prices lag the coins' real price by seconds. When the price says a side is worth 10¢+ more than its ask after the fee, buying it won about +4.9¢/ct in held-out weeks, but buying one minute later lost (DOGE −2.6¢). So the question is speed: does a bot reacting in about a second still find the stale ask? The server watches Kalshi's own CF Benchmarks feed (what these markets settle on) and the live order book, logs every 10¢+ gap (14 to 1 min before close, first per market), checks the ask again at +0.5, +1, +2 and +5 s, and makes a 1-contract <b>paper</b> buy at the +1 s ask if 5¢+ edge is still there and a contract is on offer (no optimistic fills). No money moves; real money would need Alex's OK. <b>Day-1 check:</b> if the gap is usually gone within a second (under half still 5¢+ at +1 s), we stop. <b>Verdict</b> at ~300 settled paper fills: keep only if +1 s fills make +3¢/ct or more with the 90% range above 0. At 300 fills the range is still about ±2.6¢ (one SE), so that is a first read, not proof.</div>`;
+  if (!L) return h + `<div class="mute" style="font-size:12px">No status yet. The server starts this logger within ~2 hours of the update; it needs 30 minutes of price history before the first signal.</div></div>`;
+  const cc = v => v == null ? "—" : cents(+v);
+  const S1 = (L.scores || {})["1"] || {}, V = L.verdict || {}, C = L.catch || [], d0 = C[0];
+  const sh1 = d0 && d0["1"] && d0["1"].share_5c != null ? Math.round(100 * d0["1"].share_5c) : null;
+  h += `<div class="sgrid" style="margin-bottom:8px">
+    <div><div class="lbl">+1 s paper fills</div><div class="val ${cls(S1.c_per_ct || 0)}">${S1.n ? cc(S1.c_per_ct) + (S1.se_c != null ? ` ±${(+S1.se_c).toFixed(1)}` : "") : "—"}<small>${S1.n || 0} settled · ${S1.n ? money(S1.pnl) : "$0"} · 90% range ${S1.lo90_c == null ? "—" : cc(S1.lo90_c) + " to " + cc(S1.hi90_c)}</small></div></div>
+    <div><div class="lbl">Signals (10¢+ gaps)</div><div class="val">${L.signals || 0}<small>${L.paper_fills || 0} paper fills · ${L.open || 0} open · index ${Object.entries(L.src || {}).map(([k, v]) => (k === "cf" ? "CF " : "exchanges ") + v).join(", ") || "—"}</small></div></div>
+    <div><div class="lbl">Still 5¢+ at +1 s (today)</div><div class="val ${sh1 == null ? "" : sh1 >= 50 ? "pos" : "neg"}">${sh1 == null ? "—" : sh1 + "%"}<small>${d0 ? d0.signals + " signals " + esc(d0.day) : "no signals yet"} · day-1 bar 50%</small></div></div>
+    <div><div class="lbl">Verdict</div><div class="val">${V.fills || 0} / ${V.need || 300}<small>${esc(V.state === "collecting" ? "collecting" : V.text || "")}</small></div></div></div>`;
+  if (C.length){
+    h += `<div class="lbl" style="margin-top:4px">Catchability by day (no settlements needed): share of 10¢+ gaps still 5¢+ with a contract on offer, and median edge left</div><div style="overflow-x:auto"><table class="tbl"><tr><th>Day (ET)</th><th align="right">Signals</th><th align="right">DOGE / NEAR</th>${SL_DELAYS.slice(1).map(d => `<th align="right">${d[1].replace(" (paper fill)", "")}</th>`).join("")}<th align="right">Ask unchanged at +1 s</th></tr>`;
+    for (const r of C){
+      const cell = k => { const x = r[k] || {}; return `<td align="right">${x.share_5c == null ? "—" : Math.round(100 * x.share_5c) + "%"}<br><small class="mute">median ${x.median_edge_c == null ? "—" : cc(x.median_edge_c)}</small></td>`; };
+      const bc = r.by_coin || {};
+      h += `<tr><td>${esc(r.day)}</td><td align="right">${r.signals}<br><small class="mute">median ${cc((r["0"] || {}).median_edge_c)}</small></td><td align="right">${bc.DOGE || 0} / ${bc.NEAR || 0}</td>${cell("0.5")}${cell("1")}${cell("2")}${cell("5")}<td align="right">${(r["1"] || {}).same_ask == null ? "—" : Math.round(100 * r["1"].same_ask) + "%"}</td></tr>`;
+    }
+    h += `</table></div>`;
+  }
+  const sc = L.scores || {}, bc = L.by_coin || {};
+  if (Object.values(sc).some(x => x.n)){
+    h += `<div class="lbl" style="margin-top:8px">Paper result if you bought at each delay (only when 5¢+ edge was still there; at signal = the 10¢+ ask)</div><div style="overflow-x:auto"><table class="tbl"><tr><th>Bought at</th><th align="right">Settled</th><th align="right">Won</th><th align="right">¢/ct ± SE</th><th align="right">90% range</th><th align="right">P&amp;L</th><th align="right">DOGE ¢/ct</th><th align="right">NEAR ¢/ct</th></tr>`;
+    for (const [k, lab] of SL_DELAYS){ const x = sc[k] || {}, D = ((bc.DOGE || {})[k]) || {}, N = ((bc.NEAR || {})[k]) || {};
+      h += `<tr${k === "1" ? ' style="font-weight:700"' : ""}><td>${lab}</td><td align="right">${x.n || 0}</td><td align="right">${x.won || 0}</td><td align="right" class="${cls(x.c_per_ct || 0)}">${x.n ? cc(x.c_per_ct) + (x.se_c != null ? " ±" + (+x.se_c).toFixed(1) : "") : "—"}</td><td align="right">${x.lo90_c == null ? "—" : cc(x.lo90_c) + " to " + cc(x.hi90_c)}</td><td align="right" class="${cls(x.pnl || 0)}">${x.n ? money(x.pnl) : "—"}</td><td align="right">${D.n ? cc(D.c_per_ct) + ` <small class="mute">(${D.n})</small>` : "—"}</td><td align="right">${N.n ? cc(N.c_per_ct) + ` <small class="mute">(${N.n})</small>` : "—"}</td></tr>`; }
+    h += `</table></div>`;
+  }
+  const rc = (L.recent || []).slice(0, 10);
+  if (rc.length) h += `<div class="list" style="margin-top:6px">` + rc.map(r => `<div class="item" style="padding:6px 0"><span class="side ${esc(r.side)}">${esc(String(r.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(r.coin)} ${esc((r.et || "").slice(5, 16))} ET <small class="mute">${Math.round((r.left_s || 0) / 60)} min left · ${r.src === "cf" ? "CF index" : "exchange median"}</small></div><div class="s">gap ${cc(100 * (r.edge0 || 0))} at ${Math.round(100 * (r.ask0 || 0))}¢ (${Math.round(r.size0 || 0)} on offer) → +1 s ${r.ask1 == null ? "no ask" : Math.round(100 * r.ask1) + "¢, edge " + cc(100 * (r.edge1 || 0))} · ${r.fill ? "paper bought" : "no paper buy"}</div></div><div class="r ${r.pnl == null ? "" : cls(r.pnl)}">${r.pnl != null ? money(r.pnl) : r.fill ? (r.result ? "—" : "open") : ""}</div></div>`).join("") + `</div>`;
+  else h += `<div class="mute" style="font-size:12px;margin-top:6px">No signals yet. Expect roughly 50 a day per coin once the logger has 30 minutes of history.</div>`;
+  const F = L.feeds || {}, sp = F.spot || {};
+  h += `<div class="mute" style="font-size:10px;margin-top:6px">Feeds (updated ${esc(L.at || "")} ET, mode ${esc(L.mode || "")}): ${Object.entries(sp).map(([c, v]) => `${esc(c)} CF ${v.cf_age_s == null ? "❌" : v.cf_age_s <= 5 ? "✓" : "⚠️"} · exchanges ${v.venues || 0}`).join(" · ")} · Kalshi book ${F.ws_age_s != null && F.ws_age_s < 30 ? "✓" : "⚠️"} (${F.books_ok || 0} books, ${F.resyncs || 0} resyncs)</div>`;
+  return h + `</div>`;
 }
 /* Fast-quake YES paper test (Nov 21): the 15-min server polls free quake feeds every 10-30 s and
    logs, per source, when it first saw each quake, what the Kalshi YES ask was then, and what a
