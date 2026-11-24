@@ -141,3 +141,22 @@ def test_feed_log(monkeypatch, tmp_path):
     q.log_feeds(NOW, fd, 0.0)                                                # no duplicates
     lines = (tmp_path / "f.csv").read_text().splitlines()
     assert len(lines) == 2 and "gfz" in lines[1] and "6.66" in lines[1]
+
+
+# --- strike ladder paper test (Nov 24, 2026) ---------------------------------------------------
+def test_ladder_paper_trades_only_in_between_strikes(monkeypatch):
+    from wxbot.strats import quake_ladder_paper as lp
+    ms = [mkt(6.2, 0.20), mkt(6.4, 0.12), mkt(6.6, 0.12), mkt(6.8, 0.08), mkt(7.0, 0.07)]
+    monkeypatch.setattr(q, "_series_markets", lambda c, s: ms)
+    monkeypatch.setattr(q, "max_so_far", lambda c, s: 5.4)
+    q._CACHE.clear()
+    out = lp.propose(ctx(mode="paper"))
+    assert {i.ticker.rsplit("-", 1)[-1] for i in out} <= {"6.2", "6.4", "6.8"} and out
+    assert all(i.strategy == "quake_ladder_paper" and i.side == "no" for i in out)
+    live = q.propose(ctx(mode="paper"))                       # live rule still only 6.6 / 7.0
+    assert {i.ticker.rsplit("-", 1)[-1] for i in live} <= {"6.6", "7.0"}
+
+
+def test_ladder_climatology():
+    assert abs(q.pday_any(6.2) - 682 / 3653) < 1e-9 and abs(q.pday_any(6.8) - 213 / 3653) < 1e-9
+    assert q.pday_any(7.0) == q.pday(7.0) and q.pday(6.2) == 0.0
