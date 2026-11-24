@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 13:27:10",
+ "at": "2026-11-24 13:37:10",
  "mode": "paper",
  "paper_only": true,
  "since": "2026-11-24 04:16:34",
@@ -16,45 +16,45 @@
   ],
   "contracts": 1
  },
- "signals": 50,
- "paper_fills": 27,
- "open": 0,
+ "signals": 52,
+ "paper_fills": 29,
+ "open": 1,
  "scores": {
   "0": {
-   "n": 50,
+   "n": 51,
    "won": 20,
-   "pnl": -2.76,
-   "c_per_ct": -5.52,
-   "se_c": 6.99,
-   "lo90_c": -17.02,
-   "hi90_c": 5.98
+   "pnl": -2.82,
+   "c_per_ct": -5.53,
+   "se_c": 6.85,
+   "lo90_c": -16.81,
+   "hi90_c": 5.74
   },
   "0.5": {
-   "n": 35,
+   "n": 36,
    "won": 16,
-   "pnl": -0.35,
-   "c_per_ct": -1.0,
-   "se_c": 8.67,
-   "lo90_c": -15.26,
-   "hi90_c": 13.26
+   "pnl": -0.39,
+   "c_per_ct": -1.09,
+   "se_c": 8.42,
+   "lo90_c": -14.95,
+   "hi90_c": 12.77
   },
   "1": {
-   "n": 27,
+   "n": 28,
    "won": 11,
-   "pnl": -2.0,
-   "c_per_ct": -7.43,
-   "se_c": 9.49,
-   "lo90_c": -23.04,
-   "hi90_c": 8.19
+   "pnl": -2.04,
+   "c_per_ct": -7.3,
+   "se_c": 9.15,
+   "lo90_c": -22.35,
+   "hi90_c": 7.75
   },
   "2": {
-   "n": 24,
+   "n": 25,
    "won": 9,
-   "pnl": -3.46,
-   "c_per_ct": -14.43,
-   "se_c": 10.04,
-   "lo90_c": -30.95,
-   "hi90_c": 2.08
+   "pnl": -3.51,
+   "c_per_ct": -14.02,
+   "se_c": 9.64,
+   "lo90_c": -29.88,
+   "hi90_c": 1.83
   },
   "5": {
    "n": 25,
@@ -116,40 +116,40 @@
   },
   "NEAR": {
    "0": {
-    "n": 23,
+    "n": 24,
     "won": 10,
-    "pnl": 0.03,
-    "c_per_ct": 0.13,
-    "se_c": 10.52,
-    "lo90_c": -17.17,
-    "hi90_c": 17.43
+    "pnl": -0.03,
+    "c_per_ct": -0.13,
+    "se_c": 10.07,
+    "lo90_c": -16.7,
+    "hi90_c": 16.44
    },
    "0.5": {
-    "n": 15,
+    "n": 16,
     "won": 8,
-    "pnl": 0.97,
-    "c_per_ct": 6.47,
-    "se_c": 14.17,
-    "lo90_c": -16.85,
-    "hi90_c": 29.78
+    "pnl": 0.93,
+    "c_per_ct": 5.8,
+    "se_c": 13.28,
+    "lo90_c": -16.04,
+    "hi90_c": 27.64
    },
    "1": {
-    "n": 8,
+    "n": 9,
     "won": 5,
-    "pnl": 0.83,
-    "c_per_ct": 10.38,
-    "se_c": 17.67,
-    "lo90_c": -18.69,
-    "hi90_c": 39.44
+    "pnl": 0.79,
+    "c_per_ct": 8.78,
+    "se_c": 15.67,
+    "lo90_c": -16.99,
+    "hi90_c": 34.55
    },
    "2": {
-    "n": 8,
+    "n": 9,
     "won": 3,
-    "pnl": -1.48,
-    "c_per_ct": -18.5,
-    "se_c": 19.03,
-    "lo90_c": -49.81,
-    "hi90_c": 12.81
+    "pnl": -1.52,
+    "c_per_ct": -16.91,
+    "se_c": 16.86,
+    "lo90_c": -44.65,
+    "hi90_c": 10.82
    },
    "5": {
     "n": 8,
@@ -164,60 +164,94 @@
  },
  "verdict": {
   "state": "collecting",
-  "fills": 27,
+  "fills": 28,
   "need": 300,
-  "text": "27 of 300 settled +1 s paper fills"
+  "text": "28 of 300 settled +1 s paper fills"
  },
  "src": {
   "mix": 21,
-  "cf": 29
+  "cf": 31
  },
  "catch": [
   {
    "day": "2026-11-24",
-   "signals": 50,
+   "signals": 52,
    "by_coin": {
-    "DOGE": 27,
-    "NEAR": 23
+    "DOGE": 28,
+    "NEAR": 24
    },
    "0": {
-    "n": 50,
-    "still_5c": 50,
+    "n": 52,
+    "still_5c": 52,
     "share_5c": 1.0,
     "median_edge_c": 10.8,
     "same_ask": 1.0
    },
    "0.5": {
-    "n": 50,
-    "still_5c": 35,
-    "share_5c": 0.7,
+    "n": 52,
+    "still_5c": 37,
+    "share_5c": 0.712,
     "median_edge_c": 9.1,
-    "same_ask": 0.36
+    "same_ask": 0.346
    },
    "1": {
-    "n": 50,
-    "still_5c": 27,
-    "share_5c": 0.54,
+    "n": 52,
+    "still_5c": 29,
+    "share_5c": 0.558,
     "median_edge_c": 7.4,
-    "same_ask": 0.24
+    "same_ask": 0.231
    },
    "2": {
-    "n": 50,
-    "still_5c": 24,
-    "share_5c": 0.48,
-    "median_edge_c": 5.2,
-    "same_ask": 0.2
+    "n": 52,
+    "still_5c": 26,
+    "share_5c": 0.5,
+    "median_edge_c": 6.0,
+    "same_ask": 0.192
    },
    "5": {
-    "n": 50,
-    "still_5c": 25,
+    "n": 52,
+    "still_5c": 26,
     "share_5c": 0.5,
     "median_edge_c": 5.9,
-    "same_ask": 0.16
+    "same_ask": 0.173
    }
   }
  ],
  "recent": [
+  {
+   "et": "2026-11-24 13:35:22",
+   "ticker": "KXDOGE15M-26NOV241345-45",
+   "coin": "DOGE",
+   "side": "yes",
+   "left_s": 577.9,
+   "src": "cf",
+   "ask0": 0.46,
+   "edge0": 0.1019,
+   "ask1": 0.45,
+   "edge1": 0.137,
+   "size0": 7270.670000000001,
+   "size1": 643.7099999999989,
+   "fill": true,
+   "result": null,
+   "pnl": null
+  },
+  {
+   "et": "2026-11-24 13:28:26",
+   "ticker": "KXNEAR15M-26NOV241330-30",
+   "coin": "NEAR",
+   "side": "yes",
+   "left_s": 93.3,
+   "src": "cf",
+   "ask0": 0.052,
+   "edge0": 0.1084,
+   "ask1": 0.03,
+   "edge1": 0.0681,
+   "size0": 10.0,
+   "size1": 23.0,
+   "fill": true,
+   "result": "no",
+   "pnl": -0.04
+  },
   {
    "et": "2026-11-24 13:12:28",
    "ticker": "KXNEAR15M-26NOV241315-15",
@@ -608,46 +642,12 @@
    "fill": false,
    "result": "yes",
    "pnl": null
-  },
-  {
-   "et": "2026-11-24 08:25:18",
-   "ticker": "KXDOGE15M-26NOV240830-30",
-   "coin": "DOGE",
-   "side": "yes",
-   "left_s": 281.3,
-   "src": "cf",
-   "ask0": 0.6,
-   "edge0": 0.1087,
-   "ask1": 0.61,
-   "edge1": 0.0341,
-   "size0": 3.000000000000057,
-   "size1": 928.08,
-   "fill": false,
-   "result": "yes",
-   "pnl": null
-  },
-  {
-   "et": "2026-11-24 08:05:59",
-   "ticker": "KXNEAR15M-26NOV240815-15",
-   "coin": "NEAR",
-   "side": "no",
-   "left_s": 540.5,
-   "src": "cf",
-   "ask0": 0.57,
-   "edge0": 0.1187,
-   "ask1": 0.67,
-   "edge1": -0.1364,
-   "size0": 31.0,
-   "size1": 67.66,
-   "fill": false,
-   "result": "no",
-   "pnl": null
   }
  ],
  "feeds": {
   "spot": {
    "DOGE": {
-    "cf_age_s": 0.0,
+    "cf_age_s": 0.2,
     "cf_points": 3900,
     "mix_age_s": 0.1,
     "venues": 1,
@@ -655,45 +655,45 @@
     "mix_vol_ok": true
    },
    "NEAR": {
-    "cf_age_s": 1.0,
+    "cf_age_s": 0.0,
     "cf_points": 3900,
-    "mix_age_s": 0.1,
-    "venues": 2,
+    "mix_age_s": 15.1,
+    "venues": 0,
     "cf_vol_ok": true,
     "mix_vol_ok": true
    }
   },
   "cf_ids": {
-   "AAVEUSD_RTI": 23999,
-   "ADAUSD_RTI": 23999,
-   "BCHUSD_RTI": 23999,
-   "BNBUSD_RTI": 23999,
-   "BRTI": 120002,
-   "DOGEUSD_RTI": 120002,
-   "ETHUSD_RTI": 120001,
-   "HYPEUSD_RTI": 23999,
-   "LINKUSD_RTI": 24000,
-   "LTCUSD_RTI": 24000,
-   "NEARUSD_RTI": 23999,
-   "SHIBUSD_RTI": 23999,
-   "SOLUSD_RTI": 120001,
-   "SUIUSD_RTI": 23999,
-   "UNIUSD_RTI": 24000,
-   "VVVUSD_RTI": 24000,
-   "WLDUSD_RTI": 24000,
-   "XRPUSD_RTI": 120002,
-   "ZECUSD_RTI": 23999
+   "AAVEUSD_RTI": 24599,
+   "ADAUSD_RTI": 24600,
+   "BCHUSD_RTI": 24599,
+   "BNBUSD_RTI": 24599,
+   "BRTI": 123001,
+   "DOGEUSD_RTI": 123001,
+   "ETHUSD_RTI": 123001,
+   "HYPEUSD_RTI": 24599,
+   "LINKUSD_RTI": 24599,
+   "LTCUSD_RTI": 24599,
+   "NEARUSD_RTI": 24600,
+   "SHIBUSD_RTI": 24599,
+   "SOLUSD_RTI": 123001,
+   "SUIUSD_RTI": 24600,
+   "UNIUSD_RTI": 24600,
+   "VVVUSD_RTI": 24599,
+   "WLDUSD_RTI": 24599,
+   "XRPUSD_RTI": 123001,
+   "ZECUSD_RTI": 24600
   },
   "ws_age_s": 0.0,
   "markets": 2,
   "books_ok": 2,
-  "book_msgs": 7090675,
-  "cf_msgs": 935999,
+  "book_msgs": 7252730,
+  "cf_msgs": 959396,
   "resyncs": 0,
   "connects": 2,
   "errors": 0,
   "no_fair": 0,
-  "scans": 218495,
+  "scans": 223909,
   "last_err": ""
  }
 }
