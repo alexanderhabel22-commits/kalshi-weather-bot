@@ -7,6 +7,12 @@ APP=/opt/kalshi-m15/app
 U=kalshi-srclog.service
 STAMP=/var/lib/kalshi-srclog.codesig
 [ -f /var/lib/kalshi-srclog.disabled ] && exit 0
+# Retired from the repo (Nov 24, 2026 verdict: no usable lag at the sources we can read).
+# Delete deploy/m15/srclog.off to bring it back.
+if [ -f "$APP/deploy/m15/srclog.off" ]; then
+  systemctl disable --now "$U" >/dev/null 2>&1 || true
+  exit 0
+fi
 changed=0
 if ! cmp -s "$APP/deploy/m15/$U" "/etc/systemd/system/$U"; then
   install -m 644 "$APP/deploy/m15/$U" /etc/systemd/system/

@@ -680,7 +680,7 @@ IP without a token). It never places, changes or cancels anything and needs no s
   Target events and dates: `research_casual/CALENDAR.md` (Spotify Wrapped ~Dec 2, TIME and Google
   ~Dec 8-11, Super Bowl ~Feb 14). Real money needs Alex's OK.
 
-## Source shadow logger (built Nov 10, 2026, logging only)
+## Source shadow logger (built Nov 10, 2026, logging only; SWITCHED OFF Nov 24 via deploy/m15/srclog.off)
 
 - `wxbot/srclog.py`, `python bot.py srclog`. Separate systemd service `kalshi-srclog` on the 15-min
   server (installed by the hourly update via `deploy/m15/install-srclog.sh`; CPU 20%, 300 MB cap).
