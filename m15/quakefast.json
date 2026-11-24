@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 03:01:15",
+ "at": "2026-11-24 03:06:15",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -1702,14 +1702,14 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 13634,
+   "ok": 13649,
    "err": 20,
-   "last_ok": "2026-11-24 03:00:57",
+   "last_ok": "2026-11-24 03:05:57",
    "last_err": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
   },
   "emsc": {
    "ok": 4808,
-   "err": 13397,
+   "err": 13417,
    "last_ok": "2026-11-23 09:01:13",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
@@ -1720,51 +1720,51 @@
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 9103,
+   "ok": 9113,
    "err": 0,
-   "last_ok": "2026-11-24 03:00:55",
+   "last_ok": "2026-11-24 03:05:55",
    "last_err": null
   },
   "gfz": {
-   "ok": 27308,
+   "ok": 27338,
    "err": 0,
-   "last_ok": "2026-11-24 03:01:14",
+   "last_ok": "2026-11-24 03:06:14",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 8561,
-   "err": 542,
-   "last_ok": "2026-11-24 03:00:55",
-   "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
+   "ok": 8567,
+   "err": 546,
+   "last_ok": "2026-11-24 03:05:55",
+   "last_err": "502 Server Error: Bad Gateway for url: https://geofon.gfz.de/fdsnws/event/1/query?format=text&minmag=5.5&starttime=2026-"
   },
   "jma": {
-   "ok": 9103,
+   "ok": 9113,
    "err": 0,
-   "last_ok": "2026-11-24 03:00:55",
+   "last_ok": "2026-11-24 03:05:55",
    "last_err": null
   },
   "kalshi": {
-   "ok": 36083,
+   "ok": 36123,
    "err": 45,
-   "last_ok": "2026-11-24 03:01:10",
+   "last_ok": "2026-11-24 03:06:12",
    "last_err": null
   },
   "ntwc": {
-   "ok": 18205,
+   "ok": 18225,
    "err": 0,
-   "last_ok": "2026-11-24 03:01:00",
+   "last_ok": "2026-11-24 03:06:00",
    "last_err": null
   },
   "ptwc": {
-   "ok": 18205,
+   "ok": 18225,
    "err": 0,
-   "last_ok": "2026-11-24 03:01:00",
+   "last_ok": "2026-11-24 03:06:00",
    "last_err": null
   },
   "usgs": {
-   "ok": 27308,
+   "ok": 27338,
    "err": 0,
-   "last_ok": "2026-11-24 03:01:14",
+   "last_ok": "2026-11-24 03:06:14",
    "last_err": null
   }
  }
