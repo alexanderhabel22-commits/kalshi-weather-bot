@@ -1,5 +1,5 @@
 {
- "at": "2026-11-23 19:05:26",
+ "at": "2026-11-23 19:10:27",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -1664,32 +1664,6 @@
      "mag": 6.8
     }
    }
-  },
-  {
-   "qid": "q1795234191-gfz_fdsn",
-   "t": 1795219748.79,
-   "et": "2026-11-20 19:09:08",
-   "place": "Central Peru",
-   "best_mag": 6.8,
-   "triggered": false,
-   "kmove": null,
-   "srcs": {
-    "gfz_fdsn": {
-     "lag_s": null,
-     "first_mag": 6.66,
-     "mag": 6.68
-    },
-    "gfz": {
-     "lag_s": null,
-     "first_mag": 6.7,
-     "mag": 6.7
-    },
-    "emsc": {
-     "lag_s": null,
-     "first_mag": 6.8,
-     "mag": 6.8
-    }
-   }
   }
  ],
  "latency_m6": {
@@ -1728,14 +1702,14 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 12213,
+   "ok": 12228,
    "err": 14,
-   "last_ok": "2026-11-23 19:05:16",
+   "last_ok": "2026-11-23 19:10:16",
    "last_err": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
   },
   "emsc": {
    "ok": 4808,
-   "err": 11494,
+   "err": 11514,
    "last_ok": "2026-11-23 09:01:13",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
@@ -1746,51 +1720,51 @@
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 8152,
+   "ok": 8162,
    "err": 0,
-   "last_ok": "2026-11-23 19:05:25",
+   "last_ok": "2026-11-23 19:10:25",
    "last_err": null
   },
   "gfz": {
-   "ok": 24453,
+   "ok": 24483,
    "err": 0,
-   "last_ok": "2026-11-23 19:05:22",
+   "last_ok": "2026-11-23 19:10:22",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 7671,
+   "ok": 7681,
    "err": 481,
-   "last_ok": "2026-11-23 19:05:24",
+   "last_ok": "2026-11-23 19:10:24",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 8152,
+   "ok": 8162,
    "err": 0,
-   "last_ok": "2026-11-23 19:05:25",
+   "last_ok": "2026-11-23 19:10:25",
    "last_err": null
   },
   "kalshi": {
-   "ok": 32314,
-   "err": 38,
-   "last_ok": "2026-11-23 19:05:22",
+   "ok": 32350,
+   "err": 42,
+   "last_ok": "2026-11-23 19:10:24",
    "last_err": null
   },
   "ntwc": {
-   "ok": 16302,
+   "ok": 16322,
    "err": 0,
-   "last_ok": "2026-11-23 19:05:14",
+   "last_ok": "2026-11-23 19:10:14",
    "last_err": null
   },
   "ptwc": {
-   "ok": 16302,
+   "ok": 16322,
    "err": 0,
-   "last_ok": "2026-11-23 19:05:14",
+   "last_ok": "2026-11-23 19:10:14",
    "last_err": null
   },
   "usgs": {
-   "ok": 24453,
+   "ok": 24483,
    "err": 0,
-   "last_ok": "2026-11-23 19:05:23",
+   "last_ok": "2026-11-23 19:10:23",
    "last_err": null
   }
  }
