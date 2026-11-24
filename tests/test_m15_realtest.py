@@ -161,3 +161,38 @@ def test_shipped_config_never_moves_cash():
     clk, cl = Clock(T0), C()
     b = mk(cfg(), clk, cl, {})
     assert b.fund_shard(T0 + 1000) == 0.0 and cl.moved == [] and b.state["shards"] == {"0": 40.0, "2": 1.0}
+
+
+def test_record_survives_restart(monkeypatch):
+    # Nov 24 bug: a restart dropped "realtest" from state.json, zeroing the record and the $ cap
+    w = World(monkeypatch)
+    clk, cl = Clock(T0), Client()
+    monkeypatch.setattr(m15.Bot, "alert", lambda self, t, body, p=3: None)
+    ctl = {"mode": "live", "real": {NG: "on"}}
+    b = mk(cfg(), clk, cl, ctl)
+    b.step()
+    cl.orders["o0"].update(status="executed", fill_count=1, remaining_count=0)
+    clk.t += 6
+    b.step()
+    settle(b, w, clk, "no")                                   # loses 82c
+    assert round(b.state["realtest"][NG]["pnl"], 2) == -0.82
+    b.save()
+    b2 = mk(cfg(), clk, cl, ctl)
+    assert round(b2.realtest(NG)["pnl"], 2) == -0.82 and b2.realtest(NG)["ct"] == 1
+
+
+def test_missing_record_rebuilt_from_log():
+    m15.M15_DIR.mkdir(parents=True, exist_ok=True)
+    head = "ticker,series,tag,close,result,real_side,real_filled,real_pnl,paper_filled,paper_pnl\n"
+    (m15.M15_DIR / "realtest-2026-11-23.csv").write_text(head
+        + "A,KXNATGAS15M,t1,2026-11-23T18:30:00+00:00,yes,yes,1,0.27,2,0.45\n"
+        + "B,KXNATGAS15M,t1,2026-11-23T18:45:00+00:00,yes,yes,0,0.0,0,0.0\n"
+        + "Z,KXNATGAS15M,old,2026-11-23T18:50:00+00:00,yes,no,1,-0.9,1,-0.9\n")
+    (m15.M15_DIR / "realtest-2026-11-24.csv").write_text(head
+        + "A,KXNATGAS15M,t1,2026-11-23T18:30:00+00:00,yes,yes,1,0.27,2,0.45\n"   # duplicate window: once
+        + "C,KXNATGAS15M,t1,2026-11-24T09:00:00+00:00,yes,no,0.5,-0.4,2,-1.6\n")
+    b = mk(cfg(real_reviews=[1, 50]), Clock(T0), None, {})
+    st = b.realtest(NG)
+    assert round(st["pnl"], 2) == -0.13 and st["ct"] == 1.5 and st["markets"] == 2 and st["won"] == 1
+    assert round(st["paper_pnl"], 2) == -1.15 and st["paper_ct"] == 4
+    assert st["reviews"] == [1] and st["first_fill"]

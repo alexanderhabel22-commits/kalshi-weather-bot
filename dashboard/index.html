@@ -1929,9 +1929,14 @@ function ngData(){
     return {r, t:+pdate(r.close) || 0, rf, rq:rf ? num(r.real_cost) / rf : null, rp:num(r.real_pnl), won:rf ? r.real_side === res : null, side:r.real_side || r.paper_side,
       pf, pq, pp:num(r.paper_pnl), p1, p2:fills.slice(1).map(ngQ).filter(x => x != null), res, model:r.model_filled === "1"};
   }).filter(w => w.t).sort((a, b) => a.t - b.t);
-  const real = {pnl:rt ? num(rt.pnl) : win.reduce((a, w) => a + w.rp, 0), ct:rt ? num(rt.ct) : win.reduce((a, w) => a + w.rf, 0),
-    markets:rt ? num(rt.markets) : win.filter(w => w.rf).length, won:rt ? num(rt.won) : win.filter(w => w.won).length,
-    ppnl:rt ? num(rt.paper_pnl) : win.reduce((a, w) => a + w.pp, 0), pct:rt ? num(rt.paper_ct) : win.reduce((a, w) => a + w.pf, 0), first:rt && rt.first_fill ? rt.first_fill * 1000 : null};
+  // Totals come from the per-window log (all-time since the test started), the same rows as the chart and table.
+  // The server's own running record (status "realtest") was zeroed by every restart until Nov 24, so it is only
+  // a fallback when no log rows have loaded.
+  const fromLog = win.length > 0 || !rt;
+  const real = {pnl:fromLog ? win.reduce((a, w) => a + w.rp, 0) : num(rt.pnl), ct:fromLog ? win.reduce((a, w) => a + w.rf, 0) : num(rt.ct),
+    markets:fromLog ? win.filter(w => w.rf).length : num(rt.markets), won:fromLog ? win.filter(w => w.won).length : num(rt.won),
+    ppnl:fromLog ? win.reduce((a, w) => a + w.pp, 0) : num(rt.paper_pnl), pct:fromLog ? win.reduce((a, w) => a + w.pf, 0) : num(rt.paper_ct),
+    first:win.find(w => w.rf) ? win.find(w => w.rf).t : rt && rt.first_fill ? rt.first_fill * 1000 : null};
   const both = win.filter(w => w.rf && w.pf && w.pq != null), slip = both.length ? 100 * both.reduce((a, w) => a + (w.rq - w.pq), 0) / both.length : null;
   const tw1 = win.filter(w => w.p1 != null), tw1c = tw1.length ? 100 * tw1.reduce((a, w) => a + w.p1, 0) / tw1.length : null;
   const realSE = ngSE(win.filter(w => w.rf).map(w => ({p:w.rp, n:w.rf})));
@@ -1954,8 +1959,8 @@ function ngHTML(){
   const nx = reviews.find(k => real.ct < k), at = pdate(st.at), cash = st.shards && st.shards["2"] != null ? num(st.shards["2"]) : null;
   const status = G.cut ? `<span class="neg">CUT to paper (${esc(G.cut.why || "cap")})</span>` : G.on ? `<span class="pos">● REAL MONEY ON</span>` : `<span class="neg">REAL OFF</span>`;
   let h = `<h2>Natgas real test <span class="sub">real money · 1 ct a window · $${cap.toFixed(0)} cap · paper twin · since Nov 23</span></h2><div class="card glow">
-    <div class="hero"><div><div class="lbl">Real money · natural gas 15-min</div><div class="big ${cls(real.pnl)}">${money(real.pnl)}</div>
-      <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${status} · ${+real.ct.toFixed(2)} ct · ${real.won}-${real.markets - real.won}${rc != null ? ` · <span class="${cls(rc)}">${cents(rc)}/ct</span>` : ""} · server ${esc(ago(at))}</div></div>
+    <div class="hero"><div><div class="lbl">Real money · natural gas 15-min · all time</div><div class="big ${cls(real.pnl)}">${money(real.pnl)}</div>
+      <div class="s mute" style="font-family:var(--mono);font-size:12px;margin-top:6px">${status} · ${+real.ct.toFixed(2)} ct · ${real.won}-${real.markets - real.won} in ${real.markets} filled of ${G.win.length} windows${rc != null ? ` · <span class="${cls(rc)}">${cents(rc)}/ct</span>` : ""} · server ${esc(ago(at))}</div></div>
       <div style="text-align:right"><div class="lbl">Paper twin, same windows</div><div class="val ${cls(real.ppnl)}">${money(real.ppnl)}</div><small class="mute">${+real.pct.toFixed(2)} ct${pc != null ? " · " + cents(pc) + "/ct" : ""}</small></div></div>
     <div class="sgrid" style="margin-top:12px">
       <div><div class="lbl">Real ¢/ct</div><div class="val ${cls(rc || 0)}">${c(rc)}<small>${G.realSE.se != null ? "±" + G.realSE.se.toFixed(1) + " (1 SE) · " : ""}${+real.ct.toFixed(2)} ct</small></div></div>
@@ -1973,12 +1978,12 @@ function ngHTML(){
     ${st.last_reject ? `<div class="mute" style="font-size:11px;margin-top:6px"><span class="neg">Last Kalshi rejection:</span> ${esc(typeof st.last_reject === "string" ? st.last_reject : JSON.stringify(st.last_reject))}</div>` : ""}
     ${G.open.filter(o => !o.k.endsWith("|paper")).map(o => `<div class="mute" style="font-size:11px;margin-top:6px"><b>Now:</b> window closing ${esc((h4 => { const hh = +h4.slice(0, 2); return (hh % 12 || 12) + ":" + h4.slice(2) + (hh < 12 ? " AM" : " PM"); })(o.k.split("-")[1].slice(-4)))} ET · bid/ask ${o.bid_ask ? o.bid_ask.map(v => Math.round(v * 100) + "¢").join(" / ") : "—"} · ${o.order ? `<span class="pos">real bid resting</span>` : "no real bid yet (bids in the last 5 min, 71-95¢ favourite)"}</div>`).join("")}
     <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Same rule as paper: in the last 5 minutes, join the best bid of the 71-95¢ favourite, hold to settlement. Real takes 1 contract; the twin keeps paper's sizes (a 2nd contract at 80-87¢), so compare ¢/ct, or the twin's 1st contract for a like-for-like check. Real fills sit at the back of the line, so expect real a bit below paper. Bot fills only; your own trades are never counted. Kill only natgas: set <b>"real": {"KXNATGAS15M": "off"}</b> in m15_control.json (Claude does this).</div></div>`;
-  h += `<h2>Real vs paper twin <span class="sub">profit over time · same windows</span></h2><div class="card"><div class="legend" id="ngLeg"></div><div class="chart" id="ngCum"></div>
+  h += `<h2>Real vs paper twin <span class="sub">profit over time · all time since Nov 23 · same windows</span></h2><div class="card"><div class="legend" id="ngLeg"></div><div class="chart" id="ngCum"></div>
     <div class="mute" style="font-size:11px;margin-top:4px">Blue = real money. Dashed = the paper twin on the same windows: all its contracts, and only its 1st contract (same size as real). If blue keeps up with the 1st-contract line, the paper record is telling the truth.</div></div>`;
   // fills table
   const rows = G.win.slice().reverse(), shown = isOpen("ngall") ? rows.slice(0, 300) : rows.slice(0, 20);
   const q = v => v == null ? "—" : Math.round(v * 100) + "¢";
-  h += `<h2>Every window <span class="sub">newest first · real vs twin · ${G.win.length} windows</span></h2><div class="card">${rows.length ? `<div class="tbl-wrap"><table class="tbl"><tr><th>Start ET</th><th>Side</th><th>Real</th><th>Twin 1st</th><th>Slip</th><th>Twin 2nd</th><th>Result</th><th>Real P&L</th><th>Twin P&L</th></tr>`
+  h += `<h2>Every window <span class="sub">newest first · all time since Nov 23 · ${G.win.length} windows, ${G.win.filter(w => w.rf).length} with a real fill</span></h2><div class="card">${rows.length ? `<div class="tbl-wrap"><table class="tbl"><tr><th>Start ET</th><th>Side</th><th>Real</th><th>Twin 1st</th><th>Slip</th><th>Twin 2nd</th><th>Result</th><th>Real P&L</th><th>Twin P&L</th></tr>`
     + shown.map(w => { const d = w.rq != null && w.pq != null ? Math.round(100 * (w.rq - w.pq)) : null, t = new Date(w.t);
       return `<tr><td style="white-space:nowrap"><b>${esc(fmt(new Date(w.t - 15 * 60e3), {hour:"numeric", minute:"2-digit"}))}</b>${etDay(t) !== etDay(new Date()) ? `<br><small class="mute">${esc(fday(t))}</small>` : ""}</td>
         <td><span class="side ${w.side === "no" ? "no" : "yes"}" style="font-size:10px">${esc(String(w.side || "–").toUpperCase())}</span></td>

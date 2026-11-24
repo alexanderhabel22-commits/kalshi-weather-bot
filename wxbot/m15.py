@@ -334,7 +334,7 @@ class Bot(FillQuality):
                       "reset_seen": st.get("reset_seen"), "fund_alerted": st.get("fund_alerted"),
                       "fv_skip_on": st.get("fv_skip_on", {}), "early_on": st.get("early_on", {}),
                       "code_version": st.get("code_version"), "saved_at": st.get("saved_at"),
-                      "fillq": st.get("fillq", [])}
+                      "fillq": st.get("fillq", []), "realtest": st.get("realtest", {})}
         self.last = {"discover": 0.0, "switch": 0.0, "upload": 0.0, "balance": 0.0,
                      "switch_ok": 0.0, "quotes": 0.0, "sync": 0.0, "queue": 0.0}
         self.switch = {"mode": None, "halted": False}
@@ -948,8 +948,47 @@ class Bot(FillQuality):
         allr = self.state.setdefault("realtest", {})
         st = allr.get(series)
         if not st or st.get("tag") != tag:
-            st = allr[series] = {"tag": tag, "pnl": 0.0, "ct": 0.0, "markets": 0, "won": 0,
-                                 "paper_pnl": 0.0, "paper_ct": 0.0, "first_fill": None, "reviews": []}
+            st = allr[series] = self.realtest_rebuild(series, tag)
+        return st
+
+    def realtest_rebuild(self, series: str, tag: str) -> dict:
+        """Start a series' real-test record from its realtest-*.csv rows with this tag (one per window).
+        Until Nov 24 the record was not kept across restarts, so each restart zeroed it (and the $ cap);
+        rebuilding from the log keeps it all-time. Reviews already passed are marked done (no push storm)."""
+        st = {"tag": tag, "pnl": 0.0, "ct": 0.0, "markets": 0, "won": 0,
+              "paper_pnl": 0.0, "paper_ct": 0.0, "first_fill": None, "reviews": []}
+        if not tag:
+            return st
+        seen = set()
+        for path in sorted(M15_DIR.glob("realtest-*.csv")):
+            try:
+                with open(path, newline="", encoding="utf-8") as f:
+                    rows = list(csv.DictReader(f))
+            except OSError:
+                continue
+            for r in rows:
+                if r.get("series") != series or r.get("tag") != tag or r.get("ticker") in seen:
+                    continue
+                seen.add(r.get("ticker"))
+                try:
+                    rf, rp = float(r.get("real_filled") or 0), float(r.get("real_pnl") or 0)
+                    pf, pp = float(r.get("paper_filled") or 0), float(r.get("paper_pnl") or 0)
+                except ValueError:
+                    continue
+                if rf:
+                    st["pnl"] = round(st["pnl"] + rp, 4)
+                    st["ct"] = round(st["ct"] + rf, 2)
+                    st["markets"] += 1
+                    st["won"] += 1 if r.get("result") and r.get("result") == r.get("real_side") else 0
+                    if st["first_fill"] is None and r.get("close"):
+                        try:
+                            st["first_fill"] = int(datetime.fromisoformat(r["close"]).timestamp())
+                        except ValueError:
+                            pass
+                if pf:
+                    st["paper_pnl"] = round(st["paper_pnl"] + pp, 4)
+                    st["paper_ct"] = round(st["paper_ct"] + pf, 2)
+        st["reviews"] = [k for k in (self.s.get("real_reviews") or []) if st["ct"] >= k]
         return st
 
     def series_exposure(self, series: str) -> float:
