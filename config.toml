@@ -333,6 +333,23 @@ max_week_contracts = 40
 max_market_contracts = 2
 
 
+[trading.quake_ladder_paper]
+# PAPER test (Nov 24, 2026): quake_no's rule on the in-between strikes 6.2, 6.4, 6.8 (Alex asked to
+# "step" the earthquake bet). Replay +8.4c +- 8.5 on 73 trades / 36 days, not significant. Never live.
+enabled = true
+live = false
+taker = true
+contracts = 2
+max_contracts = 2
+min_price = 0.03
+max_price = 0.97
+max_open_pct = 0.10
+max_event_pct = 0.10
+exit = "hold"
+max_week_contracts = 60
+max_market_contracts = 2
+
+
 [trading.quake_no_guard_paper]
 # PAPER test of the fast-quake guard (Nov 21, 2026): quake_no's rule, but skip when GFZ/EMSC already
 # show a quake within 0.3 of the strike, or when Kalshi bids 2+ unreached strikes 50c+ and 30c+ over

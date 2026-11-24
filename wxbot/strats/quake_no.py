@@ -109,18 +109,31 @@ def market_day(ticker: str):
     return d.replace(tzinfo=UTC)
 
 
+def pday_any(x: float) -> float:
+    """pday for any strike: the live strikes' table first, else the same 2015-2024 ComCat counts in
+    GUARD_DAYS (identical for 6.6 / 7.0). Used by the ladder paper test (6.2 / 6.4 / 6.8)."""
+    v = pday(x)
+    if v:
+        return v
+    for k, n in GUARD_DAYS.items():
+        if abs(k - x) < 1e-6:
+            return max(n / DAYS, 1e-4)
+    return 0.0
+
+
 def p_yes(x: float, hours_left: float) -> float:
-    return 1 - (1 - pday(x)) ** (max(hours_left, 0.0) / 24.0)
+    return 1 - (1 - pday_any(x)) ** (max(hours_left, 0.0) / 24.0)
 
 
 def candidates(markets: list[dict], now: datetime, max_so_far: float, p: dict,
                held: dict | None = None, name: str = NAME) -> list[Intent]:
     held = held or {}
+    strikes = tuple(p.get("strikes") or STRIKES)       # live quake_no: always (6.6, 7.0)
     out = []
     for m in markets:
         tk = m.get("ticker") or ""
         x = strike(m)
-        if not tk.startswith(SERIES + "-") or x is None or all(abs(x - s) > 1e-6 for s in STRIKES):
+        if not tk.startswith(SERIES + "-") or x is None or all(abs(x - s) > 1e-6 for s in strikes):
             continue
         start = market_day(tk)
         if start is None or not (start <= now < start + timedelta(days=1)):
