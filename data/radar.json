@@ -79,15 +79,15 @@
    ]
   },
   "macro_wide": {
-   "contracts": 4,
-   "cpc": -15.333333333333334,
-   "cpc_last20": -15.333333333333334,
+   "contracts": 6,
+   "cpc": -9.875,
+   "cpc_last20": -9.875,
    "fill_rate": 0.5,
-   "fills": 3,
+   "fills": 4,
    "flags": [],
    "missed": 2,
    "missed_cpc": 7.5,
-   "pnl": -0.22,
+   "pnl": -0.09,
    "rule": {
     "max_cpc": -5.0,
     "min_fills": 20
@@ -120,8 +120,8 @@
    "fill_rate": 0.0,
    "fills": 0,
    "flags": [],
-   "missed": 30,
-   "missed_cpc": 27.333333333333332,
+   "missed": 36,
+   "missed_cpc": 24.833333333333332,
    "pnl": 0,
    "rule": {
     "max_cpc": -5.0,
@@ -176,8 +176,8 @@
    "fill_rate": 0.0,
    "fills": 0,
    "flags": [],
-   "missed": 27,
-   "missed_cpc": 30.296296296296298,
+   "missed": 33,
+   "missed_cpc": 29.151515151515152,
    "pnl": 0,
    "rule": {
     "max_cpc": -5.0,
@@ -191,7 +191,7 @@
    "contracts": 345,
    "cpc": -0.40454545454545454,
    "cpc_last20": -9.4,
-   "fill_rate": 0.8475836431226765,
+   "fill_rate": 0.850909090909091,
    "fills": 220,
    "flags": [
     "ADVERSE SELECTION: orders we missed would have made +14.9c, fills made -0.4c"
@@ -213,29 +213,18 @@
   }
  },
  "last_new": [
-  "KXARUNAMILLERANNOUNCEOUT",
-  "KXBOARDNVDA",
-  "KXCONFIRMDAVIES",
-  "KXCS2",
-  "KXCS2QUALIFIERS",
-  "KXDEBTPOWERHOUSE",
-  "KXDPWORLDTOUR",
-  "KXJENSENOUT",
-  "KXNVDACHARGE",
-  "KXOPENSHARE",
-  "KXRIKERSDEADLINE",
-  "KXSAPSLBTTS",
-  "KXSAPSLSPREAD",
-  "KXSAPSLTOTAL",
-  "KXSLOVENIAZIURS",
-  "KXSVKCUPBTTS",
-  "KXSVKCUPSPREAD",
-  "KXSVKCUPTOTAL",
-  "KXTRUMPNYTJUDGE",
-  "KXWAYMOFREEWAYSTATE",
-  "KXWORLDCHESSMATCH"
+  "KXARGNACBADVANCE",
+  "KXHURRLANDTX3",
+  "KXMORRISCONF",
+  "KXNFLDIVISIONQUAL",
+  "KXNVDABOARDTESTIFY",
+  "KXRAINSNYC",
+  "KXRAINSSFO",
+  "KXWORLDCHESSDRAWS",
+  "KXWORLDCHESSSPREAD",
+  "KXWORLDCHESSTIEBREAK"
  ],
- "last_run": "2026-11-23T20:36:47+00:00",
+ "last_run": "2026-11-24T02:13:27+00:00",
  "listings": {
   "KX10YRRATE15M": {
    "category": "Financials",
@@ -521,6 +510,15 @@
    "first_seen": "2026-11-20T16:58:25+00:00",
    "series": "KXALLSVENSKANTOTAL",
    "title": "Mjallby vs Malmo: Total Goals"
+  },
+  "KXARGNACBADVANCE": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXARGNACBADVANCE-26NOV27MORCOL",
+   "exchange_index": 0,
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "series": "KXARGNACBADVANCE",
+   "title": "Moron vs Santa Fe"
   },
   "KXARGNACBBTTS": {
    "category": "Sports",
@@ -1350,6 +1348,18 @@
    "series": "KXHUNNB1TOTAL",
    "title": "Ujpest Budapest vs Kisvarda FC: Total Goals"
   },
+  "KXHURRLANDTX3": {
+   "category": "Climate and Weather",
+   "events": 1,
+   "example": "KXHURRLANDTX3-31DEC27-YES",
+   "example_event": "KXHURRLANDTX3-31DEC27",
+   "exchange_index": 0,
+   "first_markets": "2026-11-24T02:13:27+00:00",
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "n_markets": 1,
+   "series": "KXHURRLANDTX3",
+   "title": "Will a Cat 3+ hurricane make landfall in Texas in 2027?"
+  },
   "KXINDIATARIFF": {
    "category": "Politics",
    "events": 2,
@@ -1728,6 +1738,18 @@
    "series": "KXMLSGOAL",
    "title": "New England vs Philadelphia: Goalscorer"
   },
+  "KXMORRISCONF": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXMORRISCONF-26NOV23",
+   "example_event": "KXMORRISCONF-26NOV23",
+   "exchange_index": 0,
+   "first_markets": "2026-11-24T02:13:27+00:00",
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "n_markets": 1,
+   "series": "KXMORRISCONF",
+   "title": "Will the Senate confirm Nate Morris as Ambassador to Colombia in 2026?"
+  },
   "KXNATGASD": {
    "category": "Commodities",
    "events": 1,
@@ -1875,6 +1897,15 @@
    "series": "KXNCAAWBRACE",
    "title": "Ohio St. vs Texas: Race to 10 Points"
   },
+  "KXNFLDIVISIONQUAL": {
+   "category": "Sports",
+   "events": 2,
+   "example_event": "KXNFLDIVISIONQUAL-27NFCWEST",
+   "exchange_index": 0,
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "series": "KXNFLDIVISIONQUAL",
+   "title": "Number of NFC West Teams to Make the Playoffs"
+  },
   "KXNFLRECYDSPRECISE": {
    "category": "Sports",
    "events": 1,
@@ -1946,6 +1977,18 @@
    "first_seen": "2026-11-21T16:58:26+00:00",
    "series": "KXNHLSAVE",
    "title": "Washington vs Boston: Saves"
+  },
+  "KXNVDABOARDTESTIFY": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXNVDABOARDTESTIFY-28JAN-28JAN",
+   "example_event": "KXNVDABOARDTESTIFY-28JAN",
+   "exchange_index": 0,
+   "first_markets": "2026-11-24T02:13:27+00:00",
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "n_markets": 4,
+   "series": "KXNVDABOARDTESTIFY",
+   "title": "Will any Nvidia director other than Jensen Huang testify in front of Congress?"
   },
   "KXNVDACHARGE": {
    "category": "Politics",
@@ -2036,6 +2079,30 @@
    "first_seen": "2026-11-20T23:05:47+00:00",
    "series": "KXPERLIGA1TOTAL",
    "title": "Alianza Lima vs FC Cajamarca: Total Goals"
+  },
+  "KXRAINSNYC": {
+   "category": "Climate and Weather",
+   "events": 1,
+   "example": "KXRAINSNYC-25NOV26-29NOV26-T3P00",
+   "example_event": "KXRAINSNYC-25NOV26-29NOV26",
+   "exchange_index": 0,
+   "first_markets": "2026-11-24T02:13:27+00:00",
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "n_markets": 5,
+   "series": "KXRAINSNYC",
+   "title": "How much will it rain in NYC from November 25\u201329, 2026?"
+  },
+  "KXRAINSSFO": {
+   "category": "Climate and Weather",
+   "events": 1,
+   "example": "KXRAINSSFO-23NOV26-27NOV26-T2P00",
+   "example_event": "KXRAINSSFO-23NOV26-27NOV26",
+   "exchange_index": 0,
+   "first_markets": "2026-11-24T02:13:27+00:00",
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "n_markets": 8,
+   "series": "KXRAINSSFO",
+   "title": "Rain in San Francisco over Thanksgiving Week"
   },
   "KXRIKERSDEADLINE": {
    "category": "Politics",
@@ -2994,6 +3061,15 @@
    "series": "KXWMT",
    "title": "Walmart US comparable sales growth (ex-fuel) in Q1"
   },
+  "KXWORLDCHESSDRAWS": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXWORLDCHESSDRAWS-2026",
+   "exchange_index": 0,
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "series": "KXWORLDCHESSDRAWS",
+   "title": "Total Draws in the 2026 FIDE World Chess Championship Match"
+  },
   "KXWORLDCHESSMATCH": {
    "category": "Sports",
    "events": 2,
@@ -3002,6 +3078,24 @@
    "first_seen": "2026-11-23T20:36:47+00:00",
    "series": "KXWORLDCHESSMATCH",
    "title": "Game 3: Javokhir Sindarov vs Gukesh Dommaraju"
+  },
+  "KXWORLDCHESSSPREAD": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXWORLDCHESSSPREAD-26GDOMJSIN",
+   "exchange_index": 0,
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "series": "KXWORLDCHESSSPREAD",
+   "title": "Gukesh Dommaraju vs Javokhir Sindarov: World Chess Championship Point Spread"
+  },
+  "KXWORLDCHESSTIEBREAK": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXWORLDCHESSTIEBREAK-2026",
+   "exchange_index": 3,
+   "first_seen": "2026-11-24T02:13:27+00:00",
+   "series": "KXWORLDCHESSTIEBREAK",
+   "title": "Will the FIDE World Chess Championship Match be decided by a tiebreak?"
   },
   "KXWSM": {
    "category": "Financials",
@@ -3154,10 +3248,16 @@
    "new": 21,
    "placed": 14,
    "t": "2026-11-23T20:36:47+00:00"
+  },
+  {
+   "events": 20077,
+   "new": 10,
+   "placed": 0,
+   "t": "2026-11-24T02:13:27+00:00"
   }
  ],
- "open_events": 19520,
- "open_series": 4970,
+ "open_events": 20077,
+ "open_series": 4938,
  "paper": [
   {
    "cents": 3.0,
@@ -3177,75 +3277,85 @@
    "title": "Will average **gas prices** be above $3.6550? Above 3.6550"
   },
   {
+   "cents": 11.0,
    "checked_at": "2026-11-20T23:05:47+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-20T23:05:47+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.88,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXBRENTD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T92.50",
    "title": "Will the brent crude oil close price be above 92.50 USD/Bbl on November 23, 2026 at 5:00 PM EST? Abo"
   },
   {
+   "cents": 13.0,
    "checked_at": "2026-11-20T23:05:47+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-20T23:05:47+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.86,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXBRENTD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T92",
    "title": "Will the brent crude oil close price be above 92 USD/Bbl on November 23, 2026 at 5:00 PM EST? Above "
   },
   {
+   "cents": 2.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.97,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.86",
    "title": "Will the copper close price be above 5.86 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.86"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "cents": 2.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.97,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.84",
    "title": "Will the copper close price be above 5.84 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.84"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-22T23:52:47+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "filled_at": "2026-11-22T23:52:47+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.82",
    "title": "Will the copper close price be above 5.82 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.82"
@@ -3299,125 +3409,141 @@
    "title": "Will Diesel Price on November 21, 2026 be above $5.860? Above $5.860"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-21T00:58:28+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-21T00:58:28+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3693",
    "title": "Will the gold close price be above 3693 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3693"
   },
   {
+   "cents": 4.0,
    "checked_at": "2026-11-21T20:06:38+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-21T20:06:38+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.95,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3683",
    "title": "Will the gold close price be above 3683 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3683"
   },
   {
+   "cents": 5.0,
    "checked_at": "2026-11-21T00:58:28+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-21T00:58:28+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.94,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3673",
    "title": "Will the gold close price be above 3673 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3673"
   },
   {
+   "cents": 2.0,
    "checked_at": "2026-11-23T20:36:47+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-23T20:36:47+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.97,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T45.25",
    "title": "Will the silver close price be above 45.25 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $45.2"
   },
   {
+   "cents": 2.0,
    "checked_at": "2026-11-21T16:58:26+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-21T16:58:26+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.97,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T45",
    "title": "Will the silver close price be above 45 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $45"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-21T16:58:26+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-21T16:58:26+00:00",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T44.75",
    "title": "Will the silver close price be above 44.75 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $44.7"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "cents": 5.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.94,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T112P000",
    "title": "Dutch TTF gas above $112.000 on Nov 23 at 4:59:59 PM EST? Above $112.000"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "cents": 6.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-20T16:58:25+00:00",
    "price": 0.93,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T111P000",
    "title": "Dutch TTF gas above $111.000 on Nov 23 at 4:59:59 PM EST? Above $111.000"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-20T16:58:25+00:00",
@@ -3425,7 +3551,7 @@
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T110P000",
    "title": "Dutch TTF gas above $110.000 on Nov 23 at 4:59:59 PM EST? Above $110.000"
@@ -3446,127 +3572,143 @@
    "title": "Will the copper close price be above 5.80 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.80"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-22T23:52:47+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "filled_at": "2026-11-22T23:52:47+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.78",
    "title": "Will the copper close price be above 5.78 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.78"
   },
   {
+   "cents": 4.0,
    "checked_at": "2026-11-23T08:18:55+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "filled_at": "2026-11-23T08:18:55+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.95,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.76",
    "title": "Will the copper close price be above 5.76 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.76"
   },
   {
+   "cents": 4.0,
    "checked_at": "2026-11-21T00:58:28+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-21T00:58:28+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.95,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3663",
    "title": "Will the gold close price be above 3663 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3663"
   },
   {
+   "cents": 5.0,
    "checked_at": "2026-11-20T23:05:47+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-20T23:05:47+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.94,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3653",
    "title": "Will the gold close price be above 3653 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3653"
   },
   {
+   "cents": 7.0,
    "checked_at": "2026-11-20T23:05:47+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-20T23:05:47+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.92,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3643",
    "title": "Will the gold close price be above 3643 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3643"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-21T16:58:26+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-21T16:58:26+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T44.50",
    "title": "Will the silver close price be above 44.50 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $44.5"
   },
   {
+   "cents": 4.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.95,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T44.25",
    "title": "Will the silver close price be above 44.25 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $44.2"
   },
   {
+   "cents": 5.0,
    "checked_at": "2026-11-21T08:50:20+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-21T08:50:20+00:00",
    "placed_at": "2026-11-20T19:16:47+00:00",
    "price": 0.94,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T44",
    "title": "Will the silver close price be above 44 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $44"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-20T19:16:47+00:00",
@@ -3574,13 +3716,13 @@
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T109P000",
    "title": "Dutch TTF gas above $109.000 on Nov 23 at 4:59:59 PM EST? Above $109.000"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-20T19:16:47+00:00",
@@ -3588,103 +3730,115 @@
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T108P000",
    "title": "Dutch TTF gas above $108.000 on Nov 23 at 4:59:59 PM EST? Above $108.000"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-21T00:58:28+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-21T00:58:28+00:00",
    "placed_at": "2026-11-20T23:05:47+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3703",
    "title": "Will the gold close price be above 3703 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3703"
   },
   {
+   "cents": 9.0,
    "checked_at": "2026-11-23T03:43:49+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-23T03:43:49+00:00",
    "placed_at": "2026-11-20T23:05:47+00:00",
    "price": 0.9,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T43.75",
    "title": "Will the silver close price be above 43.75 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $43.7"
   },
   {
+   "cents": 12.0,
    "checked_at": "2026-11-23T03:43:49+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-23T03:43:49+00:00",
    "placed_at": "2026-11-20T23:05:47+00:00",
    "price": 0.87,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T43.50",
    "title": "Will the silver close price be above 43.50 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $43.5"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-22T02:40:43+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-22T02:40:43+00:00",
    "placed_at": "2026-11-21T00:58:28+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3713",
    "title": "Will the gold close price be above 3713 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3713"
   },
   {
+   "cents": 2.0,
    "checked_at": "2026-11-21T08:50:20+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-21T08:50:20+00:00",
    "placed_at": "2026-11-21T00:58:28+00:00",
    "price": 0.97,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T45.50",
    "title": "Will the silver close price be above 45.50 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $45.5"
   },
   {
+   "cents": -90.0,
    "checked_at": "2026-11-21T08:50:20+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-21T08:50:20+00:00",
    "placed_at": "2026-11-21T03:59:15+00:00",
    "price": 0.89,
+   "result": "yes",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3633",
    "title": "Will the gold close price be above 3633 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3633"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "placed_at": "2026-11-21T03:59:15+00:00",
@@ -3692,28 +3846,30 @@
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T45.75",
    "title": "Will the silver close price be above 45.75 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $45.7"
   },
   {
+   "cents": 12.0,
    "checked_at": "2026-11-22T22:28:33+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXSILVERD-26NOV2317",
    "filled_at": "2026-11-22T22:28:33+00:00",
    "placed_at": "2026-11-21T03:59:15+00:00",
    "price": 0.87,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSILVERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSILVERD-26NOV2317-T43.25",
    "title": "Will the silver close price be above 43.25 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $43.2"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-21T08:50:20+00:00",
@@ -3721,7 +3877,7 @@
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T107P000",
    "title": "Dutch TTF gas above $107.000 on Nov 23 at 4:59:59 PM EST? Above $107.000"
@@ -3860,31 +4016,35 @@
    "title": "Will the copper close price be above 5.88 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.88"
   },
   {
+   "cents": 7.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-21T16:58:26+00:00",
    "price": 0.92,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.74",
    "title": "Will the copper close price be above 5.74 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.74"
   },
   {
+   "cents": 9.0,
    "checked_at": "2026-11-22T22:28:33+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "filled_at": "2026-11-22T22:28:33+00:00",
    "placed_at": "2026-11-21T16:58:26+00:00",
    "price": 0.9,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.72",
    "title": "Will the copper close price be above 5.72 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.72"
@@ -3924,22 +4084,24 @@
    "title": "Will Diesel Price on November 22, 2026 be above $5.845? Above $5.845"
   },
   {
+   "cents": 13.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-21T20:06:38+00:00",
    "price": 0.86,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXCOPPERD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.70",
    "title": "Will the copper close price be above 5.70 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.70"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-21T20:06:38+00:00",
@@ -3947,22 +4109,24 @@
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T106P000",
    "title": "Dutch TTF gas above $106.000 on Nov 23 at 4:59:59 PM EST? Above $106.000"
   },
   {
+   "cents": 13.0,
    "checked_at": "2026-11-22T07:59:59+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST10AD-26NOV23",
    "filled_at": "2026-11-22T07:59:59+00:00",
    "placed_at": "2026-11-21T22:26:54+00:00",
    "price": 0.86,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXUST10AD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV23-T5.00",
    "title": "Will the 10Y U.S. Treasury yield be above 5.00% on Nov 23, 2026? 5.01% or above"
@@ -3984,22 +4148,24 @@
    "title": "Will Diesel Price on November 22, 2026 be above $5.840? Above $5.840"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-22T02:40:43+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-22T02:40:43+00:00",
    "placed_at": "2026-11-22T00:20:57+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3743",
    "title": "Will the gold close price be above 3743 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3743"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T21:59:59Z",
    "event": "KXTTFD-23NOV261659",
    "placed_at": "2026-11-22T00:20:57+00:00",
@@ -4007,37 +4173,41 @@
    "rule": "longshot_no",
    "series": "KXTTFD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXTTFD-23NOV261659-T105P000",
    "title": "Dutch TTF gas above $105.000 on Nov 23 at 4:59:59 PM EST? Above $105.000"
   },
   {
+   "cents": 2.0,
    "checked_at": "2026-11-22T07:59:59+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-22T07:59:59+00:00",
    "placed_at": "2026-11-22T02:40:43+00:00",
    "price": 0.97,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3763",
    "title": "Will the gold close price be above 3763 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3763"
   },
   {
+   "cents": 2.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-22T02:40:43+00:00",
    "price": 0.97,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3753",
    "title": "Will the gold close price be above 3753 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3753"
@@ -4133,31 +4303,35 @@
    "title": "Will the 10Y U.S. Treasury yield be above 5.02% on Nov 23, 2026? 5.03% or above"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-23T08:18:55+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-23T08:18:55+00:00",
    "placed_at": "2026-11-22T22:28:33+00:00",
    "price": 0.96,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXBRENTD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T86",
    "title": "Will the brent crude oil close price be above 86 USD/Bbl on November 23, 2026 at 5:00 PM EST? Above "
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-22T22:28:33+00:00",
    "price": 0.96,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXBRENTD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T85.50",
    "title": "Will the brent crude oil close price be above 85.50 USD/Bbl on November 23, 2026 at 5:00 PM EST? Abo"
@@ -4227,22 +4401,24 @@
    "title": "Will Diesel Price on November 23, 2026 be above $5.820? Above $5.820"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-23T03:43:49+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-23T03:43:49+00:00",
    "placed_at": "2026-11-22T22:28:33+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3713",
    "title": "Will the gold close price be above 3713 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3713"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "placed_at": "2026-11-22T22:28:33+00:00",
@@ -4250,22 +4426,24 @@
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3373",
    "title": "Will the gold close price be above 3373 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3373"
   },
   {
+   "cents": 14.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST10AD-26NOV23",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-22T23:52:47+00:00",
    "price": 0.85,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXUST10AD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV23-T5.00",
    "title": "Will the 10Y U.S. Treasury yield be above 5.00% on Nov 23, 2026? 5.01% or above"
@@ -4313,16 +4491,18 @@
    "title": "Will the 30Y U.S. Treasury yield be above 5.41% on Nov 23, 2026? 5.42% or above"
   },
   {
+   "cents": 8.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST30AD-26NOV23",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-22T23:52:47+00:00",
    "price": 0.91,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST30AD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST30AD-26NOV23-T5.25",
    "title": "Will the 30Y U.S. Treasury yield be above 5.25% on Nov 23, 2026? 5.26% or above"
@@ -4342,52 +4522,58 @@
    "title": "Will the 7Y U.S. Treasury yield be above 4.90% on Nov 23, 2026? 4.91% or above"
   },
   {
+   "cents": 12.0,
    "checked_at": "2026-11-23T03:43:49+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-23T03:43:49+00:00",
    "placed_at": "2026-11-22T23:52:47+00:00",
    "price": 0.87,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXBRENTD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T91.50",
    "title": "Will the brent crude oil close price be above 91.50 USD/Bbl on November 23, 2026 at 5:00 PM EST? Abo"
   },
   {
+   "cents": 5.0,
    "checked_at": "2026-11-23T08:18:55+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-23T08:18:55+00:00",
    "placed_at": "2026-11-22T23:52:47+00:00",
    "price": 0.94,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXBRENTD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T92.50",
    "title": "Will the brent crude oil close price be above 92.50 USD/Bbl on November 23, 2026 at 5:00 PM EST? Abo"
   },
   {
+   "cents": 6.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-22T23:52:47+00:00",
    "price": 0.93,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXBRENTD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T86.50",
    "title": "Will the brent crude oil close price be above 86.50 USD/Bbl on November 23, 2026 at 5:00 PM EST? Abo"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "placed_at": "2026-11-22T23:52:47+00:00",
@@ -4395,7 +4581,7 @@
    "rule": "fav_24h",
    "series": "KXCOPPERD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.40",
    "title": "Will the copper close price be above 5.40 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.40"
@@ -4416,37 +4602,41 @@
    "title": "Will the copper close price be above 5.92 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.92"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-23T03:43:49+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-23T03:43:49+00:00",
    "placed_at": "2026-11-22T23:52:47+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3723",
    "title": "Will the gold close price be above 3723 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3723"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-23T03:43:49+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-23T03:43:49+00:00",
    "placed_at": "2026-11-22T23:52:47+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3723",
    "title": "Will the gold close price be above 3723 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3723"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "placed_at": "2026-11-22T23:52:47+00:00",
@@ -4454,13 +4644,13 @@
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3423",
    "title": "Will the gold close price be above 3423 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3423"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXNATGASD-26NOV2317",
    "placed_at": "2026-11-22T23:52:47+00:00",
@@ -4468,13 +4658,13 @@
    "rule": "longshot_no",
    "series": "KXNATGASD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXNATGASD-26NOV2317-T3.850",
    "title": "Will the natural gas close price be above 3.850 USD/MMBtu on November 23, 2026 at 5:00 PM EST? Above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXNATGASD-26NOV2317",
    "placed_at": "2026-11-22T23:52:47+00:00",
@@ -4482,22 +4672,24 @@
    "rule": "fav_24h",
    "series": "KXNATGASD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXNATGASD-26NOV2317-T3.850",
    "title": "Will the natural gas close price be above 3.850 USD/MMBtu on November 23, 2026 at 5:00 PM EST? Above"
   },
   {
+   "cents": 8.0,
    "checked_at": "2026-11-23T08:18:55+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST30AD-26NOV23",
    "filled_at": "2026-11-23T08:18:55+00:00",
    "placed_at": "2026-11-23T03:43:49+00:00",
    "price": 0.91,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXUST30AD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST30AD-26NOV23-T5.39",
    "title": "Will the 30Y U.S. Treasury yield be above 5.39% on Nov 23, 2026? 5.4% or above"
@@ -4517,16 +4709,18 @@
    "title": "Will the 7Y U.S. Treasury yield be above 4.92% on Nov 23, 2026? 4.93% or above"
   },
   {
+   "cents": 12.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST7AD-26NOV23",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-23T03:43:49+00:00",
    "price": 0.87,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXUST7AD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST7AD-26NOV23-T4.90",
    "title": "Will the 7Y U.S. Treasury yield be above 4.90% on Nov 23, 2026? 4.91% or above"
@@ -4546,37 +4740,41 @@
    "title": "Will the 7Y U.S. Treasury yield be above 4.92% on Nov 23, 2026? 4.93% or above"
   },
   {
+   "cents": -93.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-23T03:43:49+00:00",
    "price": 0.92,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXBRENTD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T87",
    "title": "Will the brent crude oil close price be above 87 USD/Bbl on November 23, 2026 at 5:00 PM EST? Above "
   },
   {
+   "cents": 9.0,
    "checked_at": "2026-11-23T08:18:55+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXBRENTD-26NOV2317",
    "filled_at": "2026-11-23T08:18:55+00:00",
    "placed_at": "2026-11-23T03:43:49+00:00",
    "price": 0.9,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXBRENTD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXBRENTD-26NOV2317-T92",
    "title": "Will the brent crude oil close price be above 92 USD/Bbl on November 23, 2026 at 5:00 PM EST? Above "
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXCOPPERD-26NOV2317",
    "placed_at": "2026-11-23T03:43:49+00:00",
@@ -4584,7 +4782,7 @@
    "rule": "fav_24h",
    "series": "KXCOPPERD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXCOPPERD-26NOV2317-T5.42",
    "title": "Will the copper close price be above 5.42 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.42"
@@ -4605,7 +4803,7 @@
    "title": "Will the copper close price be above 5.82 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.82"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "placed_at": "2026-11-23T03:43:49+00:00",
@@ -4613,28 +4811,30 @@
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3483",
    "title": "Will the gold close price be above 3483 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3483"
   },
   {
+   "cents": 4.0,
    "checked_at": "2026-11-23T08:18:55+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "filled_at": "2026-11-23T08:18:55+00:00",
    "placed_at": "2026-11-23T03:43:49+00:00",
    "price": 0.95,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3703",
    "title": "Will the gold close price be above 3703 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3703"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXNATGASD-26NOV2317",
    "placed_at": "2026-11-23T03:43:49+00:00",
@@ -4642,13 +4842,13 @@
    "rule": "longshot_no",
    "series": "KXNATGASD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXNATGASD-26NOV2317-T3.795",
    "title": "Will the natural gas close price be above 3.795 USD/MMBtu on November 23, 2026 at 5:00 PM EST? Above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXNATGASD-26NOV2317",
    "placed_at": "2026-11-23T03:43:49+00:00",
@@ -4656,13 +4856,13 @@
    "rule": "longshot_no",
    "series": "KXNATGASD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXNATGASD-26NOV2317-T3.800",
    "title": "Will the natural gas close price be above 3.800 USD/MMBtu on November 23, 2026 at 5:00 PM EST? Above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXNATGASD-26NOV2317",
    "placed_at": "2026-11-23T03:43:49+00:00",
@@ -4670,13 +4870,13 @@
    "rule": "longshot_no",
    "series": "KXNATGASD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXNATGASD-26NOV2317-T3.860",
    "title": "Will the natural gas close price be above 3.860 USD/MMBtu on November 23, 2026 at 5:00 PM EST? Above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXNATGASD-26NOV2317",
    "placed_at": "2026-11-23T03:43:49+00:00",
@@ -4684,13 +4884,13 @@
    "rule": "fav_24h",
    "series": "KXNATGASD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXNATGASD-26NOV2317-T3.795",
    "title": "Will the natural gas close price be above 3.795 USD/MMBtu on November 23, 2026 at 5:00 PM EST? Above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXNATGASD-26NOV2317",
    "placed_at": "2026-11-23T03:43:49+00:00",
@@ -4698,52 +4898,58 @@
    "rule": "fav_24h",
    "series": "KXNATGASD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXNATGASD-26NOV2317-T3.800",
    "title": "Will the natural gas close price be above 3.800 USD/MMBtu on November 23, 2026 at 5:00 PM EST? Above"
   },
   {
+   "cents": 9.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST10AD-26NOV23",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-23T08:18:55+00:00",
    "price": 0.9,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST10AD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV23-T4.90",
    "title": "Will the 10Y U.S. Treasury yield be above 4.90% on Nov 23, 2026? 4.91% or above"
   },
   {
+   "cents": 10.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST30AD-26NOV23",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-23T08:18:55+00:00",
    "price": 0.89,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST30AD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST30AD-26NOV23-T5.27",
    "title": "Will the 30Y U.S. Treasury yield be above 5.27% on Nov 23, 2026? 5.28% or above"
   },
   {
+   "cents": -87.0,
    "checked_at": "2026-11-23T14:40:17+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST30AD-26NOV23",
    "filled_at": "2026-11-23T14:40:17+00:00",
    "placed_at": "2026-11-23T08:18:55+00:00",
    "price": 0.86,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXUST30AD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST30AD-26NOV23-T5.29",
    "title": "Will the 30Y U.S. Treasury yield be above 5.29% on Nov 23, 2026? 5.3% or above"
@@ -4909,7 +5115,7 @@
    "title": "Will the copper close price be above 5.76 USD/Lbs on November 23, 2026 at 5:00 PM EST? Above $5.76"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "placed_at": "2026-11-23T08:18:55+00:00",
@@ -4917,13 +5123,13 @@
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3493",
    "title": "Will the gold close price be above 3493 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3493"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGOLDD-26NOV2317",
    "placed_at": "2026-11-23T08:18:55+00:00",
@@ -4931,13 +5137,13 @@
    "rule": "fav_24h",
    "series": "KXGOLDD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGOLDD-26NOV2317-T3503",
    "title": "Will the gold close price be above 3503 USD/t.oz on November 23, 2026 at 5:00 PM EST? Above $3503"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGBPUSDAD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
@@ -4945,13 +5151,13 @@
    "rule": "fav_24h",
    "series": "KXGBPUSDAD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGBPUSDAD-26NOV23-1.3010",
    "title": "Will GBPUSD be Above 1.301 at 5pm ET on Nov 23? Above 1.301"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXUSDCADAD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
@@ -4959,111 +5165,125 @@
    "rule": "longshot_no",
    "series": "KXUSDCADAD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXUSDCADAD-26NOV23-1.4410",
    "title": "Will USDCAD be Above 1.441 at 5pm ET on Nov 23? Above 1.441"
   },
   {
-   "checked_at": "2026-11-23T14:40:17+00:00",
+   "cents": 11.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXUSDCADAD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
    "price": 0.88,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXUSDCADAD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUSDCADAD-26NOV23-1.4410",
    "title": "Will USDCAD be Above 1.441 at 5pm ET on Nov 23? Above 1.441"
   },
   {
-   "checked_at": "2026-11-23T14:40:17+00:00",
+   "cents": 13.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXUSDCHFAD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
    "price": 0.86,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUSDCHFAD",
    "side": "yes",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUSDCHFAD-26NOV23-0.8370",
    "title": "Will USDCHF be Above 0.837 at 5pm ET on Nov 23? Above 0.837"
   },
   {
-   "checked_at": "2026-11-23T14:40:17+00:00",
+   "cents": 14.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXUSDCHFAD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
    "price": 0.85,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXUSDCHFAD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUSDCHFAD-26NOV23-0.8450",
    "title": "Will USDCHF be Above 0.845 at 5pm ET on Nov 23? Above 0.845"
   },
   {
-   "checked_at": "2026-11-23T14:40:17+00:00",
+   "cents": 7.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST5AD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
    "price": 0.92,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXUST5AD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUST5AD-26NOV23-T4.82",
    "title": "Will the 5Y U.S. Treasury yield be above 4.82% on Nov 23, 2026? 4.83% or above"
   },
   {
-   "checked_at": "2026-11-23T14:40:17+00:00",
+   "cents": 3.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST5AD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
    "price": 0.96,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXUST5AD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUST5AD-26NOV23-T4.84",
    "title": "Will the 5Y U.S. Treasury yield be above 4.84% on Nov 23, 2026? 4.85% or above"
   },
   {
-   "checked_at": "2026-11-23T14:40:17+00:00",
+   "cents": 7.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST5AD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
    "price": 0.92,
+   "result": "no",
    "rule": "fav_24h",
    "series": "KXUST5AD",
    "side": "no",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUST5AD-26NOV23-T4.82",
    "title": "Will the 5Y U.S. Treasury yield be above 4.82% on Nov 23, 2026? 4.83% or above"
   },
   {
-   "checked_at": "2026-11-23T14:40:17+00:00",
+   "cents": 3.0,
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T20:30:00Z",
    "event": "KXUST7AD-26NOV23",
    "placed_at": "2026-11-23T14:40:17+00:00",
    "price": 0.96,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST7AD",
    "side": "yes",
-   "status": "resting",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUST7AD-26NOV23-T4.78",
    "title": "Will the 7Y U.S. Treasury yield be above 4.78% on Nov 23, 2026? 4.79% or above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXAUDUSDAD-26NOV23",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5071,13 +5291,13 @@
    "rule": "fav_24h",
    "series": "KXAUDUSDAD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXAUDUSDAD-26NOV23-0.6610",
    "title": "Will AUDUSD be Above 0.661 at 5pm ET on Nov 23? Above 0.661"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGBPUSDAD-26NOV23",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5085,13 +5305,13 @@
    "rule": "longshot_no",
    "series": "KXGBPUSDAD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGBPUSDAD-26NOV23-1.3050",
    "title": "Will GBPUSD be Above 1.305 at 5pm ET on Nov 23? Above 1.305"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXGBPUSDAD-26NOV23",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5099,13 +5319,13 @@
    "rule": "fav_24h",
    "series": "KXGBPUSDAD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXGBPUSDAD-26NOV23-1.3050",
    "title": "Will GBPUSD be Above 1.305 at 5pm ET on Nov 23? Above 1.305"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXUSDCADAD-26NOV23",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5113,13 +5333,13 @@
    "rule": "longshot_no",
    "series": "KXUSDCADAD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXUSDCADAD-26NOV23-1.4390",
    "title": "Will USDCAD be Above 1.439 at 5pm ET on Nov 23? Above 1.439"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXUSDCADAD-26NOV23",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5127,13 +5347,13 @@
    "rule": "fav_24h",
    "series": "KXUSDCADAD",
    "side": "yes",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXUSDCADAD-26NOV23-1.4350",
    "title": "Will USDCAD be Above 1.435 at 5pm ET on Nov 23? Above 1.435"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-23T22:00:00Z",
    "event": "KXUSDCADAD-26NOV23",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5141,13 +5361,13 @@
    "rule": "fav_24h",
    "series": "KXUSDCADAD",
    "side": "no",
-   "status": "resting",
+   "status": "unfilled",
    "taker": false,
    "ticker": "KXUSDCADAD-26NOV23-1.4390",
    "title": "Will USDCAD be Above 1.439 at 5pm ET on Nov 23? Above 1.439"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-27T15:00:00Z",
    "event": "KXSETLIST-MACYSWI26NOV27",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5161,7 +5381,7 @@
    "title": "Will Teddy Swims perform The Door at the 100th Macy's Thanksgiving Day Parade? The Door"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5175,21 +5395,22 @@
    "title": "Will the 10Y U.S. Treasury yield be above 5.01% on Nov 24, 2026? 5.02% or above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
+   "filled_at": "2026-11-24T02:13:27+00:00",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.88,
    "rule": "longshot_no",
    "series": "KXUST10AD",
    "side": "no",
-   "status": "resting",
+   "status": "filled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV24-T4.99",
    "title": "Will the 10Y U.S. Treasury yield be above 4.99% on Nov 24, 2026? 5% or above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5203,7 +5424,7 @@
    "title": "Will the 10Y U.S. Treasury yield be above 4.81% on Nov 24, 2026? 4.82% or above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5217,7 +5438,7 @@
    "title": "Will the 10Y U.S. Treasury yield be above 4.83% on Nov 24, 2026? 4.84% or above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST2AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5231,7 +5452,7 @@
    "title": "Will the 2Y U.S. Treasury yield be above 4.60% on Nov 24, 2026? 4.61% or above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST2AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5245,7 +5466,7 @@
    "title": "Will the 2Y U.S. Treasury yield be above 4.58% on Nov 24, 2026? 4.59% or above"
   },
   {
-   "checked_at": "2026-11-23T20:36:47+00:00",
+   "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST30AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -5265,12 +5486,13 @@
   "listed:KXCOPPERD": "2026-11-20T16:58:25+00:00",
   "listed:KXGOLDD": "2026-11-20T16:58:25+00:00",
   "listed:KXNATGASD": "2026-11-20T16:58:25+00:00",
+  "promise:KXSILVERD:longshot_no": "2026-11-24T02:13:27+00:00",
   "relist:fx_weekly:2026-11-23": "2026-11-23T14:40:17+00:00"
  },
  "pushes": {
   "2026-11-20": 4,
   "2026-11-21": 1,
-  "2026-11-23": 1
+  "2026-11-23": 2
  },
  "relist": {
   "fx_weekly": {
@@ -5629,6 +5851,7 @@
   "KXARGENTINAPRES",
   "KXARGENTINAPRES1R",
   "KXARGLNBGAME",
+  "KXARGNACBADVANCE",
   "KXARGNACBBTTS",
   "KXARGNACBGAME",
   "KXARGNACBSPREAD",
@@ -7327,6 +7550,7 @@
   "KXHURRICANENAMES",
   "KXHURRLANDFL4",
   "KXHURRLANDNE3",
+  "KXHURRLANDTX3",
   "KXHUTCHISONPANAMA",
   "KXHVOTEHEGSETHIMPEACH",
   "KXHYPE",
@@ -8077,6 +8301,7 @@
   "KXMORATHANNOUNCEOUT",
   "KXMORATORIUMCOUNT",
   "KXMORENASEATS",
+  "KXMORRISCONF",
   "KXMORTGAGERATE",
   "KXMOSTATELEG",
   "KXMOSTEXPENSIVEART",
@@ -8638,6 +8863,7 @@
   "KXNFLDEBUT",
   "KXNFLDELAY",
   "KXNFLDIVISIONORDER",
+  "KXNFLDIVISIONQUAL",
   "KXNFLDIVISIONWINS",
   "KXNFLDIVLEASTWINS",
   "KXNFLDIVMOSTWINS",
@@ -8878,6 +9104,7 @@
   "KXNUMSHUTDOWNS",
   "KXNUNEZANNOUNCEOUT",
   "KXNVDAA",
+  "KXNVDABOARDTESTIFY",
   "KXNVDACEO",
   "KXNVDACEODATE",
   "KXNVDACEOHIRE",
@@ -9302,6 +9529,8 @@
   "KXRAINSFOM",
   "KXRAINSGFM",
   "KXRAINSLAX",
+  "KXRAINSNYC",
+  "KXRAINSSFO",
   "KXRAINSTLM",
   "KXRAINTHANKSGIVING",
   "KXRAINTPAM",
@@ -10635,7 +10864,10 @@
   "KXWODIMATCH",
   "KXWOODCABINET50",
   "KXWORDOFTHEYEAR",
+  "KXWORLDCHESSDRAWS",
   "KXWORLDCHESSMATCH",
+  "KXWORLDCHESSSPREAD",
+  "KXWORLDCHESSTIEBREAK",
   "KXWRECSS",
   "KXWSM",
   "KXWSMA",
@@ -12307,6 +12539,13 @@
     "spread": null,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 1.0
+   },
+   {
+    "n": 34,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 1.0
    }
   ],
   "KXARUNAMILLERANNOUNCEOUT": [
@@ -12315,6 +12554,13 @@
     "quoted": 2,
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -12332,6 +12578,13 @@
     "spread": 0.06,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXBOARDNVDA": [
@@ -12341,6 +12594,13 @@
     "spread": 0.07,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 550.2
+   },
+   {
+    "n": 11,
+    "quoted": 11,
+    "spread": 0.07,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 1332.5
    }
   ],
   "KXBRENTD": [
@@ -12767,6 +13027,13 @@
     "spread": 0.09,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 3.7
+   },
+   {
+    "n": 7,
+    "quoted": 7,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 269.5
    }
   ],
   "KXCHIJOHNSONBALLOT": [
@@ -12902,6 +13169,13 @@
     "spread": 0.98,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.2,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXCOLLATZ": [
@@ -12974,6 +13248,13 @@
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 9.9
    }
   ],
   "KXCONFIRMDAVIES": [
@@ -12982,6 +13263,13 @@
     "quoted": 5,
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 5,
+    "quoted": 5,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -13204,6 +13492,13 @@
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXDEBTPOWERHOUSE": [
@@ -13212,6 +13507,13 @@
     "quoted": 1,
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -13464,6 +13766,13 @@
     "spread": 0.18,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 380.2
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.2,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 601.0
    }
   ],
   "KXFUTU": [
@@ -13622,6 +13931,13 @@
     "spread": 0.17,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 5.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXGOLDBACH": [
@@ -13693,6 +14009,13 @@
     "quoted": 3,
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -13901,6 +14224,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 24027.9
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 30681.2
    }
   ],
   "KXHIGHCHI": [
@@ -14008,6 +14338,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 29671.8
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 34570.9
    }
   ],
   "KXHIGHDEN": [
@@ -14017,6 +14354,13 @@
     "spread": 0.02,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 24277.0
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 40803.6
    }
   ],
   "KXHIGHLAX": [
@@ -14126,6 +14470,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 66362.1
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 87259.0
    }
   ],
   "KXHIGHNY": [
@@ -14226,6 +14577,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 100324.4
+   },
+   {
+    "n": 12,
+    "quoted": 4,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 122292.3
    }
   ],
   "KXHIGHPHIL": [
@@ -14368,6 +14726,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 21077.9
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 25137.0
    }
   ],
   "KXHIGHTATL": [
@@ -14758,6 +15123,13 @@
     "spread": 0.02,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 11295.1
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 14102.9
    }
   ],
   "KXHIGHTNOLA": [
@@ -14876,6 +15248,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 11424.8
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 45833.8
    }
   ],
   "KXHIGHTSATX": [
@@ -14964,6 +15343,15 @@
     "spread": 0.02,
     "t": "2026-11-21T20:06:38+00:00",
     "vol": 7179.8
+   }
+  ],
+  "KXHURRLANDTX3": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.08,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXINDIATARIFF": [
@@ -15136,6 +15524,13 @@
     "spread": 0.03,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 70409.3
+   },
+   {
+    "n": 30,
+    "quoted": 16,
+    "spread": 0.08,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 37447.0
    }
   ],
   "KXINX15M": [
@@ -15287,6 +15682,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 33800.8
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 59253.7
    }
   ],
   "KXJPNCPIYOY": [
@@ -15875,6 +16277,13 @@
     "spread": 0.03,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 2921.6
+   },
+   {
+    "n": 12,
+    "quoted": 7,
+    "spread": 0.06,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 4376.5
    }
   ],
   "KXLOWTDEN": [
@@ -16109,6 +16518,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 3269.4
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.02,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 3581.4
    }
   ],
   "KXLOWTNOLA": [
@@ -16393,6 +16809,13 @@
     "spread": 0.03,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 2873.0
+   },
+   {
+    "n": 12,
+    "quoted": 9,
+    "spread": 0.05,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 7770.8
    }
   ],
   "KXLOWTOKC": [
@@ -16588,6 +17011,13 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 2535.1
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 5362.0
    }
   ],
   "KXLOWTSAN": [
@@ -16799,6 +17229,22 @@
     "spread": 0.04,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 4520.6
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.03,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 5306.9
+   }
+  ],
+  "KXMORRISCONF": [
+   {
+    "n": 1,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXNASDAQ100": [
@@ -16829,6 +17275,13 @@
     "spread": 0.04,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 29419.0
+   },
+   {
+    "n": 30,
+    "quoted": 16,
+    "spread": 0.15,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 115.0
    }
   ],
   "KXNATGASD": [
@@ -16966,6 +17419,15 @@
     "vol": 22606.6
    }
   ],
+  "KXNVDABOARDTESTIFY": [
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 131.5
+   }
+  ],
   "KXNVDACHARGE": [
    {
     "n": 5,
@@ -16973,6 +17435,13 @@
     "spread": 0.08,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 10.9
+   },
+   {
+    "n": 5,
+    "quoted": 5,
+    "spread": 0.07,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 382.4
    }
   ],
   "KXNZDUSDAD": [
@@ -16989,6 +17458,13 @@
     "spread": 0.2,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXOPENSHARE": [
@@ -16998,6 +17474,13 @@
     "spread": 0.02,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 6120.0
+   },
+   {
+    "n": 9,
+    "quoted": 9,
+    "spread": 0.03,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 10722.0
    }
   ],
   "KXRAIN": [
@@ -17077,6 +17560,31 @@
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 671197.7
+   },
+   {
+    "n": 74,
+    "quoted": 18,
+    "spread": 0.01,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 1050024.4
+   }
+  ],
+  "KXRAINSNYC": [
+   {
+    "n": 5,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXRAINSSFO": [
+   {
+    "n": 8,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXRIKERSDEADLINE": [
@@ -17086,6 +17594,13 @@
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 200.0
    }
   ],
   "KXRSA1024": [
@@ -17157,6 +17672,13 @@
     "quoted": 4,
     "spread": 0.2,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.2,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -17252,6 +17774,13 @@
     "quoted": 6,
     "spread": 0.095,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 200.0
+   },
+   {
+    "n": 9,
+    "quoted": 6,
+    "spread": 0.095,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 200.0
    }
   ],
@@ -17388,6 +17917,13 @@
     "spread": 0.09,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 100.0
+   },
+   {
+    "n": 9,
+    "quoted": 9,
+    "spread": 0.09,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 104.5
    }
   ],
   "KXSILVERD": [
@@ -17497,6 +18033,13 @@
     "spread": 0.1,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXTRUMPNYTJUDGE": [
@@ -17505,6 +18048,13 @@
     "quoted": 3,
     "spread": 0.98,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.79,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -17806,6 +18356,13 @@
     "spread": 0.2,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 100.9
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.2,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 100.9
    }
   ],
   "KXUKRETAIL": [
@@ -17908,6 +18465,13 @@
     "spread": null,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXUSDCADAD": [
@@ -17924,6 +18488,13 @@
     "spread": 0.09,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 25.7
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXUSDCHFAD": [
@@ -17939,6 +18510,13 @@
     "quoted": 6,
     "spread": 0.01,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -17956,6 +18534,13 @@
     "spread": null,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXUSDJPYAD": [
@@ -17971,6 +18556,13 @@
     "quoted": 0,
     "spread": null,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -17995,6 +18587,13 @@
     "spread": 0.86,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.02,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 80.4
    }
   ],
   "KXUSDMXNAD": [
@@ -18010,6 +18609,13 @@
     "quoted": 0,
     "spread": null,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -18112,6 +18718,13 @@
     "quoted": 0,
     "spread": null,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 0,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 0.0
    }
   ],
@@ -18818,6 +19431,13 @@
     "spread": 0.08,
     "t": "2026-11-23T20:36:47+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.08,
+    "t": "2026-11-24T02:13:27+00:00",
+    "vol": 0.0
    }
   ],
   "KXWINDSPEEDNYC": [
@@ -18945,6 +19565,13 @@
     "quoted": 4,
     "spread": 0.36,
     "t": "2026-11-23T20:36:47+00:00",
+    "vol": 429.3
+   },
+   {
+    "n": 5,
+    "quoted": 4,
+    "spread": 0.38,
+    "t": "2026-11-24T02:13:27+00:00",
     "vol": 429.3
    }
   ],
@@ -19178,6 +19805,12 @@
   "KXINX-26NOV20H1600-B7337": "",
   "KXINX-26NOV20H1600-B7362": "",
   "KXINX-26NOV20H1600-B7387": "",
+  "KXINX-26NOV23H1600-B7062": "no",
+  "KXINX-26NOV23H1600-B7087": "no",
+  "KXINX-26NOV23H1600-B7112": "no",
+  "KXINX-26NOV23H1600-B7137": "no",
+  "KXINX-26NOV23H1600-B7162": "no",
+  "KXINX-26NOV23H1600-B7187": "no",
   "KXJOBLESSCLAIMS-26NOV19-210000": "no",
   "KXJOBLESSCLAIMS-26NOV19-215000": "no",
   "KXLOWTATL-26NOV13-B36.5": "no",
@@ -19237,6 +19870,12 @@
   "KXNASDAQ100-26NOV20H1600-B27150": "",
   "KXNASDAQ100-26NOV20H1600-B27250": "",
   "KXNASDAQ100-26NOV20H1600-B27350": "",
+  "KXNASDAQ100-26NOV23H1600-B25550": "no",
+  "KXNASDAQ100-26NOV23H1600-B25650": "no",
+  "KXNASDAQ100-26NOV23H1600-B25750": "no",
+  "KXNASDAQ100-26NOV23H1600-B25850": "no",
+  "KXNASDAQ100-26NOV23H1600-B25950": "no",
+  "KXNASDAQ100-26NOV23H1600-B26750": "yes",
   "KXRT-CAT-60": "no",
   "KXRT-HOWT-42": "no"
  }
