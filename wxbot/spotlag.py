@@ -75,6 +75,8 @@ CF_FRESH_S = 3.0
 VOL_LOOK_S = 3600
 VOL_MIN_RET = 30          # 1-minute returns needed (30 min of history)
 VOL_FLOOR = 2e-5          # per-second log vol floor
+SIG_EVERY_S = 15.0        # recompute the hour-long vol this often (CPU)
+SCAN_EVERY_S = 0.1        # signal scan / probe cadence
 KEEP_DAYS = 14
 VERDICT_FILLS = 300
 
@@ -207,6 +209,18 @@ class Spot:
             comp = Composite(sorted(set(SERIES.values())), keep_s=VOL_LOOK_S + 300)
         self.comp = comp
         self.cf_ids: dict[str, int] = {}
+        self._sig: dict[tuple, tuple[float, float | None]] = {}   # (coin, src) -> (at, sigma)
+
+    def sigma(self, coin: str, cf: bool, now: float) -> float | None:
+        """sigma_1m, recomputed at most every SIG_EVERY_S (it walks an hour of points)."""
+        k = (coin, cf)
+        hit = self._sig.get(k)
+        if hit and now - hit[0] < SIG_EVERY_S:
+            return hit[1]
+        src = self.comp.cf_series if cf else self.comp.series
+        v = sigma_1m(src.get(coin, ()), now)
+        self._sig[k] = (now, v)
+        return v
 
     def start(self):
         self.comp.start(venues=("coinbase", "kraken", "bitstamp"), client=None)
@@ -228,13 +242,13 @@ class Spot:
         left = close - now
         d = self.comp.cf_series.get(coin)
         if d and now - d[-1][0] <= CF_FRESH_S:
-            sig = sigma_1m(d, now)
+            sig = self.sigma(coin, True, now)
             if sig is not None:
                 px = d[-1][1]
                 return {"src": "cf", "px": px, "sigma": sig, "fv_yes": fair_yes(px, strike, sig, left, [])}
         if self.comp.healthy(coin, now):
             px, n = self.comp.now_px(coin, now)
-            sig = sigma_1m(self.comp.series.get(coin, ()), now)
+            sig = self.sigma(coin, False, now)
             if px is not None and sig is not None:
                 return {"src": f"mix{n}", "px": px, "sigma": sig,
                         "fv_yes": fair_yes(px, strike, sig, left, [])}
@@ -247,8 +261,8 @@ class Spot:
             out[c] = {"cf_age_s": round(now - cf[-1][0], 1) if cf else None,
                       "mix_age_s": round(now - mx[-1][0], 1) if mx else None,
                       "venues": self.comp.now_px(c, now)[1],
-                      "cf_vol_ok": sigma_1m(cf or (), now) is not None,
-                      "mix_vol_ok": sigma_1m(mx or (), now) is not None}
+                      "cf_vol_ok": self.sigma(c, True, now) is not None,
+                      "mix_vol_ok": self.sigma(c, False, now) is not None}
         return out
 
 
@@ -647,8 +661,10 @@ class SpotLag:
             timers["mk"] = now + 20
             self.refresh_markets(now)
             self.subscribe_new()
-        self.scan(now)
-        self.run_probes(now)
+        if now - timers.get("scan", 0) >= SCAN_EVERY_S:   # not once per websocket message
+            timers["scan"] = now
+            self.scan(now)
+            self.run_probes(now)
         if now >= timers.get("st", 0):
             timers["st"] = now + 20
             self.settle(now)
@@ -665,8 +681,8 @@ class SpotLag:
         from .m15_feeds import KALSHI_WS
         hdr = self.signer.headers("GET", KALSHI_WS) if self.signer else {}
         started = self.clock()
-        with connect(KALSHI_WS, additional_headers=hdr, open_timeout=15, ping_interval=10,
-                     ping_timeout=20, max_size=2 ** 23) as ws:
+        with connect(KALSHI_WS, additional_headers=hdr, open_timeout=15, ping_interval=20,
+                     ping_timeout=60, max_size=2 ** 23) as ws:
             self.ws = ws
             self.subscribed, self.seq, self.books = set(), {}, {}
             self.counts["connects"] += 1
@@ -694,10 +710,13 @@ class SpotLag:
         timers: dict = {}
         backoff = 5
         while True:
+            t0 = self.clock()
             try:
                 self.session(timers)
                 backoff = 5
             except Exception as exc:  # noqa: BLE001  never die; log and reconnect
+                if self.clock() - t0 > 120:      # it ran fine for a while: quick retry
+                    backoff = 5
                 self.counts["errors"] += 1
                 self.last_err = str(exc)[:200]
                 log.warning("spotlag session: %s", exc)

@@ -250,3 +250,23 @@ def test_real_spot_prefers_cf_after_warmup():
     assert sp.fair("NEAR", 3.0, T0 + 300, T0) is None          # no NEAR data at all
     sp.comp.cf_series["DOGE"].clear()
     assert sp.fair("DOGE", 0.15, T0 + 300, T0)["src"].startswith("mix")
+
+
+def test_sigma_cached_between_recomputes():
+    from wxbot.m15_fv import Composite
+    sp = spotlag.Spot(Composite(["DOGE", "NEAR"], keep_s=4000))
+    for i in range(3601):
+        sp.on_cf({"index_id": "DOGEUSD_RTI", "value_usd": str(0.15 * math.exp(0.002 * math.sin(i / 300)))}, T0 - 3600 + i)
+        sp.sample(T0 - 3600 + i)
+    a = sp.sigma("DOGE", True, T0)
+    sp.comp.cf_series["DOGE"].clear()
+    assert sp.sigma("DOGE", True, T0 + 5) == a                 # cached
+    assert sp.sigma("DOGE", True, T0 + 20) is None             # recomputed
+
+
+def test_scan_throttled_per_tick(tmp_path):
+    sl, clk, _ = make(tmp_path)
+    timers = {"ctl": 1e18, "mk": 1e18, "st": 1e18, "save": 1e18, "up": 1e18}
+    for i in range(10):
+        sl.tick(clk.t + i * 0.01, timers)
+    assert sl.counts["scans"] == 1
