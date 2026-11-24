@@ -1,8 +1,8 @@
 {
- "at": "2026-11-24 09:36:22",
- "paper_only": true,
+ "at": "2026-11-24 09:46:24",
+ "paper_only": false,
  "real": {
-  "mode": "stopped",
+  "mode": "live",
   "control": {
    "mode": "live",
    "contracts": 1,
@@ -10,15 +10,11 @@
    "max_cost": 0.95,
    "margin": 2,
    "slack": 0.03,
-   "epoch": 0
+   "epoch": 1
   },
   "cap": 5.0,
   "cap_used": 0.0,
-  "stopped": {
-   "why": "PortWatch history read failed ({'code': 400, 'message': 'Invalid URL', 'details': ['Invalid)",
-   "et": "2026-11-24 08:45:17",
-   "epoch": 0
-  },
+  "stopped": null,
   "orders": 0,
   "filled": 0,
   "missed": 0,
@@ -56,7 +52,7 @@
     "KXBABELMANDEBWEEKLY": 189,
     "KXHORMUZWEEKLY": 19
    },
-   "kalshi_values": null,
+   "kalshi_values": {},
    "lags": {
     "0": {
      "et": "2026-11-24 08:45:08",
@@ -97,10 +93,18 @@
      "ct_cap": 0,
      "profit_all_mkts": 0,
      "profit_uncapped": 0
+    },
+    "3600": {
+     "et": "2026-11-24 09:45:24",
+     "closed": true,
+     "profit_cap": 0,
+     "ct_cap": 0,
+     "profit_all_mkts": 0,
+     "profit_uncapped": 0
     }
    },
    "takes": [],
-   "settled": false,
+   "settled": true,
    "checks": {
     "second_read": true,
     "history": {},
