@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 02:43:15",
+ "at": "2026-11-24 02:54:19",
  "mode": "paper",
  "paper_only": true,
  "since": "2026-11-24 02:43:13",
@@ -174,31 +174,51 @@
  "feeds": {
   "spot": {
    "DOGE": {
-    "cf_age_s": null,
-    "mix_age_s": 0.5,
-    "venues": 2,
+    "cf_age_s": 160.4,
+    "mix_age_s": 160.4,
+    "venues": 0,
     "cf_vol_ok": false,
     "mix_vol_ok": false
    },
    "NEAR": {
-    "cf_age_s": null,
-    "mix_age_s": 0.5,
+    "cf_age_s": 160.4,
+    "mix_age_s": 0.4,
     "venues": 2,
     "cf_vol_ok": false,
     "mix_vol_ok": false
    }
   },
-  "cf_ids": {},
+  "cf_ids": {
+   "AAVEUSD_RTI": 187,
+   "ADAUSD_RTI": 187,
+   "BCHUSD_RTI": 187,
+   "BNBUSD_RTI": 187,
+   "BRTI": 935,
+   "DOGEUSD_RTI": 935,
+   "ETHUSD_RTI": 935,
+   "HYPEUSD_RTI": 187,
+   "LINKUSD_RTI": 187,
+   "LTCUSD_RTI": 187,
+   "NEARUSD_RTI": 187,
+   "SHIBUSD_RTI": 187,
+   "SOLUSD_RTI": 935,
+   "SUIUSD_RTI": 187,
+   "UNIUSD_RTI": 187,
+   "VVVUSD_RTI": 187,
+   "WLDUSD_RTI": 187,
+   "XRPUSD_RTI": 934,
+   "ZECUSD_RTI": 187
+  },
   "ws_age_s": 0.0,
   "markets": 2,
   "books_ok": 0,
-  "book_msgs": 0,
-  "cf_msgs": 0,
+  "book_msgs": 16122,
+  "cf_msgs": 7292,
   "resyncs": 0,
-  "connects": 1,
-  "errors": 0,
+  "connects": 7,
+  "errors": 6,
   "no_fair": 0,
-  "scans": 1,
-  "last_err": ""
+  "scans": 24624,
+  "last_err": "sent 1011 (internal error) keepalive ping timeout; no close frame received"
  }
 }
