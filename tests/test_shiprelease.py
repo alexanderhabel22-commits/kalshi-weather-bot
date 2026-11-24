@@ -320,3 +320,29 @@ def test_max_cost_after_fee(tmp_path):
     release(w, fs, clock)
     # only NO legs (ask 0.40); limit 0.43 + 2c fee = 0.45 <= 0.50; YES at 0.70 never
     assert c.orders and all(o[1] == "no" and o[2] + sr.fee1(o[2]) <= 0.5 for o in c.orders)
+
+
+def test_history_unavailable_does_not_stop(tmp_path, monkeypatch):
+    monkeypatch.setattr(sr, "HIST_RETRY_S", 0)
+    c = FakeClient()
+    w, fs, clock, _ = live(tmp_path, c)
+    orig = fs.get
+
+    def flaky(url, params=None, timeout=None):
+        if url.endswith("/query") and "2026-10-19" in params["where"]:
+            return Resp({"error": {"code": 400, "message": "Invalid URL"}})
+        return orig(url, params, timeout)
+    fs.get = flaky
+    wk = release(w, fs, clock)
+    assert w.stopped is None and c.orders
+    assert "Invalid URL" in wk["checks"]["history_err"]
+
+
+def test_error_retry_is_fast_in_window(tmp_path):
+    class Bad(FakeSession):
+        def get(self, url, params=None, timeout=None):
+            if url.endswith("/query"):
+                return Resp({"error": {"code": 400}})
+            return super().get(url, params, timeout)
+    w = sr.ShipRelease(tmp_path, clock=lambda: ts(2026, 11, 24, 6), session=Bad(date(2026, 11, 22)))
+    assert w.step(ts(2026, 11, 24, 6)) == sr.ERR_RETRY_S

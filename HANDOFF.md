@@ -315,8 +315,11 @@ record earns it. Be candid about odds and risk; no hype.
   Tuesday". Real rail: at release, 1-ct IOC on the side the posted count decides, only brackets cleared by more
   than 2 ships, price + fee <= 95c, limit = seen ask + 3c, one order per market ever, shard 0, cap = open bets +
   settled losses <= $5 (profits add no room; code ceilings 1 ct, $5). Anomaly stop (raise `epoch` in the
-  control file to resume): second PortWatch read differs, history unreadable, rules don't name PortWatch + the
-  week, order refused, Kalshi settles on another count, a real bet loses. A total 50%+ (10+ ships) off the last
+  control file to resume): second PortWatch read differs, rules don't name PortWatch + the
+  week, order refused, Kalshi settles on another count, a real bet loses. (History unreadable after 3 tries =
+  history check skipped, since Nov 24: PortWatch threw 400 'Invalid URL' ~5:20-8:45 AM ET around its update and
+  that false alarm stopped the first real Tuesday; epoch 1 cleared it. Nov 24 data became public ~8:40 AM ET;
+  the market repriced within that minute, our first good read was 8:45, nothing left on offer.) A total 50%+ (10+ ships) off the last
   4 weeks skips that chokepoint's real orders. One ntfy push per Tuesday with bets placed; one per anomaly.
   Review at 10 real fills. Why: the four ship-count series settle on the PortWatch Mon-Sun sum
   (matched 35/38 weeks), PortWatch posts the week early Tuesday (Nov 17: layer edit 5:15 AM ET) and the

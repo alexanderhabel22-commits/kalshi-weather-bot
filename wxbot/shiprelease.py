@@ -8,7 +8,7 @@ clears by more than `margin` (2) ships, price + taker fee <= `max_cost` (95c), i
 (never rests, never chases), one real order per market ever, exchange shard 0 only, HARD $5 cap:
 cost of open real bets + settled real losses + the new order <= $5 (profits never add room).
 Anomaly stop (real orders stop until the control file's `epoch` is raised): a second PortWatch read
-disagrees with the first, PortWatch history can't be read, a market's rules don't name PortWatch and
+disagrees with the first, a market's rules don't name PortWatch and
 this week, Kalshi refuses an order, Kalshi settles on a different count than PortWatch showed, or a
 real bet loses. A total far from the last 4 weeks (50% and 10+ ships) skips that chokepoint's real orders.
 The paper twin below keeps logging every Tuesday whatever the real switch says. Review at 10 real fills.
@@ -72,6 +72,8 @@ REAL_DEFAULTS = {"mode": "off", "contracts": 1, "max_loss_usd": 5.0, "max_cost":
                  "slack": 0.03, "epoch": 0}
 REAL_MAX_CONTRACTS = 1     # code ceiling whatever the control file says
 REAL_MAX_LOSS = 5.0        # code ceiling for the cap
+HIST_RETRY_S = 1.0
+ERR_RETRY_S = 5           # in the fast window, re-poll this soon after a PortWatch error
 HIST_DEV = 0.5             # anomaly: total more than 50% (and 10+ ships) away from the last 4 weeks' mean
 
 
@@ -187,6 +189,7 @@ class ShipRelease:
         self.ok_at = -1e12
         self.real: list[dict] = []
         self.stopped: dict | None = None
+        self.poll_failed = False
         self.load()
 
     # -- persistence
@@ -259,7 +262,9 @@ class ShipRelease:
             rows, edit = self.portwatch(end)
         except Exception as exc:  # noqa: BLE001
             self.polls.update(err=self.polls["err"] + 1, last_err=f"{et_str(now)} {str(exc)[:120]}")
+            self.poll_failed = True
             return
+        self.poll_failed = False
         self.polls.update(ok=self.polls["ok"] + 1, last_ok=et_str(now),
                           edit=et_str(edit) if edit else self.polls.get("edit"))
         n = days_present(rows, end)
@@ -439,7 +444,9 @@ class ShipRelease:
 
     def release_checks(self, end: date, tot: dict) -> dict:
         """Second read must match (else anomaly stop). A total far from the last 4 weeks: that
-        chokepoint gets no real orders this week. History unreadable: anomaly stop."""
+        chokepoint gets no real orders this week. History unreadable after 3 tries: the history check
+        is skipped (logged), because PortWatch's API throws intermittent 400s around its weekly update
+        (Nov 24: 'Invalid URL' from ~5:20 to 8:45 AM ET) and the second read already guards the totals."""
         out = {"second_read": None, "history": {}, "skip_series": []}
         try:
             rows, _ = self.portwatch(end)
@@ -449,8 +456,20 @@ class ShipRelease:
         out["second_read"] = again == tot
         if again != tot:
             self.anomaly(f"PortWatch second read for week {end} gave {again}, first {tot}")
+        rows, err = None, None
+        for i in range(3):
+            try:
+                rows, _ = self.portwatch(end - timedelta(days=7), days=28)
+                break
+            except Exception as exc:  # noqa: BLE001
+                err = exc
+                if i < 2:
+                    time.sleep(HIST_RETRY_S)
+        if rows is None:
+            out["history_err"] = str(err)[:100]
+            self.write({"kind": "history_unavailable", "err": str(err)[:200]})
+            return out
         try:
-            rows, _ = self.portwatch(end - timedelta(days=7), days=28)
             for s_, pid in SERIES.items():
                 vals = [int(a["n_total"]) for a in rows if a.get("portid") == pid and a.get("n_total") is not None]
                 if len(vals) < 21:
@@ -462,7 +481,6 @@ class ShipRelease:
                     self.write({"kind": "real_skip_series", "series": s_, "total": tot[s_], "mean4": mean})
         except Exception as exc:  # noqa: BLE001
             out["history_err"] = str(exc)[:100]
-            self.anomaly(f"PortWatch history read failed ({str(exc)[:60]})")
         return out
 
     def real_orders(self, w: dict, snap: dict) -> None:
@@ -623,6 +641,8 @@ class ShipRelease:
         w = self.weeks.get(str(last_week_end(now))) or {}
         fast = fast_window(now, bool(w.get("released")))
         pending = any(w2.get("released") and len(w2["snaps"]) < len(LAGS_S) for w2 in self.weeks.values())
+        if fast and self.poll_failed:
+            return ERR_RETRY_S
         return FAST_S if fast or pending else SLOW_S
 
     def run(self) -> None:
