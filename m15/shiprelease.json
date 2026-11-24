@@ -1,8 +1,8 @@
 {
- "at": "2026-11-24 08:35:52",
- "paper_only": false,
+ "at": "2026-11-24 08:45:08",
+ "paper_only": true,
  "real": {
-  "mode": "live",
+  "mode": "stopped",
   "control": {
    "mode": "live",
    "contracts": 1,
@@ -14,7 +14,11 @@
   },
   "cap": 5.0,
   "cap_used": 0.0,
-  "stopped": null,
+  "stopped": {
+   "why": "PortWatch history read failed ({'code': 400, 'message': 'Invalid URL', 'details': ['Invalid)",
+   "et": "2026-11-24 08:45:17",
+   "epoch": 0
+  },
   "orders": 0,
   "filled": 0,
   "missed": 0,
@@ -31,25 +35,47 @@
   "margin": 2
  },
  "polls": {
-  "ok": 3125,
-  "err": 605,
-  "last_ok": "2026-11-24 07:51:31",
-  "last_err": "2026-11-24 08:35:52 {'code': 499, 'message': 'Token Required', 'messageCode': 'GWM_0003', 'details': ['Token Required']}",
-  "edit": "2026-11-17 05:15:06"
+  "ok": 3137,
+  "err": 620,
+  "last_ok": "2026-11-24 08:45:08",
+  "last_err": "2026-11-24 08:44:47 {'code': 400, 'message': 'Invalid URL', 'details': ['Invalid URL']}",
+  "edit": "2026-11-24 06:18:11"
  },
  "weeks": [
   {
    "end": "2026-11-22",
-   "released_et": null,
-   "layer_edit_et": null,
-   "first_partial": null,
-   "totals": null,
+   "released_et": "2026-11-24 08:45:08",
+   "layer_edit_et": "2026-11-24 06:18:11",
+   "first_partial": {
+    "et": "2026-11-24 08:45:08",
+    "days": 28
+   },
+   "totals": {
+    "KXSUEZWEEKLY": 319,
+    "KXPANAMAWEEKLY": 194,
+    "KXBABELMANDEBWEEKLY": 189,
+    "KXHORMUZWEEKLY": 19
+   },
    "kalshi_values": null,
-   "lags": {},
+   "lags": {
+    "0": {
+     "et": "2026-11-24 08:45:08",
+     "closed": false,
+     "profit_cap": 0.0,
+     "ct_cap": 0.0,
+     "profit_all_mkts": 0.0,
+     "profit_uncapped": 0.0
+    }
+   },
    "takes": [],
    "settled": false,
-   "checks": null,
-   "real_mode": null,
+   "checks": {
+    "second_read": true,
+    "history": {},
+    "skip_series": [],
+    "history_err": "{'code': 400, 'message': 'Invalid URL', 'details': ['Invalid URL']}"
+   },
+   "real_mode": "stopped",
    "paper": {
     "markets": 0,
     "ct": 0,
@@ -694,7 +720,7 @@
   }
  ],
  "totals": {
-  "weeks_released": 1,
+  "weeks_released": 2,
   "settled_takes": 0,
   "ct": 0,
   "pnl": 0,
