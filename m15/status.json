@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24T09:17:00+00:00",
+ "at": "2026-11-24T09:32:00+00:00",
  "code": "d3e2e05",
  "control": "live",
  "control_real": {
@@ -16,22 +16,26 @@
   "KXBTC15M": 1794394096
  },
  "halted": null,
- "last_reject": null,
+ "last_reject": {
+  "at": 1795512311,
+  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
+  "ticker": "KXNATGAS15M-26NOV240430-30"
+ },
  "live_exposure": 0.0,
  "live_now": {
-  "KXNATGAS15M-26NOV240430-30": {
+  "KXNATGAS15M-26NOV240445-45": {
    "bid_ask": [
-    0.67,
-    0.7
+    0.55,
+    0.59
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXNATGAS15M-26NOV240430-30|paper": {
+  "KXNATGAS15M-26NOV240445-45|paper": {
    "bid_ask": [
-    0.67,
-    0.7
+    0.55,
+    0.59
    ],
    "mode": "paper",
    "order": false,
@@ -51,7 +55,7 @@
    "2026-11-12": -1.7,
    "2026-11-13": -3.22,
    "2026-11-23": 3.13,
-   "2026-11-24": 0.5795
+   "2026-11-24": -0.2805
   },
   "live_log": [
    [
@@ -245,9 +249,13 @@
    [
     1795511700,
     0.05
+   ],
+   [
+    1795512600,
+    -0.86
    ]
   ],
-  "live_total": -7.4033,
+  "live_total": -8.2633,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
@@ -266,19 +274,19 @@
    "2026-11-21": -6.06,
    "2026-11-22": -12.45,
    "2026-11-23": -38.45,
-   "2026-11-24": -5.56
+   "2026-11-24": -4.49
   },
-  "paper_total": -472.24
+  "paper_total": -471.17
  },
- "pnl_24h": 3.7095,
+ "pnl_24h": 2.8495,
  "realtest": {
   "KXNATGAS15M": {
-   "ct": 6.0,
+   "ct": 7.0,
    "first_fill": 1795503308,
-   "markets": 6,
-   "paper_ct": 9.0,
-   "paper_pnl": -0.66,
-   "pnl": -0.18,
+   "markets": 7,
+   "paper_ct": 11.0,
+   "paper_pnl": -0.29,
+   "pnl": -1.04,
    "reviews": [],
    "tag": "natgas-2026-11-23",
    "won": 5
@@ -2099,11 +2107,11 @@
   },
   "KXNATGAS15M": {
    "at_step": [
-    47.99,
-    3.7095
+    48.99,
+    2.8495
    ],
-   "fills": 47.99,
-   "pnl": 3.7095,
+   "fills": 48.99,
+   "pnl": 2.8495,
    "recent": [
     [
      1.0,
@@ -2296,6 +2304,10 @@
     [
      1.0,
      0.05
+    ],
+    [
+     1.0,
+     -0.86
     ]
    ],
    "step": 0,
@@ -2491,6 +2503,10 @@
     [
      1.0,
      0.05
+    ],
+    [
+     1.0,
+     -0.86
     ]
    ],
    "step_since": 1795458640.335016
@@ -4372,7 +4388,7 @@
  "shards": {
   "0": 12.46,
   "1": 0.0,
-  "2": 8.5432,
+  "2": 8.6832,
   "3": 0.0
  },
  "spot_ok": true,
