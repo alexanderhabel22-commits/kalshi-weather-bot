@@ -166,6 +166,11 @@
       "label": "Shipping counts (paper)",
       "backtest_c": 4.7,
       "backtest_note": "Weekly ship-transit counts (Hormuz, Suez, Panama, Bab el-Mandeb) vs an IMF PortWatch forecast (14-day average x 7, negative binomial): buy the side worth 5c+ more than its price after the taker fee, until the week ends. Replay Sep-Nov 2026 +4.7c +-8.3 on 216 trades (+7.0c +-7.5 on 243 with the full candle window): not significant. PAPER ONLY from Nov 20. First look at 20 settled fills (Tue Nov 24, when the first week settles), verdict at 100 (~Dec 15)."
+    },
+    "gas_fav_paper": {
+      "label": "State gas late favorites (paper)",
+      "backtest_c": 6.3,
+      "backtest_note": "AAA state gas daily-change brackets (50 states, new Nov 2026): from 11 PM ET the night before to 3:15 AM ET, buy YES on the bracket priced 70-97c (taker), hold. Replay Nov 12-24 2026 +6.3c +-2.0 on 169 entries over 11 days (9 up, errors clustered by day); first and second halves both positive. Only 11 days, all while prices were falling. PAPER ONLY from Nov 25. First look at 100 settled fills, verdict at 300 (~Dec 16)."
     }
   },
   "events": [

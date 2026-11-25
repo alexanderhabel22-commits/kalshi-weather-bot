@@ -472,6 +472,26 @@ exit = "hold"
 max_week_contracts = 400
 max_market_contracts = 1
 
+[trading.gas_fav_paper]
+# PAPER ONLY (Nov 25, 2026; thread "Find new paper-test ideas like our winners"). Never live without Alex's OK.
+# wxbot/strats/gas_fav_paper.py. 50 state AAA gas daily-change bracket series (KXAAAGASCD<ST>, new Nov 2026):
+# from 11 PM ET the night before to 3:15 AM ET (AAA publishes ~3:30 AM), buy YES on the favourite bracket
+# at the ask in 70-97c (taker), one entry per market, hold. Replay Nov 12-24: +6.3c +- 2.0 (169 entries,
+# 11 days, 9 up; day-clustered), both halves positive. Only 11 days of one falling-price stretch.
+# ~10-20 paper fills a night. Reviews: first look at 100 settled fills (~1 week), verdict at 300 (~Dec 16).
+enabled = true
+live = false
+taker = true
+contracts = 1
+max_contracts = 1
+min_price = 0.70
+max_price = 0.97
+max_open_pct = 1.00
+max_event_pct = 0.40
+exit = "hold"
+max_week_contracts = 250
+max_market_contracts = 1
+
 [trading.locks]
 # Weather LOCKs, PAPER for now. Alex OK'd real money on Nov 5, then paused it the
 # same evening after a bad 6-hour METAR group made a false Philadelphia LOCK.
