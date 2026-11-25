@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 21:08:14",
+ "at": "2026-11-24 21:13:14",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -1415,7 +1415,59 @@
     "lag_s": 411.2,
     "ticker": "KXBIGGESTQUAKE-25NOV26-5.4",
     "from": 0.74,
-    "to": 0.88
+    "to": 0.88,
+    "tape": {
+     "KXBIGGESTQUAKE-25NOV26-5.2": {
+      "first_50c_s": 447.8,
+      "n_after": 4,
+      "first_s": 447.8
+     },
+     "KXBIGGESTQUAKE-25NOV26-5.4": {
+      "first_50c_s": 346.2,
+      "n_after": 16,
+      "first_s": 346.2
+     },
+     "KXBIGGESTQUAKE-25NOV26-5.6": {
+      "first_50c_s": 346.2,
+      "n_after": 32,
+      "first_s": 346.2
+     },
+     "KXBIGGESTQUAKE-25NOV26-5.8": {
+      "first_50c_s": 384.4,
+      "n_after": 34,
+      "first_s": 384.4
+     },
+     "KXBIGGESTQUAKE-25NOV26-6.0": {
+      "first_50c_s": 448.0,
+      "n_after": 16,
+      "first_s": 448.0
+     },
+     "KXBIGGESTQUAKE-25NOV26-6.2": {
+      "first_50c_s": null,
+      "n_after": 4,
+      "first_s": 865.2
+     },
+     "KXBIGGESTQUAKE-25NOV26-6.4": {
+      "first_50c_s": null,
+      "n_after": 7,
+      "first_s": 865.2
+     },
+     "KXBIGGESTQUAKE-25NOV26-6.6": {
+      "first_50c_s": null,
+      "n_after": 3,
+      "first_s": 865.2
+     },
+     "KXBIGGESTQUAKE-25NOV26-6.8": {
+      "first_50c_s": null,
+      "n_after": 5,
+      "first_s": 865.2
+     },
+     "KXBIGGESTQUAKE-25NOV26-7.0": {
+      "first_50c_s": null,
+      "n_after": 2,
+      "first_s": 865.2
+     }
+    }
    },
    "srcs": {
     "gfz_fdsn": {
@@ -1723,69 +1775,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 16891,
+   "ok": 16906,
    "err": 24,
-   "last_ok": "2026-11-24 21:07:58",
+   "last_ok": "2026-11-24 21:12:58",
    "last_err": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
   },
   "emsc": {
-   "ok": 6286,
+   "ok": 6306,
    "err": 16267,
-   "last_ok": "2026-11-24 21:08:02",
+   "last_ok": "2026-11-24 21:13:02",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 2750,
+   "ok": 2764,
    "err": 2,
-   "last_ok": "2026-11-24 21:06:18",
+   "last_ok": "2026-11-24 21:12:28",
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 11277,
+   "ok": 11287,
    "err": 0,
-   "last_ok": "2026-11-24 21:07:56",
+   "last_ok": "2026-11-24 21:12:56",
    "last_err": null
   },
   "gfz": {
-   "ok": 33829,
+   "ok": 33859,
    "err": 0,
-   "last_ok": "2026-11-24 21:08:06",
+   "last_ok": "2026-11-24 21:13:06",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 10677,
+   "ok": 10687,
    "err": 600,
-   "last_ok": "2026-11-24 21:07:55",
+   "last_ok": "2026-11-24 21:12:55",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 11277,
+   "ok": 11287,
    "err": 0,
-   "last_ok": "2026-11-24 21:07:56",
+   "last_ok": "2026-11-24 21:12:56",
    "last_err": null
   },
   "kalshi": {
-   "ok": 44708,
+   "ok": 44748,
    "err": 50,
-   "last_ok": "2026-11-24 21:08:05",
+   "last_ok": "2026-11-24 21:13:07",
    "last_err": null
   },
   "ntwc": {
-   "ok": 22553,
+   "ok": 22573,
    "err": 0,
-   "last_ok": "2026-11-24 21:08:02",
+   "last_ok": "2026-11-24 21:13:02",
    "last_err": null
   },
   "ptwc": {
-   "ok": 22553,
+   "ok": 22573,
    "err": 0,
-   "last_ok": "2026-11-24 21:08:02",
+   "last_ok": "2026-11-24 21:13:02",
    "last_err": null
   },
   "usgs": {
-   "ok": 33829,
+   "ok": 33859,
    "err": 0,
-   "last_ok": "2026-11-24 21:08:07",
+   "last_ok": "2026-11-24 21:13:07",
    "last_err": null
   }
  }
