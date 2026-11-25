@@ -142,6 +142,11 @@
       "backtest_c": 6.6,
       "backtest_note": "Daily 'biggest earthquake' markets: during the UTC day, with no quake near the strike yet, buy NO on the 6.6 and 7.0 strikes when USGS 2015-2024 history says NO is worth 5c+ more than its price after the taker fee (usually 86-93c). Replay Sep-Nov 2026: +6.6c +-5.9 on 38 trades over 25 days, but found by slicing after the fact; the pre-registered broad test lost -2.9c. 2-contract real test from Nov 20 with a hard $4 cap (settled losses + open bets). Reviews at 20 and 50 fills."
     },
+    "quake_ladder": {
+      "label": "Earthquake NO ladder 6.2/6.4/6.8",
+      "backtest_c": 8.4,
+      "backtest_note": "The earthquake NO rule on the in-between strikes 6.2, 6.4 and 6.8. Replay Sep 15-Nov 23, 2026: +8.4c +-8.5 on 73 trades over 36 days, not significant; strikes 6.0 and below lose. REAL 1 contract per strike from Nov 25 (Alex: 'Go live with it'), its own hard $4 cap incl. open bets (separate from the 6.6/7.0 test). A big-quake day loses all three. Review at 10 settled fills."
+    },
     "quake_no_paper": {
       "label": "Earthquake NO (paper twin)",
       "backtest_c": 6.6,

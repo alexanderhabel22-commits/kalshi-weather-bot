@@ -269,6 +269,15 @@ record earns it. Be candid about odds and risk; no hype.
   orders (`data/quake_no_state.json`). Paper twin `quake_no_paper` runs the same rule uncapped.
   Reviews at 20 and 50 fills (real + twin). One big-quake day costs ~$1.80 per 2-contract bet.
   Dashboard: TESTS tab "Real-money tests" table + earthquake card (cap meter, twin).
+- **Earthquake NO ladder (REAL 1 contract per strike, Nov 25, its OWN hard $4 cap):**
+  `wxbot/strats/quake_ladder.py`, `[trading.quake_ladder]` (Alex, Nov 25 12:37 AM ET: "Go live with it").
+  quake_no's exact rule on the in-between strikes 6.2, 6.4, 6.8 (climatology 682 / 460 / 213 of 3,653
+  days). Replay Sep 15-Nov 23: +8.4c +-8.5 on 73 trades / 36 days, not significant; 6.0 and below lose
+  (/mnt/project-files/analysis/quake-ladder/RESULTS.md). Cap is separate from quake_no's: only
+  quake_ladder's own settled P&L + open cost count; when used, one push and off
+  (`data/quake_ladder_state.json`). Kill: `live = false` in `[trading.quake_ladder]`. Paper twin
+  `quake_ladder_paper` (2 ct, uncapped, since Nov 24). Review at 10 real fills. A big-quake day loses all
+  three strikes (~$2.70). Dashboard: TESTS "Real-money tests" row + "Ladder REAL" tile on the earthquake card.
 - **Fast quake YES (REAL 1 contract, Nov 21, hard $3 cap; on the 15-min SERVER, not the main bot):**
   `wxbot/quakefast.py`, service `kalshi-quakefast` (installed by update.sh), switch
   `quakefast_control.json` on main (Alex, Nov 20 9:10 PM ET "still want to test", 9:25 PM ET "Let's just
