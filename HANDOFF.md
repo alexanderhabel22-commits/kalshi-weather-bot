@@ -25,6 +25,7 @@ record earns it. Be candid about odds and risk; no hype.
   (10%/day, 25% halt). Scale-up kit stays OFF (Alex chose "leave it off" Nov 17).
 - Nov 24 rebalance (Alex: "scale the early fails down", not full cuts): weather_late low/holds 2 -> 1 ct,
   the 16 added low cities 2 -> 1 ct (original cities' lows-need stay 4), rain_evening 2 -> 1 ct. Nothing switched off.
+  Mentions NO 1 -> 2 ct per word (Alex decision card Nov 24 9:34 PM ET); caps unchanged.
 - 15-min bot paper EXCEPT the natgas real test (Nov 23, below); Copycat real off.
 
 ## Where everything lives

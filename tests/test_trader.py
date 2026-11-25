@@ -522,7 +522,7 @@ def test_only_approved_strategies_trade_real_money():
     assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 1   # Nov 24 rebalance: 2 -> 1
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 2   # x2 Nov 17
     assert c.raw["trading"]["macro_fade"]["contracts"] == 6   # x2 Nov 17
-    assert c.raw["trading"]["mentions"]["contracts"] == 1     # 1-contract real test, Nov 19
+    assert c.raw["trading"]["mentions"]["contracts"] == 2     # 1 -> 2 Nov 24 (Alex decision card)
     wl = c.raw["trading"]["weather_late"]
     assert wl["contracts"] == 2 and wl["contracts_by"] == {"low/need": 4, "low/holds": 1} and wl["max_open_pct"] <= 0.60 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
     # Nov 13: highs "need" back to paper (replay ~0); new low cities start at 1 contract
