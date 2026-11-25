@@ -347,7 +347,7 @@
  "archive_day": "2026-11-25",
  "day_stop": "live|2026-11-24",
  "drift": {
-  "at": "2026-11-24T22:39:09+00:00",
+  "at": "2026-11-25T18:41:44+00:00",
   "by": {
    "ai_fade": {
     "contracts": 9,
@@ -390,10 +390,10 @@
     "replay_c": null
    },
    "macro_fade": {
-    "contracts": 2,
-    "events": 2,
+    "contracts": 3,
+    "events": 3,
     "level": "too_few",
-    "live_c": -37.0,
+    "live_c": -21.0,
     "pushed_level": "ok",
     "replay_c": 8.7
    },
@@ -421,11 +421,19 @@
     "pushed_level": "ok",
     "replay_c": 16.3
    },
-   "quake_no": {
-    "contracts": 2,
-    "events": 1,
+   "quake_ladder": {
+    "contracts": 0,
+    "events": 0,
     "level": "too_few",
-    "live_c": -37.0,
+    "live_c": null,
+    "pushed_level": "ok",
+    "replay_c": 8.4
+   },
+   "quake_no": {
+    "contracts": 4,
+    "events": 2,
+    "level": "too_few",
+    "live_c": -13.5,
     "pushed_level": "ok",
     "replay_c": 6.6
    },
@@ -446,12 +454,12 @@
     "replay_c": 5.1
    },
    "weather_late": {
-    "contracts": 379,
-    "events": 163,
-    "high_c": 3.03,
+    "contracts": 409,
+    "events": 172,
+    "high_c": 3.27,
     "level": "below_replay",
-    "live_c": -0.97,
-    "low_c": -5.1,
+    "live_c": -0.73,
+    "low_c": -4.9,
     "pushed_level": "below_replay",
     "replay_c": 3.9
    }
