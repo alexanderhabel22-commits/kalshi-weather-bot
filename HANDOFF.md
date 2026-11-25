@@ -352,9 +352,9 @@ record earns it. Be candid about odds and risk; no hype.
 - **DOGE/NEAR spot-lag logger: STOPPED Nov 25, 2026** (`spotlag_control.json` mode off). Nov 25 scorecard:
   +1 s paper fills -9.7c +/-5.5/ct on 73 settled (90% range -18.8 to -0.6c), 0-delay -5.1c +/-4.3 on 124,
   DOGE worse than NEAR; the catch check passed (61% still 5c+ at +1 s) but the stale asks still lose. Paper
-  only, no money lost. Service stays installed (no new signals; settles open fills, uploads final status);
-  data and TESTS card kept with a "stopped" note. To remove fully on the droplet:
-  `sudo systemctl disable --now kalshi-spotlag && sudo touch /var/lib/kalshi-spotlag.disabled`. Original notes:
+  only, no money lost. Data and TESTS card kept with a "stopped" note. SERVICE RETIRED Nov 25 via
+  `deploy/m15/spotlag.off` (all paper fills had settled; the hourly update disables it; delete the file to
+  bring it back). Original notes:
 - **DOGE/NEAR spot-lag logger (PAPER ONLY, Nov 24, 1 ct):** `wxbot/spotlag.py`, droplet service
   `kalshi-spotlag` (installed by update.sh via `deploy/m15/install-spotlag.sh`; no trading-bot restart),
   switch `spotlag_control.json` on main (mode paper | off). No order code at all: the Kalshi key only signs
@@ -577,6 +577,11 @@ IP without a token). It never places, changes or cancels anything and needs no s
 
 ## Copycat (built Nov 10, 2026; real money per account once its paper test passes)
 
+- RETIRED Nov 25, 2026 (Alex picked "everything now, Copycat too"): real copies were off since Nov 16
+  (-$4.79 on 175 real copies); the Nov 28 re-test and the boss score (~Dec 1) are dropped. Service off via
+  `deploy/m15/copycat.off` (delete to bring it back). This also ends the boss's AI spend (~$0.02/day).
+  Data stays on branch copycat-data. Frees ~650 MB so the droplet fits the $6 (1 GB) size.
+
 - Alex's idea and name: copy proven Kalshi winners' trades. `wxbot/copycat.py`, `python bot.py copycat`,
   separate systemd service `kalshi-copycat` on the 15-min server (installed by the hourly update via
   `deploy/m15/install-copycat.sh`; CPU 10%, 200 MB cap). Off: set `"mode": "off"` in
@@ -669,6 +674,8 @@ IP without a token). It never places, changes or cancels anything and needs no s
   ~50 accounts hide their trades. Background: Library analysis/leaderboard/RESULTS.md.
 
 ## Liquidity-reward test (built Nov 11, 2026; real money, small, 3 days)
+- RETIRED Nov 25, 2026: test ended Nov 15 ($0 earned/lost); service switched off from the repo via
+  `deploy/m15/lip.off` (hourly update disables it; delete the file to bring it back).
 - Kalshi pays daily rewards for resting orders in ~5,000 markets until Jan 1, 2027 (GET
   /incentive_programs). Research: /mnt/project-files/analysis/overnight-ideas/RESULTS.md, idea #1.
   Alex OK'd a ~$20, 3-day real test on Nov 11 8:23 AM ET.
@@ -687,6 +694,9 @@ IP without a token). It never places, changes or cancels anything and needs no s
   /var/lib/kalshi-lip/state.json, daily logs there too.
 
 ## Paper tests: wide-spread maker + parlay quote requests (built Nov 11, 2026; no orders)
+- RETIRED Nov 25, 2026: maker (-1.6c markout), parlay quotes, sell-the-field and casual-flow tags all
+  judged dead; service switched off via `deploy/m15/paper.off` (delete to bring it back). Data stays on
+  m15-data. Frees ~160-230 MB on the droplet ahead of the planned $6 (1 GB) resize after the Copycat re-test.
 - `wxbot/paperlab.py`, `python bot.py paperlab`, systemd service `kalshi-paper` on the 15-min server
   (`deploy/m15/install-paperlab.sh`). GET requests only; the Kalshi key is wrapped read-only.
 - Maker: ~20 wide-spread (3c+) non-sports, non-crypto markets (Mentions first, up to 8). Each minute a
