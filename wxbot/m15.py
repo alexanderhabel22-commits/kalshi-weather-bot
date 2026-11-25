@@ -1190,6 +1190,27 @@ class Bot(FillQuality):
             if s.get("stop_guard", True) and self.exposure("live") + q * n_new > room_to_stop - 0.01:
                 m["why"] = f"daily-stop guard (room ${room_to_stop:.2f})"
                 return
+        if m["mode"] == "live" and self.client is not None and m.get("ended"):
+            # Re-read every order this market already ended before placing another one.
+            # Nov 25 2:45 PM ET natgas: order 1 (72c) was pulled, Kalshi's record said 0 filled at
+            # cancel time, a 2nd 72c order went in, and both filled: 2 held on a 1-ct real test.
+            # The order record is final a few seconds after the cancel, so look again here.
+            for oid, booked in list(m["ended"].items()):
+                try:
+                    got = fill_qty(self.client.get_order(oid), 0)
+                except Exception as exc:
+                    log.warning("recheck %s: %s", oid, exc)
+                    m["why"] = "ended-order check failed"
+                    return
+                if got > booked + 0.01:
+                    extra = round(got - booked, 2)
+                    log.warning("%s: ended order %s filled %.2f after its cancel; booking it",
+                                m["ticker"], oid, extra)
+                    m["ended"][oid] = got
+                    self._book(m, {"q": m.get("last_q") or q, "n": extra, "filled": extra}, now)
+                    m["why"] = "caught late fill"
+                    self.state["caught"] = round(float(self.state.get("caught", 0)) + extra, 2)
+                    return
         if m["mode"] == "live" and self.client is not None and hasattr(self.client, "position"):
             # Kalshi's own position is the truth (Nov 10: fills the bot never saw left 3-4
             # contracts where it booked 2). Book anything unseen and re-check room next step.
