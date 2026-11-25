@@ -33,6 +33,7 @@ REPLAY_C = {
     "ndx_range": 16.3,       # Nasdaq range fade at the Nov 20 30c sell price (was 22.0 at 35c)
     "favorites_mid": 4.3,    # Entertainment 300k-1M events, last-24h replay (Nov 19)
     "quake_no": 6.6,         # biggest-quake NO on 6.6/7.0, sliced replay (Nov 20), weak
+    "quake_ladder": 8.4,     # biggest-quake NO on 6.2/6.4/6.8, replay (Nov 24), not significant
     "fade_leads": 13.0,      # U3/GDP/Starship fade replay +13.0c, 0 losses (Nov 20); fair ~+7 to +12c
     "mentions": 0.9,         # Mentions NO: Nov 12 audit +0.9c +-0.9 (real again Nov 19, verdict ~Dec 3)
     "favorites_wide": None,  # no clean replay number: only the "losing" check applies

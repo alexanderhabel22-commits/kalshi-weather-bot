@@ -288,11 +288,12 @@ def log_feeds(now: datetime, fd: dict, usgs_max: float) -> None:
             w.writerow([now.isoformat(timespec="seconds"), src, t, f"{m:.2f}"])
 
 
-def budget(ctx, p: dict) -> tuple[float, float]:
-    """(room, settled): dollars still allowed at risk under the hard cap, and settled real P&L."""
-    settled = realized(ctx.orders, strategy=NAME, mode="live") + archived_realized("live", NAME)
+def budget(ctx, p: dict, name: str = NAME) -> tuple[float, float]:
+    """(room, settled): dollars still allowed at risk under the hard cap, and settled real P&L.
+    Each real strategy (quake_no, quake_ladder) counts only its own rows: separate caps."""
+    settled = realized(ctx.orders, strategy=name, mode="live") + archived_realized("live", name)
     live_rows = [r for r in ctx.orders if r.get("mode") == "live"]
-    open_cost = exposure(live_rows, NAME)
+    open_cost = exposure(live_rows, name)
     return float(p["max_loss_usd"]) + settled - open_cost, settled
 
 
@@ -310,23 +311,25 @@ def fit_budget(intents: list[Intent], room: float) -> list[Intent]:
     return out
 
 
-def stopped(ctx, p: dict, settled: float) -> bool:
+def stopped(ctx, p: dict, settled: float, name: str = NAME, state=None,
+            label: str = "Earthquake NO test") -> bool:
     """Settled losses alone leave no room for one more contract at the top of the band: stop for good."""
     cap = float(p["max_loss_usd"])
     if cap + settled >= float(p["max_price"]) + fee1(float(p["max_price"])):
         return False
-    st = read_json(STATE, {}) or {}
+    state = state or STATE
+    st = read_json(state, {}) or {}
     if not st.get("stopped"):
         st["stopped"] = ctx.now.isoformat(timespec="seconds")
         st["pnl"] = round(settled, 2)
-        write_json(STATE, st)
+        write_json(state, st)
         try:
-            notify.send(ctx.http, ctx.cfg, "Earthquake NO test: stopped",
+            notify.send(ctx.http, ctx.cfg, f"{label}: stopped",
                         f"Real-money result ${settled:+.2f} used up the ${cap:.0f} cap. No new real orders; "
                         "the paper copy keeps logging.", priority=3, tags=["warning"])
         except Exception as exc:  # alerts must never block trading
-            log.warning("quake_no stop push failed: %s", exc)
-    log.warning("quake_no: $%.0f cap used ($%+.2f settled); no new orders", cap, settled)
+            log.warning("%s stop push failed: %s", name, exc)
+    log.warning("%s: $%.0f cap used ($%+.2f settled); no new orders", name, cap, settled)
     return True
 
 

@@ -160,3 +160,30 @@ def test_ladder_paper_trades_only_in_between_strikes(monkeypatch):
 def test_ladder_climatology():
     assert abs(q.pday_any(6.2) - 682 / 3653) < 1e-9 and abs(q.pday_any(6.8) - 213 / 3653) < 1e-9
     assert q.pday_any(7.0) == q.pday(7.0) and q.pday(6.2) == 0.0
+
+
+# --- strike ladder REAL test (Nov 25, 2026): 1 ct, its own $4 cap ------------------------------
+def test_ladder_real_own_cap(monkeypatch, tmp_path):
+    from wxbot.strats import quake_ladder as ql
+    ms = [mkt(6.2, 0.20), mkt(6.4, 0.12), mkt(6.6, 0.12), mkt(6.8, 0.08), mkt(7.0, 0.07)]
+    monkeypatch.setattr(q, "_series_markets", lambda c, s: ms)
+    monkeypatch.setattr(q, "max_so_far", lambda c, s: 5.4)
+    monkeypatch.setattr(q, "archived_realized", lambda *a, **k: 0.0)
+    monkeypatch.setattr(ql, "STATE", tmp_path / "l.json")
+    q._CACHE.clear()
+    # quake_no's own losses do NOT use the ladder's cap (separate caps)
+    out = ql.propose(ctx([row(pnl="-3.72")]))
+    assert out and {i.ticker.rsplit("-", 1)[-1] for i in out} <= {"6.2", "6.4", "6.8"}
+    assert all(i.strategy == "quake_ladder" and i.count == 1 and i.taker for i in out)
+    # the ladder's own settled losses + open bets do
+    q._CACHE.clear()
+    sent = []
+    monkeypatch.setattr(q.notify, "send", lambda *a, **k: sent.append(a))
+    lost = [row(pnl="-0.90", filled=1, strat="quake_ladder") for _ in range(4)]
+    assert ql.propose(ctx(lost)) == [] and len(sent) == 1
+    assert (tmp_path / "l.json").exists()
+    q._CACHE.clear()
+    some = [row(pnl="-0.90", filled=1, strat="quake_ladder") for _ in range(2)] + \
+           [row(status="filled", filled=1, price="0.90", strat="quake_ladder")]
+    out = ql.propose(ctx(some))                              # $4 - 1.80 - 0.91 = $1.29 room: one more bet
+    assert len(out) == 1 and out[0].count == 1

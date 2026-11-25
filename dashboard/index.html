@@ -300,7 +300,7 @@ const KALSHI = "https://api.elections.kalshi.com/trade-api/v2";
 const RELAY = "https://kalshi-relay.alexanderhabel22.workers.dev";
 const TZ = "America/New_York";
 const DATA_MS = 60e3, API_MS = 300e3, QUOTE_MS = 30e3;
-const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", quake_no_guard_paper:"#fed7aa", quake_ladder_paper:"#ea580c", ship_paper:"#38bdf8", fx_paper:"#4ade80", fade_leads:"#8b5cf6", fade_leads_paper:"#a78bfa", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
+const COLORS = {mentions:"#22d3ee", weather:"#e050f0", weather_late:"#34d399", favorites:"#f472b6", favorites_wide:"#fde047", favorites_late:"#fb7185", favorites_mid:"#f9a8d4", macro_fade:"#60a5fa", macro_wide:"#fb923c", ai_fade:"#a3e635", rain_evening:"#93c5fd", spx_range:"#c084fc", ndx_range:"#2dd4bf", quake_no:"#f97316", quake_no_paper:"#fdba74", quake_no_guard_paper:"#fed7aa", quake_ladder:"#c2410c", quake_ladder_paper:"#ea580c", ship_paper:"#38bdf8", fx_paper:"#4ade80", fade_leads:"#8b5cf6", fade_leads_paper:"#a78bfa", "edge-shadow":"#f5b335", "near-shadow":"#8b8cf8"};
 const EXTRA = ["#34d399", "#f472b6", "#60a5fa", "#fb923c"];
 const S = {mode:null, view:"overview", sha:null, commit:null, data:{}, runs:null, tree:null, quotes:{}, filter:"all", wxDay:null, lastData:0, lastApi:0, errors:[]};
 
@@ -456,10 +456,12 @@ async function loadTests(){
   let qstate = null, fstate = null;
   try { qstate = await raw("data/quake_no_state.json", "json"); } catch(e){ qstate = null; }
   try { fstate = await raw("data/fade_leads_state.json", "json"); } catch(e){ fstate = null; }
+  let lstate = null;
+  try { lstate = await raw("data/quake_ladder_state.json", "json"); } catch(e){ lstate = null; }
   let radar = null, farm = null;
   try { radar = await raw("data/radar.json", "json"); } catch(e){ radar = null; }
   try { const r = await fetch(`https://raw.githubusercontent.com/${REPO}/farm-watch-data/state/farm_watch.json?t=${Date.now()}`, {cache:"no-store"}); farm = r.ok ? await r.json() : null; } catch(e){ farm = null; }
-  S.tx = {lip, mm, rfq, late, cool, field, qstate, fstate, radar, farm, qfast, shiprel, spotlag};
+  S.tx = {lip, mm, rfq, late, cool, field, qstate, fstate, lstate, radar, farm, qfast, shiprel, spotlag};
 }
 // Late-day weather paper test (Nov 11): sell brackets beyond the low/high already recorded
 function lateCard(rows){
@@ -516,6 +518,7 @@ function lateCoolCard(rows, late){
    review it is heading for and, for the earthquake test, the paper twin that runs the same rule uncapped. */
 const TEST_STRATS = [
   ["fade_leads", "Nov 20", "2 ct real, hard $6 cap (settled losses + open bets). Jobs/GDP/Starship fade: +13¢ on 126 replay fills with zero losses; the real risk is one surprise release. Judged at 10 and 30 fills.", [10, 30]],
+  ["quake_ladder", "Nov 25", "1 ct real per strike (6.2 / 6.4 / 6.8), its own hard $4 cap (settled losses + open bets), separate from the 6.6/7.0 test. Replay +8.4¢, not significant; a big-quake day loses all three (~$2.70). Judged at 10 fills.", [10]],
   ["quake_no", "Nov 20", "2 ct real, hard $4 cap (settled losses + open bets). Weak lead found by slicing after the fact: judged at 20 and 50 fills.", [20, 50]],
   ["favorites_mid", "Nov 19", "2 ct real, own $5 stop. Mid-size Entertainment events (300k-1M contracts traded).", null],
   ["mentions", "Nov 19", "Back on real money at 1 ct per word (Alex). Audit edge about 0c; verdict ~Dec 3.", null],
@@ -545,8 +548,10 @@ function realTestsHTML(){
     const used = Math.max(0, -s.pnl) + s.exposure, rp = rowsP.filter(x => x.strategy === "quake_no_paper"), sp = stats(rp);
     const rg = rowsP.filter(x => x.strategy === "quake_no_guard_paper"), sg = stats(rg), g0 = filledN(rg, "settled");
     const rl = rowsP.filter(x => x.strategy === "quake_ladder_paper"), sl = stats(rl), l0 = filledN(rl, "settled");
+    const QL = t.quake_ladder || {}, rq = rowsL.filter(x => x.strategy === "quake_ladder"), sq = stats(rq), q0 = filledN(rq, "settled");
+    const qcap = num(QL.max_loss_usd, 4), qused = Math.max(0, -sq.pnl) + sq.exposure, qstop = ((S.tx || {}).lstate || {}).stopped;
     const n0 = filledN(r, "settled"), p0 = filledN(rp, "settled"), stopped = ((S.tx || {}).qstate || {}).stopped;
-    const recent = r.concat(rp, rg, rl).filter(x => x.status === "settled" || x.status === "filled" || x.status === "open").sort((a, b) => (b.placed || 0) - (a.placed || 0)).slice(0, 8);
+    const recent = r.concat(rq, rp, rg, rl).filter(x => x.status === "settled" || x.status === "filled" || x.status === "open").sort((a, b) => (b.placed || 0) - (a.placed || 0)).slice(0, 8);
     h += `<h2>Earthquake NO test <span class="sub">${liveNow("quake_no") ? (stopped ? "STOPPED · $" + cap.toFixed(0) + " cap used" : "REAL MONEY · " + num(Q.contracts, 2) + " contracts") : "PAPER"}</span></h2><div class="card">
       ${meter("Loss cap used (settled losses + open bets)", used, cap, {txt:`$${used.toFixed(2)} / $${cap.toFixed(2)}`, sub:`settled ${s.settled.length ? money(s.pnl) : "$0.00"} · open $${s.exposure.toFixed(2)} · one big-quake day costs about $1.80 per 2-contract bet`})}
       <div class="sgrid" style="margin-top:10px">
@@ -554,10 +559,11 @@ function realTestsHTML(){
         <div><div class="lbl">Real ¢/ct</div><div class="val ${cls(s.edgeC || 0)}">${s.contracts ? c(s.edgeC) : "—"}<small>replay +6.6¢</small></div></div>
         <div><div class="lbl">Paper twin</div><div class="val ${cls(sp.pnl)}">${sp.settled.length ? money(sp.pnl) : "—"}<small>${p0} ct${sp.contracts ? " · " + c(sp.edgeC) + "/ct" : ""}</small></div></div>
         <div><div class="lbl">Paper + fast-quake guard</div><div class="val ${cls(sg.pnl)}">${sg.settled.length ? money(sg.pnl) : "—"}<small>${g0} ct${sg.contracts ? " · " + c(sg.edgeC) + "/ct" : ""} · skips when GFZ/EMSC or the market already see a quake</small></div></div>
-        <div><div class="lbl">Ladder 6.2 / 6.4 / 6.8 (paper)</div><div class="val ${cls(sl.pnl)}">${sl.settled.length ? money(sl.pnl) : "—"}<small>${l0} ct${sl.contracts ? " · " + c(sl.edgeC) + "/ct" : ""} · same rule on the in-between strikes · replay +8.4¢ (not significant)</small></div></div>
+        <div><div class="lbl">Ladder 6.2 / 6.4 / 6.8 REAL</div><div class="val ${cls(sq.pnl)}">${!liveNow("quake_ladder") ? "off" : qstop ? "STOPPED" : sq.settled.length ? money(sq.pnl) : "—"}<small>${q0} ct · ${sq.wins}-${sq.settled.length - sq.wins}${sq.contracts ? " · " + c(sq.edgeC) + "/ct" : ""} · 1 ct/strike since Nov 25 · own cap $${qused.toFixed(2)} / $${qcap.toFixed(2)} · review at 10 fills</small></div></div>
+        <div><div class="lbl">Ladder 6.2 / 6.4 / 6.8 (paper twin)</div><div class="val ${cls(sl.pnl)}">${sl.settled.length ? money(sl.pnl) : "—"}<small>${l0} ct${sl.contracts ? " · " + c(sl.edgeC) + "/ct" : ""} · same rule on the in-between strikes · replay +8.4¢ (not significant)</small></div></div>
       </div>
       <div class="mute" style="font-size:11px;margin-top:8px;line-height:1.5">Kalshi's daily "biggest earthquake" markets (the UTC day runs 7 PM to 7 PM ET). With no quake near the strike yet, buy NO on the 6.6 and 7.0 strikes when USGS history says the NO is worth 5¢+ more than its price after the fee: usually in the ET afternoon or evening, at 86-93¢. Honest odds: this rule was found by slicing the data after the fact (+6.6¢ on 38 trades over 25 days) and the planned broad test lost (−2.9¢), so expect noise. The paper twin runs the same rule with no cap. Reviews at 20 and 50 fills, then 100/300/500.</div>
-      ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : x.strategy === "quake_no_guard_paper" ? "paper + guard" : x.strategy === "quake_ladder_paper" ? "paper ladder" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
+      ${recent.length ? `<div class="list" style="margin-top:6px">` + recent.map(x => `<div class="item" style="padding:6px 0"><span class="side ${esc(x.side)}">${esc(String(x.side).toUpperCase())}</span><div class="main"><div class="t" style="font-size:12px">${esc(x.title || x.ticker)} <small class="mute">${x.strategy === "quake_no" ? "real" : x.strategy === "quake_ladder" ? "real ladder" : x.strategy === "quake_no_guard_paper" ? "paper + guard" : x.strategy === "quake_ladder_paper" ? "paper ladder" : "paper"}</small></div><div class="s" style="white-space:normal">${esc(x.note || "")}</div></div><div class="r ${x.pnl == null ? "" : cls(x.pnl)}">${x.pnl == null ? "open" : money(x.pnl)}</div></div>`).join("") + `</div>` : `<div class="mute" style="font-size:12px;margin-top:6px">No bets yet. The first one usually comes late on a quiet UTC day.</div>`}
     </div>`;
   }
   return h + spotLagHTML() + quakeFastHTML() + shipPaperHTML(rowsP) + shipReleaseHTML() + fxPaperHTML(rowsP) + fadeLeadsHTML(rowsP);
