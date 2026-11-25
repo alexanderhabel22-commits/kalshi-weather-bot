@@ -23,6 +23,8 @@ record earns it. Be candid about odds and risk; no hype.
 - Nov 17 (Alex card "Double every live strategy", PR #318): every live strategy's contracts x2 (favorites 8,
   Fed/CPI fade 6, ai_fade 6, weather_late 2 / lows-need 4, the 1-contract tests 2). Global stops unchanged
   (10%/day, 25% halt). Scale-up kit stays OFF (Alex chose "leave it off" Nov 17).
+- Nov 24 rebalance (Alex: "scale the early fails down", not full cuts): weather_late low/holds 2 -> 1 ct,
+  the 16 added low cities 2 -> 1 ct (original cities' lows-need stay 4), rain_evening 2 -> 1 ct. Nothing switched off.
 - 15-min bot paper EXCEPT the natgas real test (Nov 23, below); Copycat real off.
 
 ## Where everything lives

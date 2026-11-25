@@ -519,14 +519,14 @@ def test_only_approved_strategies_trade_real_money():
     # Alex, Nov 20 12:23 AM ET ("we should do the earthquake one", 2 contracts, $4 cap): quake NO test.
     assert c.raw["trading"]["quake_no"]["max_loss_usd"] == 4.0 and c.raw["trading"]["quake_no_paper"]["live"] is False
     assert c.raw["trading"]["ai_fade"]["contracts"] == c.raw["trading"]["ai_fade"]["max_contracts"] == 6   # x2 Nov 17
-    assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 2   # x2 Nov 17
+    assert c.raw["trading"]["rain_evening"]["contracts"] == c.raw["trading"]["rain_evening"]["max_contracts"] == 1   # Nov 24 rebalance: 2 -> 1
     assert c.raw["trading"]["macro_wide"]["contracts"] == c.raw["trading"]["favorites_wide"]["contracts"] == 2   # x2 Nov 17
     assert c.raw["trading"]["macro_fade"]["contracts"] == 6   # x2 Nov 17
     assert c.raw["trading"]["mentions"]["contracts"] == 1     # 1-contract real test, Nov 19
     wl = c.raw["trading"]["weather_late"]
-    assert wl["contracts"] == 2 and wl["contracts_by"] == {"low/need": 4} and wl["max_open_pct"] <= 0.60 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
+    assert wl["contracts"] == 2 and wl["contracts_by"] == {"low/need": 4, "low/holds": 1} and wl["max_open_pct"] <= 0.60 and wl["metrics"] == ["low", "high"] and wl["kinds"] == ["need", "holds"]
     # Nov 13: highs "need" back to paper (replay ~0); new low cities start at 1 contract
-    assert "high/need" in wl["skip"] and set(wl["series_contracts"].values()) == {2}   # x2 Nov 17
+    assert "high/need" in wl["skip"] and set(wl["series_contracts"].values()) == {1}   # Nov 24 rebalance: 2 -> 1
     assert c.raw["trading"]["weather"]["max_open_pct"] <= 0.15
 
 
