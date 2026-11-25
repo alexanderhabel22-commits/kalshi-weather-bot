@@ -307,6 +307,13 @@ record earns it. Be candid about odds and risk; no hype.
   NOTE: older replays (fade-events, fade-events-2, edge-hunt-3 fetch.py) read candle `close` only; the live
   candlestick endpoint (markets closing after Sep 13 2026) returns `close_dollars`, so those replays silently
   had NO data after Sep 13. Fixed in analysis/fade-leads/scripts/fetch.py.
+- **State gas late favorites paper test (PAPER ONLY, Nov 25, 1 ct):** `wxbot/strats/gas_fav_paper.py`,
+  `[trading.gas_fav_paper]` (live = false). 50 new KXAAAGASCD<ST> series (AAA daily change brackets
+  LD/SD/MC/SI/LI). From 11 PM ET the night before to 3:15 AM ET (AAA publishes ~3:30 AM), buy YES on the
+  bracket asked at 70-97c, taker, one per market, hold. Markets read in 5 batched `tickers=` calls per run,
+  only inside the window. Replay Nov 12-24 +6.3c +-2.0 (169 entries, 11 days, 9 up, day-clustered); a
+  momentum model and longshot NO both lost. Only one falling-price stretch. First look 100 settled fills,
+  verdict 300 (~Dec 16). Research: `analysis/gas-daily/RESULTS.md` (project files).
 - **Shipping counts paper test (PAPER ONLY, Nov 20, 1 ct):** `wxbot/strats/ship_paper.py`,
   `[trading.ship_paper]` (live = false; Alex "Whatever you think", Nov 20 11:41 AM ET). Weekly
   KXHORMUZWEEKLY / KXSUEZWEEKLY / KXPANAMAWEEKLY / KXBABELMANDEBWEEKLY "transits > K" markets, settled on
