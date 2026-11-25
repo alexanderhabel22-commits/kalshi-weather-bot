@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 22:37:10",
+ "at": "2026-11-24 22:47:10",
  "mode": "paper",
  "paper_only": true,
  "since": "2026-11-24 04:16:34",
@@ -16,45 +16,45 @@
   ],
   "contracts": 1
  },
- "signals": 111,
- "paper_fills": 67,
+ "signals": 113,
+ "paper_fills": 68,
  "open": 0,
  "scores": {
   "0": {
-   "n": 111,
+   "n": 113,
    "won": 43,
-   "pnl": -7.31,
-   "c_per_ct": -6.59,
-   "se_c": 4.52,
-   "lo90_c": -14.02,
-   "hi90_c": 0.84
+   "pnl": -7.85,
+   "c_per_ct": -6.95,
+   "se_c": 4.44,
+   "lo90_c": -14.26,
+   "hi90_c": 0.36
   },
   "0.5": {
-   "n": 82,
+   "n": 83,
    "won": 33,
-   "pnl": -4.81,
-   "c_per_ct": -5.87,
-   "se_c": 5.31,
-   "lo90_c": -14.6,
-   "hi90_c": 2.86
+   "pnl": -5.01,
+   "c_per_ct": -6.04,
+   "se_c": 5.25,
+   "lo90_c": -14.67,
+   "hi90_c": 2.59
   },
   "1": {
-   "n": 67,
+   "n": 68,
    "won": 25,
-   "pnl": -6.38,
-   "c_per_ct": -9.53,
-   "se_c": 5.83,
-   "lo90_c": -19.12,
-   "hi90_c": 0.06
+   "pnl": -6.58,
+   "c_per_ct": -9.68,
+   "se_c": 5.74,
+   "lo90_c": -19.13,
+   "hi90_c": -0.23
   },
   "2": {
-   "n": 62,
+   "n": 63,
    "won": 22,
-   "pnl": -8.53,
-   "c_per_ct": -13.75,
-   "se_c": 6.0,
-   "lo90_c": -23.62,
-   "hi90_c": -3.89
+   "pnl": -8.73,
+   "c_per_ct": -13.85,
+   "se_c": 5.9,
+   "lo90_c": -23.56,
+   "hi90_c": -4.15
   },
   "5": {
    "n": 56,
@@ -69,13 +69,13 @@
  "by_coin": {
   "DOGE": {
    "0": {
-    "n": 61,
+    "n": 62,
     "won": 26,
-    "pnl": -5.25,
-    "c_per_ct": -8.61,
-    "se_c": 6.25,
-    "lo90_c": -18.9,
-    "hi90_c": 1.68
+    "pnl": -5.57,
+    "c_per_ct": -8.98,
+    "se_c": 6.16,
+    "lo90_c": -19.12,
+    "hi90_c": 1.16
    },
    "0.5": {
     "n": 48,
@@ -116,40 +116,40 @@
   },
   "NEAR": {
    "0": {
-    "n": 50,
+    "n": 51,
     "won": 17,
-    "pnl": -2.06,
-    "c_per_ct": -4.12,
-    "se_c": 6.56,
-    "lo90_c": -14.91,
-    "hi90_c": 6.66
+    "pnl": -2.28,
+    "c_per_ct": -4.47,
+    "se_c": 6.44,
+    "lo90_c": -15.07,
+    "hi90_c": 6.12
    },
    "0.5": {
-    "n": 34,
+    "n": 35,
     "won": 13,
-    "pnl": -0.25,
-    "c_per_ct": -0.74,
-    "se_c": 8.33,
-    "lo90_c": -14.45,
-    "hi90_c": 12.97
+    "pnl": -0.45,
+    "c_per_ct": -1.29,
+    "se_c": 8.11,
+    "lo90_c": -14.63,
+    "hi90_c": 12.05
    },
    "1": {
-    "n": 21,
+    "n": 22,
     "won": 8,
-    "pnl": 0.11,
-    "c_per_ct": 0.52,
-    "se_c": 10.46,
-    "lo90_c": -16.68,
-    "hi90_c": 17.73
+    "pnl": -0.09,
+    "c_per_ct": -0.41,
+    "se_c": 10.02,
+    "lo90_c": -16.89,
+    "hi90_c": 16.07
    },
    "2": {
-    "n": 18,
+    "n": 19,
     "won": 5,
-    "pnl": -2.22,
-    "c_per_ct": -12.36,
-    "se_c": 11.29,
-    "lo90_c": -30.93,
-    "hi90_c": 6.22
+    "pnl": -2.42,
+    "c_per_ct": -12.76,
+    "se_c": 10.69,
+    "lo90_c": -30.34,
+    "hi90_c": 4.82
    },
    "5": {
     "n": 14,
@@ -164,60 +164,94 @@
  },
  "verdict": {
   "state": "collecting",
-  "fills": 67,
+  "fills": 68,
   "need": 300,
-  "text": "67 of 300 settled +1 s paper fills"
+  "text": "68 of 300 settled +1 s paper fills"
  },
  "src": {
   "mix": 22,
-  "cf": 89
+  "cf": 91
  },
  "catch": [
   {
    "day": "2026-11-24",
-   "signals": 111,
+   "signals": 113,
    "by_coin": {
-    "DOGE": 61,
-    "NEAR": 50
+    "DOGE": 62,
+    "NEAR": 51
    },
    "0": {
-    "n": 111,
-    "still_5c": 111,
+    "n": 113,
+    "still_5c": 113,
     "share_5c": 1.0,
     "median_edge_c": 10.7,
     "same_ask": 1.0
    },
    "0.5": {
-    "n": 111,
-    "still_5c": 82,
-    "share_5c": 0.739,
+    "n": 113,
+    "still_5c": 83,
+    "share_5c": 0.735,
     "median_edge_c": 9.0,
-    "same_ask": 0.459
+    "same_ask": 0.451
    },
    "1": {
-    "n": 111,
-    "still_5c": 67,
-    "share_5c": 0.604,
-    "median_edge_c": 7.3,
-    "same_ask": 0.36
+    "n": 113,
+    "still_5c": 68,
+    "share_5c": 0.602,
+    "median_edge_c": 7.2,
+    "same_ask": 0.354
    },
    "2": {
-    "n": 111,
-    "still_5c": 62,
-    "share_5c": 0.559,
+    "n": 113,
+    "still_5c": 63,
+    "share_5c": 0.558,
     "median_edge_c": 6.7,
-    "same_ask": 0.333
+    "same_ask": 0.336
    },
    "5": {
-    "n": 111,
+    "n": 113,
     "still_5c": 56,
-    "share_5c": 0.505,
-    "median_edge_c": 5.5,
-    "same_ask": 0.252
+    "share_5c": 0.496,
+    "median_edge_c": 5.2,
+    "same_ask": 0.248
    }
   }
  ],
  "recent": [
+  {
+   "et": "2026-11-24 22:42:34",
+   "ticker": "KXNEAR15M-26NOV242245-45",
+   "coin": "NEAR",
+   "side": "no",
+   "left_s": 145.0,
+   "src": "cf",
+   "ask0": 0.2,
+   "edge0": 0.1229,
+   "ask1": 0.18,
+   "edge1": 0.0675,
+   "size0": 31.0,
+   "size1": 2.3299999999999983,
+   "fill": true,
+   "result": "yes",
+   "pnl": -0.2
+  },
+  {
+   "et": "2026-11-24 22:41:51",
+   "ticker": "KXDOGE15M-26NOV242245-45",
+   "coin": "DOGE",
+   "side": "yes",
+   "left_s": 188.9,
+   "src": "cf",
+   "ask0": 0.3,
+   "edge0": 0.1154,
+   "ask1": 0.31,
+   "edge1": 0.0279,
+   "size0": 900.0,
+   "size1": 63.959999999999994,
+   "fill": false,
+   "result": "no",
+   "pnl": null
+  },
   {
    "et": "2026-11-24 22:27:17",
    "ticker": "KXDOGE15M-26NOV242230-30",
@@ -608,40 +642,6 @@
    "fill": true,
    "result": "yes",
    "pnl": -0.56
-  },
-  {
-   "et": "2026-11-24 18:39:23",
-   "ticker": "KXNEAR15M-26NOV241845-45",
-   "coin": "NEAR",
-   "side": "yes",
-   "left_s": 336.8,
-   "src": "cf",
-   "ask0": 0.13,
-   "edge0": 0.1036,
-   "ask1": 0.17,
-   "edge1": -0.0212,
-   "size0": 44.0,
-   "size1": 45.0,
-   "fill": false,
-   "result": "no",
-   "pnl": null
-  },
-  {
-   "et": "2026-11-24 18:31:25",
-   "ticker": "KXDOGE15M-26NOV241845-45",
-   "coin": "DOGE",
-   "side": "no",
-   "left_s": 814.1,
-   "src": "cf",
-   "ask0": 0.68,
-   "edge0": 0.117,
-   "ask1": 0.68,
-   "edge1": 0.1393,
-   "size0": 5763.530000000002,
-   "size1": 4936.39,
-   "fill": true,
-   "result": "no",
-   "pnl": 0.3
   }
  ],
  "feeds": {
@@ -650,50 +650,50 @@
     "cf_age_s": 0.2,
     "cf_points": 3900,
     "mix_age_s": 0.6,
-    "venues": 2,
+    "venues": 1,
     "cf_vol_ok": true,
     "mix_vol_ok": true
    },
    "NEAR": {
     "cf_age_s": 0.5,
     "cf_points": 3900,
-    "mix_age_s": 32.6,
+    "mix_age_s": 54.6,
     "venues": 0,
     "cf_vol_ok": true,
     "mix_vol_ok": true
    }
   },
   "cf_ids": {
-   "AAVEUSD_RTI": 56999,
-   "ADAUSD_RTI": 56999,
-   "BCHUSD_RTI": 56999,
-   "BNBUSD_RTI": 56999,
-   "BRTI": 285002,
-   "DOGEUSD_RTI": 285002,
-   "ETHUSD_RTI": 285002,
-   "HYPEUSD_RTI": 56999,
-   "LINKUSD_RTI": 56999,
-   "LTCUSD_RTI": 56999,
-   "NEARUSD_RTI": 56999,
-   "SHIBUSD_RTI": 56999,
-   "SOLUSD_RTI": 285002,
-   "SUIUSD_RTI": 56999,
-   "UNIUSD_RTI": 56999,
-   "VVVUSD_RTI": 56999,
-   "WLDUSD_RTI": 56999,
-   "XRPUSD_RTI": 285002,
-   "ZECUSD_RTI": 56999
+   "AAVEUSD_RTI": 57599,
+   "ADAUSD_RTI": 57599,
+   "BCHUSD_RTI": 57599,
+   "BNBUSD_RTI": 57599,
+   "BRTI": 288002,
+   "DOGEUSD_RTI": 288002,
+   "ETHUSD_RTI": 288002,
+   "HYPEUSD_RTI": 57599,
+   "LINKUSD_RTI": 57599,
+   "LTCUSD_RTI": 57599,
+   "NEARUSD_RTI": 57599,
+   "SHIBUSD_RTI": 57599,
+   "SOLUSD_RTI": 288002,
+   "SUIUSD_RTI": 57599,
+   "UNIUSD_RTI": 57599,
+   "VVVUSD_RTI": 57599,
+   "WLDUSD_RTI": 57599,
+   "XRPUSD_RTI": 288002,
+   "ZECUSD_RTI": 57599
   },
   "ws_age_s": 0.0,
   "markets": 2,
   "books_ok": 2,
-  "book_msgs": 14401659,
-  "cf_msgs": 2222996,
+  "book_msgs": 14611527,
+  "cf_msgs": 2246396,
   "resyncs": 0,
   "connects": 3,
   "errors": 0,
   "no_fair": 0,
-  "scans": 513269,
+  "scans": 518763,
   "last_err": ""
  }
 }
