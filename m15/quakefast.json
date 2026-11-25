@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 20:58:13",
+ "at": "2026-11-24 21:03:14",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -50,18 +50,18 @@
  },
  "totals": {
   "n": 13,
-  "settled": 11,
-  "won": 8,
-  "pnl": 1.2,
-  "c_per_ct": 10.9,
+  "settled": 13,
+  "won": 10,
+  "pnl": 1.28,
+  "c_per_ct": 9.8,
   "skipped": 171
  },
  "first_source": {
   "n": 5,
-  "settled": 4,
-  "won": 2,
-  "pnl": 0.26,
-  "c_per_ct": 6.5,
+  "settled": 5,
+  "won": 3,
+  "pnl": 0.3,
+  "c_per_ct": 6.0,
   "skipped": 28
  },
  "by_source": {
@@ -115,10 +115,10 @@
   },
   "gfz_fdsn|0.0": {
    "n": 2,
-   "settled": 1,
-   "won": 1,
-   "pnl": 0.44,
-   "c_per_ct": 44.0,
+   "settled": 2,
+   "won": 2,
+   "pnl": 0.48,
+   "c_per_ct": 24.0,
    "skipped": 13
   },
   "gfz_fdsn|0.2": {
@@ -131,10 +131,10 @@
   },
   "gfz|0.0": {
    "n": 3,
-   "settled": 2,
-   "won": 1,
-   "pnl": -0.12,
-   "c_per_ct": -6.0,
+   "settled": 3,
+   "won": 2,
+   "pnl": -0.08,
+   "c_per_ct": -2.7,
    "skipped": 15
   },
   "gfz|0.2": {
@@ -712,9 +712,11 @@
    "ask": 0.95,
    "ask_size": 1.0,
    "place": "Balleny Islands Region",
-   "status": "open",
+   "status": "settled",
    "fee": 0.01,
-   "checked": 1795571846.4036052
+   "checked": 1795572146.8723543,
+   "result": "yes",
+   "pnl": 0.04
   },
   {
    "key": "q1795571245-gfz_fdsn|gfz_fdsn|KXBIGGESTQUAKE-25NOV26-5.6|0.0",
@@ -853,9 +855,11 @@
    "ask": 0.95,
    "ask_size": 1.0,
    "place": "Balleny Islands Region",
-   "status": "open",
+   "status": "settled",
    "fee": 0.01,
-   "checked": 1795571847.7283754
+   "checked": 1795572147.906881,
+   "result": "yes",
+   "pnl": 0.04
   },
   {
    "key": "q1795571245-gfz_fdsn|gfz|KXBIGGESTQUAKE-25NOV26-5.6|0.0",
@@ -1719,69 +1723,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 16861,
+   "ok": 16876,
    "err": 24,
-   "last_ok": "2026-11-24 20:57:58",
+   "last_ok": "2026-11-24 21:02:58",
    "last_err": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
   },
   "emsc": {
-   "ok": 6246,
+   "ok": 6266,
    "err": 16267,
-   "last_ok": "2026-11-24 20:58:02",
+   "last_ok": "2026-11-24 21:03:02",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 2747,
+   "ok": 2748,
    "err": 2,
-   "last_ok": "2026-11-24 20:58:13",
+   "last_ok": "2026-11-24 20:58:24",
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 11257,
+   "ok": 11267,
    "err": 0,
-   "last_ok": "2026-11-24 20:57:56",
+   "last_ok": "2026-11-24 21:02:56",
    "last_err": null
   },
   "gfz": {
-   "ok": 33769,
+   "ok": 33799,
    "err": 0,
-   "last_ok": "2026-11-24 20:58:06",
+   "last_ok": "2026-11-24 21:03:06",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 10658,
+   "ok": 10668,
    "err": 599,
-   "last_ok": "2026-11-24 20:57:55",
+   "last_ok": "2026-11-24 21:02:55",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 11257,
+   "ok": 11267,
    "err": 0,
-   "last_ok": "2026-11-24 20:57:56",
+   "last_ok": "2026-11-24 21:02:56",
    "last_err": null
   },
   "kalshi": {
-   "ok": 44628,
+   "ok": 44668,
    "err": 50,
-   "last_ok": "2026-11-24 20:57:59",
+   "last_ok": "2026-11-24 21:03:03",
    "last_err": null
   },
   "ntwc": {
-   "ok": 22513,
+   "ok": 22533,
    "err": 0,
-   "last_ok": "2026-11-24 20:58:02",
+   "last_ok": "2026-11-24 21:03:02",
    "last_err": null
   },
   "ptwc": {
-   "ok": 22513,
+   "ok": 22533,
    "err": 0,
-   "last_ok": "2026-11-24 20:58:02",
+   "last_ok": "2026-11-24 21:03:02",
    "last_err": null
   },
   "usgs": {
-   "ok": 33769,
+   "ok": 33799,
    "err": 0,
-   "last_ok": "2026-11-24 20:58:07",
+   "last_ok": "2026-11-24 21:03:07",
    "last_err": null
   }
  }
