@@ -7,6 +7,12 @@ APP=/opt/kalshi-m15/app
 U=kalshi-spotlag.service
 STAMP=/var/lib/kalshi-spotlag.codesig
 [ -f /var/lib/kalshi-spotlag.disabled ] && exit 0
+# Retired from the repo (Nov 25, 2026: spot-lag stopped at -9.7c/ct, all paper fills settled; data stays on
+# m15-data). Delete deploy/m15/spotlag.off to bring it back.
+if [ -f "$APP/deploy/m15/spotlag.off" ]; then
+  systemctl disable --now "$U" >/dev/null 2>&1 || true
+  exit 0
+fi
 changed=0
 if ! cmp -s "$APP/deploy/m15/$U" "/etc/systemd/system/$U"; then
   install -m 644 "$APP/deploy/m15/$U" /etc/systemd/system/
