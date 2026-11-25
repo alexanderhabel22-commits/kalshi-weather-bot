@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 19:47:10",
+ "at": "2026-11-24 19:57:10",
  "mode": "paper",
  "paper_only": true,
  "since": "2026-11-24 04:16:34",
@@ -16,9 +16,9 @@
   ],
   "contracts": 1
  },
- "signals": 96,
- "paper_fills": 59,
- "open": 0,
+ "signals": 97,
+ "paper_fills": 60,
+ "open": 1,
  "scores": {
   "0": {
    "n": 95,
@@ -170,54 +170,71 @@
  },
  "src": {
   "mix": 22,
-  "cf": 74
+  "cf": 75
  },
  "catch": [
   {
    "day": "2026-11-24",
-   "signals": 96,
+   "signals": 97,
    "by_coin": {
     "DOGE": 53,
-    "NEAR": 43
+    "NEAR": 44
    },
    "0": {
-    "n": 96,
-    "still_5c": 96,
+    "n": 97,
+    "still_5c": 97,
     "share_5c": 1.0,
     "median_edge_c": 10.7,
     "same_ask": 1.0
    },
    "0.5": {
-    "n": 96,
-    "still_5c": 71,
-    "share_5c": 0.74,
+    "n": 97,
+    "still_5c": 72,
+    "share_5c": 0.742,
     "median_edge_c": 9.1,
-    "same_ask": 0.458
+    "same_ask": 0.464
    },
    "1": {
-    "n": 96,
-    "still_5c": 59,
-    "share_5c": 0.615,
+    "n": 97,
+    "still_5c": 60,
+    "share_5c": 0.619,
     "median_edge_c": 7.5,
-    "same_ask": 0.354
+    "same_ask": 0.361
    },
    "2": {
-    "n": 96,
+    "n": 97,
     "still_5c": 54,
-    "share_5c": 0.562,
+    "share_5c": 0.557,
     "median_edge_c": 6.8,
-    "same_ask": 0.323
+    "same_ask": 0.33
    },
    "5": {
-    "n": 96,
-    "still_5c": 50,
-    "share_5c": 0.521,
-    "median_edge_c": 5.6,
-    "same_ask": 0.26
+    "n": 97,
+    "still_5c": 51,
+    "share_5c": 0.526,
+    "median_edge_c": 5.8,
+    "same_ask": 0.258
    }
   }
  ],
  "recent": [
+  {
+   "et": "2026-11-24 19:52:12",
+   "ticker": "KXNEAR15M-26NOV242000-00",
+   "coin": "NEAR",
+   "side": "yes",
+   "left_s": 467.1,
+   "src": "cf",
+   "ask0": 0.47,
+   "edge0": 0.121,
+   "ask1": 0.47,
+   "edge1": 0.056,
+   "size0": 202.94,
+   "size1": 200.35,
+   "fill": true,
+   "result": null,
+   "pnl": null
+  },
   {
    "et": "2026-11-24 19:46:10",
    "ticker": "KXDOGE15M-26NOV242000-00",
@@ -625,23 +642,6 @@
    "fill": true,
    "result": "no",
    "pnl": -0.23
-  },
-  {
-   "et": "2026-11-24 16:35:19",
-   "ticker": "KXDOGE15M-26NOV241645-45",
-   "coin": "DOGE",
-   "side": "yes",
-   "left_s": 580.3,
-   "src": "cf",
-   "ask0": 0.32,
-   "edge0": 0.1149,
-   "ask1": 0.32,
-   "edge1": 0.0777,
-   "size0": 244.19000000000005,
-   "size1": 235.21000000000006,
-   "fill": true,
-   "result": "no",
-   "pnl": -0.34
   }
  ],
  "feeds": {
@@ -649,7 +649,7 @@
    "DOGE": {
     "cf_age_s": 0.0,
     "cf_points": 3900,
-    "mix_age_s": 8.4,
+    "mix_age_s": 7.4,
     "venues": 0,
     "cf_vol_ok": true,
     "mix_vol_ok": true
@@ -664,36 +664,36 @@
    }
   },
   "cf_ids": {
-   "AAVEUSD_RTI": 46799,
-   "ADAUSD_RTI": 46799,
-   "BCHUSD_RTI": 46799,
-   "BNBUSD_RTI": 46799,
-   "BRTI": 234001,
-   "DOGEUSD_RTI": 234002,
-   "ETHUSD_RTI": 234002,
-   "HYPEUSD_RTI": 46799,
-   "LINKUSD_RTI": 46799,
-   "LTCUSD_RTI": 46799,
-   "NEARUSD_RTI": 46799,
-   "SHIBUSD_RTI": 46799,
-   "SOLUSD_RTI": 234002,
-   "SUIUSD_RTI": 46799,
-   "UNIUSD_RTI": 46799,
-   "VVVUSD_RTI": 46799,
-   "WLDUSD_RTI": 46799,
-   "XRPUSD_RTI": 234002,
-   "ZECUSD_RTI": 46799
+   "AAVEUSD_RTI": 47399,
+   "ADAUSD_RTI": 47399,
+   "BCHUSD_RTI": 47399,
+   "BNBUSD_RTI": 47399,
+   "BRTI": 237001,
+   "DOGEUSD_RTI": 237002,
+   "ETHUSD_RTI": 237001,
+   "HYPEUSD_RTI": 47399,
+   "LINKUSD_RTI": 47399,
+   "LTCUSD_RTI": 47399,
+   "NEARUSD_RTI": 47399,
+   "SHIBUSD_RTI": 47399,
+   "SOLUSD_RTI": 237001,
+   "SUIUSD_RTI": 47399,
+   "UNIUSD_RTI": 47399,
+   "VVVUSD_RTI": 47399,
+   "WLDUSD_RTI": 47399,
+   "XRPUSD_RTI": 237002,
+   "ZECUSD_RTI": 47399
   },
   "ws_age_s": 0.0,
   "markets": 2,
   "books_ok": 2,
-  "book_msgs": 11569943,
-  "cf_msgs": 1825195,
+  "book_msgs": 11701270,
+  "cf_msgs": 1848593,
   "resyncs": 0,
   "connects": 3,
   "errors": 0,
   "no_fair": 0,
-  "scans": 420741,
+  "scans": 426139,
   "last_err": ""
  }
 }
