@@ -577,6 +577,11 @@ IP without a token). It never places, changes or cancels anything and needs no s
 
 ## Copycat (built Nov 10, 2026; real money per account once its paper test passes)
 
+- RETIRED Nov 25, 2026 (Alex picked "everything now, Copycat too"): real copies were off since Nov 16
+  (-$4.79 on 175 real copies); the Nov 28 re-test and the boss score (~Dec 1) are dropped. Service off via
+  `deploy/m15/copycat.off` (delete to bring it back). This also ends the boss's AI spend (~$0.02/day).
+  Data stays on branch copycat-data. Frees ~650 MB so the droplet fits the $6 (1 GB) size.
+
 - Alex's idea and name: copy proven Kalshi winners' trades. `wxbot/copycat.py`, `python bot.py copycat`,
   separate systemd service `kalshi-copycat` on the 15-min server (installed by the hourly update via
   `deploy/m15/install-copycat.sh`; CPU 10%, 200 MB cap). Off: set `"mode": "off"` in
