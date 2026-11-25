@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 21:47:10",
+ "at": "2026-11-24 21:57:10",
  "mode": "paper",
  "paper_only": true,
  "since": "2026-11-24 04:16:34",
@@ -16,9 +16,9 @@
   ],
   "contracts": 1
  },
- "signals": 106,
- "paper_fills": 64,
- "open": 0,
+ "signals": 107,
+ "paper_fills": 65,
+ "open": 1,
  "scores": {
   "0": {
    "n": 106,
@@ -170,54 +170,71 @@
  },
  "src": {
   "mix": 22,
-  "cf": 84
+  "cf": 85
  },
  "catch": [
   {
    "day": "2026-11-24",
-   "signals": 106,
+   "signals": 107,
    "by_coin": {
     "DOGE": 59,
-    "NEAR": 47
+    "NEAR": 48
    },
    "0": {
-    "n": 106,
-    "still_5c": 106,
+    "n": 107,
+    "still_5c": 107,
     "share_5c": 1.0,
     "median_edge_c": 10.7,
     "same_ask": 1.0
    },
    "0.5": {
-    "n": 106,
-    "still_5c": 78,
-    "share_5c": 0.736,
+    "n": 107,
+    "still_5c": 79,
+    "share_5c": 0.738,
     "median_edge_c": 9.0,
-    "same_ask": 0.472
+    "same_ask": 0.467
    },
    "1": {
-    "n": 106,
-    "still_5c": 64,
-    "share_5c": 0.604,
+    "n": 107,
+    "still_5c": 65,
+    "share_5c": 0.607,
     "median_edge_c": 7.3,
-    "same_ask": 0.368
+    "same_ask": 0.364
    },
    "2": {
-    "n": 106,
-    "still_5c": 59,
-    "share_5c": 0.557,
-    "median_edge_c": 6.6,
-    "same_ask": 0.34
+    "n": 107,
+    "still_5c": 60,
+    "share_5c": 0.561,
+    "median_edge_c": 6.7,
+    "same_ask": 0.346
    },
    "5": {
-    "n": 106,
-    "still_5c": 53,
-    "share_5c": 0.5,
-    "median_edge_c": 5.3,
-    "same_ask": 0.255
+    "n": 107,
+    "still_5c": 54,
+    "share_5c": 0.505,
+    "median_edge_c": 5.5,
+    "same_ask": 0.262
    }
   }
  ],
  "recent": [
+  {
+   "et": "2026-11-24 21:55:46",
+   "ticker": "KXNEAR15M-26NOV242200-00",
+   "coin": "NEAR",
+   "side": "no",
+   "left_s": 253.8,
+   "src": "cf",
+   "ask0": 0.28,
+   "edge0": 0.1102,
+   "ask1": 0.27,
+   "edge1": 0.0821,
+   "size0": 25.0,
+   "size1": 25.0,
+   "fill": true,
+   "result": null,
+   "pnl": null
+  },
   {
    "et": "2026-11-24 21:38:29",
    "ticker": "KXDOGE15M-26NOV242145-45",
@@ -625,23 +642,6 @@
    "fill": true,
    "result": "no",
    "pnl": -0.37
-  },
-  {
-   "et": "2026-11-24 17:49:54",
-   "ticker": "KXNEAR15M-26NOV241800-00",
-   "coin": "NEAR",
-   "side": "yes",
-   "left_s": 605.1,
-   "src": "cf",
-   "ask0": 0.28,
-   "edge0": 0.1796,
-   "ask1": 0.27,
-   "edge1": 0.0794,
-   "size0": 127.0,
-   "size1": 25.059999999999995,
-   "fill": true,
-   "result": "no",
-   "pnl": -0.29
   }
  ],
  "feeds": {
@@ -649,8 +649,8 @@
    "DOGE": {
     "cf_age_s": 0.1,
     "cf_points": 3900,
-    "mix_age_s": 9.5,
-    "venues": 0,
+    "mix_age_s": 0.5,
+    "venues": 1,
     "cf_vol_ok": true,
     "mix_vol_ok": true
    },
@@ -658,42 +658,42 @@
     "cf_age_s": 0.5,
     "cf_points": 3900,
     "mix_age_s": 0.5,
-    "venues": 3,
+    "venues": 1,
     "cf_vol_ok": true,
     "mix_vol_ok": true
    }
   },
   "cf_ids": {
-   "AAVEUSD_RTI": 53999,
-   "ADAUSD_RTI": 53999,
-   "BCHUSD_RTI": 53999,
-   "BNBUSD_RTI": 53999,
-   "BRTI": 270002,
-   "DOGEUSD_RTI": 270002,
-   "ETHUSD_RTI": 270002,
-   "HYPEUSD_RTI": 53999,
-   "LINKUSD_RTI": 53999,
-   "LTCUSD_RTI": 53999,
-   "NEARUSD_RTI": 53999,
-   "SHIBUSD_RTI": 53999,
-   "SOLUSD_RTI": 270002,
-   "SUIUSD_RTI": 53999,
-   "UNIUSD_RTI": 53999,
-   "VVVUSD_RTI": 53999,
-   "WLDUSD_RTI": 53999,
-   "XRPUSD_RTI": 270002,
-   "ZECUSD_RTI": 53999
+   "AAVEUSD_RTI": 54599,
+   "ADAUSD_RTI": 54599,
+   "BCHUSD_RTI": 54599,
+   "BNBUSD_RTI": 54599,
+   "BRTI": 273002,
+   "DOGEUSD_RTI": 273002,
+   "ETHUSD_RTI": 273002,
+   "HYPEUSD_RTI": 54599,
+   "LINKUSD_RTI": 54599,
+   "LTCUSD_RTI": 54599,
+   "NEARUSD_RTI": 54599,
+   "SHIBUSD_RTI": 54599,
+   "SOLUSD_RTI": 273002,
+   "SUIUSD_RTI": 54599,
+   "UNIUSD_RTI": 54599,
+   "VVVUSD_RTI": 54599,
+   "WLDUSD_RTI": 54599,
+   "XRPUSD_RTI": 273002,
+   "ZECUSD_RTI": 54599
   },
   "ws_age_s": 0.0,
   "markets": 2,
   "books_ok": 2,
-  "book_msgs": 13594743,
-  "cf_msgs": 2105996,
+  "book_msgs": 13742129,
+  "cf_msgs": 2129396,
   "resyncs": 0,
   "connects": 3,
   "errors": 0,
   "no_fair": 0,
-  "scans": 486135,
+  "scans": 491550,
   "last_err": ""
  }
 }
