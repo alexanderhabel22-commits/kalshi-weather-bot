@@ -189,7 +189,7 @@
    "contracts": 379,
    "cpc": -1.221276595744681,
    "cpc_last20": -13.9,
-   "fill_rate": 0.8491228070175438,
+   "fill_rate": 0.8506944444444444,
    "fills": 235,
    "flags": [
     "ADVERSE SELECTION: orders we missed would have made +14.8c, fills made -1.2c"
@@ -211,76 +211,11 @@
   }
  },
  "last_new": [
-  "KXAITRAININGHALT",
-  "KXARMINWAGE",
-  "KXATPCHALLENGERSETWINNER",
-  "KXCANBYLIBSEATS",
-  "KXCASUENVDA",
-  "KXCHINAAIDISCLOSE",
-  "KXCHINACARBAN",
-  "KXCOLCABOUT",
-  "KXCOPPAITALIABTTS",
-  "KXCOPPAITALIASPREAD",
-  "KXCOPPAITALIATOTAL",
-  "KXDCMINWAGEBALLOT",
-  "KXDCMINWAGEPASS",
-  "KXDFBPOKALBTTS",
-  "KXDFBPOKALSPREAD",
-  "KXDFBPOKALTOTAL",
-  "KXDNCDEBATEBAR",
-  "KXDPWORLDTOURMAKECUT",
-  "KXDPWORLDTOURR1LEAD",
-  "KXDPWORLDTOURR2LEAD",
-  "KXDPWORLDTOURR3LEAD",
-  "KXDPWT3BALL",
-  "KXDPWTTOP10",
-  "KXDPWTTOP20",
-  "KXDPWTTOP5",
-  "KXEARNINGSMENTIONAMAT",
-  "KXEARNINGSMENTIONCBRS",
-  "KXEARNINGSMENTIONDIS",
-  "KXEARNINGSMENTIONETOR",
-  "KXEARNINGSMENTIONPG",
-  "KXEARNINGSMENTIONSNOW",
-  "KXEUSANCTIONSPKG",
-  "KXEUSUBSIDYTARIFF",
-  "KXFISAWARRANT",
-  "KXGRAMMYCOUNT",
-  "KXHOUSECONTEMPTANY",
-  "KXHOUSESUPERPACPLEDGE",
-  "KXINDONESIAVP",
-  "KXKEELUNGMAYOR",
-  "KXLIGAPORTUGALBTTS",
-  "KXLIGAPORTUGALSPREAD",
-  "KXLIGAPORTUGALTOTAL",
-  "KXMACYSPARADEWX",
-  "KXMEDICAREAGELAW",
-  "KXMEDICAREHOMECARE",
-  "KXNVDASUBPOENA",
-  "KXNYCLOBSTER",
-  "KXPRESDEBATECOUNTD",
-  "KXPRESDEBATECREATORD",
-  "KXPRESDEBATETWONIGHTD",
-  "KXPUBLICOPTIONLAW",
-  "KXRCPDEMLEAD",
-  "KXSENATEFASTTRACK",
-  "KXSENDEMNEITHER",
-  "KXTECHRECESS",
-  "KXTHANDRINGQVISTOUT",
-  "KXTRUMPIMMACTION",
-  "KXUEL1H",
-  "KXUEL1HBTTS",
-  "KXUEL1HSPREAD",
-  "KXUEL1HTOTAL",
-  "KXUELFTTS",
-  "KXUELSCORE",
-  "KXUELTEAMTOTAL",
-  "KXUKEURESETBILL",
-  "KXUNIONNATIONSMATCH",
-  "KXWHRLAST",
-  "KXYTVIEWSD"
+  "KXNLLGAME",
+  "KXTRUMPELSAYEDMEET",
+  "KXVENFUTVEADVANCE"
  ],
- "last_run": "2026-11-24T23:01:58+00:00",
+ "last_run": "2026-11-25T01:08:00+00:00",
  "listings": {
   "KX10YRRATE15M": {
    "category": "Financials",
@@ -2649,6 +2584,15 @@
    "series": "KXNHLSAVE",
    "title": "Washington vs Boston: Saves"
   },
+  "KXNLLGAME": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXNLLGAME-26NOV271930SASOSH",
+   "exchange_index": 0,
+   "first_seen": "2026-11-25T01:08:00+00:00",
+   "series": "KXNLLGAME",
+   "title": "Saskatchewan Rush vs Oshawa FireWolves"
+  },
   "KXNVDABOARDTESTIFY": {
    "category": "Politics",
    "events": 1,
@@ -3399,6 +3343,18 @@
    "series": "KXTHANDRINGQVISTOUT",
    "title": "Elisabeth Thand Ringqvist out as Centre Party leader?"
   },
+  "KXTRUMPELSAYEDMEET": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXTRUMPELSAYEDMEET-27FEB01-JAN01",
+   "example_event": "KXTRUMPELSAYEDMEET-27FEB01",
+   "exchange_index": 0,
+   "first_markets": "2026-11-25T01:08:00+00:00",
+   "first_seen": "2026-11-25T01:08:00+00:00",
+   "n_markets": 4,
+   "series": "KXTRUMPELSAYEDMEET",
+   "title": "When will Donald Trump and Abdul El-Sayed meet?"
+  },
   "KXTRUMPIMMACTION": {
    "category": "Politics",
    "events": 1,
@@ -4026,6 +3982,15 @@
    "series": "KXVANCEELSAYEDMEET",
    "title": "When will JD Vance and Abdul El-Sayed meet?"
   },
+  "KXVENFUTVEADVANCE": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXVENFUTVEADVANCE-26NOV29TACCFC",
+   "exchange_index": 0,
+   "first_seen": "2026-11-25T01:08:00+00:00",
+   "series": "KXVENFUTVEADVANCE",
+   "title": "Tachira vs Carabobo"
+  },
   "KXVENFUTVEBTTS": {
    "category": "Sports",
    "events": 2,
@@ -4351,10 +4316,16 @@
    "new": 68,
    "placed": 2,
    "t": "2026-11-24T23:01:58+00:00"
+  },
+  {
+   "events": 20532,
+   "new": 3,
+   "placed": 1,
+   "t": "2026-11-25T01:08:00+00:00"
   }
  ],
- "open_events": 20152,
- "open_series": 4996,
+ "open_events": 20532,
+ "open_series": 5028,
  "paper": [
   {
    "cents": 3.0,
@@ -6588,7 +6559,7 @@
    "title": "Will USDCAD be Above 1.439 at 5pm ET on Nov 23? Above 1.439"
   },
   {
-   "checked_at": "2026-11-24T23:01:58+00:00",
+   "checked_at": "2026-11-25T01:08:00+00:00",
    "close": "2026-11-27T15:00:00Z",
    "event": "KXSETLIST-MACYSWI26NOV27",
    "placed_at": "2026-11-23T20:36:47+00:00",
@@ -6602,109 +6573,123 @@
    "title": "Will Teddy Swims perform The Door at the 100th Macy's Thanksgiving Day Parade? The Door"
   },
   {
+   "cents": 7.0,
    "checked_at": "2026-11-24T23:01:58+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.92,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXUST10AD",
    "side": "no",
-   "status": "unfilled",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV24-T5.01",
    "title": "Will the 10Y U.S. Treasury yield be above 5.01% on Nov 24, 2026? 5.02% or above"
   },
   {
+   "cents": 11.0,
    "checked_at": "2026-11-24T02:13:27+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
    "filled_at": "2026-11-24T02:13:27+00:00",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.88,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXUST10AD",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV24-T4.99",
    "title": "Will the 10Y U.S. Treasury yield be above 4.99% on Nov 24, 2026? 5% or above"
   },
   {
+   "cents": 3.0,
    "checked_at": "2026-11-24T23:01:58+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.96,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST10AD",
    "side": "yes",
-   "status": "unfilled",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV24-T4.81",
    "title": "Will the 10Y U.S. Treasury yield be above 4.81% on Nov 24, 2026? 4.82% or above"
   },
   {
+   "cents": 5.0,
    "checked_at": "2026-11-24T16:29:51+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST10AD-26NOV24",
    "filled_at": "2026-11-24T16:29:51+00:00",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.94,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST10AD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST10AD-26NOV24-T4.83",
    "title": "Will the 10Y U.S. Treasury yield be above 4.83% on Nov 24, 2026? 4.84% or above"
   },
   {
+   "cents": 11.0,
    "checked_at": "2026-11-24T16:29:51+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST2AD-26NOV24",
    "filled_at": "2026-11-24T16:29:51+00:00",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.88,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST2AD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST2AD-26NOV24-T4.60",
    "title": "Will the 2Y U.S. Treasury yield be above 4.60% on Nov 24, 2026? 4.61% or above"
   },
   {
+   "cents": 13.0,
    "checked_at": "2026-11-24T16:29:51+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST2AD-26NOV24",
    "filled_at": "2026-11-24T16:29:51+00:00",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.86,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST2AD",
    "side": "yes",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXUST2AD-26NOV24-T4.58",
    "title": "Will the 2Y U.S. Treasury yield be above 4.58% on Nov 24, 2026? 4.59% or above"
   },
   {
+   "cents": 10.0,
    "checked_at": "2026-11-24T23:01:58+00:00",
    "close": "2026-11-24T20:30:00Z",
    "event": "KXUST30AD-26NOV24",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.89,
+   "result": "yes",
    "rule": "fav_24h",
    "series": "KXUST30AD",
    "side": "yes",
-   "status": "unfilled",
+   "status": "settled-unfilled",
    "taker": false,
    "ticker": "KXUST30AD-26NOV24-T5.23",
    "title": "Will the 30Y U.S. Treasury yield be above 5.23% on Nov 24, 2026? 5.24% or above"
   },
   {
-   "checked_at": "2026-11-24T23:01:58+00:00",
+   "checked_at": "2026-11-25T01:08:00+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXBELGIUMBUDGET-27JAN01",
    "placed_at": "2026-11-24T16:29:51+00:00",
@@ -6718,7 +6703,7 @@
    "title": "Will Belgium reach a 2027 federal budget deal before Dec 1, 2026? Before Dec 1, 2026"
   },
   {
-   "checked_at": "2026-11-24T23:01:58+00:00",
+   "checked_at": "2026-11-25T01:08:00+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXHARTIGANNOUNCEOUT-26NOV",
    "placed_at": "2026-11-24T16:29:51+00:00",
@@ -6732,7 +6717,7 @@
    "title": "Will Anthea Hartig be out as Director of the National Museum of American History before Dec 1, 2026?"
   },
   {
-   "checked_at": "2026-11-24T23:01:58+00:00",
+   "checked_at": "2026-11-25T01:08:00+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXVANCEELSAYEDMEET-27JAN01",
    "placed_at": "2026-11-24T16:29:51+00:00",
@@ -6874,7 +6859,7 @@
    "title": "Will USDCHF be Above 0.831 at 5pm ET on Nov 24? Above 0.831"
   },
   {
-   "checked_at": "2026-11-24T23:01:58+00:00",
+   "checked_at": "2026-11-25T01:08:00+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXHOUSECONTEMPTANY-26NOV",
    "placed_at": "2026-11-24T23:01:58+00:00",
@@ -6888,18 +6873,33 @@
    "title": "Will a resolution finding anyone in contempt of Congress pass the House before Dec 1, 2026? Before D"
   },
   {
-   "checked_at": "2026-11-24T23:01:58+00:00",
+   "checked_at": "2026-11-25T01:08:00+00:00",
    "close": "2026-12-03T15:00:00Z",
    "event": "KXMACYSPARADEWX-26NOV26",
+   "filled_at": "2026-11-25T01:08:00+00:00",
    "placed_at": "2026-11-24T23:01:58+00:00",
    "price": 0.88,
    "rule": "longshot_no",
    "series": "KXMACYSPARADEWX",
    "side": "no",
-   "status": "resting",
+   "status": "filled",
    "taker": false,
    "ticker": "KXMACYSPARADEWX-26NOV26-Y",
    "title": "Will weather cause postponement to a later date or cancellation at Macy\u2019s Thanksgiving Day Parade? P"
+  },
+  {
+   "checked_at": "2026-11-25T01:08:00+00:00",
+   "close": "2026-12-01T04:59:00Z",
+   "event": "KXTRUMPELSAYEDMEET-27FEB01",
+   "placed_at": "2026-11-25T01:08:00+00:00",
+   "price": 0.91,
+   "rule": "longshot_no",
+   "series": "KXTRUMPELSAYEDMEET",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXTRUMPELSAYEDMEET-27FEB01-DEC01",
+   "title": "Will Donald Trump and Abdul El-Sayed meet before Dec 1, 2026? Before Dec 1, 2026"
   }
  ],
  "pushed": {
@@ -10549,6 +10549,7 @@
   "KXNKLGAME",
   "KXNL",
   "KXNLGAME",
+  "KXNLLGAME",
   "KXNLPROVINCIAL",
   "KXNM1GAME",
   "KXNMARIANAGOV",
@@ -11820,6 +11821,7 @@
   "KXTRUMPDELETE",
   "KXTRUMPDEMDISTRICTS",
   "KXTRUMPDIVIDEND",
+  "KXTRUMPELSAYEDMEET",
   "KXTRUMPENDORSE28",
   "KXTRUMPENDORSEMENTS",
   "KXTRUMPEOD",
@@ -12224,6 +12226,7 @@
   "KXVENEZUELALEADER",
   "KXVENEZUELATSJ",
   "KXVENFUTVE",
+  "KXVENFUTVEADVANCE",
   "KXVENFUTVEBTTS",
   "KXVENFUTVEGAME",
   "KXVENFUTVESPREAD",
@@ -13978,6 +13981,13 @@
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXALBUMCHART": [
@@ -14093,6 +14103,13 @@
     "quoted": 1,
     "spread": 0.08,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -14523,6 +14540,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXCANCPIYOY": [
@@ -14680,6 +14704,13 @@
     "quoted": 1,
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -14846,6 +14877,13 @@
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXCHINACARBAN": [
@@ -14855,6 +14893,13 @@
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXCOLCABOUT": [
@@ -14863,6 +14908,13 @@
     "quoted": 18,
     "spread": 0.08,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 18,
+    "quoted": 18,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -15245,6 +15297,13 @@
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXDCMINWAGEPASS": [
@@ -15253,6 +15312,13 @@
     "quoted": 1,
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -15442,6 +15508,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXEARNINGSMENTIONAMAT": [
@@ -15451,6 +15524,13 @@
     "spread": 0.63,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 13,
+    "quoted": 13,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 100.0
    }
   ],
   "KXEARNINGSMENTIONCBRS": [
@@ -15459,6 +15539,13 @@
     "quoted": 16,
     "spread": 0.08,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 16,
+    "quoted": 16,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -15469,6 +15556,13 @@
     "spread": 0.65,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 16,
+    "quoted": 16,
+    "spread": 0.65,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXEARNINGSMENTIONETOR": [
@@ -15477,6 +15571,13 @@
     "quoted": 14,
     "spread": 0.08,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 18.0
+   },
+   {
+    "n": 14,
+    "quoted": 14,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 18.0
    }
   ],
@@ -15487,6 +15588,13 @@
     "spread": 0.7,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 16,
+    "quoted": 16,
+    "spread": 0.36,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXEARNINGSMENTIONSNOW": [
@@ -15495,6 +15603,13 @@
     "quoted": 13,
     "spread": 0.22,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 25.0
+   },
+   {
+    "n": 13,
+    "quoted": 13,
+    "spread": 0.19,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 25.0
    }
   ],
@@ -15514,6 +15629,13 @@
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXEUSUBSIDYTARIFF": [
@@ -15522,6 +15644,13 @@
     "quoted": 1,
     "spread": 0.2,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.2,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -15661,6 +15790,13 @@
     "quoted": 1,
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -16101,6 +16237,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 59,
+    "quoted": 37,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXHARTIGANNOUNCEOUT": [
@@ -16210,6 +16353,13 @@
     "spread": 0.01,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 27793.7
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 28882.2
    }
   ],
   "KXHIGHCHI": [
@@ -16824,6 +16974,13 @@
     "spread": 0.01,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 23728.3
+   },
+   {
+    "n": 12,
+    "quoted": 4,
+    "spread": 0.01,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 24393.1
    }
   ],
   "KXHIGHTATL": [
@@ -16959,6 +17116,13 @@
     "spread": 0.01,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 79238.6
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 81090.3
    }
   ],
   "KXHIGHTBOS": [
@@ -17068,6 +17232,13 @@
     "spread": 0.01,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 18697.1
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 20823.0
    }
   ],
   "KXHIGHTDC": [
@@ -17226,6 +17397,13 @@
     "spread": 0.01,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 25755.9
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 25995.2
    }
   ],
   "KXHIGHTLV": [
@@ -17235,6 +17413,13 @@
     "spread": 0.05,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 15576.9
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 18741.3
    }
   ],
   "KXHIGHTMIN": [
@@ -17279,6 +17464,13 @@
     "spread": 0.02,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 8955.2
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.02,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 9268.0
    }
   ],
   "KXHIGHTNOLA": [
@@ -17330,6 +17522,13 @@
     "spread": 0.04,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 3991.7
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.03,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 4408.7
    }
   ],
   "KXHIGHTOKC": [
@@ -17541,6 +17740,13 @@
     "spread": 0.01,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 12825.5
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.01,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 13249.1
    }
   ],
   "KXHIGHTSFO": [
@@ -17580,6 +17786,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXHOUSESUPERPACPLEDGE": [
@@ -17588,6 +17801,13 @@
     "quoted": 1,
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -17802,6 +18022,13 @@
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXINX": [
@@ -17845,6 +18072,13 @@
     "quoted": 14,
     "spread": 0.07,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 39619.4
+   },
+   {
+    "n": 30,
+    "quoted": 14,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 39619.4
    }
   ],
@@ -18185,6 +18419,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 2,
+    "spread": 0.09,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 1421.2
    }
   ],
   "KXKLOBCABGOP": [
@@ -18754,6 +18995,13 @@
     "spread": 0.03,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 16759.8
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.03,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 25473.0
    }
   ],
   "KXLOWTEWR": [
@@ -18967,6 +19215,13 @@
     "spread": 0.05,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 17840.0
+   },
+   {
+    "n": 12,
+    "quoted": 8,
+    "spread": 0.02,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 18627.4
    }
   ],
   "KXLOWTNOLA": [
@@ -19509,6 +19764,13 @@
     "spread": 0.02,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 6703.2
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.04,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 6735.2
    }
   ],
   "KXLOWTSAN": [
@@ -19620,6 +19882,13 @@
     "spread": 0.06,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 10189.9
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.03,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 10329.9
    }
   ],
   "KXLOWTTTN": [
@@ -19703,6 +19972,13 @@
     "spread": 0.05,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 773.7
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 2390.8
    }
   ],
   "KXMAMDANIEO": [
@@ -19791,6 +20067,13 @@
     "spread": 0.08,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXMEDICAREHOMECARE": [
@@ -19799,6 +20082,13 @@
     "quoted": 1,
     "spread": 0.05,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.05,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -19873,6 +20163,13 @@
     "quoted": 16,
     "spread": 0.19,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 117.0
+   },
+   {
+    "n": 30,
+    "quoted": 16,
+    "spread": 0.19,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 117.0
    }
   ],
@@ -20085,6 +20382,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXNYCAIAUDIT": [
@@ -20102,6 +20406,13 @@
     "quoted": 2,
     "spread": 0.09,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.09,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -20202,6 +20513,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 5,
+    "quoted": 5,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXPRESDEBATECREATORD": [
@@ -20211,6 +20529,13 @@
     "spread": 0.08,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 7,
+    "quoted": 7,
+    "spread": 0.08,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 1.0
    }
   ],
   "KXPRESDEBATETWONIGHTD": [
@@ -20220,6 +20545,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXPUBLICOPTIONLAW": [
@@ -20228,6 +20560,13 @@
     "quoted": 1,
     "spread": 0.07,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.07,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -20383,6 +20722,13 @@
     "quoted": 10,
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 10,
+    "quoted": 10,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
@@ -20564,6 +20910,13 @@
     "spread": 0.09,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.09,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXSENATEIAD": [
@@ -20666,6 +21019,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.09,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 1.0
    }
   ],
   "KXSETLIST": [
@@ -20963,6 +21323,13 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
    }
   ],
   "KXTHANDRINGQVISTOUT": [
@@ -20972,6 +21339,22 @@
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXTRUMPELSAYEDMEET": [
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.1,
+    "t": "2026-11-25T01:08:00+00:00",
+    "vol": 420.6
    }
   ],
   "KXTRUMPIMMACTION": [
@@ -20980,6 +21363,13 @@
     "quoted": 5,
     "spread": 0.98,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 5,
+    "quoted": 5,
+    "spread": 0.98,
+    "t": "2026-11-25T01:08:00+00:00",
     "vol": 0.0
    }
   ],
