@@ -497,7 +497,7 @@ exit_margin = 0.08
 enabled = true
 live = true
 contracts = 2                    # per order; raise only at a review  (was 1; x2 Nov 17)
-contracts_by = { "low/need" = 4 }  # late-day LOWS 1 -> 2 (Alex Nov 12 10:41 PM ET "sure do it"); highs/holds stay 1
+contracts_by = { "low/need" = 4, "low/holds" = 1 }  # late-day LOWS 1 -> 2 (Alex Nov 12 10:41 PM ET "sure do it"). Nov 24 rebalance (Alex: "scale the early fails down"): low/holds 2 -> 1 (real -3.8c/ct on 81 ct)
 metrics = ["low", "high"]        # highs added Nov 12 as a 1-contract real test (backtest: cool season only)
 kinds = ["need", "holds"]        # "holds" (YES on the bracket holding the extreme) added Nov 12, 1-contract test
 # Nov 13 (thread "Expand late-day weather to more markets", Alex: "start em up with real money"):
@@ -508,7 +508,7 @@ kinds = ["need", "holds"]        # "holds" (YES on the bracket holding the extre
 skip = ["high/need", "KXHIGHTEWR", "KXHIGHTTTN", "KXHIGHTSAN"]
 min_price_by = { "low/holds" = 0.10 }  # Nov 21 (Alex decision card): no real low-holds YES under 10c (cheap tails 0-for-5 real, MSP 46+ at 3c); paper still logs them
 sub_loss_stop = { "high/holds" = 3.0 }  # Nov 14: late-day HIGH holds goes paper once its real result hits -$3 (one push); lows untouched
-series_contracts = { KXLOWTATL = 2, KXLOWTBOS = 2, KXLOWTDAL = 2, KXLOWTDC = 2, KXLOWTHOU = 2, KXLOWTLV = 2, KXLOWTMIN = 2, KXLOWTNOLA = 2, KXLOWTOKC = 2, KXLOWTPHX = 2, KXLOWTSAN = 2, KXLOWTSATX = 2, KXLOWTSEA = 2, KXLOWTSFO = 2, KXLOWTEWR = 2, KXLOWTTTN = 2 }
+series_contracts = { KXLOWTATL = 1, KXLOWTBOS = 1, KXLOWTDAL = 1, KXLOWTDC = 1, KXLOWTHOU = 1, KXLOWTLV = 1, KXLOWTMIN = 1, KXLOWTNOLA = 1, KXLOWTOKC = 1, KXLOWTPHX = 1, KXLOWTSAN = 1, KXLOWTSATX = 1, KXLOWTSEA = 1, KXLOWTSFO = 1, KXLOWTEWR = 1, KXLOWTTTN = 1 }  # Nov 24 rebalance: 2 -> 1 (16 added cities' lows real -0.7c/ct need, -2.3c holds; the 20 original cities stay at full size)
 max_open_pct = 0.6               # 15% -> 40% (Alex Nov 13 12:31 AM ET, decision card): room for 23 cities' late-day orders  (was 0.4; x2 Nov 17)
 max_event_pct = 0.16             # one city-day  (was 0.08; x2 Nov 17)
 max_loss_pct = 0.10              # own stop: down 10% of the bankroll on this strategy -> no new orders
@@ -527,8 +527,8 @@ max_market_contracts = 100  # x2 Nov 17 (Alex card: "Double every live strategy"
 enabled = true
 live = true
 taker = true                     # the tested rule takes the ask (fee ~1c)
-contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
-max_contracts = 2  # x2 Nov 17 (Alex card: "Double every live strategy")
+contracts = 1  # Nov 24 rebalance: 2 -> 1 (real -11c/ct on 8 ct, 5 nights; Alex "scale the early fails down"). Was x2 Nov 17
+max_contracts = 1
 min_price = 0.75
 max_price = 0.95
 start_hour = 20                  # local time window for entries
