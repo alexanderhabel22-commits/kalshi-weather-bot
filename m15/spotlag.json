@@ -1,5 +1,5 @@
 {
- "at": "2026-11-24 19:17:10",
+ "at": "2026-11-24 19:27:10",
  "mode": "paper",
  "paper_only": true,
  "since": "2026-11-24 04:16:34",
@@ -16,9 +16,9 @@
   ],
   "contracts": 1
  },
- "signals": 92,
- "paper_fills": 57,
- "open": 1,
+ "signals": 93,
+ "paper_fills": 58,
+ "open": 2,
  "scores": {
   "0": {
    "n": 91,
@@ -170,54 +170,71 @@
  },
  "src": {
   "mix": 22,
-  "cf": 70
+  "cf": 71
  },
  "catch": [
   {
    "day": "2026-11-24",
-   "signals": 92,
+   "signals": 93,
    "by_coin": {
     "DOGE": 51,
-    "NEAR": 41
+    "NEAR": 42
    },
    "0": {
-    "n": 92,
-    "still_5c": 92,
+    "n": 93,
+    "still_5c": 93,
     "share_5c": 1.0,
     "median_edge_c": 10.7,
     "same_ask": 1.0
    },
    "0.5": {
-    "n": 92,
-    "still_5c": 68,
-    "share_5c": 0.739,
+    "n": 93,
+    "still_5c": 69,
+    "share_5c": 0.742,
     "median_edge_c": 9.1,
-    "same_ask": 0.457
+    "same_ask": 0.452
    },
    "1": {
-    "n": 92,
-    "still_5c": 57,
-    "share_5c": 0.62,
-    "median_edge_c": 7.7,
-    "same_ask": 0.359
+    "n": 93,
+    "still_5c": 58,
+    "share_5c": 0.624,
+    "median_edge_c": 7.6,
+    "same_ask": 0.355
    },
    "2": {
-    "n": 92,
-    "still_5c": 52,
-    "share_5c": 0.565,
+    "n": 93,
+    "still_5c": 53,
+    "share_5c": 0.57,
     "median_edge_c": 6.8,
-    "same_ask": 0.304
+    "same_ask": 0.312
    },
    "5": {
-    "n": 92,
-    "still_5c": 48,
-    "share_5c": 0.522,
-    "median_edge_c": 5.9,
-    "same_ask": 0.25
+    "n": 93,
+    "still_5c": 49,
+    "share_5c": 0.527,
+    "median_edge_c": 6.0,
+    "same_ask": 0.247
    }
   }
  ],
  "recent": [
+  {
+   "et": "2026-11-24 19:21:09",
+   "ticker": "KXNEAR15M-26NOV241930-30",
+   "coin": "NEAR",
+   "side": "no",
+   "left_s": 530.4,
+   "src": "cf",
+   "ask0": 0.49,
+   "edge0": 0.1184,
+   "ask1": 0.5,
+   "edge1": 0.0702,
+   "size0": 28.05,
+   "size1": 185.00000000000003,
+   "fill": true,
+   "result": null,
+   "pnl": null
+  },
   {
    "et": "2026-11-24 19:16:42",
    "ticker": "KXDOGE15M-26NOV241930-30",
@@ -625,75 +642,58 @@
    "fill": true,
    "result": "no",
    "pnl": -0.47
-  },
-  {
-   "et": "2026-11-24 16:02:28",
-   "ticker": "KXNEAR15M-26NOV241615-15",
-   "coin": "NEAR",
-   "side": "yes",
-   "left_s": 751.2,
-   "src": "cf",
-   "ask0": 0.44,
-   "edge0": 0.1107,
-   "ask1": 0.45,
-   "edge1": 0.0074,
-   "size0": 150.0,
-   "size1": 22.999999999999986,
-   "fill": false,
-   "result": "no",
-   "pnl": null
   }
  ],
  "feeds": {
   "spot": {
    "DOGE": {
-    "cf_age_s": 0.2,
+    "cf_age_s": 0.0,
     "cf_points": 3900,
-    "mix_age_s": 17.4,
-    "venues": 0,
+    "mix_age_s": 0.4,
+    "venues": 1,
     "cf_vol_ok": true,
     "mix_vol_ok": true
    },
    "NEAR": {
-    "cf_age_s": 0.4,
+    "cf_age_s": 0.3,
     "cf_points": 3900,
-    "mix_age_s": 15.4,
-    "venues": 0,
+    "mix_age_s": 0.4,
+    "venues": 1,
     "cf_vol_ok": true,
     "mix_vol_ok": true
    }
   },
   "cf_ids": {
-   "AAVEUSD_RTI": 44999,
-   "ADAUSD_RTI": 44999,
-   "BCHUSD_RTI": 44999,
-   "BNBUSD_RTI": 44999,
-   "BRTI": 225001,
-   "DOGEUSD_RTI": 225001,
-   "ETHUSD_RTI": 225001,
-   "HYPEUSD_RTI": 44999,
-   "LINKUSD_RTI": 44999,
-   "LTCUSD_RTI": 44999,
-   "NEARUSD_RTI": 44999,
-   "SHIBUSD_RTI": 44999,
-   "SOLUSD_RTI": 225001,
-   "SUIUSD_RTI": 44999,
-   "UNIUSD_RTI": 44999,
-   "VVVUSD_RTI": 44999,
-   "WLDUSD_RTI": 44999,
-   "XRPUSD_RTI": 225001,
-   "ZECUSD_RTI": 44999
+   "AAVEUSD_RTI": 45599,
+   "ADAUSD_RTI": 45599,
+   "BCHUSD_RTI": 45599,
+   "BNBUSD_RTI": 45599,
+   "BRTI": 228001,
+   "DOGEUSD_RTI": 228002,
+   "ETHUSD_RTI": 228001,
+   "HYPEUSD_RTI": 45599,
+   "LINKUSD_RTI": 45599,
+   "LTCUSD_RTI": 45599,
+   "NEARUSD_RTI": 45599,
+   "SHIBUSD_RTI": 45599,
+   "SOLUSD_RTI": 228002,
+   "SUIUSD_RTI": 45599,
+   "UNIUSD_RTI": 45599,
+   "VVVUSD_RTI": 45599,
+   "WLDUSD_RTI": 45599,
+   "XRPUSD_RTI": 228001,
+   "ZECUSD_RTI": 45599
   },
   "ws_age_s": 0.0,
   "markets": 2,
   "books_ok": 2,
-  "book_msgs": 11099478,
-  "cf_msgs": 1754991,
+  "book_msgs": 11274109,
+  "cf_msgs": 1778393,
   "resyncs": 0,
   "connects": 3,
   "errors": 0,
   "no_fair": 0,
-  "scans": 404487,
+  "scans": 409933,
   "last_err": ""
  }
 }
