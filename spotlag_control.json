@@ -1,4 +1,5 @@
 {
  "_note": "DOGE/NEAR 15-min spot-lag logger (wxbot/spotlag.py on the kalshi-m15 droplet, read every 5 min). PAPER ONLY: the code has no order path; real money needs a separate OK from Alex and a separate change. mode: paper | off. Alex asked for it Nov 24, 2026 ('Ok please do that paper logger then'). Verdict at ~300 settled +1 s paper fills: keep only if >= +3c/ct with the 90% range above 0. Day-1 check: if the 10c gap is usually gone within a second, stop.",
- "mode": "paper"
+ "mode": "off",
+ "_stopped": "STOPPED Nov 25, 2026 (Nov 25 scorecard): +1 s paper fills -9.7c +/-5.5/ct on 73 settled (90% range -18.8 to -0.6c), even 0-delay -5.1c +/-4.3 on 124; DOGE worse than NEAR. The catch check passed (61% of gaps still 5c+ at +1 s) but the stale asks lose anyway. No new signals; the service keeps settling open paper fills and uploading the final status. Data stays on m15-data."
 }

@@ -342,6 +342,12 @@ record earns it. Be candid about odds and risk; no hype.
   market, skip brackets within 2 ships of the total), and scores against Kalshi's result and settled value.
   Status m15/shiprelease.json on m15-data; dashboard TESTS card "Shipping release window". First release
   Tue Nov 24; paper verdict after 4 Tuesdays (~Dec 15). Off (whole service): `sudo systemctl disable --now kalshi-shiprel && sudo touch /var/lib/kalshi-shiprel.disabled`.
+- **DOGE/NEAR spot-lag logger: STOPPED Nov 25, 2026** (`spotlag_control.json` mode off). Nov 25 scorecard:
+  +1 s paper fills -9.7c +/-5.5/ct on 73 settled (90% range -18.8 to -0.6c), 0-delay -5.1c +/-4.3 on 124,
+  DOGE worse than NEAR; the catch check passed (61% still 5c+ at +1 s) but the stale asks still lose. Paper
+  only, no money lost. Service stays installed (no new signals; settles open fills, uploads final status);
+  data and TESTS card kept with a "stopped" note. To remove fully on the droplet:
+  `sudo systemctl disable --now kalshi-spotlag && sudo touch /var/lib/kalshi-spotlag.disabled`. Original notes:
 - **DOGE/NEAR spot-lag logger (PAPER ONLY, Nov 24, 1 ct):** `wxbot/spotlag.py`, droplet service
   `kalshi-spotlag` (installed by update.sh via `deploy/m15/install-spotlag.sh`; no trading-bot restart),
   switch `spotlag_control.json` on main (mode paper | off). No order code at all: the Kalshi key only signs
