@@ -1243,3 +1243,31 @@ def test_stale_quote_guard_can_be_switched_off(monkeypatch):
     b.fv.lag = FakeLag({"side_bid": 0.70, "side_ask": 0.72, "yes_bid": 0.70, "yes_ask": 0.72})
     b.step()
     assert b.state["markets"][TK]["order"]
+
+
+def test_late_fill_on_an_ended_order_blocks_a_second_order(monkeypatch):
+    # Nov 25 natgas: order 1 pulled with 0 filled per Kalshi at cancel time, filled anyway;
+    # the bot re-bid and ended up holding 2 on a 1-contract real test.
+    w = World(monkeypatch, yb=0.73, ya=0.76)
+    clk = Clock()
+    cl = Client()
+    b = bot(cfg(mode="live", live_max_contracts={"KXBTC15M": 1}), clk, cl)
+    b.step()
+    m = b.state["markets"][TK]
+    assert len(cl.placed) == 1 and m["order"]["id"] == "o0"
+    w.book.update(yes_bid=0.75, yes_ask=0.77)        # bid moves up: requote pulls o0 (0 filled)
+    clk.t += 30
+    b.step()
+    assert "o0" in cl.cancelled and m["filled"] == 0
+    cl.orders["o0"]["fill_count"] = 1                 # Kalshi's record catches up: o0 did fill
+    for o in list(cl.orders.values()):
+        if o["order_id"] != "o0":
+            o["status"] = "canceled"                  # take any re-bid out of the way
+    m["order"] = None
+    n_before = len(cl.placed)
+    clk.t += 10
+    b.step()
+    assert m["filled"] == 1 and len(cl.placed) == n_before   # booked the late fill, no new order
+    clk.t += 10
+    b.step()
+    assert len(cl.placed) == n_before                         # 1-ct cap holds
