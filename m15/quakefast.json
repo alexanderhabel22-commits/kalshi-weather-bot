@@ -1,5 +1,5 @@
 {
- "at": "2026-11-25 21:40:51",
+ "at": "2026-11-25 21:45:51",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -1695,207 +1695,95 @@
      "mag": 5.67
     }
    }
-  },
-  {
-   "qid": "q1795402059-emsc_ws",
-   "t": 1795401657.9,
-   "et": "2026-11-22 21:40:57",
-   "place": "VANUATU REGION",
-   "best_mag": 6.51,
-   "triggered": true,
-   "kmove": {
-    "ts": 1795401809.9,
-    "lag_s": 152.0,
-    "ticker": "KXBIGGESTQUAKE-23NOV26-5.8",
-    "from": 0.42,
-    "to": 0.57,
-    "tape": {
-     "KXBIGGESTQUAKE-23NOV26-5.2": {
-      "first_50c_s": 135.3,
-      "n_after": 6,
-      "first_s": 135.3
-     },
-     "KXBIGGESTQUAKE-23NOV26-5.4": {
-      "first_50c_s": 135.3,
-      "n_after": 7,
-      "first_s": 135.3
-     },
-     "KXBIGGESTQUAKE-23NOV26-5.6": {
-      "first_50c_s": 135.3,
-      "n_after": 27,
-      "first_s": 135.3
-     },
-     "KXBIGGESTQUAKE-23NOV26-5.8": {
-      "first_50c_s": 135.3,
-      "n_after": 25,
-      "first_s": 135.3
-     },
-     "KXBIGGESTQUAKE-23NOV26-6.0": {
-      "first_50c_s": 137.5,
-      "n_after": 27,
-      "first_s": 135.3
-     },
-     "KXBIGGESTQUAKE-23NOV26-6.2": {
-      "first_50c_s": 151.3,
-      "n_after": 32,
-      "first_s": 151.3
-     },
-     "KXBIGGESTQUAKE-23NOV26-6.4": {
-      "first_50c_s": 298.2,
-      "n_after": 51,
-      "first_s": 151.3
-     },
-     "KXBIGGESTQUAKE-23NOV26-6.6": {
-      "first_50c_s": 448.1,
-      "n_after": 15,
-      "first_s": 171.0
-     },
-     "KXBIGGESTQUAKE-23NOV26-6.8": {
-      "first_50c_s": null,
-      "n_after": 4,
-      "first_s": 170.9
-     },
-     "KXBIGGESTQUAKE-23NOV26-7.0": {
-      "first_50c_s": null,
-      "n_after": 4,
-      "first_s": 531.0
-     }
-    }
-   },
-   "srcs": {
-    "emsc_ws": {
-     "lag_s": 401.2,
-     "first_mag": 6.2,
-     "mag": 6.5
-    },
-    "emsc": {
-     "lag_s": 404.1,
-     "first_mag": 6.2,
-     "mag": 6.5
-    },
-    "gfz_fdsn": {
-     "lag_s": 416.0,
-     "first_mag": 6.14,
-     "mag": 6.51
-    },
-    "ptwc": {
-     "lag_s": 434.2,
-     "first_mag": 6.5,
-     "mag": 6.5
-    },
-    "gfz": {
-     "lag_s": 440.9,
-     "first_mag": 6.2,
-     "mag": 6.5
-    },
-    "usgs": {
-     "lag_s": 441.0,
-     "first_mag": 6.5,
-     "mag": 6.5
-    },
-    "ntwc": {
-     "lag_s": 569.2,
-     "first_mag": 6.5,
-     "mag": 6.5
-    }
-   }
   }
  ],
  "latency_m6": {
+  "gfz_fdsn": {
+   "n": 1,
+   "median_s": 639.5
+  },
   "emsc_ws": {
-   "n": 2,
+   "n": 1,
    "median_s": 654.5
   },
   "emsc": {
-   "n": 2,
+   "n": 1,
    "median_s": 660.1
   },
-  "gfz_fdsn": {
-   "n": 2,
-   "median_s": 639.5
-  },
-  "ptwc": {
-   "n": 1,
-   "median_s": 434.2
-  },
-  "usgs": {
-   "n": 2,
-   "median_s": 1098.9
-  },
   "gfz": {
-   "n": 2,
+   "n": 1,
    "median_s": 668.7
   },
-  "ntwc": {
+  "usgs": {
    "n": 1,
-   "median_s": 569.2
+   "median_s": 1098.9
   }
  },
  "feeds": {
   "bmkg": {
-   "ok": 21303,
+   "ok": 21318,
    "err": 30,
-   "last_ok": "2026-11-25 21:40:40",
+   "last_ok": "2026-11-25 21:45:40",
    "last_err": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
   },
   "emsc": {
    "ok": 7618,
-   "err": 20826,
+   "err": 20846,
    "last_ok": "2026-11-25 04:01:33",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 3626,
+   "ok": 3632,
    "err": 3,
-   "last_ok": "2026-11-25 21:37:19",
+   "last_ok": "2026-11-25 21:45:49",
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 14222,
+   "ok": 14232,
    "err": 0,
-   "last_ok": "2026-11-25 21:40:27",
+   "last_ok": "2026-11-25 21:45:27",
    "last_err": null
   },
   "gfz": {
-   "ok": 42658,
+   "ok": 42688,
    "err": 7,
-   "last_ok": "2026-11-25 21:40:50",
+   "last_ok": "2026-11-25 21:45:50",
    "last_err": "502 Server Error: Bad Gateway for url: https://geofon.gfz.de/eqinfo/list.php?fmt=rss"
   },
   "gfz_fdsn": {
-   "ok": 13506,
+   "ok": 13516,
    "err": 716,
-   "last_ok": "2026-11-25 21:40:27",
+   "last_ok": "2026-11-25 21:45:27",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 14222,
+   "ok": 14232,
    "err": 0,
-   "last_ok": "2026-11-25 21:40:27",
+   "last_ok": "2026-11-25 21:45:27",
    "last_err": null
   },
   "kalshi": {
-   "ok": 56402,
+   "ok": 56442,
    "err": 50,
-   "last_ok": "2026-11-25 21:40:49",
+   "last_ok": "2026-11-25 21:45:51",
    "last_err": null
   },
   "ntwc": {
-   "ok": 28444,
+   "ok": 28464,
    "err": 0,
-   "last_ok": "2026-11-25 21:40:50",
+   "last_ok": "2026-11-25 21:45:50",
    "last_err": null
   },
   "ptwc": {
-   "ok": 28444,
+   "ok": 28464,
    "err": 0,
-   "last_ok": "2026-11-25 21:40:50",
+   "last_ok": "2026-11-25 21:45:50",
    "last_err": null
   },
   "usgs": {
-   "ok": 42665,
+   "ok": 42695,
    "err": 0,
-   "last_ok": "2026-11-25 21:40:51",
+   "last_ok": "2026-11-25 21:45:51",
    "last_err": null
   }
  }
