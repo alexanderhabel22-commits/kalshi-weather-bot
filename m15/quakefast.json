@@ -1,5 +1,5 @@
 {
- "at": "2026-11-26 10:37:17",
+ "at": "2026-11-26 10:42:18",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -1404,6 +1404,37 @@
  ],
  "quakes": [
   {
+   "qid": "q1795707456-emsc",
+   "t": 1795706810.17,
+   "et": "2026-11-26 10:26:50",
+   "place": "REVILLA GIGEDO ISLANDS REGION",
+   "best_mag": 5.6,
+   "triggered": false,
+   "kmove": null,
+   "srcs": {
+    "emsc": {
+     "lag_s": 646.5,
+     "first_mag": 5.6,
+     "mag": 5.6
+    },
+    "emsc_ws": {
+     "lag_s": 647.3,
+     "first_mag": 5.6,
+     "mag": 5.6
+    },
+    "gfz_fdsn": {
+     "lag_s": 667.5,
+     "first_mag": 5.51,
+     "mag": 5.51
+    },
+    "gfz": {
+     "lag_s": 692.4,
+     "first_mag": 5.5,
+     "mag": 5.5
+    }
+   }
+  },
+  {
    "qid": "q1795684360-bmkg",
    "t": 1795684119.0,
    "et": "2026-11-26 04:08:39",
@@ -1705,69 +1736,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 23631,
+   "ok": 23646,
    "err": 31,
-   "last_ok": "2026-11-26 10:37:01",
+   "last_ok": "2026-11-26 10:42:01",
    "last_err": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
   },
   "emsc": {
-   "ok": 9023,
-   "err": 22526,
-   "last_ok": "2026-11-26 10:08:36",
+   "ok": 9042,
+   "err": 22527,
+   "last_ok": "2026-11-26 10:42:06",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 4095,
+   "ok": 4099,
    "err": 3,
-   "last_ok": "2026-11-26 10:33:30",
+   "last_ok": "2026-11-26 10:41:17",
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 15775,
+   "ok": 15785,
    "err": 0,
-   "last_ok": "2026-11-26 10:36:58",
+   "last_ok": "2026-11-26 10:41:58",
    "last_err": null
   },
   "gfz": {
-   "ok": 47316,
+   "ok": 47346,
    "err": 7,
-   "last_ok": "2026-11-26 10:37:12",
+   "last_ok": "2026-11-26 10:42:12",
    "last_err": "502 Server Error: Bad Gateway for url: https://geofon.gfz.de/eqinfo/list.php?fmt=rss"
   },
   "gfz_fdsn": {
-   "ok": 14964,
-   "err": 811,
-   "last_ok": "2026-11-26 10:36:57",
+   "ok": 14973,
+   "err": 812,
+   "last_ok": "2026-11-26 10:41:27",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 15775,
+   "ok": 15785,
    "err": 0,
-   "last_ok": "2026-11-26 10:36:58",
+   "last_ok": "2026-11-26 10:41:58",
    "last_err": null
   },
   "kalshi": {
-   "ok": 62564,
+   "ok": 62604,
    "err": 52,
-   "last_ok": "2026-11-26 10:37:12",
+   "last_ok": "2026-11-26 10:42:14",
    "last_err": null
   },
   "ntwc": {
-   "ok": 31549,
+   "ok": 31569,
    "err": 0,
-   "last_ok": "2026-11-26 10:37:06",
+   "last_ok": "2026-11-26 10:42:06",
    "last_err": null
   },
   "ptwc": {
-   "ok": 31549,
+   "ok": 31569,
    "err": 0,
-   "last_ok": "2026-11-26 10:37:06",
+   "last_ok": "2026-11-26 10:42:06",
    "last_err": null
   },
   "usgs": {
-   "ok": 47323,
+   "ok": 47353,
    "err": 0,
-   "last_ok": "2026-11-26 10:37:12",
+   "last_ok": "2026-11-26 10:42:12",
    "last_err": null
   }
  }
