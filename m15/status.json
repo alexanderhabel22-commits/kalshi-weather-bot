@@ -1,5 +1,5 @@
 {
- "at": "2026-11-26T03:02:00+00:00",
+ "at": "2026-11-26T03:17:00+00:00",
  "code": "361487f",
  "control": "live",
  "control_real": {
@@ -16,22 +16,26 @@
   "KXBTC15M": 1794394096
  },
  "halted": null,
- "last_reject": null,
+ "last_reject": {
+  "at": 1795662638,
+  "error": "HTTP 400 for https://api.elections.kalshi.com/trade-api/v2/portfolio/events/orders: {\"error\":{\"code\":\"invalid_order\",\"message\":\"invalid order\",\"details\":\"post only cross\"}}",
+  "ticker": "KXNATGAS15M-26NOV252215-15"
+ },
  "live_exposure": 0.0,
  "live_now": {
-  "KXNATGAS15M-26NOV252215-15": {
+  "KXNATGAS15M-26NOV252230-30": {
    "bid_ask": [
-    0.46,
-    0.48
+    0.55,
+    0.6
    ],
    "mode": "live",
    "order": false,
    "why": "out of band"
   },
-  "KXNATGAS15M-26NOV252215-15|paper": {
+  "KXNATGAS15M-26NOV252230-30|paper": {
    "bid_ask": [
-    0.46,
-    0.48
+    0.55,
+    0.6
    ],
    "mode": "paper",
    "order": false,
@@ -52,13 +56,9 @@
    "2026-11-13": -3.22,
    "2026-11-23": 3.13,
    "2026-11-24": -0.5984,
-   "2026-11-25": 3.78
+   "2026-11-25": 4.06
   },
   "live_log": [
-   [
-    1795576500.0,
-    0.05
-   ],
    [
     1795577400.0,
     0.12
@@ -366,9 +366,13 @@
    [
     1795661100,
     0.09
+   ],
+   [
+    1795662900,
+    0.28
    ]
   ],
-  "live_total": -4.8012,
+  "live_total": -4.5212,
   "paper_days": {
    "2026-11-07": -5.8,
    "2026-11-08": -50.72,
@@ -388,25 +392,25 @@
    "2026-11-22": -12.45,
    "2026-11-23": -38.45,
    "2026-11-24": -65.4,
-   "2026-11-25": -54.78
+   "2026-11-25": -55.16
   },
-  "paper_total": -586.86
+  "paper_total": -587.24
  },
- "pnl_24h": 3.57,
+ "pnl_24h": 3.8,
  "realtest": {
   "KXNATGAS15M": {
-   "ct": 120.65,
+   "ct": 121.65,
    "first_fill": 1795535704,
-   "markets": 120,
-   "paper_ct": 200.0,
-   "paper_pnl": 1.85,
-   "pnl": 3.2485,
+   "markets": 121,
+   "paper_ct": 201.0,
+   "paper_pnl": 1.12,
+   "pnl": 3.5285,
    "reviews": [
     20,
     50
    ],
    "tag": "natgas-2026-11-23",
-   "won": 103
+   "won": 104
   }
  },
  "roll_stop": null,
@@ -2224,11 +2228,11 @@
   },
   "KXNATGAS15M": {
    "at_step": [
-    189.76,
-    6.3116
+    190.76,
+    6.5916
    ],
-   "fills": 189.76,
-   "pnl": 6.3116,
+   "fills": 190.76,
+   "pnl": 6.5916,
    "recent": [
     [
      1.0,
@@ -2989,6 +2993,10 @@
     [
      1.0,
      0.09
+    ],
+    [
+     1.0,
+     0.28
     ]
    ],
    "step": 0,
@@ -3752,6 +3760,10 @@
     [
      1.0,
      0.09
+    ],
+    [
+     1.0,
+     0.28
     ]
    ],
    "step_since": 1795458640.335016
@@ -5631,9 +5643,9 @@
   }
  },
  "shards": {
-  "0": 16.7159,
+  "0": 15.9659,
   "1": 0.0,
-  "2": 12.1453,
+  "2": 11.4253,
   "3": 0.0
  },
  "spot_ok": true,
