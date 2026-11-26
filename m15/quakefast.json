@@ -1,5 +1,5 @@
 {
- "at": "2026-11-26 14:37:44",
+ "at": "2026-11-26 14:42:44",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -1404,6 +1404,22 @@
  ],
  "quakes": [
   {
+   "qid": "q1795722028-jma",
+   "t": 1795721580.0,
+   "et": "2026-11-26 14:33:00",
+   "place": "Adjacent Sea of\u200b Chichijima Island",
+   "best_mag": 5.5,
+   "triggered": false,
+   "kmove": null,
+   "srcs": {
+    "jma": {
+     "lag_s": 448.7,
+     "first_mag": 5.5,
+     "mag": 5.5
+    }
+   }
+  },
+  {
    "qid": "q1795707456-emsc",
    "t": 1795706810.17,
    "et": "2026-11-26 10:26:50",
@@ -1741,69 +1757,69 @@
  },
  "feeds": {
   "bmkg": {
-   "ok": 24353,
+   "ok": 24368,
    "err": 31,
-   "last_ok": "2026-11-26 14:37:41",
+   "last_ok": "2026-11-26 14:42:41",
    "last_err": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
   },
   "emsc": {
-   "ok": 9984,
+   "ok": 10004,
    "err": 22527,
-   "last_ok": "2026-11-26 14:37:37",
+   "last_ok": "2026-11-26 14:42:37",
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 4220,
+   "ok": 4222,
    "err": 3,
-   "last_ok": "2026-11-26 14:36:23",
+   "last_ok": "2026-11-26 14:41:36",
    "last_err": "'str' object has no attribute 'get'"
   },
   "geonet": {
-   "ok": 16256,
+   "ok": 16266,
    "err": 0,
-   "last_ok": "2026-11-26 14:37:28",
+   "last_ok": "2026-11-26 14:42:28",
    "last_err": null
   },
   "gfz": {
-   "ok": 48759,
+   "ok": 48789,
    "err": 7,
-   "last_ok": "2026-11-26 14:37:43",
+   "last_ok": "2026-11-26 14:42:43",
    "last_err": "502 Server Error: Bad Gateway for url: https://geofon.gfz.de/eqinfo/list.php?fmt=rss"
   },
   "gfz_fdsn": {
-   "ok": 15417,
+   "ok": 15427,
    "err": 839,
-   "last_ok": "2026-11-26 14:37:27",
+   "last_ok": "2026-11-26 14:42:27",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 16256,
+   "ok": 16266,
    "err": 0,
-   "last_ok": "2026-11-26 14:37:28",
+   "last_ok": "2026-11-26 14:42:28",
    "last_err": null
   },
   "kalshi": {
-   "ok": 64474,
+   "ok": 64512,
    "err": 52,
-   "last_ok": "2026-11-26 14:37:44",
+   "last_ok": "2026-11-26 14:42:31",
    "last_err": null
   },
   "ntwc": {
-   "ok": 32511,
+   "ok": 32531,
    "err": 0,
-   "last_ok": "2026-11-26 14:37:37",
+   "last_ok": "2026-11-26 14:42:37",
    "last_err": null
   },
   "ptwc": {
-   "ok": 32511,
+   "ok": 32531,
    "err": 0,
-   "last_ok": "2026-11-26 14:37:37",
+   "last_ok": "2026-11-26 14:42:37",
    "last_err": null
   },
   "usgs": {
-   "ok": 48766,
+   "ok": 48796,
    "err": 0,
-   "last_ok": "2026-11-26 14:37:43",
+   "last_ok": "2026-11-26 14:42:43",
    "last_err": null
   }
  }
