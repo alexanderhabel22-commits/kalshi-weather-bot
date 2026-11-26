@@ -537,7 +537,7 @@ exit_margin = 0.08
 enabled = true
 live = true
 contracts = 2                    # per order; raise only at a review  (was 1; x2 Nov 17)
-contracts_by = { "low/need" = 4, "low/holds" = 1 }  # late-day LOWS 1 -> 2 (Alex Nov 12 10:41 PM ET "sure do it"). Nov 24 rebalance (Alex: "scale the early fails down"): low/holds 2 -> 1 (real -3.8c/ct on 81 ct)
+contracts_by = { "low/need" = 2, "low/holds" = 1 }  # Nov 26: low/need 4 -> 2 after -$10 on Nov 24-26 (real since Nov 22 -$13.8); 500 review decides next.  # late-day LOWS 1 -> 2 (Alex Nov 12 10:41 PM ET "sure do it"). Nov 24 rebalance (Alex: "scale the early fails down"): low/holds 2 -> 1 (real -3.8c/ct on 81 ct)
 metrics = ["low", "high"]        # highs added Nov 12 as a 1-contract real test (backtest: cool season only)
 kinds = ["need", "holds"]        # "holds" (YES on the bracket holding the extreme) added Nov 12, 1-contract test
 # Nov 13 (thread "Expand late-day weather to more markets", Alex: "start em up with real money"):
