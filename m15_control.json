@@ -1,8 +1,8 @@
 {
- "mode": "live",
+ "mode": "paper",
  "note": "Claude-only fast switch for the 15-minute server bot: live | paper | off. The server reads it every minute. reset_halt: set to a new string to clear a total-loss halt. real: per-series switch for small real tests (\"on\" = allowed, anything else = paper); only series in config [m15] control_gated need it.",
- "changed": "2026-11-23 12:45 PM ET: LIVE for the natgas real test ONLY (Alex OK Nov 23 'ok sure'; config live_series = natgas, 1 ct, $3 cap). Every other series stays paper. Kill natgas: real KXNATGAS15M off. Kill all: mode paper.",
+ "changed": "2026-11-27 12:10 PM ET: natgas real test ENDED (cap tripped Nov 26; 251 real fills +0.2c, paper twin -1.4c since Nov 23). All series paper. Real natgas again only with Alex's OK.",
  "real": {
-  "KXNATGAS15M": "on"
+  "KXNATGAS15M": "off"
  }
 }
