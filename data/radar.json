@@ -32,9 +32,7 @@
     "max_loss_usd": 6.0,
     "min_fills": 10
    },
-   "series": [
-    "KXU3"
-   ]
+   "series": []
   },
   "favorites": {
    "contracts": 65,
@@ -202,32 +200,58 @@
    ]
   },
   "weather_late": {
-   "contracts": 427,
-   "cpc": -1.9649805447470816,
-   "cpc_last20": -10.2,
+   "contracts": 431,
+   "cpc": -1.9111969111969112,
+   "cpc_last20": -14.25,
    "fill_rate": 0.8552631578947368,
-   "fills": 257,
+   "fills": 259,
    "flags": [
-    "ADVERSE SELECTION: orders we missed would have made +14.8c, fills made -2.0c"
+    "ADVERSE SELECTION: orders we missed would have made +14.8c, fills made -1.9c"
    ],
    "missed": 30,
    "missed_cpc": 14.766666666666667,
-   "pnl": -8.35,
+   "pnl": -8.15,
    "rule": {
     "max_cpc": -3.0,
     "min_fills": 50
    },
    "series": [
     "KXHIGHAUS",
-    "KXHIGHCHI",
     "KXHIGHDEN",
-    "KXHIGHLAX",
-    "KXHIGHMIA"
+    "KXHIGHNY",
+    "KXHIGHPHIL",
+    "KXHIGHTATL"
    ]
   }
  },
- "last_new": [],
- "last_run": "2026-11-27T14:25:45+00:00",
+ "last_new": [
+  "KXARMAHOUSEVOTE",
+  "KXAUCPIYOY",
+  "KXCONMEBOLLIB1H",
+  "KXCONMEBOLLIB1HBTTS",
+  "KXCONMEBOLLIB1HSPREAD",
+  "KXCONMEBOLLIB1HTOTAL",
+  "KXDEAICOMPANIES",
+  "KXDOMINICAPARLI",
+  "KXEAHICPYOY",
+  "KXEPAIOWALEAD",
+  "KXGOVFORMNZ",
+  "KXHOUSESTOCKBAN26",
+  "KXHUANGFIFTH",
+  "KXHUANGHOUSEPUBLIC",
+  "KXJAN6PLAQUE",
+  "KXMXCPIYOY",
+  "KXNORTHCYPRUSPARLI",
+  "KXNORWAYBUDGET",
+  "KXNPSREORG",
+  "KXPRESDEBATEPARTNERD",
+  "KXSNAPELECTIONNZ",
+  "KXTAOYUANMAYOR",
+  "KXTRUMPNEXTPARDON",
+  "KXUKINFYOY",
+  "KXVOTEDST"
+ ],
+ "last_run": "2026-11-27T21:58:55+00:00",
  "listings": {
   "KX10YRRATE15M": {
    "category": "Financials",
@@ -598,6 +622,18 @@
    "series": "KXARGNACBTOTAL",
    "title": "Santa Fe vs Moron: Total Goals"
   },
+  "KXARMAHOUSEVOTE": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXARMAHOUSEVOTE-26NOV-JAN03",
+   "example_event": "KXARMAHOUSEVOTE-26NOV",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 2,
+   "series": "KXARMAHOUSEVOTE",
+   "title": "Will the House vote on the American Reserve Modernization Act?"
+  },
   "KXARMINWAGE": {
    "category": "Politics",
    "events": 1,
@@ -630,6 +666,18 @@
    "first_seen": "2026-11-24T23:01:58+00:00",
    "series": "KXATPCHALLENGERSETWINNER",
    "title": "Johan Nikles vs Pedro Boscardin Dias: Set 2 Winner"
+  },
+  "KXAUCPIYOY": {
+   "category": "Economics",
+   "events": 1,
+   "example": "KXAUCPIYOY-27JAN05-T5.1",
+   "example_event": "KXAUCPIYOY-27JAN05",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 7,
+   "series": "KXAUCPIYOY",
+   "title": "Australia inflation rate YoY for November"
   },
   "KXAUDUSDAD": {
    "category": "Financials",
@@ -1063,6 +1111,42 @@
    "series": "KXCONFIRMDAVIES",
    "title": "Will Kirsten Davies be confirmed as National Cyber Director?"
   },
+  "KXCONMEBOLLIB1H": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXCONMEBOLLIB1H-26NOV28PALELP",
+   "exchange_index": 0,
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "series": "KXCONMEBOLLIB1H",
+   "title": "Palmeiras vs Estudiantes La Plata: First Half Winner"
+  },
+  "KXCONMEBOLLIB1HBTTS": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXCONMEBOLLIB1HBTTS-26NOV28PALELP",
+   "exchange_index": 0,
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "series": "KXCONMEBOLLIB1HBTTS",
+   "title": "Palmeiras vs Estudiantes La Plata: First Half BTTS"
+  },
+  "KXCONMEBOLLIB1HSPREAD": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXCONMEBOLLIB1HSPREAD-26NOV28PALELP",
+   "exchange_index": 0,
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "series": "KXCONMEBOLLIB1HSPREAD",
+   "title": "Palmeiras vs Estudiantes La Plata: First Half Spread"
+  },
+  "KXCONMEBOLLIB1HTOTAL": {
+   "category": "Sports",
+   "events": 1,
+   "example_event": "KXCONMEBOLLIB1HTOTAL-26NOV28PALELP",
+   "exchange_index": 0,
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "series": "KXCONMEBOLLIB1HTOTAL",
+   "title": "Palmeiras vs Estudiantes La Plata: First Half Total"
+  },
   "KXCONMEBOLLIBADVANCE": {
    "category": "Sports",
    "events": 1,
@@ -1366,6 +1450,18 @@
    "series": "KXDCMINWAGEPASS",
    "title": "Will D.C. voters pass a $25 minimum wage?"
   },
+  "KXDEAICOMPANIES": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXDEAICOMPANIES-28JAN01-28JAN01",
+   "example_event": "KXDEAICOMPANIES-28JAN01",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 2,
+   "series": "KXDEAICOMPANIES",
+   "title": "Will Delaware enact a law allowing AI-managed companies?"
+  },
   "KXDEBTPOWERHOUSE": {
    "category": "Politics",
    "events": 1,
@@ -1428,6 +1524,18 @@
    "n_markets": 1,
    "series": "KXDNCDEBATEBAR",
    "title": "Will the DNC bar a 2028 debater over outside spending?"
+  },
+  "KXDOMINICAPARLI": {
+   "category": "Elections",
+   "events": 1,
+   "example": "KXDOMINICAPARLI-26DEC16-UWP",
+   "example_event": "KXDOMINICAPARLI-26DEC16",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 2,
+   "series": "KXDOMINICAPARLI",
+   "title": "Dominica parliamentary election winner?"
   },
   "KXDPRESDELEGATE": {
    "category": "Elections",
@@ -1521,6 +1629,18 @@
    "first_seen": "2026-11-24T23:01:58+00:00",
    "series": "KXDPWTTOP5",
    "title": "Bmw Australian Pga Championship: Top 5 Finishers"
+  },
+  "KXEAHICPYOY": {
+   "category": "Economics",
+   "events": 1,
+   "example": "KXEAHICPYOY-26DEC01-T4.2",
+   "example_event": "KXEAHICPYOY-26DEC01",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 7,
+   "series": "KXEAHICPYOY",
+   "title": "Euro Area inflation rate YoY for November"
   },
   "KXEARNINGSMENTIONAMAT": {
    "category": "Mentions",
@@ -1719,6 +1839,18 @@
    "first_seen": "2026-11-21T16:58:26+00:00",
    "series": "KXENGWLEAGUECUPTOTAL",
    "title": "Bristol City W vs Watford Women: Total Goals"
+  },
+  "KXEPAIOWALEAD": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXEPAIOWALEAD-26NOV-27JAN01",
+   "example_event": "KXEPAIOWALEAD-26NOV",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 1,
+   "series": "KXEPAIOWALEAD",
+   "title": "Will EPA report lab-detected airborne lead after the Iowa blast in 2026?"
   },
   "KXEPLAST": {
    "category": "Sports",
@@ -2020,6 +2152,18 @@
    "series": "KXGOODREADS",
    "title": "2026 Goodreads Choice Awards \u00b7 Best Romance?"
   },
+  "KXGOVFORMNZ": {
+   "category": "Elections",
+   "events": 1,
+   "example": "KXGOVFORMNZ-27MAR-27JAN15",
+   "example_event": "KXGOVFORMNZ-27MAR",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 7,
+   "series": "KXGOVFORMNZ",
+   "title": "When will a new government be formed in New Zealand?"
+  },
   "KXGRAMMYCOUNT": {
    "category": "Entertainment",
    "events": 8,
@@ -2083,6 +2227,18 @@
    "series": "KXHOUSECONTEMPTANY",
    "title": "Will the House hold anyone in contempt of Congress?"
   },
+  "KXHOUSESTOCKBAN26": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXHOUSESTOCKBAN26-26NOV",
+   "example_event": "KXHOUSESTOCKBAN26-26NOV",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 1,
+   "series": "KXHOUSESTOCKBAN26",
+   "title": "Will the House pass a stock trading ban again in 2026?"
+  },
   "KXHOUSESUPERPACPLEDGE": {
    "category": "Politics",
    "events": 1,
@@ -2094,6 +2250,30 @@
    "n_markets": 1,
    "series": "KXHOUSESUPERPACPLEDGE",
    "title": "Will Democrats extend the super PAC pledge to House primaries?"
+  },
+  "KXHUANGFIFTH": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXHUANGFIFTH-26DEC04-26DEC04",
+   "example_event": "KXHUANGFIFTH-26DEC04",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 2,
+   "series": "KXHUANGFIFTH",
+   "title": "Will Jensen Huang plead the Fifth?"
+  },
+  "KXHUANGHOUSEPUBLIC": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXHUANGHOUSEPUBLIC-27",
+   "example_event": "KXHUANGHOUSEPUBLIC-27",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 1,
+   "series": "KXHUANGHOUSEPUBLIC",
+   "title": "Will Jensen Huang testify at a public House hearing in 2026?"
   },
   "KXHUANGSWORN": {
    "category": "Politics",
@@ -2277,6 +2457,18 @@
    "first_seen": "2026-11-26T13:13:39+00:00",
    "series": "KXISRPLTOTAL",
    "title": "Maccabi Petah Tikva vs Hapoel Tel Aviv: Total Goals"
+  },
+  "KXJAN6PLAQUE": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXJAN6PLAQUE-28-28JAN01",
+   "example_event": "KXJAN6PLAQUE-28",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 6,
+   "series": "KXJAN6PLAQUE",
+   "title": "When will the Jan. 6 plaque be moved somewhere Capitol visitors can see?"
   },
   "KXJENSENMENTION": {
    "category": "Mentions",
@@ -2872,6 +3064,18 @@
    "series": "KXMRVLREV",
    "title": "Marvell revenue in Q3 2027"
   },
+  "KXMXCPIYOY": {
+   "category": "Economics",
+   "events": 1,
+   "example": "KXMXCPIYOY-26DEC09-T4.3",
+   "example_event": "KXMXCPIYOY-26DEC09",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 7,
+   "series": "KXMXCPIYOY",
+   "title": "Mexico inflation rate YoY for November"
+  },
   "KXNATGASD": {
    "category": "Commodities",
    "events": 1,
@@ -3139,6 +3343,42 @@
    "series": "KXNLLGAME",
    "title": "Saskatchewan Rush vs Oshawa FireWolves"
   },
+  "KXNORTHCYPRUSPARLI": {
+   "category": "Elections",
+   "events": 1,
+   "example": "KXNORTHCYPRUSPARLI-26DEC06-YDP",
+   "example_event": "KXNORTHCYPRUSPARLI-26DEC06",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 3,
+   "series": "KXNORTHCYPRUSPARLI",
+   "title": "Northern Cyprus parliamentary election winner?"
+  },
+  "KXNORWAYBUDGET": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXNORWAYBUDGET-27JAN01",
+   "example_event": "KXNORWAYBUDGET-27JAN01",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 1,
+   "series": "KXNORWAYBUDGET",
+   "title": "Will Norway pass its 2027 budget in 2026?"
+  },
+  "KXNPSREORG": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXNPSREORG-26NOV-27JAN01",
+   "example_event": "KXNPSREORG-26NOV",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 1,
+   "series": "KXNPSREORG",
+   "title": "Will Interior announce a Park Service reorganization in 2026?"
+  },
   "KXNVDABOARDTESTIFY": {
    "category": "Politics",
    "events": 1,
@@ -3372,6 +3612,18 @@
    "n_markets": 7,
    "series": "KXPRESDEBATECREATORD",
    "title": "Which creators will moderate or ask a question at a 2028 Democratic debate?"
+  },
+  "KXPRESDEBATEPARTNERD": {
+   "category": "Elections",
+   "events": 1,
+   "example": "KXPRESDEBATEPARTNERD-27-ZETE",
+   "example_event": "KXPRESDEBATEPARTNERD-27",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 12,
+   "series": "KXPRESDEBATEPARTNERD",
+   "title": "Which media partners will the DNC name for its first two debates?"
   },
   "KXPRESDEBATETWONIGHTD": {
    "category": "Elections",
@@ -3823,6 +4075,18 @@
    "series": "KXSLOVENIAZIURS",
    "title": "Will Slovenia's Intervention Act referendum pass?"
   },
+  "KXSNAPELECTIONNZ": {
+   "category": "Elections",
+   "events": 1,
+   "example": "KXSNAPELECTIONNZ-27JUL02",
+   "example_event": "KXSNAPELECTIONNZ-27JUL02",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 1,
+   "series": "KXSNAPELECTIONNZ",
+   "title": "Will New Zealand announce a snap election before Jul 1, 2027?"
+  },
   "KXSNOWCHRISTMAS": {
    "category": "Climate and Weather",
    "events": 1,
@@ -4060,6 +4324,18 @@
    "series": "KXTAIWANSTRAITWEEKLY",
    "title": "Traffic through the Taiwan Strait? (11/30 - 12/6)"
   },
+  "KXTAOYUANMAYOR": {
+   "category": "Elections",
+   "events": 1,
+   "example": "KXTAOYUANMAYOR-26NOV28-HHUA",
+   "example_event": "KXTAOYUANMAYOR-26NOV28",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 2,
+   "series": "KXTAOYUANMAYOR",
+   "title": "Taoyuan mayoral election winner?"
+  },
   "KXTECHRECESS": {
    "category": "Economics",
    "events": 1,
@@ -4146,6 +4422,18 @@
    "n_markets": 5,
    "series": "KXTRUMPIMMACTION",
    "title": "Which immigration actions will Trump take before 2028?"
+  },
+  "KXTRUMPNEXTPARDON": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXTRUMPNEXTPARDON-27APR15-27MAR01",
+   "example_event": "KXTRUMPNEXTPARDON-27APR15",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 8,
+   "series": "KXTRUMPNEXTPARDON",
+   "title": "When will Trump issue his next pardon?"
   },
   "KXTRUMPNYTJUDGE": {
    "category": "Politics",
@@ -4534,6 +4822,18 @@
    "series": "KXUKEURESETBILL",
    "title": "When will Britain's EU reset bill become law?"
   },
+  "KXUKINFYOY": {
+   "category": "Economics",
+   "events": 1,
+   "example": "KXUKINFYOY-26DEC16-T3.9",
+   "example_event": "KXUKINFYOY-26DEC16",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 7,
+   "series": "KXUKINFYOY",
+   "title": "UK inflation rate YoY for November"
+  },
   "KXUKRETAIL": {
    "category": "Economics",
    "events": 1,
@@ -4833,6 +5133,18 @@
    "first_seen": "2026-11-20T23:05:47+00:00",
    "series": "KXVENFUTVETOTAL",
    "title": "Tachira vs Caracas: Total Goals"
+  },
+  "KXVOTEDST": {
+   "category": "Politics",
+   "events": 1,
+   "example": "KXVOTEDST-26NOV-JAN01",
+   "example_event": "KXVOTEDST-26NOV",
+   "exchange_index": 0,
+   "first_markets": "2026-11-27T21:58:55+00:00",
+   "first_seen": "2026-11-27T21:58:55+00:00",
+   "n_markets": 1,
+   "series": "KXVOTEDST",
+   "title": "Will the Senate vote on permanent daylight saving time in 2026?"
   },
   "KXVTBSPREAD": {
    "category": "Sports",
@@ -5240,10 +5552,16 @@
    "new": 0,
    "placed": 0,
    "t": "2026-11-27T14:25:45+00:00"
+  },
+  {
+   "events": 22105,
+   "new": 25,
+   "placed": 3,
+   "t": "2026-11-27T21:58:55+00:00"
   }
  ],
- "open_events": 21715,
- "open_series": 5169,
+ "open_events": 22105,
+ "open_series": 5199,
  "paper": [
   {
    "cents": 3.0,
@@ -7477,16 +7795,18 @@
    "title": "Will USDCAD be Above 1.439 at 5pm ET on Nov 23? Above 1.439"
   },
   {
+   "cents": 12.0,
    "checked_at": "2026-11-25T17:14:05+00:00",
    "close": "2026-11-27T15:00:00Z",
    "event": "KXSETLIST-MACYSWI26NOV27",
    "filled_at": "2026-11-25T17:14:05+00:00",
    "placed_at": "2026-11-23T20:36:47+00:00",
    "price": 0.87,
+   "result": "no",
    "rule": "longshot_no",
    "series": "KXSETLIST",
    "side": "no",
-   "status": "filled",
+   "status": "settled",
    "taker": false,
    "ticker": "KXSETLIST-MACYSWI26NOV27-DOOR",
    "title": "Will Teddy Swims perform The Door at the 100th Macy's Thanksgiving Day Parade? The Door"
@@ -7608,7 +7928,7 @@
    "title": "Will the 30Y U.S. Treasury yield be above 5.23% on Nov 24, 2026? 5.24% or above"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXBELGIUMBUDGET-27JAN01",
    "placed_at": "2026-11-24T16:29:51+00:00",
@@ -7622,7 +7942,7 @@
    "title": "Will Belgium reach a 2027 federal budget deal before Dec 1, 2026? Before Dec 1, 2026"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXHARTIGANNOUNCEOUT-26NOV",
    "placed_at": "2026-11-24T16:29:51+00:00",
@@ -7636,7 +7956,7 @@
    "title": "Will Anthea Hartig be out as Director of the National Museum of American History before Dec 1, 2026?"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXVANCEELSAYEDMEET-27JAN01",
    "placed_at": "2026-11-24T16:29:51+00:00",
@@ -7778,7 +8098,7 @@
    "title": "Will USDCHF be Above 0.831 at 5pm ET on Nov 24? Above 0.831"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T04:59:00Z",
    "event": "KXHOUSECONTEMPTANY-26NOV",
    "placed_at": "2026-11-24T23:01:58+00:00",
@@ -7839,7 +8159,7 @@
    "title": "Will U.S. egg prices exceed $3.03 per dozen on Thanksgiving 2026? Above $3.03"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-11-30T15:00:00Z",
    "event": "KXMACYSBALLOONS-26NOV26-ALL",
    "placed_at": "2026-11-26T09:32:20+00:00",
@@ -7887,7 +8207,7 @@
    "title": "Will U.S. egg prices exceed $3.01 per dozen on Thanksgiving 2026? Above $3.01"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXBOSPORUSWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7901,7 +8221,7 @@
    "title": "Will there be more than 400 transit calls through the Bosporus Strait from Nov 23, 2026 to Nov 29, 2"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXBOSPORUSWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7915,7 +8235,7 @@
    "title": "Will there be more than 380 transit calls through the Bosporus Strait from Nov 23, 2026 to Nov 29, 2"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXBOSPORUSWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7929,7 +8249,7 @@
    "title": "Will there be more than 400 transit calls through the Bosporus Strait from Nov 30, 2026 to Dec 6, 20"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXBOSPORUSWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7943,7 +8263,7 @@
    "title": "Will there be more than 380 transit calls through the Bosporus Strait from Nov 30, 2026 to Dec 6, 20"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXGOODHOPEWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7957,7 +8277,7 @@
    "title": "Will there be more than 580 transit calls through the Cape of Good Hope from Nov 23, 2026 to Nov 29,"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXGOODHOPEWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7971,7 +8291,7 @@
    "title": "Will there be more than 560 transit calls through the Cape of Good Hope from Nov 23, 2026 to Nov 29,"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXGOODHOPEWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7985,7 +8305,7 @@
    "title": "Will there be more than 540 transit calls through the Cape of Good Hope from Nov 23, 2026 to Nov 29,"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXGOODHOPEWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -7999,7 +8319,7 @@
    "title": "Will there be more than 600 transit calls through the Cape of Good Hope from Nov 30, 2026 to Dec 6, "
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXGOODHOPEWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8013,7 +8333,7 @@
    "title": "Will there be more than 580 transit calls through the Cape of Good Hope from Nov 30, 2026 to Dec 6, "
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXGOODHOPEWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8027,7 +8347,7 @@
    "title": "Will there be more than 560 transit calls through the Cape of Good Hope from Nov 30, 2026 to Dec 6, "
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXMALACCAWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8041,7 +8361,7 @@
    "title": "Will there be more than 1700 transit calls through the Malacca Strait from Nov 23, 2026 to Nov 29, 2"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXMALACCAWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8055,7 +8375,7 @@
    "title": "Will there be more than 1700 transit calls through the Malacca Strait from Nov 30, 2026 to Dec 6, 20"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXTAIWANSTRAITWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8069,7 +8389,7 @@
    "title": "Will there be more than 1700 transit calls through the Taiwan Strait from Nov 23, 2026 to Nov 29, 20"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-01T15:00:00Z",
    "event": "KXTAIWANSTRAITWEEKLY-26NOV29",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8083,7 +8403,7 @@
    "title": "Will there be more than 1650 transit calls through the Taiwan Strait from Nov 23, 2026 to Nov 29, 20"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXTAIWANSTRAITWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8097,7 +8417,7 @@
    "title": "Will there be more than 1750 transit calls through the Taiwan Strait from Nov 30, 2026 to Dec 6, 202"
   },
   {
-   "checked_at": "2026-11-27T14:25:45+00:00",
+   "checked_at": "2026-11-27T21:58:55+00:00",
    "close": "2026-12-08T15:00:00Z",
    "event": "KXTAIWANSTRAITWEEKLY-26DEC06",
    "placed_at": "2026-11-26T19:37:55+00:00",
@@ -8109,6 +8429,48 @@
    "taker": false,
    "ticker": "KXTAIWANSTRAITWEEKLY-26DEC06-T1700",
    "title": "Will there be more than 1700 transit calls through the Taiwan Strait from Nov 30, 2026 to Dec 6, 202"
+  },
+  {
+   "checked_at": "2026-11-27T21:58:55+00:00",
+   "close": "2026-12-01T09:59:00Z",
+   "event": "KXEAHICPYOY-26DEC01",
+   "placed_at": "2026-11-27T21:58:55+00:00",
+   "price": 0.9,
+   "rule": "longshot_no",
+   "series": "KXEAHICPYOY",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXEAHICPYOY-26DEC01-T4.1",
+   "title": "Will Eurostat\u2019s flash estimate of the euro area\u2019s annual inflation rate for November 2026 be above 4"
+  },
+  {
+   "checked_at": "2026-11-27T21:58:55+00:00",
+   "close": "2026-12-01T09:59:00Z",
+   "event": "KXEAHICPYOY-26DEC01",
+   "placed_at": "2026-11-27T21:58:55+00:00",
+   "price": 0.9,
+   "rule": "longshot_no",
+   "series": "KXEAHICPYOY",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXEAHICPYOY-26DEC01-T4.0",
+   "title": "Will Eurostat\u2019s flash estimate of the euro area\u2019s annual inflation rate for November 2026 be above 4"
+  },
+  {
+   "checked_at": "2026-11-27T21:58:55+00:00",
+   "close": "2026-12-01T15:00:00Z",
+   "event": "KXTRUMPNEXTPARDON-27APR15",
+   "placed_at": "2026-11-27T21:58:55+00:00",
+   "price": 0.9,
+   "rule": "longshot_no",
+   "series": "KXTRUMPNEXTPARDON",
+   "side": "no",
+   "status": "resting",
+   "taker": false,
+   "ticker": "KXTRUMPNEXTPARDON-27APR15-26DEC01",
+   "title": "Will any person receive a presidential pardon before Dec 1, 2026? Before Dec 1, 2026"
   }
  ],
  "pushed": {
@@ -8497,6 +8859,7 @@
   "KXARGPREMDIVGAME",
   "KXARGPREMDIVSPREAD",
   "KXARGPREMDIVTOTAL",
+  "KXARMAHOUSEVOTE",
   "KXARMINWAGE",
   "KXARMOMINF",
   "KXARREST",
@@ -8534,6 +8897,7 @@
   "KXATTYGENOH",
   "KXATZ",
   "KXATZA",
+  "KXAUCPIYOY",
   "KXAUCTIONRECORD",
   "KXAUDITORRACE",
   "KXAUDUSD15M",
@@ -9084,6 +9448,10 @@
   "KXCONGRESSTESTIFY",
   "KXCONGRESSTRADES",
   "KXCONMEBOLLIB",
+  "KXCONMEBOLLIB1H",
+  "KXCONMEBOLLIB1HBTTS",
+  "KXCONMEBOLLIB1HSPREAD",
+  "KXCONMEBOLLIB1HTOTAL",
   "KXCONMEBOLLIBADVANCE",
   "KXCONMEBOLLIBBTTS",
   "KXCONMEBOLLIBGAME",
@@ -9277,6 +9645,7 @@
   "KXDDR5MS",
   "KXDDR5WS",
   "KXDDSFT",
+  "KXDEAICOMPANIES",
   "KXDEBTGROWTH",
   "KXDEBTLIMITINCREASE",
   "KXDEBTPOWERHOUSE",
@@ -9386,6 +9755,7 @@
   "KXDOLA",
   "KXDOMINICANREPUBLICDEPUTIES",
   "KXDOMINICANREPUBLICSENATE",
+  "KXDOMINICAPARLI",
   "KXDONATEMRBEAST",
   "KXDOTA2GAME",
   "KXDOTA2MAP",
@@ -9432,6 +9802,7 @@
   "KXDWTSTOP3",
   "KXDXYVSGOLD",
   "KXEACNOM",
+  "KXEAHICPYOY",
   "KXEARNINGSMENTIONAAL",
   "KXEARNINGSMENTIONABBV",
   "KXEARNINGSMENTIONABT",
@@ -9699,6 +10070,7 @@
   "KXENTITYLIST",
   "KXEOTRUMPTERM",
   "KXEOWEEK",
+  "KXEPAIOWALEAD",
   "KXEPARODENT",
   "KXEPL1H",
   "KXEPL1HBTTS",
@@ -10053,6 +10425,7 @@
   "KXGOVAIKILLSWITCH",
   "KXGOVBAL",
   "KXGOVFALLNL",
+  "KXGOVFORMNZ",
   "KXGOVKYNOMD",
   "KXGOVKYNOMR",
   "KXGOVNOM",
@@ -10224,6 +10597,7 @@
   "KXHOUSESEATSD",
   "KXHOUSESEATSR",
   "KXHOUSESPEAKERRUN",
+  "KXHOUSESTOCKBAN26",
   "KXHOUSESUBPOENA",
   "KXHOUSESUPERPACPLEDGE",
   "KXHOUSETURNOUT",
@@ -10234,6 +10608,8 @@
   "KXHOWMANYUKPM",
   "KXHSINCHUCITYMAYOR",
   "KXHSINCHUCOUNTYMAG",
+  "KXHUANGFIFTH",
+  "KXHUANGHOUSEPUBLIC",
   "KXHUANGNW",
   "KXHUANGSWORN",
   "KXHUANGTESTIFY",
@@ -10418,6 +10794,7 @@
   "KXJACKSONOPEN",
   "KXJACKSONVILLEMAYOR",
   "KXJAN6CASES",
+  "KXJAN6PLAQUE",
   "KXJAPANHOUSE",
   "KXJBLU",
   "KXJCHOME",
@@ -11083,6 +11460,7 @@
   "KXMUSKSPORTS",
   "KXMUSKTRUMPACCT",
   "KXMUSKWEALTH",
+  "KXMXCPIYOY",
   "KXMYSLBTTS",
   "KXMYSLGAME",
   "KXMYSLSPREAD",
@@ -11822,15 +12200,18 @@
   "KXNORDSTREAM2",
   "KXNORDSTROMFT",
   "KXNORDSTROMFTD",
+  "KXNORTHCYPRUSPARLI",
   "KXNORTHSTAROPEN",
   "KXNORTHSTARSNOW",
   "KXNORTHWESTAPPS",
   "KXNORTHWESTRATE",
+  "KXNORWAYBUDGET",
   "KXNOTE10Y",
   "KXNOTREDAMEAPPS",
   "KXNOTREDAMERATE",
   "KXNP",
   "KXNPA",
+  "KXNPSREORG",
   "KXNPVICSTATES",
   "KXNSW2ND",
   "KXNSWLABORMAJ",
@@ -12157,6 +12538,7 @@
   "KXPRESDEBATECREATORD",
   "KXPRESDEBATEFIRSTD",
   "KXPRESDEBATEFIRSTR",
+  "KXPRESDEBATEPARTNERD",
   "KXPRESDEBATETWONIGHTD",
   "KXPRESDISTRICT",
   "KXPRESELECTIONOCCUR",
@@ -12672,6 +13054,7 @@
   "KXSNAPA",
   "KXSNAPELECTIONBEL",
   "KXSNAPELECTIONFR",
+  "KXSNAPELECTIONNZ",
   "KXSNAPELECTIONSWE",
   "KXSNAPELECTIONTUR",
   "KXSNAPRESTRICT",
@@ -12950,6 +13333,7 @@
   "KXTALARICOOUTPERFORMRCP",
   "KXTALKINGFBUSTER",
   "KXTAMPAMAYOR",
+  "KXTAOYUANMAYOR",
   "KXTARIFFCHECKS",
   "KXTARIFFRATEBR",
   "KXTARIFFRATECAN",
@@ -13128,6 +13512,7 @@
   "KXTRUMPMEETM",
   "KXTRUMPMOJTABA",
   "KXTRUMPNATIONALADDRESS",
+  "KXTRUMPNEXTPARDON",
   "KXTRUMPNOMNUM",
   "KXTRUMPNUMSTATES",
   "KXTRUMPNYTJUDGE",
@@ -13330,6 +13715,7 @@
   "KXUKEURESETBILL",
   "KXUKFOOTBALLALCOHOL",
   "KXUKGEYEAR",
+  "KXUKINFYOY",
   "KXUKPARTY",
   "KXUKPOLLFIRST",
   "KXUKRAINEEU",
@@ -13550,6 +13936,7 @@
   "KXVONCFR",
   "KXVOTECLARITY",
   "KXVOTECOUNTY",
+  "KXVOTEDST",
   "KXVOTEFR1",
   "KXVOTEGENERAL",
   "KXVOTEJEFFRIES",
@@ -15677,6 +16064,15 @@
     "vol": 4342.7
    }
   ],
+  "KXARMAHOUSEVOTE": [
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXARMINWAGE": [
    {
     "n": 1,
@@ -15783,6 +16179,15 @@
     "quoted": 2,
     "spread": 0.06,
     "t": "2026-11-24T16:29:51+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXAUCPIYOY": [
+   {
+    "n": 7,
+    "quoted": 7,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
     "vol": 0.0
    }
   ],
@@ -15983,6 +16388,15 @@
     "vol": 0.0
    }
   ],
+  "KXBIGGESTQUAKE": [
+   {
+    "n": 20,
+    "quoted": 20,
+    "spread": 0.07,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 3700.7
+   }
+  ],
   "KXBOARDNVDA": [
    {
     "n": 11,
@@ -16062,6 +16476,13 @@
     "spread": 0.1,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 100.0
+   },
+   {
+    "n": 14,
+    "quoted": 14,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 455.0
    }
   ],
   "KXBRENTD": [
@@ -17826,6 +18247,15 @@
     "vol": 0.0
    }
   ],
+  "KXDEAICOMPANIES": [
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.98,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXDEBTPOWERHOUSE": [
    {
     "n": 1,
@@ -18077,6 +18507,15 @@
     "vol": 0.0
    }
   ],
+  "KXDOMINICAPARLI": [
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.096,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 51.6
+   }
+  ],
   "KXDPRESDELEGATE": [
    {
     "n": 16,
@@ -18133,6 +18572,22 @@
     "spread": 0.06,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 16,
+    "quoted": 16,
+    "spread": 0.05,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXEAHICPYOY": [
+   {
+    "n": 7,
+    "quoted": 6,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 250.0
    }
   ],
   "KXEARNINGSMENTIONAMAT": [
@@ -18481,6 +18936,15 @@
     "spread": 0.07,
     "t": "2026-11-26T03:12:03+00:00",
     "vol": 322.4
+   }
+  ],
+  "KXEPAIOWALEAD": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.98,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXEUDIGITALLEVY": [
@@ -19333,6 +19797,13 @@
     "spread": 0.1,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 100.0
+   },
+   {
+    "n": 18,
+    "quoted": 17,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 100.0
    }
   ],
   "KXGOODREADS": [
@@ -19419,6 +19890,15 @@
     "spread": 0.01,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 158812.8
+   }
+  ],
+  "KXGOVFORMNZ": [
+   {
+    "n": 7,
+    "quoted": 7,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXGRAMMYCOUNT": [
@@ -20268,6 +20748,13 @@
     "spread": 0.01,
     "t": "2026-11-26T19:37:55+00:00",
     "vol": 39562.9
+   },
+   {
+    "n": 12,
+    "quoted": 3,
+    "spread": 0.01,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 115028.2
    }
   ],
   "KXHIGHPHIL": [
@@ -20508,6 +20995,13 @@
     "spread": 0.03,
     "t": "2026-11-26T19:37:55+00:00",
     "vol": 12440.4
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 103042.5
    }
   ],
   "KXHIGHTATL": [
@@ -21225,6 +21719,13 @@
     "spread": 0.01,
     "t": "2026-11-26T19:37:55+00:00",
     "vol": 7946.5
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.01,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 16739.2
    }
   ],
   "KXHIGHTLV": [
@@ -21567,6 +22068,13 @@
     "spread": 0.01,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 2276.0
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 8649.9
    }
   ],
   "KXHIGHTOKC": [
@@ -21632,6 +22140,13 @@
     "spread": 0.03,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 4184.2
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 17571.7
    }
   ],
   "KXHIGHTPHX": [
@@ -21853,6 +22368,13 @@
     "spread": 0.03,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 2693.3
+   },
+   {
+    "n": 12,
+    "quoted": 7,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 5363.5
    }
   ],
   "KXHIGHTSEA": [
@@ -21897,6 +22419,13 @@
     "spread": 0.01,
     "t": "2026-11-25T20:14:40+00:00",
     "vol": 15638.2
+   },
+   {
+    "n": 12,
+    "quoted": 9,
+    "spread": 0.01,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 7276.1
    }
   ],
   "KXHIGHTSFO": [
@@ -21973,6 +22502,15 @@
     "vol": 0.0
    }
   ],
+  "KXHOUSESTOCKBAN26": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXHOUSESUPERPACPLEDGE": [
    {
     "n": 1,
@@ -22015,6 +22553,24 @@
     "spread": 0.89,
     "t": "2026-11-25T20:14:40+00:00",
     "vol": 1.0
+   }
+  ],
+  "KXHUANGFIFTH": [
+   {
+    "n": 2,
+    "quoted": 0,
+    "spread": null,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXHUANGHOUSEPUBLIC": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.09,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXHUANGSWORN": [
@@ -22080,6 +22636,13 @@
     "spread": 0.03,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 2198.9
+   },
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.03,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 2334.0
    }
   ],
   "KXHURRLANDTX3": [
@@ -22600,6 +23163,15 @@
     "vol": 0.0
    }
   ],
+  "KXJAN6PLAQUE": [
+   {
+    "n": 6,
+    "quoted": 6,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXJENSENMENTION": [
    {
     "n": 18,
@@ -22897,6 +23469,13 @@
     "spread": 0.078,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 13,
+    "quoted": 13,
+    "spread": 0.068,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXLALTGOVADVANCE": [
@@ -22954,6 +23533,13 @@
     "quoted": 2,
     "spread": 0.037,
     "t": "2026-11-27T14:25:45+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.037,
+    "t": "2026-11-27T21:58:55+00:00",
     "vol": 0.0
    }
   ],
@@ -23162,6 +23748,13 @@
     "spread": 0.06,
     "t": "2026-11-21T16:58:26+00:00",
     "vol": 4994.6
+   },
+   {
+    "n": 12,
+    "quoted": 7,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 7597.0
    }
   ],
   "KXLOWTAUS": [
@@ -23627,6 +24220,13 @@
     "spread": 0.02,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 1350.4
+   },
+   {
+    "n": 12,
+    "quoted": 7,
+    "spread": 0.04,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 3074.8
    }
   ],
   "KXLOWTEWR": [
@@ -23996,6 +24596,13 @@
     "spread": 0.03,
     "t": "2026-11-26T13:13:39+00:00",
     "vol": 1451.8
+   },
+   {
+    "n": 12,
+    "quoted": 5,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 6962.8
    }
   ],
   "KXLOWTNOLA": [
@@ -24152,6 +24759,13 @@
     "spread": 0.02,
     "t": "2026-11-26T19:37:55+00:00",
     "vol": 5891.2
+   },
+   {
+    "n": 12,
+    "quoted": 8,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 4900.3
    }
   ],
   "KXLOWTNYC": [
@@ -24385,6 +24999,13 @@
     "spread": 0.12,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 2210.2
+   },
+   {
+    "n": 12,
+    "quoted": 9,
+    "spread": 0.04,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 126186.4
    }
   ],
   "KXLOWTOKC": [
@@ -24645,6 +25266,13 @@
     "spread": 0.64,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 1030.1
+   },
+   {
+    "n": 12,
+    "quoted": 6,
+    "spread": 0.03,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 3502.9
    }
   ],
   "KXLOWTSATX": [
@@ -24796,6 +25424,13 @@
     "spread": 0.03,
     "t": "2026-11-26T19:37:55+00:00",
     "vol": 2030.1
+   },
+   {
+    "n": 12,
+    "quoted": 7,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 1973.8
    }
   ],
   "KXLOWTTTN": [
@@ -25037,6 +25672,13 @@
     "spread": 0.1,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 71.8
+   },
+   {
+    "n": 14,
+    "quoted": 14,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 133.8
    }
   ],
   "KXMAMDANIEO": [
@@ -25380,6 +26022,15 @@
     "vol": 0.0
    }
   ],
+  "KXMXCPIYOY": [
+   {
+    "n": 7,
+    "quoted": 7,
+    "spread": 0.98,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXNASDAQ100": [
    {
     "n": 60,
@@ -25706,6 +26357,40 @@
     "spread": 0.02,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 176.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 176.0
+   }
+  ],
+  "KXNORTHCYPRUSPARLI": [
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.05,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 106.0
+   }
+  ],
+  "KXNORWAYBUDGET": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXNPSREORG": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXNVDABOARDTESTIFY": [
@@ -26162,6 +26847,13 @@
     "spread": 0.25,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 517.3
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.03,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 2378.3
    }
   ],
   "KXPRECIPDAYSWEEKDAYS": [
@@ -26382,6 +27074,15 @@
     "vol": 1.0
    }
   ],
+  "KXPRESDEBATEPARTNERD": [
+   {
+    "n": 12,
+    "quoted": 10,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXPRESDEBATETWONIGHTD": [
    {
     "n": 1,
@@ -26468,6 +27169,13 @@
     "spread": 0.09,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 3,
+    "quoted": 3,
+    "spread": 0.01,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 4328.0
    }
   ],
   "KXPRESWINNERLGBTQ": [
@@ -26511,6 +27219,13 @@
     "quoted": 0,
     "spread": null,
     "t": "2026-11-27T14:25:45+00:00",
+    "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.071,
+    "t": "2026-11-27T21:58:55+00:00",
     "vol": 0.0
    }
   ],
@@ -26556,6 +27271,13 @@
     "spread": 0.1,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.02,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXPRESWINNERREGION": [
@@ -26600,6 +27322,13 @@
     "spread": 0.1,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 4,
+    "quoted": 4,
+    "spread": 0.01,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 64.5
    }
   ],
   "KXPRESWINNERWOMAN": [
@@ -26644,6 +27373,13 @@
     "spread": 0.09,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.03,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 5.2
    }
   ],
   "KXPUBLICOPTIONLAW": [
@@ -26890,6 +27626,13 @@
     "spread": 0.97,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 51,
+    "quoted": 51,
+    "spread": 0.97,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXRAINSNYC": [
@@ -27089,6 +27832,13 @@
     "spread": 0.02,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 13,
+    "quoted": 13,
+    "spread": 0.03,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXRSA1024": [
@@ -27240,6 +27990,13 @@
     "spread": 0.46,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 438.2
+   },
+   {
+    "n": 5,
+    "quoted": 5,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 2702.4
    }
   ],
   "KXRT": [
@@ -27736,6 +28493,15 @@
     "vol": 0.0
    }
   ],
+  "KXSNAPELECTIONNZ": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXSNOWCHRISTMAS": [
    {
     "n": 23,
@@ -27850,6 +28616,13 @@
     "spread": 0.97,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 23,
+    "quoted": 23,
+    "spread": 0.73,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
    }
   ],
   "KXSSINVESTFUND": [
@@ -27903,6 +28676,22 @@
     "spread": 0.1,
     "t": "2026-11-27T14:25:45+00:00",
     "vol": 0.0
+   },
+   {
+    "n": 18,
+    "quoted": 17,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXTAOYUANMAYOR": [
+   {
+    "n": 2,
+    "quoted": 2,
+    "spread": 0.095,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 3.1
    }
   ],
   "KXTECHRECESS": [
@@ -28129,6 +28918,15 @@
     "quoted": 5,
     "spread": 0.98,
     "t": "2026-11-25T05:26:57+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXTRUMPNEXTPARDON": [
+   {
+    "n": 8,
+    "quoted": 8,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
     "vol": 0.0
    }
   ],
@@ -28505,6 +29303,15 @@
     "quoted": 5,
     "spread": 0.1,
     "t": "2026-11-24T23:01:58+00:00",
+    "vol": 0.0
+   }
+  ],
+  "KXUKINFYOY": [
+   {
+    "n": 7,
+    "quoted": 7,
+    "spread": 0.1,
+    "t": "2026-11-27T21:58:55+00:00",
     "vol": 0.0
    }
   ],
@@ -29716,6 +30523,15 @@
     "vol": 0.0
    }
   ],
+  "KXVOTEDST": [
+   {
+    "n": 1,
+    "quoted": 1,
+    "spread": 0.06,
+    "t": "2026-11-27T21:58:55+00:00",
+    "vol": 0.0
+   }
+  ],
   "KXWAYMOFREEWAYSTATE": [
    {
     "n": 3,
@@ -30148,6 +30964,7 @@
   "KXINX-26NOV25H1600-B7087": "no",
   "KXINX-26NOV25H1600-B7112": "no",
   "KXINX-26NOV25H1600-B7137": "no",
+  "KXINX-26NOV27H1300-B7312": "",
   "KXJOBLESSCLAIMS-26NOV19-210000": "no",
   "KXJOBLESSCLAIMS-26NOV19-215000": "no",
   "KXJOBLESSCLAIMS-26NOV25-205000": "no",
@@ -30231,6 +31048,12 @@
   "KXNASDAQ100-26NOV25H1600-B25650": "no",
   "KXNASDAQ100-26NOV25H1600-B25750": "no",
   "KXNASDAQ100-26NOV25H1600-B25850": "no",
+  "KXNASDAQ100-26NOV27H1300-B26450": "",
+  "KXNASDAQ100-26NOV27H1300-B26650": "",
+  "KXNASDAQ100-26NOV27H1300-B26750": "",
+  "KXNASDAQ100-26NOV27H1300-B26850": "",
+  "KXNASDAQ100-26NOV27H1300-B26950": "",
+  "KXNASDAQ100-26NOV27H1300-B27050": "",
   "KXPCECORE-26OCT-T0.4": "no",
   "KXRT-CAT-60": "no",
   "KXRT-HOWT-42": "no"
