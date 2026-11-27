@@ -719,13 +719,22 @@ def settle(http: Http, rows: list[dict], now: datetime, cfg, dry_run) -> int:
             else:
                 r["checked_at"] = min(close or now, now).isoformat(timespec="seconds")
         res = ((m or {}).get("result") or "").lower()
-        if res not in ("yes", "no"):
+        yes_val = {"yes": 1.0, "no": 0.0}.get(res)
+        if res == "scalar":
+            # Kalshi settled at a fair price instead of yes/no (e.g. weather data error,
+            # San Antonio lows Nov 17): YES is paid settlement_value_dollars, NO the rest
+            sv = (m or {}).get("settlement_value_dollars")
+            if sv in (None, "") or (m or {}).get("status") not in ("finalized", "settled"):
+                continue
+            yes_val = min(max(_f(sv), 0.0), 1.0)
+        if yes_val is None:
             continue
         filled = int(_f(r.get("filled")))
         r["result"] = res
         r["settled_at"] = now.isoformat(timespec="seconds")
         if filled:
-            pnl = filled * ((1.0 if res == r["side"] else 0.0) - _f(r["price"])) - _f(r.get("fee"))
+            won = yes_val if r["side"] == "yes" else 1.0 - yes_val
+            pnl = filled * (won - _f(r["price"])) - _f(r.get("fee"))
             r["pnl"] = f"{pnl:.2f}"
             r["status"] = "settled"
             if r["mode"] == "live":

@@ -195,3 +195,19 @@ def test_run_time_budget_stops_placing(monkeypatch):
     c.raw["trading"]["mentions"]["enabled"] = True
     out = trader.run(c, now=NOW, http=Http())
     assert called and not out["placed"] and "budget" in out["skipped"][0][2]
+
+
+def test_scalar_settlement_books_fair_price(monkeypatch):
+    """Nov 27: Kalshi settled San Antonio lows Nov 17 as 'scalar' (fair price, not yes/no);
+    those rows sat open for 10 days, holding cap room. Book YES at the settlement value."""
+    rows = [dict(row(1, "filled", mode="live"), side="yes", price="0.18"),
+            dict(row(2, "filled", mode="live"), price="0.71"),
+            row(3, "filled", mode="live")]
+    mk = {"T1": {"ticker": "T1", "result": "scalar", "status": "finalized", "settlement_value_dollars": "0.0000"},
+          "T2": {"ticker": "T2", "result": "scalar", "status": "finalized", "settlement_value_dollars": "0.0100"},
+          "T3": {"ticker": "T3", "result": "scalar", "status": "closed", "settlement_value_dollars": ""}}
+    monkeypatch.setattr(kalshi, "get_markets", lambda http, tks: {t: mk[t] for t in tks})
+    trader.settle(Http(), rows, NOW, cfg(), True)
+    assert rows[0]["status"] == "settled" and rows[0]["pnl"] == "-0.36"
+    assert rows[1]["status"] == "settled" and rows[1]["pnl"] == "0.56"
+    assert rows[2]["status"] == "filled"          # not final yet: wait
