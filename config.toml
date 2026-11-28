@@ -411,6 +411,25 @@ max_event_pct = 0.12             # 3 markets x 2 contracts at ~90c = ~$5.40
 max_week_contracts = 30
 max_market_contracts = 2
 
+[trading.oneoff]
+# One-off REAL orders Alex OKs by name in the project thread (wxbot/strats/oneoff.py). Buys right away
+# only at the limit or better (no chasing), up to `count` filled in total, until `until`. Held to settle.
+# Nov 27, 2026 10:11 PM ET Alex: "Do what you think is best make me money!" / "do something you can do":
+# 8 NO on November unemployment above 4.2% at 87c or better (same rule as fade_leads, which holds 2 there).
+enabled = true
+live = true
+taker = true
+allow_duplicate = true           # fade_leads already holds this ticker/side
+exit = "hold"
+min_price = 0.80
+max_price = 0.87
+max_contracts = 8
+max_market_contracts = 10        # with fade_leads' 2
+max_event_pct = 0.20             # same as the account-wide per-event cap
+orders = [
+  {ticker = "KXU3-26NOV-T4.2", side = "no", price = 0.87, count = 8, until = "2026-12-03T23:00:00Z", note = "Nov unemployment >4.2% NO (Alex Nov 27)"},
+]
+
 [trading.fade_leads_paper]
 # PAPER twin of fade_leads: same rule, 1 contract, no dollar cap, never live. wxbot/strats/fade_leads_paper.py.
 # Started Nov 20 as the paper-only test (PR #334); keeps logging for the 10/30-fill reviews.
