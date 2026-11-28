@@ -1,5 +1,5 @@
 {
- "at": "2026-11-27 20:36:15",
+ "at": "2026-11-27 20:41:15",
  "paper_only": false,
  "real": {
   "mode": "live",
@@ -1548,168 +1548,74 @@
      "mag": 5.5
     }
    }
-  },
-  {
-   "qid": "q1795571245-gfz_fdsn",
-   "t": 1795570726.78,
-   "et": "2026-11-24 20:38:46",
-   "place": "Balleny Islands Region",
-   "best_mag": 5.9,
-   "triggered": true,
-   "kmove": {
-    "ts": 1795571138.0,
-    "lag_s": 411.2,
-    "ticker": "KXBIGGESTQUAKE-25NOV26-5.4",
-    "from": 0.74,
-    "to": 0.88,
-    "tape": {
-     "KXBIGGESTQUAKE-25NOV26-5.2": {
-      "first_50c_s": 447.8,
-      "n_after": 4,
-      "first_s": 447.8
-     },
-     "KXBIGGESTQUAKE-25NOV26-5.4": {
-      "first_50c_s": 346.2,
-      "n_after": 16,
-      "first_s": 346.2
-     },
-     "KXBIGGESTQUAKE-25NOV26-5.6": {
-      "first_50c_s": 346.2,
-      "n_after": 32,
-      "first_s": 346.2
-     },
-     "KXBIGGESTQUAKE-25NOV26-5.8": {
-      "first_50c_s": 384.4,
-      "n_after": 34,
-      "first_s": 384.4
-     },
-     "KXBIGGESTQUAKE-25NOV26-6.0": {
-      "first_50c_s": 448.0,
-      "n_after": 16,
-      "first_s": 448.0
-     },
-     "KXBIGGESTQUAKE-25NOV26-6.2": {
-      "first_50c_s": null,
-      "n_after": 4,
-      "first_s": 865.2
-     },
-     "KXBIGGESTQUAKE-25NOV26-6.4": {
-      "first_50c_s": null,
-      "n_after": 7,
-      "first_s": 865.2
-     },
-     "KXBIGGESTQUAKE-25NOV26-6.6": {
-      "first_50c_s": null,
-      "n_after": 3,
-      "first_s": 865.2
-     },
-     "KXBIGGESTQUAKE-25NOV26-6.8": {
-      "first_50c_s": null,
-      "n_after": 5,
-      "first_s": 865.2
-     },
-     "KXBIGGESTQUAKE-25NOV26-7.0": {
-      "first_50c_s": null,
-      "n_after": 2,
-      "first_s": 865.2
-     }
-    }
-   },
-   "srcs": {
-    "gfz_fdsn": {
-     "lag_s": 519.2,
-     "first_mag": 5.87,
-     "mag": 5.86
-    },
-    "gfz": {
-     "lag_s": 520.0,
-     "first_mag": 5.9,
-     "mag": 5.9
-    },
-    "emsc_ws": {
-     "lag_s": 530.5,
-     "first_mag": 5.9,
-     "mag": 5.9
-    },
-    "emsc": {
-     "lag_s": 540.7,
-     "first_mag": 5.9,
-     "mag": 5.9
-    },
-    "usgs": {
-     "lag_s": 770.2,
-     "first_mag": 5.9,
-     "mag": 5.9
-    }
-   }
   }
  ],
  "latency_m6": {},
  "feeds": {
   "bmkg": {
-   "ok": 3441,
+   "ok": 3456,
    "err": 0,
-   "last_ok": "2026-11-27 20:36:01",
+   "last_ok": "2026-11-27 20:41:01",
    "last_err": null
   },
   "emsc": {
    "ok": 0,
-   "err": 4588,
+   "err": 4608,
    "last_ok": null,
    "last_err": "Expecting value: line 1 column 1 (char 0)"
   },
   "emsc_ws": {
-   "ok": 565,
+   "ok": 566,
    "err": 0,
-   "last_ok": "2026-11-27 20:35:54",
+   "last_ok": "2026-11-27 20:38:22",
    "last_err": null
   },
   "geonet": {
-   "ok": 2294,
+   "ok": 2304,
    "err": 0,
-   "last_ok": "2026-11-27 20:35:51",
+   "last_ok": "2026-11-27 20:40:51",
    "last_err": null
   },
   "gfz": {
-   "ok": 6882,
+   "ok": 6912,
    "err": 0,
-   "last_ok": "2026-11-27 20:36:13",
+   "last_ok": "2026-11-27 20:41:13",
    "last_err": null
   },
   "gfz_fdsn": {
-   "ok": 2281,
+   "ok": 2291,
    "err": 13,
-   "last_ok": "2026-11-27 20:35:50",
+   "last_ok": "2026-11-27 20:40:50",
    "last_err": "HTTPSConnectionPool(host='geofon.gfz.de', port=443): Read timed out. (read timeout=8)"
   },
   "jma": {
-   "ok": 2294,
+   "ok": 2304,
    "err": 0,
-   "last_ok": "2026-11-27 20:35:51",
+   "last_ok": "2026-11-27 20:40:51",
    "last_err": null
   },
   "kalshi": {
-   "ok": 9106,
+   "ok": 9146,
    "err": 0,
-   "last_ok": "2026-11-27 20:36:09",
+   "last_ok": "2026-11-27 20:41:11",
    "last_err": null
   },
   "ntwc": {
-   "ok": 4588,
+   "ok": 4608,
    "err": 0,
-   "last_ok": "2026-11-27 20:36:06",
+   "last_ok": "2026-11-27 20:41:06",
    "last_err": null
   },
   "ptwc": {
-   "ok": 4588,
+   "ok": 4608,
    "err": 0,
-   "last_ok": "2026-11-27 20:36:06",
+   "last_ok": "2026-11-27 20:41:06",
    "last_err": null
   },
   "usgs": {
-   "ok": 6882,
+   "ok": 6912,
    "err": 0,
-   "last_ok": "2026-11-27 20:36:13",
+   "last_ok": "2026-11-27 20:41:13",
    "last_err": null
   }
  }
