@@ -13,6 +13,15 @@ his call once paper results earn it. It is a small real-money test (~$37 bankrol
 started Nov 3, 2026; topped up to $49.71 on Nov 5) in place of paper trading; Alex adds money only if the
 record earns it. Be candid about odds and risk; no hype.
 
+## Server deleted (Nov 27, 2026)
+- The DigitalOcean droplet `kalshi-m15` ($12/mo) was DESTROYED Nov 27 ~10:10 PM ET (Alex: not paying $12/mo for a
+  server doing nothing positive). Everything that ran there is gone: 15-min bot (paper), fast quake YES (real $0,
+  1 order/0 fills), shipping release window (real $0, 0 orders), websocket recorder, Foreman watcher. PR #376 set
+  quakefast_control.json and shiprelease_control.json to `off`. Paper twins stop; data already on m15-data,
+  quakefast-data, copycat-data branches stays. Dashboard 15-MIN tab and server TESTS cards are frozen at Nov 27.
+- The main bot (GitHub Actions) is unaffected. Server sections below are history; reviving needs a new droplet
+  + deploy/m15/SETUP.md. Alex's other droplets (`trading-office`, `memebot`) are his: never touch them.
+
 ## Fresh start (Nov 17, 2026)
 - The $500 swing (wxbot/swing.py, PRs #314-#315) ran Nov 16 for 3 bets (-$27.64) and is OFF for good
   (`[swing] enabled = false`). Alex: "I just want a fresh start, call all of the rest of it testing fees."
