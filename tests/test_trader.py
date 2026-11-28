@@ -512,7 +512,8 @@ def test_only_approved_strategies_trade_real_money():
     # Alex, Nov 14 4:19 PM ET ("Ok sure get it going"): Nasdaq range fade, 1 contract.
     # Alex, Nov 19 1:21 AM ET ("Yeah put it back"): Mentions NO real again, 1 contract per word.
     # Alex, Nov 19 5:53 PM ET (decision card "Real, 2 contracts"): mid-size Entertainment favorites.
-    assert live == {"mentions", "favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range", "favorites_mid", "quake_no", "fade_leads", "quake_ladder"}
+    assert live == {"mentions", "favorites", "macro_fade", "weather_late", "macro_wide", "favorites_wide", "rain_evening", "spx_range", "ai_fade", "ndx_range", "favorites_mid", "quake_no", "fade_leads", "quake_ladder", "oneoff"}
+    # Alex, Nov 27 10:11 PM ET ("Do what you think is best make me money!"): one-off 8 NO on U3 >4.2% at 87c.
     # Alex, Nov 20 2:13 PM ET ("Run em live again, this is test money"): Jobs/GDP/Starship fade, 2 ct, $6 cap.
     assert c.raw["trading"]["fade_leads"]["max_loss_usd"] == 6.0 and c.raw["trading"]["fade_leads"]["contracts"] == 2
     assert c.raw["trading"]["fade_leads_paper"]["live"] is False

@@ -446,7 +446,9 @@ def vet(intent: Intent, rows: list[dict], t: dict, sp: dict, now: datetime,
     if close is None or close <= now + timedelta(minutes=10):
         return "market closing"
     key = (intent.ticker, intent.side)
-    if any((r.get("ticker"), r.get("side")) == key for r in rows) or \
+    mine = (lambda s: s == intent.strategy) if sp.get("allow_duplicate") else (lambda s: True)
+    if any((r.get("ticker"), r.get("side")) == key and mine(r.get("strategy")) and
+           (not sp.get("allow_duplicate") or r.get("status") == "resting") for r in rows) or \
             any((p.ticker, p.side) == key for p in planned):
         return "duplicate"
     cost = intent.price * intent.count
